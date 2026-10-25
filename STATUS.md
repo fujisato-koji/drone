@@ -9,6 +9,8 @@
 - none
 
 ## Open items by waits_for
+### assistant
+- Q-006 (question) Find third party liability insurance that an individual can buy for a self-built aircraft flown at Level 3.5. The hob...
 ### owner
 - Q-002 (question) What the drone is for (its mission, payload, and where and how it flies). Ask the questions that can rule a form out ...
 - Q-003 (question) Does the budget of D-005 include the fees paid to the State for inspection? If it does, every certification route use...
@@ -29,9 +31,10 @@
 
 ## Failing checks
 - K-001 partial: ['cert.fee_type_class1_min', 'cert.fee_type_class1_max', ...
+- K-002 partial: ['cost.license_exam_written_2nd', 'cost.license_exam_prac...
 
 ## Problems
 - 0 (from check, not counting E10, E13, E14)
 
 ## Next steps
-- none
+- Q-006 Find third party liability insurance that an individual can buy for a self-built aircraft flown at Level 3.5. The hob...

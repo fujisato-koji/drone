@@ -97,3 +97,222 @@ items:
     status: sourced
     basis:
       - P23
+  - key: cost.license_exam_written_2nd
+    v: 8800
+    unit: JPY
+    status: sourced
+    basis:
+      - P26
+  - key: cost.license_exam_practical_2nd_basic
+    v: 20400
+    unit: JPY
+    status: sourced
+    basis:
+      - P26
+  - key: cost.license_exam_practical_2nd_bvlos
+    v: 19800
+    unit: JPY
+    status: sourced
+    basis:
+      - P26
+  - key: cost.license_medical_documents
+    v: 5200
+    unit: JPY
+    status: sourced
+    basis:
+      - P26
+  - key: cost.license_medical_venue
+    v: 19900
+    unit: JPY
+    status: sourced
+    basis:
+      - P26
+  - key: cost.license_issue
+    v: 3000
+    unit: JPY
+    status: sourced
+    basis:
+      - P27
+  - key: cost.license_renewal_issue
+    v: 2850
+    unit: JPY
+    status: sourced
+    basis:
+      - P27
+  - key: cost.license_validity
+    v: 3
+    unit: year
+    status: sourced
+    basis:
+      - P28
+  - key: cost.license_course_2nd_beginner_min
+    v: 230000
+    unit: JPY
+    status: sourced
+    basis:
+      - M6
+      - M7
+      - M8
+  - key: cost.license_course_2nd_beginner_max
+    v: 300000
+    unit: JPY
+    status: sourced
+    basis:
+      - M6
+      - M7
+      - M8
+  - key: cost.license_course_2nd_experienced_min
+    v: 80000
+    unit: JPY
+    status: sourced
+    basis:
+      - M6
+      - M7
+      - M8
+  - key: cost.license_course_2nd_experienced_max
+    v: 128000
+    unit: JPY
+    status: sourced
+    basis:
+      - M6
+      - M7
+      - M8
+  - key: cost.license_course_bvlos_min
+    v: 33000
+    unit: JPY
+    status: sourced
+    basis:
+      - M7
+  - key: cost.license_course_bvlos_max
+    v: 35000
+    unit: JPY
+    status: sourced
+    basis:
+      - M6
+      - M8
+  - key: cost.license_renewal_course_min
+    v: 8800
+    unit: JPY
+    status: sourced
+    basis:
+      - M9
+  - key: cost.license_renewal_course_max
+    v: 20000
+    unit: JPY
+    status: sourced
+    basis:
+      - M9
+  - key: cost.registration_fee_mynumber
+    v: 900
+    unit: JPY
+    status: sourced
+    basis:
+      - P21
+  - key: cost.registration_fee_other_id
+    v: 1450
+    unit: JPY
+    status: sourced
+    basis:
+      - P21
+  - key: cost.registration_validity
+    v: 3
+    unit: year
+    status: sourced
+    basis:
+      - P21
+  - key: cost.remote_id_external_min
+    v: 16900
+    unit: JPY
+    status: sourced
+    basis:
+      - F1
+  - key: cost.remote_id_external_typ
+    v: 17600
+    unit: JPY
+    status: sourced
+    basis:
+      - F1
+  - key: cost.permit_system_fee
+    v: 0
+    unit: JPY
+    status: sourced
+    basis:
+      - P30
+  - key: cost.lte_docomo_flat_month
+    v: 49800
+    unit: JPY
+    status: sourced
+    basis:
+      - M1
+  - key: cost.lte_docomo_metered_base_month
+    v: 12500
+    unit: JPY
+    status: sourced
+    basis:
+      - M1
+  - key: cost.lte_softbank_month
+    v: 49800
+    unit: JPY
+    status: sourced
+    basis:
+      - M2
+  - key: cost.insurance_hobby_two_years
+    v: 6500
+    unit: JPY
+    status: sourced
+    basis:
+      - M3
+  - key: cost.insurance_hobby_cover
+    v: 100000000
+    unit: JPY
+    status: sourced
+    basis:
+      - M3
+  - key: cost.insurance_business_year
+    v: 7350
+    unit: JPY
+    status: sourced
+    basis:
+      - M4
+  - key: cost.insurance_business_cover
+    v: 100000000
+    unit: JPY
+    status: sourced
+    basis:
+      - M4
+  - key: cost.test_field_private_day
+    v: 3000
+    unit: JPY
+    status: sourced
+    basis:
+      - M10
+  - key: cost.test_field_rtf_half_day_third
+    v: 20200
+    unit: JPY
+    status: sourced
+    basis:
+      - P36
+  - key: cost.non_airframe_once_min
+    v: 78000
+    unit: JPY
+    status: calculated
+    basis:
+      - docs/05-parts-and-cost.md#totals
+  - key: cost.non_airframe_once_typ
+    v: 391250
+    unit: JPY
+    status: calculated
+    basis:
+      - docs/05-parts-and-cost.md#totals
+  - key: cost.non_airframe_year_min
+    v: 9167
+    unit: JPY
+    status: calculated
+    basis:
+      - docs/05-parts-and-cost.md#totals
+  - key: cost.non_airframe_year_typ
+    v: 17183
+    unit: JPY
+    status: calculated
+    basis:
+      - docs/05-parts-and-cost.md#totals

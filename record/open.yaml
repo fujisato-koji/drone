@@ -50,3 +50,12 @@ items:
     opened: 2026-10-26
     raised_by: assistant
     phase: design
+  - id: Q-006
+    kind: question
+    text: Find third party liability insurance that an individual can buy for a self-built aircraft flown at Level 3.5. The hobby policy covers hobby flights only and excludes work and research (M3), the business policy is for corporations and sole proprietors and for industrial aircraft with a sale price (M4), and another product excludes self-built aircraft (M5).
+    waits_for: assistant
+    affects:
+      - D-001
+    opened: 2026-10-26
+    raised_by: assistant
+    phase: design
