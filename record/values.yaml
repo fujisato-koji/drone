@@ -1,3 +1,99 @@
 kind: value
 schema: 1
 items:
+  - key: budget.total
+    v: 300000
+    unit: JPY
+    status: decided
+    basis:
+      - D-005
+  - key: law.uas_min_weight
+    v: 100
+    unit: g
+    status: sourced
+    basis:
+      - P3
+  - key: law.permit_weight
+    v: 25
+    unit: kg
+    status: sourced
+    basis:
+      - P3
+  - key: cert.self_confirm_weight
+    v: 4
+    unit: kg
+    status: sourced
+    basis:
+      - P6
+  - key: cert.fee_type_class1_min
+    v: 2209300
+    unit: JPY
+    status: sourced
+    basis:
+      - P10
+  - key: cert.fee_type_class1_max
+    v: 2731800
+    unit: JPY
+    status: sourced
+    basis:
+      - P10
+  - key: cert.fee_type_class2_under4kg
+    v: 290500
+    unit: JPY
+    status: sourced
+    basis:
+      - P10
+  - key: cert.fee_aircraft_class1_untyped_min
+    v: 1481200
+    unit: JPY
+    status: sourced
+    basis:
+      - P9
+  - key: cert.fee_aircraft_class2_untyped_under4kg
+    v: 284900
+    unit: JPY
+    status: sourced
+    basis:
+      - P9
+  - key: cert.validity_aircraft_class1
+    v: 1
+    unit: year
+    status: sourced
+    basis:
+      - P3
+  - key: cert.validity_aircraft_class2
+    v: 3
+    unit: year
+    status: sourced
+    basis:
+      - P3
+  - key: cert.validity_type
+    v: 3
+    unit: year
+    status: sourced
+    basis:
+      - P3
+  - key: cert.dr_hours_example_390
+    v: 375
+    unit: h
+    status: sourced
+    basis:
+      - P7
+  - key: cert.dr_hours_example_390_mitigated
+    v: 150
+    unit: h
+    status: sourced
+    basis:
+      - P7
+  - key: market.class1_type_models
+    v: 1
+    unit: count
+    status: sourced
+    basis:
+      - P22
+  - key: market.level4_flights
+    v: 8
+    unit: count
+    status: sourced
+    basis:
+      - P23

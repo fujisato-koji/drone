@@ -9,23 +9,28 @@
 - none
 
 ## Open items by waits_for
-### assistant
-- Q-001 (question) Which certification to aim for: type certification or aircraft certification, and class 1 or class 2. Settle it from ...
 ### owner
 - Q-002 (question) What the drone is for (its mission, payload, and where and how it flies). Ask the questions that can rule a form out ...
+- Q-003 (question) D-005 の予算に、国の検査の手数料を含めるか。含めるなら、どの認証の経路も手数料だけで予算の大半を使う（cert.fee_type_class2_under4kg、cert.fee_aircraft_class2_untyped_...
+- Q-004 (question) 第一種（レベル4）の型式認証を目指したまま進めるか、最初の型式は第二種で 4 kg 未満（cert.self_confirm_weight）にして第一種を次の段にするか。
+- Q-005 (question) 型式認証の均一性基準は、ある構成品の設計者、製造者、検査者、責任者がすべて同じ一人でほかに誰もいない分担を認めない（P7 p244）。少なくとも一役（たとえば検査）と、独立の監査（兼務でよい）を誰に担ってもらうか。
 
 ## Last decisions
 - D-001 2026-10-25 owner: Design and build a drone as a personal project, aiming for it to be certifiable in Japan.
 - D-002 2026-10-25 owner: Keep the record public from the start, and name the repository drone until the purpose of the dro...
+- D-003 2026-10-25 owner: 安く作れて型式認証を受けられるドローンを作る（施主の回答は「安く作れるが型式認定が必要なもの」で、認定は認証と読んだ）。
+- D-004 2026-10-25 owner: 人のいる場所の上を目視外で飛ばす。
+- D-005 2026-10-25 owner: 製作と認証にかける額は 30 万円までとする。
+- D-006 2026-10-25 owner: 離陸重量は施主が先に決めず、用途から導いた案を見て決める。
 
 ## Unanswered notices
 - none
 
 ## Failing checks
-- none
+- K-001 partial: ['cert.fee_type_class1_min', 'cert.fee_type_class1_max', ...
 
 ## Problems
 - 0 (from check, not counting E10, E13, E14)
 
 ## Next steps
-- Q-001 Which certification to aim for: type certification or aircraft certification, and class 1 or class 2. Settle it from ...
+- none

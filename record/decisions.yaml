@@ -14,3 +14,28 @@ items:
     what: Keep the record public from the start, and name the repository drone until the purpose of the drone is decided.
     touches:
       - Q-002
+  - id: D-003
+    date: 2026-10-25
+    by: owner
+    what: 安く作れて型式認証を受けられるドローンを作る（施主の回答は「安く作れるが型式認定が必要なもの」で、認定は認証と読んだ）。
+    touches:
+      - Q-001
+      - Q-002
+  - id: D-004
+    date: 2026-10-25
+    by: owner
+    what: 人のいる場所の上を目視外で飛ばす。
+    touches:
+      - Q-001
+  - id: D-005
+    date: 2026-10-25
+    by: owner
+    what: 製作と認証にかける額は 30 万円までとする。
+    touches:
+      - D-001
+  - id: D-006
+    date: 2026-10-25
+    by: owner
+    what: 離陸重量は施主が先に決めず、用途から導いた案を見て決める。
+    touches:
+      - Q-002
