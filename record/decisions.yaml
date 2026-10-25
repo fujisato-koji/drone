@@ -17,25 +17,31 @@ items:
   - id: D-003
     date: 2026-10-25
     by: owner
-    what: 安く作れて型式認証を受けられるドローンを作る（施主の回答は「安く作れるが型式認定が必要なもの」で、認定は認証と読んだ）。
+    what: Make a drone that is cheap to build and can obtain type certification (the owner wrote 認定, approval, which was read as 認証, certification).
     touches:
       - Q-001
       - Q-002
   - id: D-004
     date: 2026-10-25
     by: owner
-    what: 人のいる場所の上を目視外で飛ばす。
+    what: Fly it beyond visual line of sight over places where people are.
     touches:
       - Q-001
   - id: D-005
     date: 2026-10-25
     by: owner
-    what: 製作と認証にかける額は 30 万円までとする。
+    what: Spend at most 300,000 yen on building and certification.
     touches:
       - D-001
   - id: D-006
     date: 2026-10-25
     by: owner
-    what: 離陸重量は施主が先に決めず、用途から導いた案を見て決める。
+    what: The owner does not fix the takeoff weight first, and decides it after seeing a proposal derived from the purpose.
     touches:
       - Q-002
+  - id: D-007
+    date: 2026-10-26
+    by: owner
+    what: Write the record, the docs, and commit messages in English, and talk with the owner in Japanese.
+    touches:
+      - D-002

@@ -2,33 +2,34 @@
 
 Why each requirement in record/requirements.yaml is what it is. Start with the questions that can rule a form out.
 
-## 認証の経路（Q-001）
 
-施主は型式認証（D-003）と、人のいる場所の上を目視外で飛ばすこと（D-004）を選んだ。
-人のいる場所の上の目視外飛行はカテゴリーIII に当たり、一等の技能証明と第一種機体認証の機体と許可承認がそろって初めて行える（P2 132条の85、132条の86、P13）。
-目視外の飛行には、技能証明の限定変更も要る（P2 132条の43）。
-型式認証は型式の設計と製造過程を認証し、検査の対象は設計、製造過程、その型式の1機の現状である（P2 132条の16、P3 236条の23）。
-型式認証には均一性基準が掛かり、品質管理制度と、業務の組織から独立した監査を求める（P3 236条の24）。
-ガイドラインは、ある構成品の設計者、製造者、検査者、責任者がすべて同じ一人で、ほかに誰もいない分担を認めず、兼業は妨げないとする（P7 p244）。
-監査者は兼務でよく、常設の組織でなくてよい（P7 p268から269）。
-法は検査を登録検査機関に行わせることを認めるが、今の運用では第一種は国が検査し、登録検査機関の能力は第二種だけである（P2 132条の24、P6 第I部2、P11）。
-登録検査機関の多くは機体認証を型式認証機に限るので、型式認証の無い第二種の機体も国の検査になる場合がある（P11）。
-型式認証を受けた型式の新品は、第二種なら機体認証の検査を原則として全部省略でき、第一種では現状の実地検査が残る（P4 6-1）。
-ここで新品とは、屋内も含めて一度も飛ばしておらず、出荷時の装備から変えておらず、改造していない機体を言う（P4 4項の注1、注6）。
-第二種の安全基準では、cert.self_confirm_weight 未満の機体は多くの項目を申請者自身が確かめた結果の提出で済ませられる（P6 第3章）。
-型式認証の無い機体も機体認証を受けられるが、設計と製造過程の検査に相当の時間が掛かると国は書いている（P3 236条の12、P1 特記7）。
-機体認証の有効期間は第一種が cert.validity_aircraft_class1、第二種が cert.validity_aircraft_class2 で、型式認証は cert.validity_type である（P3）。
+## Certification routes (Q-001)
 
-### 予算との突き合わせ
+The owner chose type certification (D-003) and flight beyond visual line of sight over places where people are (D-004).
+Flight beyond visual line of sight over people is category III, which is allowed only with an aircraft holding class 1 aircraft certification, a first class remote pilot certificate, and a permission and approval (P2 Articles 132-85 and 132-86, P13).
+Flight beyond visual line of sight also needs the visual line of sight limitation on the remote pilot certificate to be lifted (P2 Article 132-43).
+Type certification certifies the design and the production process of a type, and it inspects the design, the production process, and the present state of one aircraft of the type (P2 Article 132-16, P3 Article 236-23).
+Type certification also applies the uniformity standard, which asks for a quality control system and an audit independent of the working organization (P3 Article 236-24).
+The guidelines do not allow a split in which the designer, maker, inspector, and person responsible for a component are all the same single person with nobody else, and they allow one person to hold several roles (P7 p244).
+The auditor may hold other roles and need not be a standing organization (P7 pp268 to 269).
+The law lets registered inspection bodies carry out inspections, but in current practice the State inspects class 1, and the registered inspection bodies are capable of class 2 only (P2 Article 132-24, P6 Part I 2, P11).
+Most registered inspection bodies limit aircraft certification to type certified aircraft, so a class 2 aircraft without type certification may also be inspected by the State (P11).
+A new aircraft of a type certified type skips the aircraft certification inspection in class 2, in principle entirely, while in class 1 an on-site inspection of its present state remains (P4 6-1).
+A new aircraft here means one that has never flown, indoors included, keeps its equipment as shipped, and has not been modified (P4 section 4, notes 1 and 6).
+Under the class 2 safety standard, an aircraft under cert.self_confirm_weight can meet many items by submitting the results of the applicant's own checks (P6 Part II chapter 3).
+An aircraft without type certification can still obtain aircraft certification, but the State says the inspection of its design and production process will take considerable time (P3 Article 236-12, P1 note 7).
+Aircraft certification is valid for cert.validity_aircraft_class1 in class 1 and cert.validity_aircraft_class2 in class 2, and type certification for cert.validity_type (P3).
 
-どの経路も、国の手数料だけで budget.total の大半か、それ以上を使う。
-第一種の型式認証の手数料は cert.fee_type_class1_min から cert.fee_type_class1_max である（P10）。
-第二種で cert.self_confirm_weight 未満の型式認証の手数料は cert.fee_type_class2_under4kg である（P10）。
-型式認証の無い機体の機体認証の手数料は、第一種が cert.fee_aircraft_class1_untyped_min から、第二種の cert.self_confirm_weight 未満が cert.fee_aircraft_class2_untyped_under4kg である（P9）。
-第一種の耐久性と信頼性の飛行試験の時間は、米国の計算例で cert.dr_hours_example_390、危害の軽減があれば cert.dr_hours_example_390_mitigated である（P7 p143）。
-手数料の表は 2022-11 の作成だが、額は現行の航空法関係手数料規則と一致する（P24、K-001）。
-第一種の型式認証を受けた型式は market.class1_type_models で、国が挙げるレベル４飛行 market.level4_flights 件はすべてその型式で行われた（P22、P23 9頁）。
-このため、予算の範囲を Q-003、第一種か第二種かを Q-004、一人で担えない役を Q-005 として施主に聞く。
+### Against the budget
+
+On every route, the State's fees alone use most of budget.total or more.
+The fee for class 1 type certification is cert.fee_type_class1_min to cert.fee_type_class1_max (P10).
+The fee for class 2 type certification under cert.self_confirm_weight is cert.fee_type_class2_under4kg (P10).
+The fee for aircraft certification without type certification starts at cert.fee_aircraft_class1_untyped_min in class 1, and is cert.fee_aircraft_class2_untyped_under4kg in class 2 under cert.self_confirm_weight (P9).
+The durability and reliability flight test for class 1 takes cert.dr_hours_example_390 in a US example, or cert.dr_hours_example_390_mitigated with harm mitigation (P7 p143).
+The fee tables were made in 2022-11, but the amounts match the current fee ordinance (P24, K-001).
+The number of types holding class 1 type certification is market.class1_type_models, and every one of the market.level4_flights Level 4 flights the State lists used that type (P22, P23 page 9).
+So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and the role that one person cannot hold alone as Q-005.
 
 ## Values
 

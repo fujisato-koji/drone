@@ -19,4 +19,4 @@ items:
     result: partial
     by: checker
     date: 2026-10-26
-    detail: 認証の経路の主張8件を別の係が一次資料で反証にかけ、7件が pass、登録検査機関の範囲の1件が partial（法令上の限定でなく今の運用）。均一性基準の言い換えが原文より広かったので docs/01-requirements.md の認証の経路を直した。
+    detail: Another agent tried to refute eight claims on the certification routes against primary sources. Seven passed, and one, the scope of registered inspection bodies, was partial because it is current practice rather than a legal limit. The paraphrase of the uniformity standard was broader than the source, so the certification routes section of docs/01-requirements.md was corrected.

@@ -24,7 +24,7 @@ items:
     phase: design
   - id: Q-003
     kind: question
-    text: D-005 の予算に、国の検査の手数料を含めるか。含めるなら、どの認証の経路も手数料だけで予算の大半を使う（cert.fee_type_class2_under4kg、cert.fee_aircraft_class2_untyped_under4kg）。
+    text: Does the budget of D-005 include the fees paid to the State for inspection? If it does, every certification route uses most of the budget on fees alone (cert.fee_type_class2_under4kg, cert.fee_aircraft_class2_untyped_under4kg).
     waits_for: owner
     affects:
       - D-005
@@ -33,7 +33,7 @@ items:
     phase: design
   - id: Q-004
     kind: question
-    text: 第一種（レベル4）の型式認証を目指したまま進めるか、最初の型式は第二種で 4 kg 未満（cert.self_confirm_weight）にして第一種を次の段にするか。
+    text: Keep aiming for class 1 type certification (Level 4), or make the first type a class 2 type under cert.self_confirm_weight and take class 1 as the next step?
     waits_for: owner
     affects:
       - D-003
@@ -43,7 +43,7 @@ items:
     phase: design
   - id: Q-005
     kind: question
-    text: 型式認証の均一性基準は、ある構成品の設計者、製造者、検査者、責任者がすべて同じ一人でほかに誰もいない分担を認めない（P7 p244）。少なくとも一役（たとえば検査）と、独立の監査（兼務でよい）を誰に担ってもらうか。
+    text: The uniformity standard of type certification does not allow a split in which the designer, maker, inspector, and person responsible for a component are all the same single person with nobody else (P7 p244). Who will take at least one role (for example, inspection) and the independent audit, which may be held together with other roles?
     waits_for: owner
     affects:
       - D-003
