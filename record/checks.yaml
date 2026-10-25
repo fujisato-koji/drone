@@ -1,3 +1,22 @@
 kind: check
 schema: 1
 items:
+  - id: K-001
+    target:
+      - cert.fee_type_class1_min
+      - cert.fee_type_class1_max
+      - cert.fee_type_class2_under4kg
+      - cert.fee_aircraft_class1_untyped_min
+      - cert.fee_aircraft_class2_untyped_under4kg
+      - cert.self_confirm_weight
+      - cert.dr_hours_example_390
+      - cert.dr_hours_example_390_mitigated
+      - cert.validity_aircraft_class1
+      - cert.validity_aircraft_class2
+      - cert.validity_type
+    tier: T2
+    method: refute
+    result: partial
+    by: checker
+    date: 2026-10-26
+    detail: 認証の経路の主張8件を別の係が一次資料で反証にかけ、7件が pass、登録検査機関の範囲の1件が partial（法令上の限定でなく今の運用）。均一性基準の言い換えが原文より広かったので docs/01-requirements.md の認証の経路を直した。

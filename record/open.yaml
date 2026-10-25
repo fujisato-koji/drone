@@ -10,6 +10,8 @@ items:
     opened: 2026-10-25
     raised_by: owner
     phase: design
+    closed: 2026-10-26
+    closed_by: K-001
   - id: Q-002
     kind: question
     text: What the drone is for (its mission, payload, and where and how it flies). Ask the questions that can rule a form out before comparing any form.
@@ -19,4 +21,32 @@ items:
       - D-002
     opened: 2026-10-25
     raised_by: owner
+    phase: design
+  - id: Q-003
+    kind: question
+    text: D-005 の予算に、国の検査の手数料を含めるか。含めるなら、どの認証の経路も手数料だけで予算の大半を使う（cert.fee_type_class2_under4kg、cert.fee_aircraft_class2_untyped_under4kg）。
+    waits_for: owner
+    affects:
+      - D-005
+    opened: 2026-10-26
+    raised_by: assistant
+    phase: design
+  - id: Q-004
+    kind: question
+    text: 第一種（レベル4）の型式認証を目指したまま進めるか、最初の型式は第二種で 4 kg 未満（cert.self_confirm_weight）にして第一種を次の段にするか。
+    waits_for: owner
+    affects:
+      - D-003
+      - D-004
+    opened: 2026-10-26
+    raised_by: assistant
+    phase: design
+  - id: Q-005
+    kind: question
+    text: 型式認証の均一性基準は、ある構成品の設計者、製造者、検査者、責任者がすべて同じ一人でほかに誰もいない分担を認めない（P7 p244）。少なくとも一役（たとえば検査）と、独立の監査（兼務でよい）を誰に担ってもらうか。
+    waits_for: owner
+    affects:
+      - D-003
+    opened: 2026-10-26
+    raised_by: assistant
     phase: design

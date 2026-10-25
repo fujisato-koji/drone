@@ -1,3 +1,197 @@
 kind: source
 schema: 1
 items:
+  - id: P1
+    class: P
+    title: 機体認証等（国交省のページ）
+    url: https://www.mlit.go.jp/koku/certification.html
+    license: unknown
+    read: full
+    retrieved: 2026-10-25
+    note: 本文。最新のお知らせは 2026-10-02。
+  - id: P2
+    class: P
+    title: 航空法（e-Gov 法令 API、2025-12-01 施行版）
+    url: https://laws.e-gov.go.jp/api/2/law_data/327AC0000000231
+    license: 著作権の対象外（著作権法13条）
+    read: partial
+    retrieved: 2026-10-25
+    note: 2条、132条の2から5、13から21、24から38、85から87。
+  - id: P3
+    class: P
+    title: 航空法施行規則（e-Gov 法令 API、2026-10-01 施行版）
+    url: https://laws.e-gov.go.jp/api/2/law_data/327M50000800056
+    license: 著作権の対象外（著作権法13条）
+    read: partial
+    retrieved: 2026-10-25
+    note: 5条の2、236条、236条の2、3、6、8、12から18、22から27、33、70、73、75、82。
+  - id: P4
+    class: P
+    title: 無人航空機の検査に関する一般方針（2026-03-31 改正、2026-05-01 施行）
+    url: https://www.mlit.go.jp/koku/content/001993761.pdf
+    license: unknown
+    read: full
+    retrieved: 2026-10-25
+  - id: P5
+    class: P
+    title: サーキュラー No.8-002 無人航空機の型式認証等の手続き（2026-03-31 改正）
+    url: https://www.mlit.go.jp/koku/content/001993762.pdf
+    license: unknown
+    read: partial
+    retrieved: 2026-10-25
+    note: p1から3、8から11、26から28。
+  - id: P6
+    class: P
+    title: サーキュラー No.8-001 無人航空機の型式認証等における安全基準及び均一性基準に対する検査要領（2025-03-24 改正）
+    url: https://www.mlit.go.jp/koku/content/001878429.pdf
+    license: unknown
+    read: partial
+    retrieved: 2026-10-25
+    note: p1から12とp18から20は通読、p13から20は見出しと重量の箇所。
+  - id: P7
+    class: P
+    title: 無人航空機の型式認証等の取得のためのガイドライン（2026-10-02 版、271頁）
+    url: https://www.mlit.go.jp/koku/content/002025995.pdf
+    license: unknown
+    read: excerpt
+    retrieved: 2026-10-25
+    note: p1から8、142から146、149から150、158、244。
+  - id: P8
+    class: P
+    title: 第一種 140-1(d) の適合性証明方法（2025-09-04）
+    url: https://www.mlit.go.jp/koku/content/001908429.pdf
+    license: unknown
+    read: partial
+    retrieved: 2026-10-25
+    note: 冒頭の約2頁。
+  - id: P9
+    class: P
+    title: 機体認証の手数料額一覧
+    url: https://www.mlit.go.jp/koku/content/001572190.pdf
+    license: unknown
+    read: full
+    retrieved: 2026-10-25
+    note: PDF の作成日は 2022-11-29。額は現行（K-001）だが、検査手法の欄は P4 の現行の扱いと食い違う。
+  - id: P10
+    class: P
+    title: 型式認証等の手数料額一覧
+    url: https://www.mlit.go.jp/koku/content/001572192.pdf
+    license: unknown
+    read: full
+    retrieved: 2026-10-25
+    note: PDF の作成日は 2022-11-29。額は現行の手数料規則と一致する（K-001）。
+  - id: P11
+    class: P
+    title: 登録検査機関情報一覧（2026-05-01 現在）
+    url: https://www.mlit.go.jp/koku/content/001572187.pdf
+    license: unknown
+    read: full
+    retrieved: 2026-10-25
+  - id: P12
+    class: P
+    title: 機体認証申請の提出書類を判別する簡易フロー図（2026-05-01 から）
+    url: https://www.mlit.go.jp/koku/content/001994722.pdf
+    license: unknown
+    read: partial
+    retrieved: 2026-10-25
+    note: 各頁の冒頭。
+  - id: P13
+    class: P
+    title: 無人航空機の飛行許可承認のページ（カテゴリーとお知らせ）
+    url: https://www.mlit.go.jp/koku/koku_fr10_000042.html
+    license: unknown
+    read: partial
+    retrieved: 2026-10-25
+    note: フロー図 https://www.mlit.go.jp/common/001582831.png は全部を読んだ。
+  - id: P14
+    class: P
+    title: カテゴリーII の審査要領（2026-09-29 改正）
+    url: https://www.mlit.go.jp/koku/content/001866503.pdf
+    license: unknown
+    read: not_read
+    note: 表紙の行だけを見た。
+  - id: P15
+    class: P
+    title: 技能証明のリーフレット
+    url: https://www.mlit.go.jp/koku/content/001892292.pdf
+    license: unknown
+    read: excerpt
+    retrieved: 2026-10-25
+    note: 注記だけ。
+  - id: P16
+    class: P
+    title: カテゴリーII（レベル3.5）の許可承認申請について（v20241128-1）
+    url: https://www.mlit.go.jp/koku/content/001725836.pdf
+    license: unknown
+    read: partial
+    retrieved: 2026-10-25
+    note: p1から7と全頁の語検索。
+  - id: P17
+    class: P
+    title: レベル4に向けた制度整備（2022-04）
+    url: https://www.mlit.go.jp/koku/content/001478580.pdf
+    license: unknown
+    read: excerpt
+    retrieved: 2026-10-25
+    note: 値は取っていない。
+  - id: P18
+    class: P
+    title: 航空法施行規則の一部を改正する省令（2026-03-19 公布、2026-05-01 施行）
+    url: https://www.mlit.go.jp/common/002009817.pdf
+    license: 著作権の対象外（著作権法13条）
+    read: partial
+    retrieved: 2026-10-25
+  - id: P19
+    class: P
+    title: 機体認証の FAQ（DIPS）
+    url: https://www.uac.dips.mlit.go.jp/contents/drn/question_ACA.html
+    license: unknown
+    read: partial
+    retrieved: 2026-10-25
+    note: 設問の一覧と2問。
+  - id: P20
+    class: P
+    title: 型式認証の FAQ（DIPS）
+    url: https://www.uac.dips.mlit.go.jp/contents/drn/question_TAA.html
+    license: unknown
+    read: partial
+    retrieved: 2026-10-25
+    note: 設問の一覧と2問。
+  - id: P21
+    class: P
+    title: 機体登録の FAQ（DIPS）
+    url: https://www.dips-reg.mlit.go.jp/contents/drs/question.html
+    license: unknown
+    read: partial
+    retrieved: 2026-10-25
+    note: 自作、リモートID、試験飛行の語で引いた箇所。
+  - id: P22
+    class: P
+    title: 型式認証を取得している無人航空機一覧（令和8年6月19日現在）
+    url: https://www.mlit.go.jp/koku/content/002008366.pdf
+    license: unknown
+    read: full
+    retrieved: 2026-10-26
+    note: P1 のページから引いた。第一種は第1号の1件、第二種は第1号から第13号。
+  - id: P23
+    class: P
+    title: 無人航空機に係る制度及びエリア単位でのレベル４飛行の取組状況等について（国土交通省航空局、令和8年4月23日、特区WG提出資料）
+    url: https://www.chisou.go.jp/tiiki/kokusentoc_wg/r8/pdf/260423_shiryou_2_4.pdf
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+    note: 全11頁のうち、9頁（レベル４飛行の概要）を図で、他の頁を語の検索で読んだ。
+  - id: P24
+    class: P
+    title: 航空法関係手数料規則（e-Gov 法令検索、2025-04-01 施行版）
+    license: 著作権の対象外（著作権法13条）
+    read: excerpt
+    retrieved: 2026-10-26
+    note: 反証の係が5条と6条を読み、P9 と P10 の額と一致することを確かめた。手数料令の9条と11条とも合う。
+  - id: P25
+    class: P
+    title: 登録検査機関の登録等に関する取扱要領（国交省、文書番号 001520588）
+    license: unknown
+    read: excerpt
+    retrieved: 2026-10-26
+    note: 登録申請の業務の種類に第１種の検査能力も挙がる。
