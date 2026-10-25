@@ -196,3 +196,175 @@ items:
     read: excerpt
     retrieved: 2026-10-26
     note: The kinds of work in a registration application also include class 1 inspection capability.
+  - id: P26
+    class: P
+    title: Remote pilot certificate exams, kinds and fees, ClassNK (技能証明試験の種別と手数料)
+    url: https://ua-remote-pilot-exam.com/certificate/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+  - id: P27
+    class: P
+    title: Fees for issuing the remote pilot certificate, MLIT (技能証明書の交付手数料額)
+    url: https://www.mlit.go.jp/koku/content/001572203.pdf
+    license: unknown
+    read: full
+    retrieved: 2026-10-26
+  - id: P28
+    class: P
+    title: Level 4 portal, remote pilot certificate, MLIT (レベル4飛行ポータル 技能証明)
+    url: https://www.mlit.go.jp/koku/level4/license/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+    note: Also the portal top page https://www.mlit.go.jp/koku/level4/.
+  - id: P29
+    class: P
+    title: Civil Aviation Bureau standard manual for Level 3.5 flight, updated 2025-12-26 (航空局標準マニュアル レベル3.5飛行等)
+    url: https://www.mlit.go.jp/common/001975932.pdf
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+  - id: P30
+    class: P
+    title: DIPS FAQ on flight permission and approval (DIPS 飛行許可承認 よくある質問)
+    url: https://www.uafp.dips.mlit.go.jp/contents/req-appl/question.html
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+  - id: P31
+    class: P
+    title: Electronic application for Level 3.5 flight on DIPS 2.0, 2024-12 (レベル3.5飛行に係るDIPS2.0を用いた電子申請について)
+    url: https://www.mlit.go.jp/koku/content/001854546.pdf
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+  - id: P32
+    class: P
+    title: List of notified Remote ID devices, updated 2026-07-08 (適合届出のあったリモートID機器等の一覧)
+    url: https://www.mlit.go.jp/koku/content/001484158.pdf
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+  - id: P33
+    class: P
+    title: Flow of developing Remote ID devices, MLIT (リモートID機器等の開発の流れ)
+    url: https://www.mlit.go.jp/koku/content/001879119.pdf
+    license: unknown
+    read: full
+    retrieved: 2026-10-26
+  - id: P34
+    class: P
+    title: Radio equipment used in drones, MIC (ドローン等に用いられる無線設備について)
+    url: https://www.tele.soumu.go.jp/j/sys/others/drone/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+  - id: P35
+    class: P
+    title: JUTM FAQ (よくある質問)
+    url: https://jutm.org/faq/
+    license: unknown
+    read: archived
+    retrieved: 2026-10-26
+    note: The live site returned 503. The FAQ archived on 2026-05-13 says individuals cannot apply, while sole proprietors and corporations can.
+  - id: P36
+    class: P
+    title: Fukushima Robot Test Field price list, F-REI (料金表)
+    url: https://rtf.f-rei.go.jp/facility-use/charge
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+    note: Whether tax is included and whether individuals may use it are not confirmed.
+  - id: P37
+    class: P
+    title: License fields of ArduPilot, PX4, Mission Planner, QGroundControl, UAV Log Viewer, and Flight Review on GitHub
+    url: https://github.com/ArduPilot/MissionPlanner
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+    note: Read through the GitHub API for each repository.
+  - id: M1
+    class: M
+    title: LTE plan for use in the air, NTT docomo (LTE上空利用プラン)
+    url: https://www.docomo.ne.jp/charge/lte-joukuriyou-plan/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+    note: Prices include tax. Contracted at docomo shops; a designated device is needed and each flight is booked.
+  - id: M2
+    class: M
+    title: LTE plan for drones in the air, SoftBank (ドローン向け LTE上空専用プラン)
+    url: https://www.softbank.jp/biz/iot/service/drone/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+    note: On the business page; whether individuals may subscribe is not stated.
+  - id: M3
+    class: M
+    title: Hobby radio control pilot registration and cover, RCK (ホビー用ラジコン操縦士登録と補償制度)
+    url: https://rck.or.jp/operator/op_hb_insurance.html
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+    note: Also https://rck.or.jp/operator/op_hb_registration.html.
+  - id: M4
+    class: M
+    title: Liability insurance under the FLIGHTS contract, A.C.F with Tokio Marine (賠償責任保険)
+    url: https://drone-hoken.jp/indemnity
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+  - id: M5
+    class: M
+    title: Aircraft and liability insurance set, Hoken Kikaku with Tokio Marine (機体と賠償のセット保険)
+    url: https://www.tmn-drone.com/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+  - id: M6
+    class: M
+    title: National licence courses and prices, Drone School Tokyo (国家資格コースと料金)
+    url: https://www.hb-j.jp/school/course/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+  - id: M7
+    class: M
+    title: Courses and prices, KFJ drone school (コースと料金)
+    url: https://droneschool.kofuji.co.jp/courses-price/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+  - id: M8
+    class: M
+    title: Typical cost of the national drone licence, Rakuten Drone Academy (ドローン免許の費用相場)
+    url: https://academy.drone.rakuten.co.jp/column/average-cost-of-drone-national-license/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+    note: Dated 2026-10-21.
+  - id: M9
+    class: M
+    title: Renewal course prices, DPCA and Rakuten Drone Academy (更新講習の料金)
+    url: https://unlc.jp/course/license-renewal/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+    note: Also https://academy.drone.rakuten.co.jp/course/national_license_renewal/.
+  - id: M10
+    class: M
+    title: Drone field price, Sagamiko resort (ドローンフィールド)
+    url: https://www.sagamiko-resort.jp/drone/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+    note: Tax status not stated.
+  - id: F1
+    class: F
+    title: AP Dev Conference 2024, Remote IDs for Japan, ArduPilot Discourse
+    url: https://discuss.ardupilot.org/t/ap-dev-conference-2024-remote-ids-for-japan/120936
+    license: unknown
+    read: partial
+    retrieved: 2026-10-26
+    note: Posted 2024-07-18. Device prices to be confirmed at a shop.

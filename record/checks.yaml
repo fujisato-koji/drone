@@ -20,3 +20,29 @@ items:
     by: checker
     date: 2026-10-26
     detail: Another agent tried to refute eight claims on the certification routes against primary sources. Seven passed, and one, the scope of registered inspection bodies, was partial because it is current practice rather than a legal limit. The paraphrase of the uniformity standard was broader than the source, so the certification routes section of docs/01-requirements.md was corrected.
+  - id: K-002
+    target:
+      - cost.license_exam_written_2nd
+      - cost.license_exam_practical_2nd_basic
+      - cost.license_exam_practical_2nd_bvlos
+      - cost.license_medical_documents
+      - cost.license_issue
+      - cost.license_renewal_issue
+      - cost.registration_fee_mynumber
+      - cost.registration_fee_other_id
+      - cost.registration_validity
+      - cost.permit_system_fee
+      - cost.insurance_hobby_two_years
+      - cost.insurance_business_year
+      - cost.lte_docomo_flat_month
+      - cost.lte_docomo_metered_base_month
+      - cost.non_airframe_once_min
+      - cost.non_airframe_once_typ
+      - cost.non_airframe_year_min
+      - cost.non_airframe_year_typ
+    tier: T2
+    method: refute
+    result: partial
+    by: checker
+    date: 2026-10-26
+    detail: Another agent tried to refute eight claims on the costs other than the airframe. Six passed. The Level 3.5 requirement was partial because section 5-4 adds more criteria and the manual adds night limitation and a preference for no-fault insurance. The insurance claim was partial because the business policy also limits aircraft to industrial ones with a sale price. The totals add up. The section in docs/05-parts-and-cost.md was corrected.

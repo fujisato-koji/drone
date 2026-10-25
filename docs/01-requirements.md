@@ -52,4 +52,39 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | cert.dr_hours_example_390_mitigated | 150 | h | sourced | P7 |
 | market.class1_type_models | 1 | count | sourced | P22 |
 | market.level4_flights | 8 | count | sourced | P23 |
+| cost.license_exam_written_2nd | 8800 | JPY | sourced | P26 |
+| cost.license_exam_practical_2nd_basic | 20400 | JPY | sourced | P26 |
+| cost.license_exam_practical_2nd_bvlos | 19800 | JPY | sourced | P26 |
+| cost.license_medical_documents | 5200 | JPY | sourced | P26 |
+| cost.license_medical_venue | 19900 | JPY | sourced | P26 |
+| cost.license_issue | 3000 | JPY | sourced | P27 |
+| cost.license_renewal_issue | 2850 | JPY | sourced | P27 |
+| cost.license_validity | 3 | year | sourced | P28 |
+| cost.license_course_2nd_beginner_min | 230000 | JPY | sourced | M6, M7, M8 |
+| cost.license_course_2nd_beginner_max | 300000 | JPY | sourced | M6, M7, M8 |
+| cost.license_course_2nd_experienced_min | 80000 | JPY | sourced | M6, M7, M8 |
+| cost.license_course_2nd_experienced_max | 128000 | JPY | sourced | M6, M7, M8 |
+| cost.license_course_bvlos_min | 33000 | JPY | sourced | M7 |
+| cost.license_course_bvlos_max | 35000 | JPY | sourced | M6, M8 |
+| cost.license_renewal_course_min | 8800 | JPY | sourced | M9 |
+| cost.license_renewal_course_max | 20000 | JPY | sourced | M9 |
+| cost.registration_fee_mynumber | 900 | JPY | sourced | P21 |
+| cost.registration_fee_other_id | 1450 | JPY | sourced | P21 |
+| cost.registration_validity | 3 | year | sourced | P21 |
+| cost.remote_id_external_min | 16900 | JPY | sourced | F1 |
+| cost.remote_id_external_typ | 17600 | JPY | sourced | F1 |
+| cost.permit_system_fee | 0 | JPY | sourced | P30 |
+| cost.lte_docomo_flat_month | 49800 | JPY | sourced | M1 |
+| cost.lte_docomo_metered_base_month | 12500 | JPY | sourced | M1 |
+| cost.lte_softbank_month | 49800 | JPY | sourced | M2 |
+| cost.insurance_hobby_two_years | 6500 | JPY | sourced | M3 |
+| cost.insurance_hobby_cover | 100000000 | JPY | sourced | M3 |
+| cost.insurance_business_year | 7350 | JPY | sourced | M4 |
+| cost.insurance_business_cover | 100000000 | JPY | sourced | M4 |
+| cost.test_field_private_day | 3000 | JPY | sourced | M10 |
+| cost.test_field_rtf_half_day_third | 20200 | JPY | sourced | P36 |
+| cost.non_airframe_once_min | 78000 | JPY | calculated | docs/05-parts-and-cost.md#totals |
+| cost.non_airframe_once_typ | 391250 | JPY | calculated | docs/05-parts-and-cost.md#totals |
+| cost.non_airframe_year_min | 9167 | JPY | calculated | docs/05-parts-and-cost.md#totals |
+| cost.non_airframe_year_typ | 17183 | JPY | calculated | docs/05-parts-and-cost.md#totals |
 <!-- tdr:end -->
