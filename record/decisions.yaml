@@ -1,3 +1,16 @@
 kind: decision
 schema: 1
 items:
+  - id: D-001
+    date: 2026-10-25
+    by: owner
+    what: Design and build a drone as a personal project, aiming for it to be certifiable in Japan.
+    touches:
+      - Q-001
+      - Q-002
+  - id: D-002
+    date: 2026-10-25
+    by: owner
+    what: Keep the record public from the start, and name the repository drone until the purpose of the drone is decided.
+    touches:
+      - Q-002

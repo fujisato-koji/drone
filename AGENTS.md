@@ -9,9 +9,8 @@ For every task, follow `.claude/skills/traceable-design/SKILL.md`.
 
 ## About this project
 
-Fill these in when the project starts.
-
-- Owner:
-- What the thing is:
-- Language of the record:
-- Where the owner keeps private facts (outside this repository):
+- Owner: the owner of this repository (fujisato-koji). This is a personal project; bring in nothing from the owner's work.
+- What the thing is: a drone (unmanned aircraft) that the owner designs and builds, aiming to be certifiable in Japan. Which certification (type certification or aircraft certification, class 1 or class 2) is open item Q-001. What the drone is for is Q-002; the repository name `drone` is provisional until then.
+- Language of the record: Japanese for prose and for talking with the owner; ids, keys, and allowed values stay as the standard defines them.
+- Where the owner keeps private facts: a local folder outside this repository, `C:\Users\user\Documents\drone-private` (never published). Never write where the owner lives or flies.
+- Writing style: one sentence per line; no middle dots (・) and no dashes (— or –).

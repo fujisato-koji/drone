@@ -9,10 +9,14 @@
 - none
 
 ## Open items by waits_for
-- none
+### assistant
+- Q-001 (question) Which certification to aim for: type certification or aircraft certification, and class 1 or class 2. Settle it from ...
+### owner
+- Q-002 (question) What the drone is for (its mission, payload, and where and how it flies). Ask the questions that can rule a form out ...
 
 ## Last decisions
-- none
+- D-001 2026-10-25 owner: Design and build a drone as a personal project, aiming for it to be certifiable in Japan.
+- D-002 2026-10-25 owner: Keep the record public from the start, and name the repository drone until the purpose of the dro...
 
 ## Unanswered notices
 - none
@@ -24,4 +28,4 @@
 - 0 (from check, not counting E10, E13, E14)
 
 ## Next steps
-- none
+- Q-001 Which certification to aim for: type certification or aircraft certification, and class 1 or class 2. Settle it from ...

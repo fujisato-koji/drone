@@ -1,3 +1,22 @@
 kind: open
 schema: 1
 items:
+  - id: Q-001
+    kind: question
+    text: "Which certification to aim for: type certification or aircraft certification, and class 1 or class 2. Settle it from primary sources of the Civil Aviation Bureau (MLIT), and record what each route asks of an individual builder."
+    waits_for: assistant
+    affects:
+      - D-001
+    opened: 2026-10-25
+    raised_by: owner
+    phase: design
+  - id: Q-002
+    kind: question
+    text: What the drone is for (its mission, payload, and where and how it flies). Ask the questions that can rule a form out before comparing any form.
+    waits_for: owner
+    affects:
+      - D-001
+      - D-002
+    opened: 2026-10-25
+    raised_by: owner
+    phase: design
