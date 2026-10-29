@@ -8,7 +8,7 @@ items:
     verify: demonstration
     basis:
       - D-008
-    status: awaiting
+    status: confirmed
   - id: R-02
     text: The energy for flight comes from the wind shear over the waves (dynamic soaring), with no fuel and no propeller for cruise.
     origin: owner
@@ -16,7 +16,7 @@ items:
     verify: test
     basis:
       - D-008
-    status: awaiting
+    status: confirmed
   - id: R-03
     text: The drone goes on its own to a position it is given and comes back.
     origin: owner
@@ -24,7 +24,7 @@ items:
     verify: demonstration
     basis:
       - D-009
-    status: awaiting
+    status: confirmed
   - id: R-04
     text: The drone sends a photo or a data record from the position.
     origin: owner
@@ -32,7 +32,7 @@ items:
     verify: demonstration
     basis:
       - D-009
-    status: awaiting
+    status: confirmed
   - id: R-05
     text: When the wind is too weak to soar, the drone lands on the water, stays sealed, rights itself, and takes off again when the wind returns.
     origin: derived
@@ -40,7 +40,7 @@ items:
     verify: test
     basis:
       - D-008
-    status: awaiting
+    status: confirmed
   - id: R-06
     text: No sea water reaches the electronics in a year.
     origin: derived
@@ -48,7 +48,7 @@ items:
     verify: test
     basis:
       - D-008
-    status: awaiting
+    status: confirmed
   - id: R-07
     text: One person can carry and launch the drone by hand.
     origin: derived
@@ -56,7 +56,7 @@ items:
     verify: inspection
     basis:
       - D-005
-    status: awaiting
+    status: confirmed
   - id: R-08
     text: The avionics run for a year on solar power and a battery.
     origin: derived
@@ -64,7 +64,7 @@ items:
     verify: analysis
     basis:
       - D-008
-    status: awaiting
+    status: confirmed
   - id: R-09
     text: The airframe carries the loads of soaring turns and gusts.
     origin: derived
@@ -72,7 +72,7 @@ items:
     verify: analysis
     basis:
       - D-008
-    status: awaiting
+    status: confirmed
   - id: R-10
     text: The drone survives touching down on the water.
     origin: derived
@@ -80,7 +80,7 @@ items:
     verify: test
     basis:
       - D-008
-    status: awaiting
+    status: confirmed
   - id: R-11
     text: The flight is legal where it flies.
     origin: derived
@@ -88,7 +88,7 @@ items:
     verify: inspection
     basis:
       - D-008
-    status: awaiting
+    status: confirmed
   - id: R-12
     text: The drone flies in the layer where the shear is, and never below a safe height over the waves.
     origin: derived
@@ -96,4 +96,4 @@ items:
     verify: analysis
     basis:
       - D-008
-    status: awaiting
+    status: confirmed
