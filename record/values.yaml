@@ -316,3 +316,201 @@ items:
     status: calculated
     basis:
       - docs/05-parts-and-cost.md#totals
+  - key: env.karman
+    v: 0.4
+    unit: 1
+    status: assumed
+    basis:
+      - Q-008
+  - key: env.charnock
+    v: 0.0144
+    unit: 1
+    status: assumed
+    basis:
+      - Q-008
+  - key: env.air_kinematic_viscosity
+    v: 1.46e-05
+    unit: m2/s
+    status: assumed
+    basis:
+      - Q-008
+  - key: env.jonswap_gamma
+    v: 3.3
+    unit: 1
+    status: assumed
+    basis:
+      - Q-008
+  - key: env.pm_hs_coefficient
+    v: 0.21
+    unit: 1
+    status: assumed
+    basis:
+      - Q-008
+  - key: env.pm_peak_coefficient
+    v: 0.877
+    unit: 1
+    status: assumed
+    basis:
+      - Q-008
+  - key: ds.endurance_days
+    v: 365
+    unit: d
+    status: decided
+    basis:
+      - D-008
+  - key: ds.range_km
+    v: 10
+    unit: km
+    status: decided
+    basis:
+      - D-009
+  - key: ds.photo_bytes
+    v: 10000
+    unit: B
+    status: assumed
+    basis:
+      - Q-009
+  - key: ds.min_u10_ms
+    v: 8
+    unit: m/s
+    status: assumed
+    basis:
+      - Q-009
+  - key: ds.mass_max_kg
+    v: 3
+    unit: kg
+    status: assumed
+    basis:
+      - Q-009
+  - key: ds.span_max_m
+    v: 3
+    unit: m
+    status: assumed
+    basis:
+      - Q-009
+  - key: ds.avionics_power_w
+    v: 3
+    unit: W
+    status: assumed
+    basis:
+      - Q-009
+  - key: ds.n_limit
+    v: 4
+    unit: 1
+    status: assumed
+    basis:
+      - Q-009
+  - key: ds.safety_factor
+    v: 1.5
+    unit: 1
+    status: assumed
+    basis:
+      - Q-009
+  - key: ds.survival_hs_m
+    v: 4
+    unit: m
+    status: assumed
+    basis:
+      - Q-009
+  - key: ds.altitude_band_max_m
+    v: 30
+    unit: m
+    status: assumed
+    basis:
+      - Q-009
+  - key: ds.clearance_min_m
+    v: 1
+    unit: m
+    status: assumed
+    basis:
+      - Q-009
+  - key: wing.span_m
+    v: 2.0
+    unit: m
+    status: assumed
+    basis:
+      - Q-009
+  - key: wing.root_chord_m
+    v: 0.16
+    unit: m
+    status: assumed
+    basis:
+      - Q-009
+  - key: wing.taper
+    v: 0.6
+    unit: 1
+    status: assumed
+    basis:
+      - Q-009
+  - key: wing.thickness_ratio
+    v: 0.1
+    unit: 1
+    status: assumed
+    basis:
+      - Q-009
+  - key: wing.design_mass_kg
+    v: 1.5
+    unit: kg
+    status: assumed
+    basis:
+      - Q-009
+  - key: spar.carbon_density
+    v: 1600
+    unit: kg/m3
+    status: assumed
+    basis:
+      - Q-009
+  - key: spar.carbon_modulus
+    v: 120000000000.0
+    unit: Pa
+    status: assumed
+    basis:
+      - Q-009
+  - key: spar.carbon_allowable
+    v: 600000000.0
+    unit: Pa
+    status: assumed
+    basis:
+      - Q-009
+  - key: spar.od_mm
+    v: 10.0
+    unit: mm
+    status: calculated
+    basis:
+      - docs/03-design.md#wing-spar
+  - key: spar.wall_mm
+    v: 0.5
+    unit: mm
+    status: calculated
+    basis:
+      - docs/03-design.md#wing-spar
+  - key: spar.mass_kg
+    v: 0.053
+    unit: kg
+    status: calculated
+    basis:
+      - docs/03-design.md#wing-spar
+  - key: spar.margin
+    v: 0.08
+    unit: 1
+    status: calculated
+    basis:
+      - docs/03-design.md#wing-spar
+  - key: spar.tip_deflection_ratio
+    v: 0.14
+    unit: 1
+    status: calculated
+    basis:
+      - docs/03-design.md#wing-spar
+  - key: wing.mass_kg
+    v: 0.392
+    unit: kg
+    status: calculated
+    basis:
+      - docs/03-design.md#mass-model
+  - key: airframe.baseline_mass_kg
+    v: 1.072
+    unit: kg
+    status: calculated
+    basis:
+      - docs/03-design.md#mass-model

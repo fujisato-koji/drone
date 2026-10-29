@@ -24,6 +24,10 @@ jobs:
           fi
       - name: Check the record
         run: python tools/tdr.py check
+      - name: Test the simulation tools
+        run: |
+          pip install numpy scipy
+          python -m unittest discover -s sim/tests -t .
       - name: Check the tier of the change
         if: github.event_name == 'pull_request'
         env:

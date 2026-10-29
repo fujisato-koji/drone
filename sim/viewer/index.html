@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sea and wind</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: linear-gradient(#cfe3f2 0%, #eef5fa 55%, #f7f4ea 100%);
+         font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #c { position: fixed; inset: 0; display: block; }
+  #panel { position: fixed; left: 0; top: 0; bottom: 0; width: 300px; box-sizing: border-box;
+           padding: 10px; overflow-y: auto; background: rgba(20, 24, 30, 0.80); color: #e8ecef;
+           font-size: 12px; line-height: 1.4; }
+  #panel h1 { font-size: 16px; margin: 0 0 2px; font-weight: 600; }
+  #panel h3 { font-size: 12px; margin: 10px 0 3px; font-weight: 600; color: #e8ecef; }
+  #panel .dim { color: #aab3bb; }
+  #panel .warn { color: #ffcf6b; }
+  #panel table { border-collapse: collapse; width: 100%; }
+  #panel td { padding: 0 0 1px; }
+  #panel td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .ctl { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+  .ctl label { width: 70px; flex: none; }
+  .ctl input[type=range] { flex: 1; min-width: 0; }
+  .ctl .val { width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+  .card { background: #fcfcfb; color: #52514e; border-radius: 4px; padding: 4px 0 0; margin: 0 0 8px; width: 280px; }
+  .card .ct { color: #0b0b0b; font-size: 12px; font-weight: 600; padding: 0 6px 2px; }
+  .card canvas { display: block; width: 280px; height: 170px; }
+  #tip { position: fixed; pointer-events: none; display: none; background: #0b0b0b; color: #f0efec;
+         font-size: 11px; padding: 2px 6px; border-radius: 3px; z-index: 10; white-space: nowrap; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="panel">
+  <h1>Sea and wind</h1>
+  <div class="dim" id="meta">no data</div>
+  <div class="warn" id="warn"></div>
+  <h3>Readouts</h3>
+  <table id="ro"></table>
+  <h3>Controls</h3>
+  <div class="ctl"><label for="u10">U10 (m/s)</label><input id="u10" type="range" min="2" max="25" step="0.5"><span class="val" id="u10v"></span></div>
+  <div class="ctl"><label for="from">Wind from (deg)</label><input id="from" type="range" min="0" max="359" step="1"><span class="val" id="fromv"></span></div>
+  <div class="ctl"><label for="spd">Time speed</label><input id="spd" type="range" min="0" max="4" step="0.1" value="1"><span class="val" id="spdv"></span></div>
+  <div class="ctl"><label><input id="pause" type="checkbox"> Pause</label>
+    <label><input id="ptc" type="checkbox" checked> Particles</label></div>
+  <div class="dim" id="mastpos"></div>
+  <div class="dim" style="margin-top:4px">Sea state from field.js; rerun the Python export to change it.</div>
+  <h3>Charts</h3>
+  <div class="card"><div class="ct">Wind speed vs height at the mast</div><canvas id="ch1" width="280" height="170"></canvas></div>
+  <div class="card"><div class="ct">Vertical wind at the mast</div><canvas id="ch2" width="280" height="170"></canvas></div>
+  <div class="dim"><b>Help</b>: drag to orbit, wheel to zoom, arrow keys move the mast (5 m steps; up = north, right = east). Yellow bar = 10 m, red line = x (east), green line = y (north).</div>
+</div>
+<div id="tip"></div>
+
+<script src="field.js"></script>
+<script src="traj.js"></script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const $ = (id) => document.getElementById(id);
+const F = window.FIELD;
+if (!F) {
+  $('meta').textContent = 'window.FIELD missing: field.js not found next to index.html';
+  throw new Error('FIELD missing');
+}
+const C = F.constants, W = F.wind, CO = F.components;
+const SEA = 240, HALF = SEA / 2, MAXC = 128;
+const N_ALL = CO.a.length, N = Math.min(N_ALL, MAXC);
+$('meta').textContent = 'generated ' + F.meta.generated + ', N = ' + N_ALL + ' components';
+if (N_ALL > MAXC) $('warn').textContent = 'Warning: ' + N_ALL + ' components, only the first ' + MAXC + ' are used.';
+
+// ---------------------------------------------------------------- physics (sim coordinates)
+const cosT = new Float64Array(N), sinT = new Float64Array(N);
+const surf = { eta: 0, ou: 0, ov: 0, ow: 0 };
+
+function surface(x, y, t) {
+  let eta = 0, ou = 0, ov = 0, ow = 0;
+  for (let i = 0; i < N; i++) {
+    const th = CO.k[i] * (CO.dx[i] * x + CO.dy[i] * y) - CO.omega[i] * t + CO.phase[i];
+    const c = Math.cos(th), s = Math.sin(th);
+    cosT[i] = c; sinT[i] = s;
+    const a = CO.a[i];
+    eta += a * c;
+    const ao = a * CO.omega[i];
+    ou += ao * c * CO.dx[i]; ov += ao * c * CO.dy[i]; ow += ao * s;
+  }
+  surf.eta = eta; surf.ou = ou; surf.ov = ov; surf.ow = ow;
+  return surf;
+}
+function meanSpeed(h) { return h > W.z0 ? (W.ustar / C.karman) * Math.log(h / W.z0) : 0; }
+// wind at height h above the local surface; uses the cache filled by surface()
+function windAt(h, o) {
+  if (h <= W.z0) { o.u = surf.ou; o.v = surf.ov; o.w = surf.ow; return o; }
+  const sp = meanSpeed(h);
+  let u = sp * W.ex, v = sp * W.ey, w = 0;
+  for (let i = 0; i < N; i++) {
+    const k = CO.k[i];
+    const f = CO.urel[i] * CO.a[i] * k * Math.exp(-k * h);
+    const up = f * cosT[i];
+    u += up * CO.dx[i]; v += up * CO.dy[i];
+    w -= f * sinT[i];
+  }
+  o.u = u; o.v = v; o.w = w; return o;
+}
+function setWind(u10, fromDeg) {
+  W.u10 = u10; W.from_deg = fromDeg; W.to_deg = (fromDeg + 180) % 360;
+  const r = W.to_deg * Math.PI / 180;
+  W.ex = Math.sin(r); W.ey = Math.cos(r);
+  let us = 0.03 * u10 + 1e-3, z0 = 0;
+  for (let n = 0; n < 50; n++) {
+    z0 = C.charnock * us * us / C.g + 0.11 * C.nu_air / us;
+    us = C.karman * u10 / Math.log(10 / z0);
+  }
+  W.ustar = us; W.z0 = z0;
+  for (let i = 0; i < N_ALL; i++) {
+    const zref = Math.max(1 / CO.k[i], 2 * z0);
+    CO.urel[i] = meanSpeed(zref) * (W.ex * CO.dx[i] + W.ey * CO.dy[i]) - CO.omega[i] / CO.k[i];
+  }
+  uploadC2();
+}
+
+// ---------------------------------------------------------------- colour ramp (low = dark, high = light)
+const RAMP = ['#7a1f12', '#eb6834', '#ffe8a3'].map((h) => new THREE.Color(h));
+const tmpC = new THREE.Color();
+function ramp(h, out) {
+  const s = Math.min(1, Math.max(0, Math.log(h / 0.3) / Math.log(40 / 0.3))) * (RAMP.length - 1);
+  const i = Math.min(RAMP.length - 2, Math.floor(s));
+  return out.copy(RAMP[i]).lerp(RAMP[i + 1], s - i);
+}
+
+// ---------------------------------------------------------------- three.js scene
+const renderer = new THREE.WebGLRenderer({ canvas: $('c'), antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 3000);
+const toThree = (x, y, z) => new THREE.Vector3(x, z, -y);
+camera.position.copy(toThree(-60, -80, 35));
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0, 0, 0);
+scene.add(new THREE.HemisphereLight(0xdfeeff, 0x335577, 0.8));
+const sunDir = new THREE.Vector3(0.4, 0.6, 0.3).normalize();
+const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+sunLight.position.copy(sunDir).multiplyScalar(100);
+scene.add(sunLight);
+
+// sea
+const uC1 = [], uC2 = [];
+for (let i = 0; i < MAXC; i++) { uC1.push(new THREE.Vector4()); uC2.push(new THREE.Vector4()); }
+for (let i = 0; i < N; i++) uC1[i].set(CO.a[i], CO.k[i], CO.omega[i], CO.phase[i]);
+function uploadC2() { for (let i = 0; i < N; i++) uC2[i].set(CO.dx[i], CO.dy[i], CO.urel[i], 0); }
+uploadC2();
+let hsTot = 0;
+for (const tr of F.trains) hsTot += tr.hs;
+const seaMat = new THREE.ShaderMaterial({
+  uniforms: {
+    uC1: { value: uC1 }, uC2: { value: uC2 }, uN: { value: N }, uT: { value: 0 },
+    uSun: { value: sunDir }, uRange: { value: Math.max(1, hsTot) }
+  },
+  vertexShader: `
+    #define MAXC ${MAXC}
+    uniform vec4 uC1[MAXC];
+    uniform vec4 uC2[MAXC];
+    uniform int uN;
+    uniform float uT;
+    varying vec3 vN;
+    varying vec3 vW;
+    varying float vH;
+    void main() {
+      float x = position.x, y = position.y;
+      float eta = 0.0, sx = 0.0, sy = 0.0;
+      for (int i = 0; i < MAXC; i++) {
+        if (i >= uN) break;
+        vec4 c1 = uC1[i];
+        vec4 c2 = uC2[i];
+        float th = c1.y * (c2.x * x + c2.y * y) - c1.z * uT + c1.w;
+        eta += c1.x * cos(th);
+        float f = -c1.x * c1.y * sin(th);
+        sx += f * c2.x;
+        sy += f * c2.y;
+      }
+      vec3 p = vec3(x, eta, -y);           // sim (x, y, z) -> three (x, z, -y)
+      vN = normalize(vec3(-sx, 1.0, sy));  // sim normal (-sx, -sy, 1) mapped the same way
+      vW = p;
+      vH = eta;
+      gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+    }`,
+  fragmentShader: `
+    uniform vec3 uSun;
+    uniform float uRange;
+    varying vec3 vN;
+    varying vec3 vW;
+    varying float vH;
+    void main() {
+      vec3 N = normalize(vN);
+      vec3 L = normalize(uSun);
+      vec3 V = normalize(cameraPosition - vW);
+      vec3 H = normalize(L + V);
+      float lam = max(dot(N, L), 0.0);
+      float spec = pow(max(dot(N, H), 0.0), 90.0) * 0.6;
+      float t = clamp(vH / uRange + 0.5, 0.0, 1.0);
+      vec3 deep = vec3(0.0863, 0.2275, 0.3725);   // #163a5f
+      vec3 crest = vec3(0.6235, 0.8275, 0.9020);  // #9fd3e6
+      vec3 col = mix(deep, crest, t) * (0.40 + 0.70 * lam) + vec3(spec);
+      gl_FragColor = vec4(col, 1.0);
+    }`
+});
+const seaGeo = new THREE.PlaneGeometry(SEA, SEA, 240, 240); // local xy plane = sim xy
+const sea = new THREE.Mesh(seaGeo, seaMat);
+sea.frustumCulled = false;
+scene.add(sea);
+
+// axes at the edge and a 10 m scale bar
+function line(pts, color) {
+  const g = new THREE.BufferGeometry().setFromPoints(pts);
+  const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color }));
+  scene.add(l); return l;
+}
+line([toThree(-HALF, -HALF, 1.5), toThree(HALF, -HALF, 1.5)], 0xc0392b);
+line([toThree(-HALF, -HALF, 1.5), toThree(-HALF, HALF, 1.5)], 0x2e8b57);
+{
+  const z = 4, y = -HALF + 6, x0 = -HALF + 6;
+  line([toThree(x0, y, z), toThree(x0 + 10, y, z)], 0xf2c200);
+  line([toThree(x0, y - 1, z), toThree(x0, y + 1, z)], 0xf2c200);
+  line([toThree(x0 + 10, y - 1, z), toThree(x0 + 10, y + 1, z)], 0xf2c200);
+}
+
+// mast
+const HM = [0.5, 1, 1.5, 2, 3, 4, 5, 7, 10, 15, 20, 30];
+let mx = 0, my = 0;
+const mastLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 30, 0)]),
+  new THREE.LineBasicMaterial({ color: 0x333333 }));
+mastLine.frustumCulled = false;
+scene.add(mastLine);
+const arrows = HM.map((h) => {
+  const a = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, ramp(h, new THREE.Color()).getHex());
+  a.line.frustumCulled = false; a.cone.frustumCulled = false;
+  scene.add(a); return a;
+});
+
+// particles
+const NP = 1200;
+const px = new Float64Array(NP), py = new Float64Array(NP), ph = new Float64Array(NP);
+const pPos = new Float32Array(NP * 3), pCol = new Float32Array(NP * 3);
+for (let i = 0; i < NP; i++) {
+  px[i] = (Math.random() - 0.5) * SEA; py[i] = (Math.random() - 0.5) * SEA;
+  ph[i] = 0.3 * Math.pow(30 / 0.3, Math.random());
+}
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+const points = new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 2.5, sizeAttenuation: false, vertexColors: true }));
+points.frustumCulled = false;
+scene.add(points);
+
+// trajectory (optional)
+let traj = null, glider = null;
+if (window.TRAJ && window.TRAJ.x && window.TRAJ.x.length > 1) {
+  const TJ = window.TRAJ, n = TJ.x.length;
+  traj = TJ;
+  const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+  let zmin = Infinity, zmax = -Infinity;
+  for (let i = 0; i < n; i++) { zmin = Math.min(zmin, TJ.z[i]); zmax = Math.max(zmax, TJ.z[i]); }
+  for (let i = 0; i < n; i++) {
+    pos.set([TJ.x[i], TJ.z[i], -TJ.y[i]], i * 3);
+    const s = (TJ.z[i] - zmin) / Math.max(1e-6, zmax - zmin);
+    ramp(0.3 * Math.pow(40 / 0.3, s), tmpC); col.set([tmpC.r, tmpC.g, tmpC.b], i * 3);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const tl = new THREE.Line(g, new THREE.LineBasicMaterial({ vertexColors: true }));
+  tl.frustumCulled = false; scene.add(tl);
+  glider = new THREE.Group();
+  glider.rotation.order = 'YXZ';
+  const wm = new THREE.MeshLambertMaterial({ color: 0x222222 });
+  for (const sgn of [-1, 1]) {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.04, 1.0), wm);
+    wing.position.set(0, 0.07, sgn * 0.5);
+    wing.rotation.x = -sgn * 0.15;  // small dihedral, flat V
+    glider.add(wing);
+  }
+  scene.add(glider);
+}
+function updateGlider(t) {
+  if (!traj) return;
+  const n = traj.x.length, dur = traj.dt * (n - 1);
+  const f = (((t % dur) + dur) % dur) / traj.dt;
+  const i = Math.min(n - 2, Math.floor(f)), s = f - i;
+  const L = (a) => a[i] + (a[i + 1] - a[i]) * s;
+  const dang = (a) => { let d = a[i + 1] - a[i]; d -= 2 * Math.PI * Math.round(d / (2 * Math.PI)); return a[i] + d * s; };
+  glider.position.set(L(traj.x), L(traj.z), -L(traj.y));
+  glider.rotation.y = dang(traj.psi);
+  glider.rotation.x = L(traj.mu);
+}
+
+// ---------------------------------------------------------------- UI
+const u10El = $('u10'), fromEl = $('from'), spdEl = $('spd');
+u10El.value = W.u10; fromEl.value = Math.round(W.from_deg) % 360;
+function syncLabels() { $('u10v').textContent = (+u10El.value).toFixed(1); $('fromv').textContent = fromEl.value; $('spdv').textContent = (+spdEl.value).toFixed(1) + 'x'; }
+function onWind() { setWind(+u10El.value, +fromEl.value); syncLabels(); }
+u10El.addEventListener('input', onWind); fromEl.addEventListener('input', onWind);
+spdEl.addEventListener('input', syncLabels);
+$('ptc').addEventListener('change', () => { points.visible = $('ptc').checked; });
+syncLabels();
+addEventListener('keydown', (e) => {
+  const d = { ArrowLeft: [-5, 0], ArrowRight: [5, 0], ArrowUp: [0, 5], ArrowDown: [0, -5] }[e.key];
+  if (!d) return;
+  e.preventDefault();
+  mx = Math.max(-HALF, Math.min(HALF, mx + d[0])); my = Math.max(-HALF, Math.min(HALF, my + d[1]));
+});
+function resize() {
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+// readouts
+const roRows = [['t', 't'], ['U10', 'u10'], ['u*', 'us'], ['z0', 'z0']];
+F.trains.forEach((tr, i) => roRows.push([tr.name + ' Hs / Tp', 'tr' + i]));
+roRows.push(['eta at mast', 'eta'], ['wind @ 2 m', 'w2'], ['wind @ 10 m', 'w10'], ['vertical w @ 2 m', 'vw2']);
+$('ro').innerHTML = roRows.map((r) => '<tr><td>' + r[0] + '</td><td id="ro_' + r[1] + '"></td></tr>').join('');
+const setRo = (k, s) => { $('ro_' + k).textContent = s; };
+F.trains.forEach((tr, i) => setRo('tr' + i, tr.hs.toFixed(2) + ' m / ' + tr.tp.toFixed(1) + ' s'));
+
+// ---------------------------------------------------------------- charts
+// series colours: first two categorical slots of the default palette (validated, light mode)
+const CS = { surface: '#fcfcfb', text1: '#0b0b0b', text2: '#52514e', muted: '#898781', grid: '#e1e0d9', axis: '#c3c2b7', s1: '#2a78d6', s2: '#eb6834' };
+const ML = 38, MR = 10, MT = 22, MB = 30, CW = 280, CH = 170;
+const PW = CW - ML - MR, PH = CH - MT - MB;
+function setupCanvas(cv) {
+  const r = Math.min(devicePixelRatio || 1, 2);
+  cv.width = CW * r; cv.height = CH * r;
+  const g = cv.getContext('2d'); g.setTransform(r, 0, 0, r, 0, 0); return g;
+}
+const g1 = setupCanvas($('ch1')), g2 = setupCanvas($('ch2'));
+const yPix = (h) => MT + PH - (h / 30) * PH;
+let markers1 = [];
+function frame(g, xmin, xmax, xticks, xlabel) {
+  g.clearRect(0, 0, CW, CH);
+  g.fillStyle = CS.surface; g.fillRect(0, 0, CW, CH);
+  g.font = '10px system-ui, sans-serif'; g.lineWidth = 1;
+  const xPix = (v) => ML + (v - xmin) / (xmax - xmin) * PW;
+  g.strokeStyle = CS.grid; g.fillStyle = CS.text2; g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (const h of [0, 10, 20, 30]) {
+    const y = Math.round(yPix(h)) + 0.5;
+    g.beginPath(); g.moveTo(ML, y); g.lineTo(ML + PW, y); g.stroke();
+    g.fillText(String(h), ML - 4, y);
+  }
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  for (const v of xticks) {
+    const x = Math.round(xPix(v)) + 0.5;
+    g.beginPath(); g.moveTo(x, MT); g.lineTo(x, MT + PH); g.stroke();
+    g.fillText(Number.isInteger(v) ? String(v) : v.toFixed(1), x, MT + PH + 3);
+  }
+  g.strokeStyle = CS.axis;
+  g.beginPath(); g.moveTo(ML + 0.5, MT); g.lineTo(ML + 0.5, MT + PH + 0.5); g.lineTo(ML + PW, MT + PH + 0.5); g.stroke();
+  g.fillStyle = CS.text2; g.textAlign = 'center'; g.textBaseline = 'bottom';
+  g.fillText(xlabel, ML + PW / 2, CH - 2);
+  g.save(); g.translate(9, MT + PH / 2); g.rotate(-Math.PI / 2); g.textBaseline = 'top';
+  g.fillText('height above surface (m)', 0, 0); g.restore();
+  return xPix;
+}
+function dot(g, x, y, c) { g.fillStyle = c; g.beginPath(); g.arc(x, y, 4, 0, 2 * Math.PI); g.fill(); }
+const clampX = (x) => Math.max(ML + 4, Math.min(ML + PW - 4, x));
+const spd = new Float64Array(HM.length), ww = new Float64Array(HM.length);
+function drawCharts() {
+  // chart 1
+  const xmax = 1.3 * W.u10, step = xmax > 20 ? 10 : 5;
+  const ticks = []; for (let v = 0; v <= xmax + 1e-9; v += step) ticks.push(v);
+  const xp = frame(g1, 0, xmax, ticks, 'horizontal wind speed (m/s)');
+  g1.strokeStyle = CS.s1; g1.lineWidth = 2; g1.beginPath();
+  for (let j = 0; j <= 60; j++) {
+    const h = 0.05 * Math.pow(30 / 0.05, j / 60);
+    const x = xp(Math.min(xmax, meanSpeed(h))), y = yPix(h);
+    if (j) g1.lineTo(x, y); else g1.moveTo(x, y);
+  }
+  g1.stroke(); g1.lineWidth = 1;
+  markers1 = [];
+  for (let j = 0; j < HM.length; j++) {
+    const x = clampX(xp(spd[j])), y = yPix(HM[j]);
+    dot(g1, x, y, CS.s2); markers1.push({ x, y, h: HM[j], s: spd[j] });
+  }
+  // legend
+  g1.font = '10px system-ui, sans-serif'; g1.textAlign = 'left'; g1.textBaseline = 'middle';
+  g1.strokeStyle = CS.s1; g1.lineWidth = 2; g1.beginPath(); g1.moveTo(ML, 9); g1.lineTo(ML + 16, 9); g1.stroke(); g1.lineWidth = 1;
+  g1.fillStyle = CS.text2; g1.fillText('mean log profile', ML + 20, 9);
+  dot(g1, ML + 112, 9, CS.s2); g1.fillStyle = CS.text2; g1.fillText('actual at mast', ML + 120, 9);
+  // chart 2
+  const xp2 = frame(g2, -2, 2, [-2, -1, 0, 1, 2], 'vertical wind w (m/s)');
+  g2.strokeStyle = CS.muted; g2.beginPath(); g2.moveTo(Math.round(xp2(0)) + 0.5, MT); g2.lineTo(Math.round(xp2(0)) + 0.5, MT + PH); g2.stroke();
+  for (let j = 0; j < HM.length; j++) dot(g2, clampX(xp2(ww[j])), yPix(HM[j]), CS.s2);
+}
+const tip = $('tip');
+$('ch1').addEventListener('mousemove', (e) => {
+  const r = e.target.getBoundingClientRect(), mxp = e.clientX - r.left, myp = e.clientY - r.top;
+  let best = null, bd = 14;
+  for (const m of markers1) { const d = Math.hypot(m.x - mxp, m.y - myp); if (d < bd) { bd = d; best = m; } }
+  if (!best) { tip.style.display = 'none'; return; }
+  tip.textContent = 'h = ' + best.h + ' m, speed = ' + best.s.toFixed(2) + ' m/s';
+  tip.style.left = (e.clientX + 12) + 'px'; tip.style.top = (e.clientY + 12) + 'px'; tip.style.display = 'block';
+});
+$('ch1').addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+
+// ---------------------------------------------------------------- main loop
+let T = 0, last = performance.now();
+const wv = { u: 0, v: 0, w: 0 };
+const _dir = new THREE.Vector3();
+
+function stepParticles(dt, t) {
+  for (let i = 0; i < NP; i++) {
+    surface(px[i], py[i], t);
+    windAt(ph[i], wv);
+    px[i] += wv.u * dt; py[i] += wv.v * dt;
+    ph[i] = Math.min(40, Math.max(0.3, ph[i] + wv.w * dt));
+    if (px[i] > HALF) px[i] -= SEA; else if (px[i] < -HALF) px[i] += SEA;
+    if (py[i] > HALF) py[i] -= SEA; else if (py[i] < -HALF) py[i] += SEA;
+  }
+}
+function updateParticleBuffers(t) {
+  for (let i = 0; i < NP; i++) {
+    surface(px[i], py[i], t);
+    pPos[3 * i] = px[i]; pPos[3 * i + 1] = surf.eta + ph[i]; pPos[3 * i + 2] = -py[i];
+    ramp(ph[i], tmpC); pCol[3 * i] = tmpC.r; pCol[3 * i + 1] = tmpC.g; pCol[3 * i + 2] = tmpC.b;
+  }
+  pGeo.attributes.position.needsUpdate = true; pGeo.attributes.color.needsUpdate = true;
+}
+
+function loop(now) {
+  requestAnimationFrame(loop);
+  const real = Math.min(0.25, (now - last) / 1000); last = now;
+  const dt = $('pause').checked ? 0 : real * (+spdEl.value);
+  if (dt > 0) {
+    const ns = Math.ceil(dt / 0.05), h = dt / ns;
+    if (points.visible) for (let s = 0; s < ns; s++) stepParticles(h, T + s * h);
+    T += dt;
+  }
+  seaMat.uniforms.uT.value = T;
+  if (points.visible) updateParticleBuffers(T);
+
+  // mast
+  surface(mx, my, T);
+  const eta = surf.eta;
+  mastLine.position.set(mx, eta, -my);
+  for (let j = 0; j < HM.length; j++) {
+    windAt(HM[j], wv);
+    const sh = Math.hypot(wv.u, wv.v);
+    spd[j] = sh; ww[j] = wv.w;
+    const len = Math.max(0.02, Math.min(25, 0.6 * Math.hypot(sh, wv.w)));
+    _dir.set(wv.u, wv.w, -wv.v); if (_dir.lengthSq() < 1e-12) _dir.set(1, 0, 0); _dir.normalize();
+    arrows[j].position.set(mx, eta + HM[j], -my);
+    arrows[j].setDirection(_dir);
+    arrows[j].setLength(len, Math.min(len * 0.3, 1.2), Math.min(len * 0.15, 0.6));
+    if (HM[j] === 2) { setRo('w2', sh.toFixed(2) + ' m/s'); setRo('vw2', wv.w.toFixed(2) + ' m/s'); }
+    if (HM[j] === 10) setRo('w10', sh.toFixed(2) + ' m/s');
+  }
+  setRo('t', T.toFixed(1) + ' s'); setRo('u10', W.u10.toFixed(1) + ' m/s');
+  setRo('us', W.ustar.toFixed(3) + ' m/s'); setRo('z0', W.z0.toExponential(2) + ' m');
+  setRo('eta', eta.toFixed(2) + ' m');
+  $('mastpos').textContent = 'Mast at sim (' + mx + ', ' + my + ') m. Arrow keys move it.';
+  drawCharts();
+
+  updateGlider(T);
+  controls.update();
+  renderer.render(scene, camera);
+}
+requestAnimationFrame((t) => { last = t; loop(t); });
+</script>
+</body>
+</html>

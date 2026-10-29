@@ -368,3 +368,31 @@ items:
     read: partial
     retrieved: 2026-10-26
     note: Posted 2024-07-18. Device prices to be confirmed at a shop.
+  - id: P38
+    class: P
+    title: Wind stress on a water surface, H. Charnock, Quarterly Journal of the Royal Meteorological Society 81, 1955
+    url: https://doi.org/10.1002/qj.49708135027
+    license: unknown
+    read: not_read
+    note: Origin of the Charnock relation z0 = a u*^2/g used in sim/seawind.py. Not read in this project; the formulas are implemented from textbook knowledge and are to be verified (Q-008).
+  - id: P39
+    class: P
+    title: A proposed spectral form for fully developed wind seas based on the similarity theory of S. A. Kitaigorodskii, W. J. Pierson and L. Moskowitz, Journal of Geophysical Research 69, 1964
+    url: https://doi.org/10.1029/JZ069i024p05181
+    license: unknown
+    read: not_read
+    note: Origin of the Pierson-Moskowitz spectrum and the Hs and peak relations used for a fully developed wind sea. Not read in this project; the formulas are implemented from textbook knowledge and are to be verified (Q-008).
+  - id: P40
+    class: P
+    title: Measurements of wind-wave growth and swell decay during the Joint North Sea Wave Project (JONSWAP), K. Hasselmann et al., Deutsche Hydrographische Zeitschrift Supplement A 8(12), 1973
+    url: https://hdl.handle.net/21.11116/0000-0007-DD3C-E
+    license: unknown
+    read: not_read
+    note: Origin of the JONSWAP spectrum and gamma = 3.3. Not read in this project; the formulas are implemented from textbook knowledge and are to be verified (Q-008).
+  - id: P41
+    class: P
+    title: Coefficients for sea surface wind stress, heat flux, and wind profiles as a function of wind speed and temperature, S. D. Smith, Journal of Geophysical Research 93, 1988
+    url: https://doi.org/10.1029/JC093iC12p15467
+    license: unknown
+    read: not_read
+    note: Charnock coefficient 0.011 and the neutral log profile over the sea. Not read in this project; the formulas are implemented from textbook knowledge and are to be verified (Q-008).

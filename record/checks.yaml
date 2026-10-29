@@ -46,3 +46,20 @@ items:
     by: checker
     date: 2026-10-26
     detail: Another agent tried to refute eight claims on the costs other than the airframe. Six passed. The Level 3.5 requirement was partial because section 5-4 adds more criteria and the manual adds night limitation and a preference for no-fault insurance. The insurance claim was partial because the business policy also limits aircraft to industrial ones with a sale price. The totals add up. The section in docs/05-parts-and-cost.md was corrected.
+  - id: K-003
+    target:
+      - env.charnock
+      - env.karman
+      - env.pm_hs_coefficient
+      - env.pm_peak_coefficient
+      - env.jonswap_gamma
+      - spar.od_mm
+      - spar.wall_mm
+      - spar.margin
+      - spar.tip_deflection_ratio
+    tier: T2
+    method: hand_calc
+    result: pass
+    by: checker
+    date: 2026-10-29
+    detail: A separate checker read sim/seawind.py and sim/structure.py and recomputed by hand the log-profile fixed point (u* 0.3707, z0 2.06e-4), the PM relations (Hs 2.414 m, Tp 7.755 s), the JONSWAP integral (4 sqrt(m0)/Hs within 0.3%), the potential-flow perturbation and its signs, the surface slope and orbital terms, the elliptical lift integrals, the tube inertia and root stress (margin 0.081), the tip deflection (ratio 0.1405 by a closed form), and the spar fit. All matched the code; the only error was the tube inertia stated in the brief itself (1.09e-10 instead of 1.69e-10 m4), not in the code. Observed, not an error, that orbital() has no depth decay and that the perturbation decays from the local surface.
