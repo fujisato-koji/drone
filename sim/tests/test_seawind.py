@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from sim.seawind import G, Environment, WaveTrain, Wind
+from sim.seawind import G, Environment, WaveTrain, Wind, gust_factor
 
 
 class Mono(WaveTrain):
@@ -223,11 +223,7 @@ class TestSeaWindExtras(unittest.TestCase):
         v = -g[:, 0] * w.ey + g[:, 1] * w.ex
         self.assertAlmostEqual(v.std() / u.std(), 0.8, delta=0.1)
         # 3 s gust factor along a 600 s series at a fixed point
-        tt = np.arange(0.0, 600.0, 0.1)
-        s = env.wind_at(np.zeros_like(tt), np.zeros_like(tt), np.full_like(tt, 10.0), tt)
-        spd = s[:, 0] * w.ex + s[:, 1] * w.ey
-        run = np.convolve(spd, np.ones(30) / 30.0, mode="valid")
-        gf = run.max() / spd.mean()
+        gf = gust_factor()
         print("3 s gust factor", gf)
         self.assertTrue(1.05 <= gf <= 1.5)
 

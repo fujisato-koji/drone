@@ -4,10 +4,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-try:
-    from sim.seawind import RHO_AIR
-except ImportError:  # seawind not written yet: fall back to the stand-in
-    from sim._seawind_stub import RHO_AIR
+from sim.seawind import RHO_AIR
 
 G = 9.81
 

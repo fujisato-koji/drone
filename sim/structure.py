@@ -17,7 +17,20 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from sim.record import value
+
 G = 9.81
+# Keyed values come from the record (record/values.yaml); the default is the number used so far.
+SPAR_FIT_FRACTION = value("spar.fit_fraction", 0.9)  # spar od as a fraction of the local thickness
+SPAR_JOINER_FACTOR = value("spar.joiner_factor", 1.1)  # mass factor for joiners on the spar
+DEFLECTION_LIMIT = value("spar.deflection_limit", 0.15)  # tip deflection / half span at limit load
+N_LIMIT = value("ds.n_limit", 4.0)
+SAFETY_FACTOR = value("ds.safety_factor", 1.5)
+WING_SPAN = value("wing.span_m", 2.0)
+WING_ROOT_CHORD = value("wing.root_chord_m", 0.16)
+WING_TAPER = value("wing.taper", 0.6)
+WING_THICKNESS_RATIO = value("wing.thickness_ratio", 0.10)
+WING_DESIGN_MASS = value("wing.design_mass_kg", 1.5)
 
 
 @dataclass
@@ -32,7 +45,10 @@ class Material:
 MATERIALS = {
     # sourced, P54 (mid of the stated range)
     # Easy Composites carbon fibre pultrusions TDS v1.0 2024-09-20; flexural strength 250-400 MPa
-    "carbon_tube": Material("carbon tube pultruded", 1400.0, 35e9, 300e6),
+    "carbon_tube": Material("carbon tube pultruded",
+                               value("spar.carbon_density", 1400.0),
+                               value("spar.carbon_modulus", 35e9),
+                               value("spar.carbon_allowable", 300e6)),
     # assumed, to be sourced (Q-010)
     "carbon_tube_wrapped": Material("carbon tube roll-wrapped", 1550.0, 90e9, 500e6),
     # assumed, to be sourced (record Q)
@@ -68,7 +84,7 @@ class WingGeometry:
         return self.root_chord * (1.0 - (1.0 - self.taper) * y / (self.span / 2.0))
 
     def max_spar_od(self, y):
-        return 0.9 * self.thickness_ratio * self.chord(y)
+        return SPAR_FIT_FRACTION * self.thickness_ratio * self.chord(y)
 
 
 def elliptical_lift(y, total_lift, span):
@@ -135,7 +151,7 @@ class TubeSpar:
 
 def size_tube_spar(geometry, mass_total, n_limit, safety_factor, material,
                    wall_options=(0.5e-3, 0.75e-3, 1.0e-3, 1.5e-3, 2.0e-3), od_step=1e-3,
-                   deflection_limit=0.15):
+                   deflection_limit=DEFLECTION_LIMIT):
     """Lightest constant round tube passing stress and stiffness at the root.
 
     Simplest choice: the tube is constant over the whole half-span (the root
@@ -182,7 +198,7 @@ def size_tube_spar(geometry, mass_total, n_limit, safety_factor, material,
         "od": best.od, "wall": best.wall, "I": best.I,
         "root_stress_ultimate": stress_ult,
         "margin": material.sigma_allow / stress_ult - 1.0,
-        "mass": 2.0 * half * best.mass_per_length * 1.1,
+        "mass": 2.0 * half * best.mass_per_length * SPAR_JOINER_FACTOR,
         "tip_deflection_limit": w_tip,
         "deflection_ratio": w_tip / half,
         "limiting": limiting,
@@ -257,10 +273,11 @@ def wing_strips(geometry, spar_mass, skin_core_mass, extra_mass=0.0, n_strips=20
     return comps
 
 
-def build_baseline(material_name="carbon tube pultruded", mass_total=1.5):
-    geo = WingGeometry(span=2.0, root_chord=0.16, taper=0.6, thickness_ratio=0.10)
+def build_baseline(material_name="carbon tube pultruded", mass_total=WING_DESIGN_MASS):
+    geo = WingGeometry(span=WING_SPAN, root_chord=WING_ROOT_CHORD, taper=WING_TAPER,
+                       thickness_ratio=WING_THICKNESS_RATIO)
     mat = next(m for m in MATERIALS.values() if m.name == material_name)
-    spar = size_tube_spar(geo, mass_total, 4.0, 1.5, mat)
+    spar = size_tube_spar(geo, mass_total, N_LIMIT, SAFETY_FACTOR, mat)
     sk = skin_mass(geo, MATERIALS["fiberglass_skin"], 0.2e-3, MATERIALS["xps"])
     solar = 0.08
     wing_mass = spar["mass"] + sk["total"] + solar

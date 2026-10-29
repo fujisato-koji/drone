@@ -473,9 +473,9 @@ items:
     title: NASA POWER climatology, SYN1DEG 2001 to 2025, all-sky insolation
     url: https://power.larc.nasa.gov/
     license: unknown
-    read: full
+    read: excerpt
     retrieved: 2026-10-29
-    note: "Home design point (private:loc-01): December 1.64, January 1.90, year 3.51 kWh/m2/day; 50S 70E: June 0.71, July 0.85, year 3.06 kWh/m2/day. Only two grid points were queried."
+    note: "Excerpt: the monthly values of two grid points only, the home design point (private:loc-01) and the point at 50S 70E in the Southern Ocean. Home design point: December 1.64, January 1.90, year 3.51 kWh/m2/day; 50S 70E: June 0.71, July 0.85, year 3.06 kWh/m2/day. No other grid point was queried and no file was downloaded."
   - id: P52
     class: P
     title: TriSonica Mini ultrasonic anemometer datasheet, Anemoment, 2018
@@ -499,7 +499,7 @@ items:
     license: unknown
     read: full
     retrieved: 2026-10-29
-    note: "Manufacturer datasheet. Pultruded carbon tube: density 1.30 to 1.50 g/cm3, modulus 28 to 40 GPa, tensile 400 to 500 MPa, flexural 250 to 400 MPa, 80 C service limit."
+    note: "Manufacturer datasheet. Pultruded carbon tube: density 1.30 to 1.50 g/cm3, modulus 28 to 40 GPa, tensile 400 to 500 MPa, flexural 250 to 400 MPa, 80 C service limit. How the record picks from the ranges: the density 1400 kg/m3 is the mid of the range 1.30 to 1.50 g/cm3; the modulus and the flexural strength are picks inside their ranges (28 to 40 GPa and 250 to 400 MPa), not the mids."
   - id: P55
     class: P
     title: Certification Specifications for Sailplanes and Powered Sailplanes CS-22, Amendment 2, EASA
@@ -521,16 +521,16 @@ items:
     title: FlyingFish UAS for ocean science missions, G. Meadows et al., 2010
     url: https://www.unols.org/
     license: unknown
-    read: full
+    read: partial
     retrieved: 2026-10-29
-    note: A 26 kg seaplane UAV that took off from the water on its own 22 times, in waves up to 2 m, with a 30 m run.
+    note: "A 26 kg seaplane UAV that took off from the water on its own 22 times, in waves up to 2 m, with a 30 m run. The URL is a site root and the note holds one passage, so only that passage is confirmed as read."
   - id: P58
     class: P
     title: Shore Protection Manual, US Army Coastal Engineering Research Center, 1984, chapter 3 wave prediction
     url: "https://usace.contentdm.oclc.org/"
     license: unknown
     read: not_read
-    note: Duration-limited growth in the dimensionless forms X* = (t*/68.8)^1.5, g Hs/U^2 = 1.6e-3 X*^0.5, g Tp/U = 0.286 X*^(1/3) as implemented in sim/seawind.py; not read in this project, to be verified (Q-008).
+    note: Same document as P83; superseded by P83. Not used by the code, which implements the growth law of P71. It was cited for the SPM duration-limited forms that the first sim/seawind.py implemented; they were replaced by the law of P71 (K-005, K-006).
   - id: P59
     class: P
     title: The dependence of sea surface roughness on the height and steepness of the waves, P. K. Taylor and M. J. Yelland, Journal of Physical Oceanography 31, 2001
@@ -582,9 +582,9 @@ items:
     title: "Effects of transfer processes on the marine atmospheric boundary layer, A.-S. Smedman, U. Hogstrom and E. Sahlee, ECMWF workshop proceedings, 2008"
     url: "https://www.ecmwf.int/"
     license: unknown
-    read: full
+    read: partial
     retrieved: 2026-10-29
-    note: "Under swell the log law fails; the wind has a maximum or knee at 5 to 10 m and is nearly constant above."
+    note: "Under swell the log law fails; the wind has a maximum or knee at 5 to 10 m and is nearly constant above. The URL is a site root and the note holds one passage, so only that passage is confirmed as read."
   - id: P66
     class: P
     title: "COARE 3.5 bulk flux algorithm, Python code coare35vn.py, NOAA Physical Sciences Laboratory"
@@ -606,25 +606,25 @@ items:
     title: "Guidelines for converting between various wind averaging periods in tropical cyclone conditions, B. A. Harper, J. D. Kepert and J. D. Ginger, WMO TD-1555, 2010"
     url: "https://library.wmo.int/"
     license: unknown
-    read: full
+    read: partial
     retrieved: 2026-10-29
-    note: "At sea, 3 s gust over 10 min mean 1.23 at 10 m."
+    note: "At sea, 3 s gust over 10 min mean 1.23 at 10 m. The URL is a site root and the note holds one passage, so only that passage is confirmed as read."
   - id: P69
     class: P
     title: "ERA5 hourly data on single levels, Copernicus Climate Change Service, licence to use Copernicus products"
     url: "https://cds.climate.copernicus.eu/"
-    license: unknown
-    read: full
+    license: Licence to use Copernicus products
+    read: excerpt
     retrieved: 2026-10-29
-    note: "Free, worldwide, perpetual, redistributable with the attribution: Generated using Copernicus Climate Change Service information [year]."
+    note: "Only the licence page was read; no data was downloaded. Free, worldwide, perpetual, redistributable with the attribution: Generated using Copernicus Climate Change Service information [year]."
   - id: P70
     class: P
     title: "Long-term wave hindcasts for the western North Pacific and Japan, T. Shimura and N. Mori, Coastal Engineering 151, 2019, data page of DPRI Kyoto University"
     url: "https://coast.dpri.kyoto-u.ac.jp/english/?p=1763"
-    license: unknown
-    read: full
+    license: "Free use including commercial use, redistributable (terms stated on the data page)"
+    read: excerpt
     retrieved: 2026-10-29
-    note: "JRA-55 forced WAVEWATCH III hindcast 1979 to 2017 at 7 km near Japan; NetCDF, free including commercial use, redistributable."
+    note: "Only the data page was read; no data was downloaded. JRA-55 forced WAVEWATCH III hindcast 1979 to 2017 at 7 km near Japan; NetCDF."
   - id: P71
     class: P
     title: "Coastal Engineering Manual, Part II, chapter 2, Meteorology and wave climate, US Army Corps of Engineers, EM 1110-2-1100, Change 1, 31 July 2003"
@@ -686,7 +686,7 @@ items:
     url: "https://hdl.handle.net/1983/9e63f712-38e2-4f54-9ff3-998057ee555e"
     license: unknown
     read: not_read
-    note: "Proposes gust soaring; also the tube nose as an airspeed sensor."
+    note: "Not read. Content as given by the overview S1 (per S1): proposes gust soaring; also the tube nose as an airspeed sensor."
   - id: P79
     class: P
     title: "Optimization of dynamic soaring in a flap-gliding seabird affects its large-scale distribution at sea, J. A. Kempton et al., Science Advances 8, 2022"
@@ -720,7 +720,7 @@ items:
     note: "Take-off run and flapping fall as wind and wave height rise; at 2 m/s wind the run is 8 s in a calm sea and 4 s with high waves."
   - id: S1
     class: S
-    title: "風を燃料にする翼：アホウドリの沈黙の飛行が拓く無燃料航空の未来, とまとの気分次第研究所 (note), 2026-05-08"
+    title: "Wings that use the wind as fuel: how the silent flight of the albatross opens a future of fuel-free aviation (風を燃料にする翼：アホウドリの沈黙の飛行が拓く無燃料航空の未来), note article by Tomato's Mood-Dependent Laboratory (とまとの気分次第研究所), 2026-05-08"
     url: "https://note.com/lyco_pene/n/n33a724e39133"
     license: unknown
     read: full
@@ -734,3 +734,51 @@ items:
     read: partial
     retrieved: 2026-10-29
     note: "Pages 3-30, 3-44, 3-45, 3-47 on a university mirror of the Internet Archive scan. Equations 3-28a, 3-33 to 3-38 in the adjusted wind UA = 0.71 U^1.23; not used by the model."
+  - id: P84
+    class: P
+    title: "Scaling of dynamic soaring flight in Procellariiformes seabirds, Y. Yonehara and K. Sato, RIMS Kokyuroku 1900, 2014"
+    url: "https://repository.kulib.kyoto-u.ac.jp/server/api/core/bitstreams/04244ef0-51e8-413d-ae9d-bce56d9fae5f/content"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Five species from 0.57 to 9.6 kg; roll cycle 2.5 to 12.3 s, proportional to mass^0.57; smaller species flap during the upwind climb."
+  - id: S2
+    class: S
+    title: "Alteon raises 2.5 million dollars to build an autonomous aircraft that flies for over a year on wind energy, note article by rakkun_aviation, 2026-10-24 (relaying TechCrunch 2026-08-31)"
+    url: "https://note.com/rakkun_aviation/n/nbc37029ad664"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "About 3 m span, seven autonomous O-loops within 1 m of the sea at over 100 km/h; propellers as turbines planned; energy-neutral flight not yet shown."
+  - id: P85
+    class: P
+    title: "Sea surface height measurements using UAV altimeters with nadir lidar or low-cost GNSS-R, Remote Sensing 16, 4577, 2024"
+    url: "https://mdpi-res.com/d_attachment/remotesensing/remotesensing-16-04577/article_deploy/remotesensing-16-04577.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "A hobby lidar over the sea lost about 50% of returns at 2 to 3 m/s wind and none came back when the body tilted."
+  - id: M11
+    class: M
+    title: "US-D1 UAV radar altimeter data sheet v2, Ainstein"
+    url: "https://store.sundance.com/docs/Ainstein/US-D1-Data-Sheetv2.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "24 GHz, 0.5 to 50 m, 110 g, 2 W, marketed for water."
+  - id: P86
+    class: P
+    title: "Optimal dynamic soaring trades off energy harvest and directional flight and its open code, and the Cuervo albatross optimizer (github.com/KristianCuervo/albatross), reproductions of the Sachs minimum wind of 8.6 m/s with z0 = 0.03 m"
+    url: "https://github.com/KristianCuervo/albatross"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Independent reproductions of the Sachs case; the literature convention z0 = 0.03 m gives about 1.9 times the Charnock shear. No licence on the code."
+  - id: P87
+    class: P
+    title: "Flight testing of dynamic soaring, M. Bronz et al., flight data and analysis scripts (github.com/mrtbrnz/dynamic_soaring, GPL-3.0)"
+    url: "https://github.com/mrtbrnz/dynamic_soaring"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "1.05 kg hotliner, S 0.21 m2, AR 11.84, CD0 0.028, e 0.85; 100 Hz logs of autonomous inclined circles."

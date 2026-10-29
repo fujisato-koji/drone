@@ -4,10 +4,7 @@ import numpy as np
 
 from sim.aircraft import BASELINE, Aircraft, dumb_glide_ctrl, simulate
 
-try:
-    from sim.seawind import Environment, Wind
-except ImportError:
-    from sim._seawind_stub import Environment, Wind
+from sim.seawind import Environment, Wind
 
 NOSTOP = lambda t, s: False
 

@@ -1,5 +1,6 @@
 """Registry of candidate aircraft for the form study."""
 from sim.aircraft import BASELINE, Aircraft
+from sim.record import value
 
 # provenance: existing BASELINE from sim.aircraft (usual values for a 2 m RC-class glider; assumed).
 baseline_2m = BASELINE
@@ -26,8 +27,13 @@ flyingwing_2m = Aircraft("flyingwing-2m", mass=1.3, span=2.0, wing_area=0.40,
 sealedhull_2p5m = Aircraft("sealedhull-2p5m", mass=2.2, span=2.5, wing_area=0.34,
                            cd0=0.016, oswald=0.85, cl_max=1.2)
 
-# provenance: wandering albatross as a reference; approximate literature values, marked assumed.
-bird_wandering = Aircraft("bird-wandering", mass=9.0, span=3.1, wing_area=0.62,
+# provenance: wandering albatross as a reference. mass, span and wing area are read from the
+# record (lit.albatross_mass_kg, lit.albatross_span_m, lit.albatross_wing_area_m2); cd0, oswald
+# and cl_max stay assumed.
+bird_wandering = Aircraft("bird-wandering",
+                          mass=value("lit.albatross_mass_kg", 9.0),
+                          span=value("lit.albatross_span_m", 3.1),
+                          wing_area=value("lit.albatross_wing_area_m2", 0.62),
                           cd0=0.015, oswald=0.90, cl_max=1.5)
 
 _ALL = [baseline_2m, demo_1p5m, easyglider_1p8m, albatross_3m, flyingwing_2m,

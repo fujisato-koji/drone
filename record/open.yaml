@@ -69,17 +69,19 @@ items:
     phase: design
   - id: Q-007
     kind: question
-    text: Which rules apply to a year-long unmanned flight over the sea (night and beyond visual line of sight permissions inside Japanese airspace, the rules beyond it, and whether the certification aim of D-003 still applies), and what the drone must carry to be legal.
+    text: "Which rules apply to a year-long unmanned flight over the sea (night and beyond visual line of sight permissions inside Japanese airspace, the rules beyond it), and what the drone must carry to be legal. Whether the certification aim still applies was settled by the owner in D-012. The owner question that depends on its answer waits for it first (Q-025)."
     waits_for: assistant
     affects:
       - D-008
-      - D-003
+      - D-012
+      - R-11
     opened: 2026-10-29
     raised_by: assistant
     phase: design
+    blocks: design_build
   - id: Q-008
     kind: question
-    text: Verify the constants and formulas of the sea and wind model (sim/seawind.py) against the primary sources P38 to P41 and against measured wind profiles over waves; the wave-coherent perturbation is a crude potential-flow model and its size near the surface is unverified.
+    text: "Verify the constants and formulas of the sea and wind model (sim/seawind.py and sim/sea_history.py), one constant at a time, against primary sources. env.karman, env.charnock and env.air_kinematic_viscosity: read P38 and P41, and compare env.charnock with lit.charnock_coare35_at_10ms (P66); settled when the values are adopted from a read source or the difference is explained. env.jonswap_gamma: read P40. env.pm_hs_coefficient and env.pm_peak_coefficient: read P39. env.sea_decay_tau_h: settled by a source for the decay time of swell over the open ocean, or by recording it as a model choice with its effect on the shear. env.breaking_slope_limit: settled by a source for the slope at which a wave breaks. env.turb_length_m: settled by a source for the turbulence length scale over the sea; until then env.turb_gust_factor_check against lit.gust_factor_3s_10min_sea (P68) is a consistency check only. env.turb_v_ratio and env.turb_w_ratio: read P72 (IEC 61400-1), which is not read yet. env.sea_grow_tau_h is not used by the code any more (the equivalent-duration growth law of P71 replaced it, K-006); it stays in the record because K-005 targets it, until the standard has a withdrawn status. The wave-coherent perturbation is a crude potential-flow model and its size near the surface is unverified. Treat the growth law and the wave figures shown to the owner as provisional until the check of the growth law against the printed pages passes."
     waits_for: assistant
     affects:
       - env.karman
@@ -88,22 +90,41 @@ items:
       - env.jonswap_gamma
       - env.pm_hs_coefficient
       - env.pm_peak_coefficient
+      - env.sea_grow_tau_h
+      - env.sea_decay_tau_h
+      - env.breaking_slope_limit
+      - env.turb_length_m
+      - env.turb_v_ratio
+      - env.turb_w_ratio
     opened: 2026-10-29
     raised_by: assistant
     phase: design
+    blocks: design_build
   - id: Q-009
     kind: question
-    text: Settle the assumed design points of the dynamic soaring drone (ds.min_u10_ms, ds.mass_max_kg, ds.span_max_m, ds.avionics_power_w, ds.n_limit, ds.safety_factor, ds.survival_hs_m, ds.altitude_band_max_m, ds.clearance_min_m, ds.photo_bytes) from the albatross and demonstrator literature and from the simulation, then ask the owner to confirm R-01 to R-12.
-    waits_for: assistant
+    text: "Settle the assumed design points of the dynamic soaring drone from the albatross and demonstrator literature and from the simulation. ds.mass_max_kg and ds.span_max_m: settled by the form comparison in docs/02-form.md#form-comparison and by what one person can carry, which is the owner's decision. ds.avionics_power_w: settled by the power budget of Q-012. ds.n_limit and ds.safety_factor: settled by loads from the simulation, with lit.cs22_limit_load_factor and lit.atlantiksolar_load_factor as references. ds.survival_hs_m: settled by the sea statistics of P61 and P62 and the water tests of R-05. ds.altitude_band_max_m and ds.clearance_min_m: settled by the simulation of the shear layer and by the owner on safe height (Q-013). ds.photo_bytes waits for the owner's choice of what the image is for. The owner confirmed R-01 to R-12 with these numbers still assumed (D-011), so each change of a value that a design point cites is for the owner to decide."
+    waits_for: "assistant, then owner"
     affects:
       - R-02
+      - R-04
       - R-05
       - R-07
       - R-08
       - R-09
+      - R-12
+      - ds.photo_bytes
+      - ds.mass_max_kg
+      - ds.span_max_m
+      - ds.avionics_power_w
+      - ds.n_limit
+      - ds.safety_factor
+      - ds.survival_hs_m
+      - ds.altitude_band_max_m
+      - ds.clearance_min_m
     opened: 2026-10-29
     raised_by: assistant
     phase: design
+    blocks: design_build
   - id: Q-010
     kind: finding
     text: With the pultruded carbon values of P54 the lightest spar that meets the stress criterion deflects 0.168 of the half span at limit load, above the 0.15 practice; the sizing routine has no stiffness criterion, and roll-wrapped or prepreg tubes (higher modulus) are not yet sourced. Add a deflection limit to the sizing and source a stiffer tube before the next pass.
@@ -114,6 +135,7 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-10-29
+    blocks: design_build
   - id: Q-011
     kind: finding
     text: "The sea and wind model has no turbulence, keeps the log profile under swell although measurements show a wind maximum or knee at 5 to 10 m with a nearly constant wind above (P65), and decays the wave-induced perturbation as exp(-k z) where measurements give exp(-0.77 k z) and exp(-0.62 k z) (P63). Swell dominates about 90% of the time in the Pacific (P62), so the shear available for soaring may be overestimated above the knee. Add a turbulence model, a swell-knee profile option, and measured decay rates, and run the form study with both profiles."
@@ -135,12 +157,526 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-10-29
+    blocks: design_build
   - id: Q-013
     kind: finding
     text: "Wave-slope soaring is sustainable for most candidates only near the surface (the analysis put its floor at patterns.wave_slope_floor_m) and only over swell of about 8 s period, below the clearance of R-12 (ds.clearance_min_m); either R-12 gets a lower floor for wave-slope flight, which is the owner's decision, or wave-slope soaring is not a usable pattern for these sizes. Rerun the analysis with the floor at ds.clearance_min_m."
     waits_for: assistant
     affects:
       - R-12
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-29
+    blocks: design_build
+  - id: Q-014
+    kind: question
+    text: "The wing geometry and design mass of the baseline (wing.span_m, wing.root_chord_m, wing.taper, wing.thickness_ratio, wing.design_mass_kg) and the parameters of the candidate forms (form.<candidate>.span_m, mass_kg, wing_area_m2, cd0, oswald, cl_max, taken from the aircraft registry in sim/aircraft_models.py) are assumed. They are settled by the form study: the comparison in docs/02-form.md#form-comparison and the owner's choice of a form (docs/02-form.md#candidate-forms), after which the chosen form's geometry is written as the wing keys and the others are dropped. The span and mass of the baseline candidate are wing.span_m and wing.design_mass_kg."
+    waits_for: assistant
+    affects:
+      - wing.span_m
+      - wing.root_chord_m
+      - wing.taper
+      - wing.thickness_ratio
+      - wing.design_mass_kg
+      - form.baseline_2m.wing_area_m2
+      - form.baseline_2m.cd0
+      - form.baseline_2m.oswald
+      - form.baseline_2m.cl_max
+      - form.demo_1p5m.span_m
+      - form.demo_1p5m.mass_kg
+      - form.demo_1p5m.wing_area_m2
+      - form.demo_1p5m.cd0
+      - form.demo_1p5m.oswald
+      - form.demo_1p5m.cl_max
+      - form.easyglider_1p8m.span_m
+      - form.easyglider_1p8m.mass_kg
+      - form.easyglider_1p8m.wing_area_m2
+      - form.easyglider_1p8m.cd0
+      - form.easyglider_1p8m.oswald
+      - form.easyglider_1p8m.cl_max
+      - form.albatross_3m.span_m
+      - form.albatross_3m.mass_kg
+      - form.albatross_3m.wing_area_m2
+      - form.albatross_3m.cd0
+      - form.albatross_3m.oswald
+      - form.albatross_3m.cl_max
+      - form.flyingwing_2m.span_m
+      - form.flyingwing_2m.mass_kg
+      - form.flyingwing_2m.wing_area_m2
+      - form.flyingwing_2m.cd0
+      - form.flyingwing_2m.oswald
+      - form.flyingwing_2m.cl_max
+      - form.sealedhull_2p5m.span_m
+      - form.sealedhull_2p5m.mass_kg
+      - form.sealedhull_2p5m.wing_area_m2
+      - form.sealedhull_2p5m.cd0
+      - form.sealedhull_2p5m.oswald
+      - form.sealedhull_2p5m.cl_max
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-015
+    kind: question
+    text: "The inputs of the structural and mass model that no source gives are assumed: spar.fit_fraction, spar.joiner_factor, skin.thickness_mm, skin.density, core.density, film.mass_kg, and the component masses battery.mass_kg, avionics.mass_kg, camera.mass_kg, pod.mass_kg, boom.mass_kg and tail.mass_kg (sim/structure.py). They are settled by the parts list and its weights in step 1.5 once a form is chosen, and the skin and core values by a datasheet of the material bought."
+    waits_for: assistant
+    affects:
+      - spar.fit_fraction
+      - spar.joiner_factor
+      - skin.thickness_mm
+      - skin.density
+      - core.density
+      - film.mass_kg
+      - battery.mass_kg
+      - avionics.mass_kg
+      - camera.mass_kg
+      - pod.mass_kg
+      - boom.mass_kg
+      - tail.mass_kg
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-016
+    kind: question
+    text: "The medical check at the renewal of the remote pilot certificate is assumed to cost the same as the medical check by documents at the first issue (cost.license_medical_documents). The totals of docs/05-parts-and-cost.md#totals use that assumption. It is settled by a source for the price of the renewal medical check."
+    waits_for: assistant
+    affects:
+      - cost.renewal_medical
+      - cost.non_airframe_year_min
+      - cost.non_airframe_year_typ
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-017
+    kind: finding
+    text: "K-004 sent back three defects of the first sim/dsearch.py: a periodicity penalty that cancelled the energy gain, a completion test that failed by round-off for half of all periods, and a penalty that could turn negative. Commit 86d6689 repaired the search (sim/dsearch.py) and added the collocation optimizer (sim/dsopt.py). No check has looked at the repair, so K-004 stays partial and the results of both searches rest on unverified code. A re-check by a separate checker (method refute, independent_model or hand_calc) is owed."
+    waits_for: assistant
+    affects:
+      - K-004
+      - R-02
+      - R-12
+    opened: 2026-10-29
+    raised_by: checker
+    phase: design
+  - id: Q-018
+    kind: finding
+    text: "K-005 sent back the wave growth law, which was labelled SPM 1984 but used U10 instead of the adjusted wind, and the fully developed sea under the knee profile, which was 11 percent low. Commit 86d6689 replaced the growth law with the equivalent-duration law of P71 (K-006 then corrected a wrong constant, checked against the printed pages) and took the friction velocity of the log profile under the knee profile. A passing re-check of the repaired law and of the knee-profile limit is owed, and env.sea_grow_tau_h, the target of K-005 and K-006, is no longer used by the code."
+    waits_for: assistant
+    affects:
+      - K-005
+      - K-006
+      - env.sea_grow_tau_h
+      - env.cem_hm0_coeff
+      - env.cem_duration_coeff
+    opened: 2026-10-29
+    raised_by: checker
+    phase: design
+  - id: Q-019
+    kind: finding
+    text: "K-005 found that the sea history grew faster than its own duration law and decayed the swell in the step in which it was created. Commit 86d6689 changed sim/sea_history.py to an equivalent-duration scheme in which the swell decays on its energy and not in its own step. No check has looked at the repair, and a re-check is owed."
+    waits_for: assistant
+    affects:
+      - K-005
+      - env.sea_decay_tau_h
+    opened: 2026-10-29
+    raised_by: checker
+    phase: design
+  - id: Q-020
+    kind: finding
+    text: "K-005 found that the lateral turbulence intensity equalled the longitudinal one. Commit 86d6689 set it to env.turb_v_ratio times the longitudinal intensity, with env.turb_w_ratio for the vertical, both assumed on P72 which is not read. A re-check is owed."
+    waits_for: assistant
+    affects:
+      - K-005
+      - env.turb_v_ratio
+      - env.turb_w_ratio
+      - env.turb_length_m
+    opened: 2026-10-29
+    raised_by: checker
+    phase: design
+  - id: Q-021
+    kind: finding
+    text: "K-005 found that, without a magnetometer, the estimator used the ground course as the heading, which hid the crosswind (9 m/s error), and that the vertical wind is never observed. Commit 86d6689 replaced the ground-course heading with an airspeed-magnitude wind fit in sim/estimator.py; the vertical wind is still not observed. A re-check of the repair is owed."
+    waits_for: assistant
+    affects:
+      - K-005
+      - R-03
+    opened: 2026-10-29
+    raised_by: checker
+    phase: design
+  - id: Q-022
+    kind: finding
+    text: "K-005 found that the pitot bias passes straight into the wind estimate. Commit 86d6689 added a pitot scale estimate and a validity flag to the estimator (sim/estimator.py). A re-check of the repair is owed."
+    waits_for: assistant
+    affects:
+      - K-005
+      - R-03
+    opened: 2026-10-29
+    raised_by: checker
+    phase: design
+  - id: Q-023
+    kind: finding
+    text: "K-003 lists spar.od_mm, spar.wall_mm, spar.margin and spar.tip_deflection_ratio as passed, but it checked a first pass with other numbers (assumed carbon values, record at c92d9ac). Those four keys now hold different numbers, sized with the pultruded values of P54 and the deflection limit of D-014, and no check has looked at them. A separate check of the current spar (re-check K-007) is being made by another agent; until it is recorded, K-003 must not be read as a check of the current numbers."
+    waits_for: assistant
+    affects:
+      - K-003
+      - spar.od_mm
+      - spar.wall_mm
+      - spar.margin
+      - spar.tip_deflection_ratio
+      - spar.mass_kg
+    opened: 2026-10-29
+    raised_by: checker
+    phase: design
+  - id: Q-024
+    kind: finding
+    text: "The collocation optimizer (docs/02-form.md#form-comparison) found that no candidate form sustains a travelling cycle at ds.min_u10_ms. The lowest minimum wind is form.albatross_3m.u10_min_travel_log, which is also the candidate with the highest wing loading of the six, and the validation against P45 gave dsopt.validation_u10_ms where P45 gives lit.min_u10_albatross_ms. The owner decides which to change, with the current and the proposed design side by side: lower the wing loading (a lighter or larger wing, against ds.mass_max_kg and ds.span_max_m), change the form, or raise the design wind of R-02 (ds.min_u10_ms)."
+    waits_for: owner
+    affects:
+      - R-02
+      - ds.min_u10_ms
+      - ds.mass_max_kg
+      - ds.span_max_m
+      - form.albatross_3m.u10_min_travel_log
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-025
+    kind: question
+    text: "No hazards are recorded, so the gate check passes without any. Decide whether to record the following hazards, each with phases, at_risk and controls, and the derived requirements (status awaiting) that control them. Hazards: vessels and small craft (strike, or while floating); manned low-flying aircraft; people at hand launch and return; cells or a wreck washing ashore; cell fire after sea water, in charging, storage and shipping; carbon dust, epoxy and hot-wire fumes while building; recovery by boat; fishing gear fouled by a wreck; flyaway over land, ports or across a border; radio misuse or interference. Derived requirements: conspicuity, geofence or flight termination, identification for a finder, an end-of-life and recovery plan, radio conformity. R-06 would be cited only for sea water reaching the cells, and R-07 and R-12 only where they control. Wildlife and photo privacy stay under Q-007 and R-11 unless the owner widens the scope. A decision that lists the hazards is needed before any T3 change to the design points, and before the form is chosen, since strike energy can bound mass and span. Waits for Q-007 first (rules on lights, identification and radio), then the owner."
+    waits_for: "Q-007, then owner"
+    affects:
+      - R-06
+      - R-07
+      - R-11
+      - R-12
+      - D-013
+      - Q-007
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-026
+    kind: question
+    text: "Four design points carry numbers inside their text: R-03 (within 1 km), R-04 (within one hour), R-06 (immersion to 1 m for 24 h), R-10 (significant wave height 2 m). Decide whether to move them into keys without changing any number, so that each has a status and a basis. Proposed: ds.waypoint_tolerance_km 1, ds.photo_latency_h 1, ds.immersion_depth_m 1, ds.immersion_duration_h 24, ds.touchdown_hs_m 2, all assumed under Q-009, and cite ds.endurance_days where R-06 says a year. The current and the proposed texts are to be shown side by side when this is put to the owner (T3, in a decision that lists the hazards touched). Until then Q-009 does not list these keys."
+    waits_for: owner
+    affects:
+      - R-03
+      - R-04
+      - R-06
+      - R-10
+      - Q-009
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-027
+    kind: question
+    text: "The questions that can rule a form out are only partly answered. Open: when the drone must be ready and how often it is used; the builder's skills, tools and help; which materials and services can be had, at what price; the end of life or recovery of the drone; whether there is one builder (D-001) or more; Japan as the place of building and first flights; and whether the budget (budget.total) counts the owner's time. Each answer is to be recorded as a decision."
+    waits_for: owner
+    affects:
+      - D-001
+      - D-005
+      - D-006
+      - budget.total
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-028
+    kind: question
+    text: "Keep the repository name drone or change it. D-002 named it drone until the purpose was decided, and the purpose is now decided (D-008, D-009). AGENTS.md still says that Q-001 and Q-002 are open, which is out of date; its rewording follows this decision."
+    waits_for: owner
+    affects:
+      - D-002
+      - D-008
+      - D-009
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-029
+    kind: question
+    text: "K-001 and K-002 are partial, and their sections were corrected afterwards without a re-check. Decide whether to accept the partial results by decision, or to have the corrected sections re-checked by a separate checker (method refute). The corrections were made by the assistant in the session that received the checks."
+    waits_for: owner
+    affects:
+      - K-001
+      - K-002
+      - Q-001
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-030
+    kind: finding
+    text: "A model or tool has no record kind, no id and no version field, so the project pins it by commit in prose; a model named as a shareable item has no schema, so another project cannot cite it; project conventions (docs/00-conventions.md) have no stage file and no place in the layout; and a calculated value cannot name the model version that produced it. Concerns S-01, S-07, S-17, S-20, N-01, N-08, N-23, N-24 and E03. Kept in prose as gaps 1 and 6 of docs/00-conventions.md."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-031
+    kind: finding
+    text: "A design-time simulation run has no record kind, so its inputs and outputs live only in prose, which the tool cannot check; the model code copies keyed values as literals instead of reading the record; and no test compares a recorded calculated value with the model. Concerns S-01, S-07, S-17, N-01, N-08, F-6 and E10. Gap 2 of docs/00-conventions.md."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-032
+    kind: finding
+    text: "The anchor of a docs/<file>.md#section reference is not verified to exist, E03 checks only the file, and the standard gives no syntax for a section id; the project writes {#id} at the end of a heading, which GitHub does not read. Concerns E03, N-08 and the section ids of 3.1. Gap 3 of docs/00-conventions.md."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-033
+    kind: finding
+    text: "The tier rules leave open what makes a model the same (T1) or new (T2) when model code is edited, and whether adding an awaiting requirement is T2 and confirming it is T0 or T3; and E11 accepts any one qualifying check id whatever its target or result, so a T2 change passes on a check of something else, or on a partial. Concerns S-06, S-11, N-19, N-20, N-21, E11 and E12. Gap 4 of docs/00-conventions.md."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-034
+    kind: finding
+    text: "Generated files outside the tables and STATUS.md (sim/viewer/field.js, sim/viewer/traj.js, sim/out/*.json) have no staleness check and no recorded command or metadata, and the tool has no command that writes the generated tables, so the project regenerates them with a script outside the repository. Concerns S-07, S-13, N-02, N-03 and E10. Gap 5 of docs/00-conventions.md."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-035
+    kind: finding
+    text: "The standard has no mechanism for a project to report gaps such as these: S-21 asks for a fixed form and place, but no form of 2.1 serves S-19 to S-23, no rule or check cites S-21, and the standard repository has no issue template and no keeper. Concerns S-19 to S-23, N-25 to N-27, Q-12 and Q-14 of the standard. Gap 7 of docs/00-conventions.md. The owner decides whether to file these findings as issues on traceable-design/traceable-design, worded under the S-14 and S-21 conflict rule."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-036
+    kind: finding
+    text: "The design to build gate passes with an empty hazard list and an empty parts list: the conditions that every hazard has a control and that the parts list is priced are true by default, Part has no price field, and the Agent Skill and the template never ask for hazards, parts or interfaces. Concerns S-04, S-08, S-10, S-15, N-22, E09, E20 and F-4 of 2.5. In this record the gate is held shut by blocks on open items."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-037
+    kind: finding
+    text: "A check that returned partial cannot be superseded by a later check, so K-001 and K-002 stay under failing checks after their sections were corrected, defects found by checks (K-004, K-005, K-006) have no required follow-up item, and Q-001 was closed on a partial check. Concerns S-06, S-19, N-12, N-20 and E11."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+      - K-001
+      - K-002
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-038
+    kind: finding
+    text: "A check names its author only by role (by: checker) and carries no model version or commit, so the record cannot show that the checker differs from the author or which numbers the check saw, and a later change silently inherits an old pass (K-003). Concerns S-06, N-20, N-24 and E11; the standard admits the comparison is not made."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+      - K-003
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-039
+    kind: finding
+    text: "Value keys inside the text of a design point are not references: tdr refs and tdr brief do not follow them, E03 does not resolve them, and E06 inspects only the requirement basis, so a design point resting on a forum-only value would pass. Concerns S-01, S-02, S-03, S-15, N-09, N-16, E03 and E06."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-040
+    kind: finding
+    text: "A value has no field for the value it superseded and no withdrawn status, so superseded numbers can live only in prose or in git (the first-pass spar values), and an unused key such as env.sea_grow_tau_h cannot be deleted without breaking E03 for the check that targets it. Concerns S-07, S-20, N-01, N-23 and E03."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+      - env.sea_grow_tau_h
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-041
+    kind: finding
+    text: "An open item has no field for waiting on another item: waits_for is free text and blocks names only a gate, so STATUS.md lists owner questions that may be moot until an assistant item is closed. Concerns S-09 and waits_for of 3.3."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-042
+    kind: finding
+    text: "The Decision trailer is read as one id, and a decision has a single supersedes id, so one owner decision that replaces two earlier ones had to be split into D-012 and D-013, and commits that record several decisions can name only one. Concerns N-19, N-21, E12 and the Decision kind of 3.3. Found on 2026-10-29."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+      - D-012
+      - D-013
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-043
+    kind: finding
+    text: "The standard says only SI units, so units that are not SI and not accepted for use with the SI (Wh/kg, kWh/m2/d, Wh/km, year) and key suffixes that repeat the unit field are inconsistent; the standard should list the allowed units and say whether a key carries its unit. Concerns N-07 and E22."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-044
+    kind: finding
+    text: "The root commit that GitHub creates from the template has no Tier trailer, and tdr tier refuses it; the standard has no exemption for it. Concerns N-19 and E11."
+    waits_for: owner
+    affects:
+      - docs/00-conventions.md
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-045
+    kind: question
+    text: Settle the assumed design points of the hazard controls R-13 to R-22 (the ds keys their design points cite) from primary sources, the rules of Q-007 and the simulation, and weigh the power of the light, the AIS receiver, the position reports and Remote ID against R-08 and Q-012.
+    waits_for: assistant
+    affects:
+      - R-13
+      - R-14
+      - R-15
+      - R-16
+      - R-17
+      - R-18
+      - R-19
+      - R-20
+      - R-21
+      - R-22
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-046
+    kind: question
+    text: Whether S-08 (hazards to people or property) widens to harm to wildlife and the sea, namely seabirds struck or disturbed in the layer the drone shares with them, colonies and protected areas, and the debris of a lost drone (carbon, XPS foam, solar film, cells); if it does not, these are carried as legal questions under Q-007 and R-11.
+    waits_for: owner
+    affects:
+      - Q-007
+      - R-11
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+    closed: 2026-10-29
+    closed_by: D-016
+  - id: Q-047
+    kind: question
+    text: Whether S-08 widens to the privacy of people and vessels in the photos of R-04; if it does not, this is carried as a legal question under Q-007 and R-11.
+    waits_for: owner
+    affects:
+      - R-04
+      - Q-007
+      - R-11
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+    closed: 2026-10-29
+    closed_by: D-016
+  - id: Q-048
+    kind: question
+    text: Where the first operations launch and recover (a beach, a harbour, or a boat), who recovers the drone and with what boat, and whether the first operating area stays inside Japanese waters; the area of R-15, the plan of R-17 and the distances of R-20 depend on it.
+    waits_for: owner
+    affects:
+      - R-15
+      - R-17
+      - R-20
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-049
+    kind: question
+    text: Whether the electronics of R-06 include the lithium cells; the draft cites R-06 as a control of H-07 on that reading, and if the owner reads it otherwise R-19 alone controls H-07.
+    waits_for: owner
+    affects:
+      - R-06
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-050
+    kind: finding
+    text: "Over a fully developed sea at autonomy.test_u10_ms every run crashed, even with the true state (after autonomy.waves_truth_crash_s at best), because the reference cycle from the optimizer keeps its lowest point at ds.clearance_min_m above the mean surface while crests rise above it; the cycle has to be planned and tracked in height above the local surface (altimeter, wave-following) or with a floor above the crests, as albatrosses fly within the troughs. Until then the form study's minimum winds hold for a flat sea only."
+    waits_for: assistant
+    affects:
+      - R-02
+      - R-12
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-29
+    blocks: design_build
+  - id: Q-051
+    kind: finding
+    text: "The tracker's feedback and clearance guard drove the load factor to autonomy.max_load_factor_waves, above ds.n_limit of R-09, and its guard floor (autonomy.guard_floor_m) sits below ds.clearance_min_m because the reference itself reaches the clearance; the controller needs a load-factor limit and a reference with margin above the guard."
+    waits_for: assistant
+    affects:
+      - R-09
+      - R-12
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-29
+  - id: Q-052
+    kind: finding
+    text: "Without a magnetometer the wind estimate never became valid before the glider crashed (wind error autonomy.minimal_wind_rms_ms); the standard and full suites flew the cycle with a wind error of about autonomy.flat_standard_wind_rms_ms and reached autonomy.flat_standard_ground_speed_ms against autonomy.flat_truth_ground_speed_ms with the true state. The minimal suite is not enough; whether a magnetometer becomes a requirement is for the owner once the sensor power is weighed against Q-012."
+    waits_for: owner
+    affects:
+      - R-03
+      - R-08
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-29
+  - id: Q-053
+    kind: finding
+    text: "The spar sizing checks the fit inside the airfoil only at the root while the tube runs the whole span (K-007); a constant tube of spar.od_mm fits only the inner part of the half span. The spar has to taper or step, and the sizing has to check fit and strength along the span; the limiting-criterion label also has to be fixed."
+    waits_for: assistant
+    affects:
+      - spar.od_mm
+      - spar.wall_mm
+      - spar.mass_kg
+      - R-09
+    raised_by: checker
+    phase: design
+    opened: 2026-10-29
+    blocks: design_build
+  - id: Q-054
+    kind: finding
+    text: "The cycle optimizer's wingtip constraint is conservative ((b/2)|mu| in place of (b/2) sin|mu| cos gamma), and the form study fixes the Charnock roughness at its 8 m/s value, which overstates every minimum wind by about 7% (K-007); also the literature convention z0 = 0.03 m gives about 1.9 times the Charnock shear (source sweep). Fix both, rerun the form study, and report the minimum winds for both roughness assumptions until Q-008 settles which one the sea follows."
+    waits_for: assistant
+    affects:
+      - dsopt.validation_u10_ms
+      - form.baseline_2m.u10_min_travel_log
+      - form.albatross_3m.u10_min_travel_log
+      - R-02
+    raised_by: checker
+    phase: design
+    opened: 2026-10-29
+  - id: Q-055
+    kind: question
+    text: "Birds lighter than about 1.5 kg flap during the upwind climb and only the 9.6 kg wandering albatross gains energy by rolling alone (P84); the only funded competitor building a year-long soaring drone carries propellers (S2), and no real UAV has flown energy-positive soaring yet. Should R-02 (energy from the wind shear only) stay, or should the project stage it, with motor-assisted cycles first and wind-only cycles as the aim?"
+    waits_for: owner
+    affects:
+      - R-02
+      - R-08
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-29
+  - id: Q-056
+    kind: finding
+    text: "Height above the water in the low turn is the sensing problem: a hobby lidar lost about half its returns over water even in light wind and none came back when tilted (P85), and a 24 GHz radar altimeter that reads over water weighs about 110 g and draws about 2 W (M11), which collides with Q-012. Settle the altimeter by test over water, and carry its power into the power budget."
+    waits_for: assistant
+    affects:
+      - R-12
+      - R-08
     raised_by: assistant
     phase: design
     opened: 2026-10-29

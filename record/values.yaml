@@ -456,11 +456,11 @@ items:
     basis:
       - Q-009
   - key: spar.carbon_density
-    v: 1600
+    v: 1400
     unit: kg/m3
-    status: assumed
+    status: sourced
     basis:
-      - Q-009
+      - P54
   - key: spar.carbon_modulus
     v: 35000000000.0
     unit: Pa
@@ -547,13 +547,24 @@ items:
     status: sourced
     basis:
       - P42
-  - key: lit.ds_cycle_period_s
-    v: 12
+  - key: lit.ds_cycle_period_min_s
+    v: 10
+    unit: s
+    status: sourced
+    basis:
+      - P47
+  - key: lit.ds_cycle_period_max_s
+    v: 15
     unit: s
     status: sourced
     basis:
       - P46
-      - P47
+  - key: lit.ds_cycle_period_s
+    v: 12
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#literature-numbers
   - key: lit.ds_cycle_height_m
     v: 15
     unit: m
@@ -561,18 +572,42 @@ items:
     basis:
       - P46
       - P47
+  - key: lit.ds_turn_angle_min_deg
+    v: 54
+    unit: deg
+    status: sourced
+    basis:
+      - P44
+  - key: lit.ds_turn_angle_max_deg
+    v: 78
+    unit: deg
+    status: sourced
+    basis:
+      - P44
   - key: lit.ds_turn_angle_deg
     v: 66
     unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#literature-numbers
+  - key: lit.shear_layer_thickness_min_m
+    v: 1
+    unit: m
+    status: sourced
+    basis:
+      - P44
+  - key: lit.shear_layer_thickness_max_m
+    v: 3
+    unit: m
     status: sourced
     basis:
       - P44
   - key: lit.shear_layer_thickness_m
     v: 2
     unit: m
-    status: sourced
+    status: calculated
     basis:
-      - P44
+      - docs/02-form.md#literature-numbers
   - key: lit.min_u10_albatross_ms
     v: 8.6
     unit: m/s
@@ -591,13 +626,24 @@ items:
     status: sourced
     basis:
       - P56
-  - key: lit.rayleigh_min_wind_difference_ms
-    v: 3.5
+  - key: lit.rayleigh_min_wind_difference_min_ms
+    v: 3.4
     unit: m/s
     status: sourced
     basis:
       - P42
-      - P43
+  - key: lit.rayleigh_min_wind_difference_max_ms
+    v: 3.6
+    unit: m/s
+    status: sourced
+    basis:
+      - P42
+  - key: lit.rayleigh_min_wind_difference_ms
+    v: 3.5
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#literature-numbers
   - key: lit.easyglider_mass_kg
     v: 1.35
     unit: kg
@@ -809,3 +855,759 @@ items:
     status: assumed
     basis:
       - Q-013
+  - key: spar.fit_fraction
+    v: 0.9
+    unit: 1
+    status: assumed
+    basis:
+      - Q-015
+  - key: spar.joiner_factor
+    v: 1.1
+    unit: 1
+    status: assumed
+    basis:
+      - Q-015
+  - key: skin.thickness_mm
+    v: 0.2
+    unit: mm
+    status: assumed
+    basis:
+      - Q-015
+  - key: skin.density
+    v: 1900
+    unit: kg/m3
+    status: assumed
+    basis:
+      - Q-015
+  - key: core.density
+    v: 33
+    unit: kg/m3
+    status: assumed
+    basis:
+      - Q-015
+  - key: film.mass_kg
+    v: 0.08
+    unit: kg
+    status: assumed
+    basis:
+      - Q-015
+  - key: battery.mass_kg
+    v: 0.25
+    unit: kg
+    status: assumed
+    basis:
+      - Q-015
+  - key: avionics.mass_kg
+    v: 0.12
+    unit: kg
+    status: assumed
+    basis:
+      - Q-015
+  - key: camera.mass_kg
+    v: 0.05
+    unit: kg
+    status: assumed
+    basis:
+      - Q-015
+  - key: pod.mass_kg
+    v: 0.15
+    unit: kg
+    status: assumed
+    basis:
+      - Q-015
+  - key: boom.mass_kg
+    v: 0.06
+    unit: kg
+    status: assumed
+    basis:
+      - Q-015
+  - key: tail.mass_kg
+    v: 0.05
+    unit: kg
+    status: assumed
+    basis:
+      - Q-015
+  - key: env.cem_hm0_coeff
+    v: 0.0413
+    unit: 1
+    status: sourced
+    basis:
+      - P71
+  - key: env.cem_tp_coeff
+    v: 0.651
+    unit: 1
+    status: sourced
+    basis:
+      - P71
+  - key: env.cem_duration_coeff
+    v: 0.00523
+    unit: 1
+    status: sourced
+    basis:
+      - P71
+  - key: env.cem_full_hm0_limit
+    v: 211.5
+    unit: 1
+    status: sourced
+    basis:
+      - P71
+  - key: env.cem_full_tp_limit
+    v: 239.8
+    unit: 1
+    status: sourced
+    basis:
+      - P71
+  - key: env.cd_law_a
+    v: 1.1
+    unit: 1
+    status: sourced
+    basis:
+      - P71
+  - key: env.cd_law_b
+    v: 0.035
+    unit: s/m
+    status: sourced
+    basis:
+      - P71
+  - key: env.turb_v_ratio
+    v: 0.8
+    unit: 1
+    status: assumed
+    basis:
+      - Q-008
+  - key: env.turb_w_ratio
+    v: 0.5
+    unit: 1
+    status: assumed
+    basis:
+      - Q-008
+  - key: airframe.mass_gap_kg
+    v: 0.392
+    unit: kg
+    status: calculated
+    basis:
+      - docs/03-design.md#mass-model
+  - key: lit.mariner_mass_kg
+    v: 2
+    unit: kg
+    status: sourced
+    basis:
+      - P45
+  - key: lit.mariner_lift_to_drag
+    v: 25
+    unit: 1
+    status: sourced
+    basis:
+      - P45
+  - key: lit.mariner_wing_loading_n_m2
+    v: 70.6
+    unit: N/m2
+    status: sourced
+    basis:
+      - P45
+  - key: lit.sailplane_mass_kg
+    v: 15
+    unit: kg
+    status: sourced
+    basis:
+      - P56
+  - key: lit.atlantiksolar_load_factor
+    v: 4
+    unit: 1
+    status: sourced
+    basis:
+      - P49
+  - key: lit.atlantiksolar_safety_factor
+    v: 1.8
+    unit: 1
+    status: sourced
+    basis:
+      - P49
+  - key: lit.cell_p45b_min_discharge_temp_degc
+    v: -40
+    unit: degC
+    status: sourced
+    basis:
+      - P50
+  - key: lit.flyingfish_mass_kg
+    v: 26
+    unit: kg
+    status: sourced
+    basis:
+      - P57
+  - key: lit.flyingfish_wave_height_m
+    v: 2
+    unit: m
+    status: sourced
+    basis:
+      - P57
+  - key: lit.albatross_preferred_heading_deg
+    v: 83
+    unit: deg
+    status: sourced
+    basis:
+      - P73
+  - key: patterns.wave_slope_swell_period_s
+    v: 8
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#flight-patterns
+  - key: cost.insurance_hobby_period
+    v: 2
+    unit: year
+    status: sourced
+    basis:
+      - M3
+  - key: cost.renewal_medical
+    v: 5200
+    unit: JPY
+    status: assumed
+    basis:
+      - Q-016
+  - key: form.baseline_2m.wing_area_m2
+    v: 0.25
+    unit: m2
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.baseline_2m.cd0
+    v: 0.015
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.baseline_2m.oswald
+    v: 0.85
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.baseline_2m.cl_max
+    v: 1.2
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.demo_1p5m.span_m
+    v: 1.5
+    unit: m
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.demo_1p5m.mass_kg
+    v: 1.07
+    unit: kg
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.demo_1p5m.wing_area_m2
+    v: 0.19
+    unit: m2
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.demo_1p5m.cd0
+    v: 0.02
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.demo_1p5m.oswald
+    v: 0.8
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.demo_1p5m.cl_max
+    v: 1.1
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.easyglider_1p8m.span_m
+    v: 1.8
+    unit: m
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.easyglider_1p8m.mass_kg
+    v: 1.35
+    unit: kg
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.easyglider_1p8m.wing_area_m2
+    v: 0.4
+    unit: m2
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.easyglider_1p8m.cd0
+    v: 0.03
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.easyglider_1p8m.oswald
+    v: 0.75
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.easyglider_1p8m.cl_max
+    v: 1.2
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.albatross_3m.span_m
+    v: 3.0
+    unit: m
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.albatross_3m.mass_kg
+    v: 3.0
+    unit: kg
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.albatross_3m.wing_area_m2
+    v: 0.36
+    unit: m2
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.albatross_3m.cd0
+    v: 0.012
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.albatross_3m.oswald
+    v: 0.9
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.albatross_3m.cl_max
+    v: 1.3
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.flyingwing_2m.span_m
+    v: 2.0
+    unit: m
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.flyingwing_2m.mass_kg
+    v: 1.3
+    unit: kg
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.flyingwing_2m.wing_area_m2
+    v: 0.4
+    unit: m2
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.flyingwing_2m.cd0
+    v: 0.018
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.flyingwing_2m.oswald
+    v: 0.8
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.flyingwing_2m.cl_max
+    v: 0.9
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.sealedhull_2p5m.span_m
+    v: 2.5
+    unit: m
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.sealedhull_2p5m.mass_kg
+    v: 2.2
+    unit: kg
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.sealedhull_2p5m.wing_area_m2
+    v: 0.34
+    unit: m2
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.sealedhull_2p5m.cd0
+    v: 0.016
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.sealedhull_2p5m.oswald
+    v: 0.85
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.sealedhull_2p5m.cl_max
+    v: 1.2
+    unit: 1
+    status: assumed
+    basis:
+      - Q-014
+  - key: form.baseline_2m.u10_min_travel_log
+    v: 11.86
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.u10_min_loiter_log
+    v: 12.52
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.cross12_speed_log
+    v: 12.48
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.u10_min_travel_knee
+    v: 12.01
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.u10_min_loiter_knee
+    v: 13.2
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_travel_log
+    v: 15.38
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_loiter_log
+    v: 16.09
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_travel_knee
+    v: 15.54
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_loiter_knee
+    v: 16.86
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_travel_log
+    v: 22.66
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_loiter_log
+    v: 23.65
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_travel_knee
+    v: 22.42
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_loiter_knee
+    v: 23.86
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_travel_log
+    v: 9.58
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_loiter_log
+    v: 10.18
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.cross12_speed_log
+    v: 17.54
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_travel_knee
+    v: 10.03
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_loiter_knee
+    v: 11.39
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.cross12_speed_knee
+    v: 16.76
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_travel_log
+    v: 16.09
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_loiter_log
+    v: 17.96
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_travel_knee
+    v: 16.01
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_loiter_knee
+    v: 17.37
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_travel_log
+    v: 12.05
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_loiter_log
+    v: 13.14
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_travel_knee
+    v: 12.51
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_loiter_knee
+    v: 13.92
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: dsopt.validation_u10_ms
+    v: 9.48
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: ds.day_sight_range_m
+    v: 500
+    unit: m
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.light_range_m
+    v: 1000
+    unit: m
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.radar_detect_range_m
+    v: 500
+    unit: m
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.land_standoff_m
+    v: 1000
+    unit: m
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.fix_loss_timeout_s
+    v: 10
+    unit: s
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.termination_time_s
+    v: 30
+    unit: s
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.geofence_margin_m
+    v: 100
+    unit: m
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.label_read_distance_m
+    v: 1
+    unit: m
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.recovery_response_h
+    v: 72
+    unit: h
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.position_report_interval_h
+    v: 6
+    unit: h
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.eol_capacity_fraction
+    v: 0.7
+    unit: 1
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.cell_charge_temp_min_c
+    v: 0
+    unit: degC
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.cell_charge_temp_max_c
+    v: 45
+    unit: degC
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.storage_soc_fraction
+    v: 0.3
+    unit: 1
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.launch_clear_radius_m
+    v: 10
+    unit: m
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.launch_clear_distance_m
+    v: 50
+    unit: m
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.motor_arm_delay_s
+    v: 1
+    unit: s
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.recovery_approach_distance_m
+    v: 30
+    unit: m
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.workshop_air_changes_per_h
+    v: 6
+    unit: 1/h
+    status: assumed
+    basis:
+      - Q-045
+  - key: ds.vessel_standoff_m
+    v: 500
+    unit: m
+    status: assumed
+    basis:
+      - Q-045
+  - key: autonomy.test_u10_ms
+    v: 13
+    unit: m/s
+    status: decided
+    basis:
+      - D-010
+  - key: autonomy.flat_standard_cycles
+    v: 18
+    unit: count
+    status: calculated
+    basis:
+      - docs/02-form.md#autonomy-check
+  - key: autonomy.flat_standard_ground_speed_ms
+    v: 21.1
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#autonomy-check
+  - key: autonomy.flat_truth_ground_speed_ms
+    v: 21.9
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#autonomy-check
+  - key: autonomy.flat_standard_wind_rms_ms
+    v: 1.38
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#autonomy-check
+  - key: autonomy.minimal_wind_rms_ms
+    v: 7.68
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#autonomy-check
+  - key: autonomy.waves_truth_crash_s
+    v: 73
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#autonomy-check
+  - key: autonomy.max_load_factor_waves
+    v: 7.34
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#autonomy-check
+  - key: autonomy.guard_floor_m
+    v: 0.5
+    unit: m
+    status: assumed
+    basis:
+      - Q-051

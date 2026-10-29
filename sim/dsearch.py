@@ -1,22 +1,31 @@
 """Dynamic soaring cycle search: sine (time-phase) and Rayleigh (heading-triggered) controllers."""
 import time
+from pathlib import Path
 
 import numpy as np
 from scipy.optimize import differential_evolution
 
-from sim.aircraft import BASELINE, G, export_traj, simulate
+from sim import record
+from sim.aircraft import BASELINE, G, simulate
+from sim.aircraft import export_traj as _write_traj
+from sim.seawind import Environment, Wind, WaveTrain
 
-try:
-    from sim.seawind import Environment, Wind, WaveTrain
-except ImportError:
-    from sim._seawind_stub import Environment, Wind
-    WaveTrain = None
-
-H_MIN_REQ = 1.0
+H_MIN_REQ = record.value("ds.clearance_min_m", 1.0)
 H0 = 3.0
 N_CYCLES = 3
 K_GAMMA = 2.0  # per radian, flight path angle hold in phases A and C
 T_CAP = 60.0  # Rayleigh runs stop at this time if three cycles are not completed
+
+
+def export_traj(result, path, name="TRAJ", command="python -m sim.dsearch"):
+    """Write the trajectory JS file (sim.aircraft writer) with a tdr-run header as its first line."""
+    _write_traj(result, path, name)
+    here = Path(__file__).resolve().parent
+    files = [here / "aircraft.py", here / "dsearch.py", here / "seawind.py"]
+    with open(path, encoding="utf-8", newline="") as fh:
+        body = fh.read()
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(record.header(command, files) + "\n" + body)
 
 
 def _psi_wind(env):

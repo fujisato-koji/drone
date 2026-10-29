@@ -8,6 +8,7 @@ Conventions (assumed where the estimator spec is silent):
 """
 import json
 import os
+import subprocess
 import time
 from dataclasses import dataclass
 from enum import Enum
@@ -15,14 +16,8 @@ from enum import Enum
 import numpy as np
 
 from sim.aircraft import BASELINE, G, clip_controls, derivatives, rk4_step
-
-try:
-    from sim.seawind import Environment, WaveTrain, Wind
-except ImportError:
-    from sim._seawind_stub import Environment, Wind
-    WaveTrain = None
-
 from sim.estimator import Estimate, Estimator
+from sim.seawind import Environment, WaveTrain, Wind
 from sim.sensors import SensorSuite, truth_from_state
 
 
@@ -312,7 +307,10 @@ def fly(aircraft, env, suite, est, ctrl, s0, t_end, dt=0.02, seed=1, target=None
     for i in range(nsteps + 1):
         t = i * dt
         truth = truth_from_state(s, env, t, None if prev is None else prev[2], prev)
-        e = est.update(suite.measure(truth, t), t)
+        if getattr(est, "perfect", False):
+            e = est.from_truth(truth, env, t)
+        else:
+            e = est.update(suite.measure(truth, t), t)
         h_true = s[2] - float(env.surface(s[0], s[1], t)[0])
         epos = np.asarray(e.pos, float)
         dist = np.inf if tgt is None else float(np.linalg.norm(tgt - epos[:2]))
@@ -366,7 +364,10 @@ def fly(aircraft, env, suite, est, ctrl, s0, t_end, dt=0.02, seed=1, target=None
 
 def _metrics(ctrl, r, p0, tgt):
     m = {"ended": r["ended"], "n_steps": int(len(r["t"])), "transitions": r["transitions"],
-         "guard_activations": int(ctrl.guard_count)}
+         "guard_activations": int(ctrl.guard_count),
+         "crashed": r["ended"] == "crash"}
+    if getattr(ctrl, "steps", 0):
+        m["guard_share"] = float(ctrl.guard_steps / ctrl.steps)
     if len(r["t"]) < 2:
         return m
     t, st = r["t"], r["state"]
@@ -407,53 +408,276 @@ def default_cycle(aircraft, u10):
     return {"p": dict(HAND_PICKED), "V0": 2.0 * aircraft.v_stall, "source": "hand-picked"}
 
 
-def compare_suites(aircraft, u10=10.0, t_end=120.0, cycle=None, seed=1, target_range=3000.0):
-    cycle = cycle or default_cycle(aircraft, u10)
-    wind = Wind(u10, 270.0)
-    envs = {"flat": Environment.flat(wind)}
-    if WaveTrain is not None:
-        envs["waved"] = Environment(wind, [WaveTrain.fully_developed(wind)], seed=1)
+
+
+class Reference:
+    """One period of a dsopt cycle (wind along +x): nodes t, z, V, gamma, psi, cl, mu.
+
+    Nodes 0..n-1 are unique (the closing node of dsopt is dropped; the loop wraps).
+    Phase is a fractional node index in [0, n). The tracker counts a cycle each time the phase
+    wraps from the end of the loop to its start; the first wrap opens the first cycle.
+    """
+
+    def __init__(self, t, z, V, gamma, psi, cl, mu, x=None, y=None, chi=0.0, u10=None,
+                 profile="log", h_scale=3.0, psi_scale=0.5):
+        keep = slice(0, len(t) - 1)
+        self.t, self.z, self.V, self.gamma = (np.asarray(a, float)[keep] for a in (t, z, V, gamma))
+        self.psi, self.cl, self.mu = (np.asarray(a, float)[keep] for a in (psi, cl, mu))
+        self.x = None if x is None else np.asarray(x, float)[keep]
+        self.y = None if y is None else np.asarray(y, float)[keep]
+        self.period = float(t[-1] - t[0]) if len(t) > 1 else 0.0
+        self.n = len(self.z)
+        self.chi, self.u10, self.profile = chi, u10, profile
+        self.hs, self.ps = h_scale, psi_scale
+        nxt = (np.arange(self.n) + 1) % self.n
+        self._dh = (self.z[nxt] - self.z) / h_scale
+        self._dp = wrap(self.psi[nxt] - self.psi) / psi_scale
+
+    def match(self, h, psi_rel, prev=None, back=2.0, fwd=None):
+        """Phase of the nearest point of the (height, heading) loop by the weighted distance.
+
+        With `prev` the search is limited to segments from prev - back to prev + fwd
+        (default n / 4) around the loop, so a crossing of the loop cannot jump the phase.
+        """
+        qh = (h - self.z) / self.hs
+        qp = wrap(psi_rel - self.psi) / self.ps
+        d2 = self._dh ** 2 + self._dp ** 2
+        s = np.clip((qh * self._dh + qp * self._dp) / np.maximum(d2, 1e-12), 0.0, 1.0)
+        dist = (qh - s * self._dh) ** 2 + (qp - s * self._dp) ** 2
+        if prev is not None:
+            fwd = self.n / 4.0 if fwd is None else fwd
+            off = (np.arange(self.n) - np.floor(prev) + self.n / 2) % self.n - self.n / 2
+            dist = np.where((off >= -back) & (off <= fwd), dist, np.inf)
+        k = int(np.argmin(dist))
+        return (k + float(s[k])) % self.n
+
+    def at(self, phase):
+        k = int(np.floor(phase)) % self.n
+        f = phase - np.floor(phase)
+        j = (k + 1) % self.n
+        lin = lambda a: a[k] + f * (a[j] - a[k])
+        return {"z": lin(self.z), "V": lin(self.V), "gamma": lin(self.gamma),
+                "psi": float(self.psi[k] + f * wrap(self.psi[j] - self.psi[k])),
+                "cl": lin(self.cl), "mu": lin(self.mu)}
+
+
+_REF_CACHE = {}
+
+
+def reference_from_dsopt(aircraft, u10, profile="log", n=40, chi_deg=20.0):
+    """Travel cycle (max ground speed along chi, wind along +x) from sim.dsopt, cached.
+
+    sim/out/dsopt.json holds no trajectories, so the cycle is solved on the fly.
+    """
+    key = (aircraft.name, float(u10), profile, n, float(chi_deg))
+    if key not in _REF_CACHE:
+        from sim.dsopt import Profile, solve
+        wind = Wind(u10, 270.0, profile=profile) if profile != "log" else Wind(u10, 270.0)
+        chi = np.radians(chi_deg)
+        info, x, col = solve(aircraft, Profile.from_wind(wind), mode="max_speed", cycle="travel",
+                             n=n, u10=float(u10), chi=chi, return_x=True)
+        if not info["success"]:
+            _REF_CACHE[key] = None
+        else:
+            S, C, T, _ = col.unpack(x)
+            t = np.linspace(0.0, T, n)
+            ref = Reference(t, S[:, 2], S[:, 3], S[:, 4], S[:, 5], C[:, 0], C[:, 1], S[:, 0],
+                            S[:, 1], chi=chi, u10=float(u10), profile=profile)
+            ref.info = info
+            _REF_CACHE[key] = ref
+    if _REF_CACHE[key] is None:
+        raise ValueError("no converged travel cycle at u10 = %g (%s)" % (u10, profile))
+    return _REF_CACHE[key]
+
+
+class ReferenceTracker(EstimatedDSController):
+    """Tracks a dsopt periodic reference in the frame of the estimated wind.
+
+    Reference heading = psi_ref + psi_wind_est + bias; reference height is above the estimated
+    surface. The phase comes from matching the estimated (height, heading) to the loop, not from
+    the clock. cl and mu are the reference values at that phase plus feedback (gains k_psi, k_h,
+    k_g; each feedback term clipped to fb_mu / fb_cl). Guard and waypoint bias as in the base
+    class; the bias is measured against the design direction chi of the cycle. While the wind or
+    the heading is not yet usable a gentle circle (bank circle_mu at best L/D) is flown so the
+    estimator can see the wind.
+    """
+
+    def __init__(self, aircraft, reference, clearance_min=0.5, noise_k=2.0,
+                 bias_max=np.radians(30.0), k_psi=1.0, k_h=0.05, k_g=1.0,
+                 fb_mu=0.5, fb_cl=0.5, circle_mu=0.4):
+        super().__init__(aircraft, {"p": dict(HAND_PICKED)}, clearance_min=clearance_min,
+                         noise_k=noise_k, bias_max=bias_max)
+        self.ref = reference
+        self.k_psi, self.k_h, self.k_g = k_psi, k_h, k_g
+        self.fb_mu, self.fb_cl, self.circle_mu = fb_mu, fb_cl, circle_mu
+        self.reset()
+
+    def reset(self, phase=Phase.CLIMB):
+        super().reset(phase)
+        self.phase_idx = None
+        self.steps = 0
+        self.guard_steps = 0
+
+    @staticmethod
+    def wind_psi(est):
+        """Math angle of the estimated wind direction, or None when not usable."""
+        if not getattr(est, "wind_valid", True):
+            return None
+        if est.ustar_est > 0:
+            return wind_to_psi(est)
+        w = np.asarray(est.wind, float)
+        return float(np.arctan2(w[1], w[0])) if np.hypot(w[0], w[1]) > 1.0 else None
+
+    def command(self, est, t, target_bearing=None, energy_margin=0.0):
+        ac, ref = self.ac, self.ref
+        h, V, hd = float(est.h_surface), float(est.airspeed), float(est.heading)
+        self._update_noise(h)
+        guard = h < self.clearance_min + self.noise_k * self.noise_est()
+        if guard and not self.guard_active:
+            self.guard_count += 1
+        self.guard_active = guard
+        self.steps += 1
+        self.guard_steps += int(guard)
+        psi_w = self.wind_psi(est)
+        if guard:
+            return ac.cl_best_ld, 0.0
+        if psi_w is None or not est.valid or V < 3.0:
+            return ac.cl_best_ld, self.circle_mu
+        b = 0.0
+        if target_bearing is not None and energy_margin > 0:
+            b = float(np.clip(wrap(target_bearing - psi_w - ref.chi), -self.bias_max,
+                              self.bias_max))
+        psi_rel = wrap(hd - psi_w - b)
+        ph = ref.match(h, psi_rel, self.phase_idx)
+        if self.phase_idx is not None and ph < self.phase_idx - ref.n / 2:
+            self.cycle_starts.append(t)
+        self.phase_idx = ph
+        r = ref.at(ph)
+        gam = float(np.arcsin(np.clip(float(est.v_ground[2]) / max(V, 1e-3), -1.0, 1.0)))
+        mu = r["mu"] + float(np.clip(self.k_psi * wrap(r["psi"] - psi_rel), -self.fb_mu,
+                                     self.fb_mu))
+        cl = r["cl"] + float(np.clip(self.k_h * (r["z"] - h) + self.k_g * (r["gamma"] - gam),
+                                     -self.fb_cl, self.fb_cl))
+        return float(np.clip(cl, ac.cl_min, ac.cl_max)), float(np.clip(mu, -ac.mu_max, ac.mu_max))
+
+
+class PerfectEstimator:
+    """The truth as an Estimate (upper bound); fly() calls from_truth instead of update."""
+    perfect = True
+    names = ()
+
+    def from_truth(self, truth, env, t):
+        return Estimate(t=t, pos=truth["pos"].copy(), v_ground=truth["v_ground"].copy(),
+                        v_air=truth["v_air"].copy(), airspeed=truth["airspeed"],
+                        heading=truth["heading"], wind=truth["wind"].copy(),
+                        h_surface=truth["h_surface"], z=float(truth["pos"][2]),
+                        ustar_est=float(env.wind.ustar), wind_dir_est_deg=float(env.wind.from_deg),
+                        shear_quality=1.0, valid=True, wind_valid=True, pitot_scale_est=1.0)
+
+
+ENVS = ("flat", "waves", "waves+turb")
+
+
+def make_env(kind, u10):
+    """flat: log wind; waves: log wind, fully developed sea, seed 1; waves+turb: swell-knee
+    profile, the same sea and the iso turbulence."""
+    if kind == "flat":
+        return Environment.flat(Wind(u10, 270.0))
+    wind = Wind(u10, 270.0, profile="swell_knee") if kind == "waves+turb" else Wind(u10, 270.0)
+    return Environment(wind, [WaveTrain.fully_developed(wind)], seed=1,
+                       turbulence="iso" if kind == "waves+turb" else None)
+
+
+def initial_state_ref(env, ref):
+    """On the reference at its highest node, heading rotated by the true wind direction."""
+    psi_w = np.arctan2(env.wind.ey, env.wind.ex)
+    k = int(np.argmax(ref.z))
+    return [0.0, 0.0, ref.z[k] + float(env.surface(0.0, 0.0, 0.0)[0]), ref.V[k],
+            ref.gamma[k], float(wrap(ref.psi[k] + psi_w))]
+
+
+def run_case(aircraft, kind, u10, suite_name, t_end=180.0, seed=1, target_range=3000.0, dt=0.02):
+    env = make_env(kind, u10)
+    ref = reference_from_dsopt(aircraft, u10, "swell_knee" if kind == "waves+turb" else "log")
+    psi_w = np.arctan2(env.wind.ey, env.wind.ex)
+    target = target_range * np.array([np.cos(psi_w + np.radians(20)),
+                                      np.sin(psi_w + np.radians(20))])
+    ctrl = ReferenceTracker(aircraft, ref)
+    if suite_name == "truth":
+        suite, est = None, PerfectEstimator()
+    else:
+        suite = getattr(SensorSuite, suite_name)(seed)
+        est = Estimator(_suite_names(suite))
+    r = fly(aircraft, env, suite, est, ctrl, initial_state_ref(env, ref), t_end, dt=dt,
+            seed=seed, target=target)
+    return r["metrics"]
+
+
+def compare_suites(aircraft, u10=13.0, t_end=180.0, seed=1, sweep=(12.0, 13.0, 15.0, 18.0)):
     res = {}
-    for ename, env in envs.items():
-        psi_w = np.arctan2(env.wind.ey, env.wind.ex)
-        target = target_range * np.array([np.cos(psi_w + np.radians(20)),
-                                          np.sin(psi_w + np.radians(20))])
-        for sname in ("minimal", "standard", "full"):
-            suite = getattr(SensorSuite, sname)(seed)
-            estimator = Estimator(_suite_names(suite))
-            ctrl = EstimatedDSController(aircraft, cycle)
-            r = fly(aircraft, env, suite, estimator, ctrl, initial_state(aircraft, env, cycle),
-                    t_end, seed=seed, target=target)
-            res["%s/%s" % (sname, ename)] = r["metrics"]
-    return {"cycle": {"p": dict(cycle["p"]), "V0": cycle["V0"],
-                      "source": cycle.get("source", "given")},
-            "u10": u10, "t_end": t_end, "results": res}
+    for ename in ENVS:
+        for sname in ("minimal", "standard", "full", "truth"):
+            res["%s/%s" % (sname, ename)] = run_case(aircraft, ename, u10, sname, t_end, seed)
+    sw = {}
+    for u in sweep:
+        try:
+            sw["%g" % u] = run_case(aircraft, "waves+turb", u, "standard", t_end, seed)
+        except ValueError as exc:
+            sw["%g" % u] = {"error": str(exc)}
+    ref = reference_from_dsopt(aircraft, u10, "log")
+    return {"reference": {"aircraft": aircraft.name, "u10": u10, "profile": "log and swell_knee",
+                          "chi_deg": 20.0, "period_log_s": ref.period, "n_nodes": 40},
+            "u10": u10, "t_end": t_end, "results": res, "sweep": sw}
 
 
 def _f(v, fmt):
     return "n/a" if v is None else fmt % v
 
 
+HEAD = ("| case | gain/cycle (J/kg) | min h (m) | max n | guard share | v toward target (m/s) "
+        "| wind rms (m/s) | h rms (m) | cycles | crashed |")
+
+
+def _row(label, m):
+    if "error" in m:
+        return "| %s | %s |" % (label, m["error"])
+    return "| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |" % (
+        label, _f(m.get("energy_gain_per_cycle"), "%.1f"), _f(m.get("min_h"), "%.2f"),
+        _f(m.get("max_n"), "%.2f"), _f(m.get("guard_share"), "%.3f"),
+        _f(m.get("ground_speed_toward_target"), "%.2f"), _f(m.get("wind_rms"), "%.2f"),
+        _f(m.get("h_rms"), "%.2f"), m.get("cycles", 0),
+        ("yes at %.0f s" % (m["duration_s"])) if m["crashed"] else "no")
+
+
+def _git_commit():
+    try:
+        return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], text=True,
+                                       cwd=os.path.dirname(os.path.dirname(__file__))).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
 def main():
     t0 = time.time()
     out = compare_suites(BASELINE)
-    print("cycle source: %s, p = %s, V0 = %.2f" % (
-        out["cycle"]["source"], out["cycle"]["p"], out["cycle"]["V0"]))
-    print("| suite | env | gain/cycle (J/kg) | min h (m) | max n | v toward target (m/s) | "
-          "wind rms | h rms | guard | ended |")
-    print("|---|---|---|---|---|---|---|---|---|---|")
+    sep = "|" + "---|" * 10
+    print(HEAD)
+    print(sep)
     for key, m in out["results"].items():
-        s, e = key.split("/")
-        print("| %s | %s | %s | %s | %s | %s | %s | %s | %d | %s |" % (
-            s, e, _f(m.get("energy_gain_per_cycle"), "%.1f"), _f(m.get("min_h"), "%.2f"),
-            _f(m.get("max_n"), "%.2f"), _f(m.get("ground_speed_toward_target"), "%.2f"),
-            _f(m.get("wind_rms"), "%.2f"), _f(m.get("h_rms"), "%.2f"),
-            m["guard_activations"], m["ended"]))
+        print(_row(key, m))
+    print("\nsweep, standard suite, waves+turb:")
+    print(HEAD)
+    print(sep)
+    for u, m in out["sweep"].items():
+        print(_row("u10 = " + u, m))
     out["runtime_s"] = time.time() - t0
+    out["meta"] = {"command": "python -m sim.autonomy", "git_commit": _git_commit(),
+                   "aircraft": BASELINE.name, "seed": 1, "dt": 0.02}
     path = os.path.join(os.path.dirname(__file__), "out")
     os.makedirs(path, exist_ok=True)
     with open(os.path.join(path, "autonomy.json"), "w", newline="\n") as fh:
         json.dump(out, fh, indent=1)
+        fh.write("\n")
     print("runtime %.0f s" % out["runtime_s"])
 
 
