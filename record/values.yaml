@@ -462,6 +462,90 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#sea-roughness
+  - key: ctrl.roll_pb2v
+    v: 0.08
+    unit: 1
+    status: assumed
+    basis:
+      - Q-062
+  - key: ctrl.cl_rate_max_per_s
+    v: 1.0
+    unit: 1/s
+    status: assumed
+    basis:
+      - Q-062
+  - key: ctrl.actuator_tau_s
+    v: 0.05
+    unit: s
+    status: assumed
+    basis:
+      - Q-062
+  - key: ctrl.actuator_delay_s
+    v: 0.05
+    unit: s
+    status: assumed
+    basis:
+      - Q-062
+  - key: ctrl.bank_rate_max_deg_s
+    v: 150
+    unit: deg/s
+    status: assumed
+    basis:
+      - Q-062
+  - key: lit.gilruth_pb2v_min
+    v: 0.07
+    unit: 1
+    status: sourced
+    basis:
+      - P106
+  - key: lit.bower_bank_rate_limit_deg_s
+    v: 90
+    unit: deg/s
+    status: sourced
+    basis:
+      - P45
+  - key: lit.bower_cl_rate_limit_per_s
+    v: 0.5
+    unit: 1/s
+    status: sourced
+    basis:
+      - P45
+  - key: lit.bronz_pb2v_p99_min
+    v: 0.057
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: lit.bronz_pb2v_p99_max
+    v: 0.073
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: lit.bronz_cl_rate_p99_max_per_s
+    v: 1.67
+    unit: 1/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: lit.albatross_bank_rate_mean_median_deg_s
+    v: 25
+    unit: deg/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: lit.albatross_bank_rate_peak_median_deg_s
+    v: 66
+    unit: deg/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: lit.albatross_bank_rate_peak_p90_deg_s
+    v: 116
+    unit: deg/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
   - key: env.charnock
     v: 0.0144
     unit: 1

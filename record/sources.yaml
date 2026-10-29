@@ -427,7 +427,7 @@ items:
     license: unknown
     read: partial
     retrieved: 2026-10-29
-    note: "Minimum reference wind at 10 m: 8.56 m/s for the albatross model (L/D 20) and 8.01 m/s for the 2 kg Mariner design (L/D 25, 70.6 N/m2, AR 15); large span, low cd0 and low mass help, span above 2.5 m gives little more. The roughness z0 = 0.03 m is chosen to match previous researchers (Sachs 2005) and as a reasonable value for a rough sea, citing Stull for values from 1e-4 m for calm water to 0.03 m for cut grass or a very rough sea; his own wave model gives 0.0023 m at U10 11.28 m/s (read by a second reader on 2026-10-29)."
+    note: "Minimum reference wind at 10 m: 8.56 m/s for the albatross model (L/D 20) and 8.01 m/s for the 2 kg Mariner design (L/D 25, 70.6 N/m2, AR 15); large span, low cd0 and low mass help, span above 2.5 m gives little more. The roughness z0 = 0.03 m is chosen to match previous researchers (Sachs 2005) and as a reasonable value for a rough sea, citing Stull for values from 1e-4 m for calm water to 0.03 m for cut grass or a very rough sea; his own wave model gives 0.0023 m at U10 11.28 m/s (read by a second reader on 2026-10-29). His optimizer limits the roll rate to 90 deg/s, the lift-coefficient rate to 0.5 per second and the bank to 60 deg, and finds these constraints of minimal importance so long as they are larger than about 0.5 per second and 60 deg/s (sections 5.1 and 5.4 to 5.6)."
   - id: P46
     class: P
     title: "Flying at no mechanical energy cost: disclosing the secret of wandering albatrosses, G. Sachs et al., PLoS ONE 7(9), 2012"
@@ -451,7 +451,7 @@ items:
     license: unknown
     read: partial
     retrieved: 2026-10-29
-    note: EasyGlider 1.8 m, 1.35 kg, 0.4 m2; drag polar CD = 0.0169 - 0.0940 CL + 0.3580 CL^2; tests in 8 to 12 m/s wind.
+    note: EasyGlider 1.8 m, 1.35 kg, 0.4 m2; drag polar CD = 0.0169 - 0.0940 CL + 0.3580 CL^2; tests in 8 to 12 m/s wind. Its optimizer bounds the bank change by 2.0 rad per second (Table I) and has no bound on the lift-coefficient rate.
   - id: P49
     class: P
     title: "Design of small hand-launched solar-powered UAVs: from concept study to a multi-day world endurance record flight, P. Oettershagen et al., Journal of Field Robotics, 2017"
@@ -781,7 +781,7 @@ items:
     license: unknown
     read: partial
     retrieved: 2026-10-29
-    note: "1.05 kg hotliner, S 0.21 m2, AR 11.84, CD0 0.028, e 0.85; 100 Hz logs of autonomous inclined circles."
+    note: "1.05 kg hotliner, S 0.21 m2, AR 11.84, CD0 0.028, e 0.85; 100 Hz logs of autonomous inclined circles. A second reader computed from two logs (autopilot circles, 1.58 m span, 10 to 30 m/s) a bank-angle rate of 53 to 61 deg/s and a non-dimensional roll rate p b/(2V) of 0.057 to 0.073 at the 99th percentile, and a lift-coefficient rate of 0.85 to 1.67 per second at the 99th percentile with 0.5 s smoothing; the bank command was capped at 52 deg."
   - id: P88
     class: P
     title: "A global climatology of wind-wave interaction, M. E. Hanley, S. E. Belcher and P. P. Sullivan, Journal of Physical Oceanography 40, 1263-1282, 2010"
@@ -910,3 +910,59 @@ items:
     read: partial
     retrieved: 2026-10-29
     note: "With swell following the wind, a low-level jet above 1.1 times the geostrophic wind near 20 m in the simulation; observations after a storm go from a logarithmic to a nearly uniform profile."
+  - id: P104
+    class: P
+    title: "MIL-F-8785C, Military specification: flying qualities of piloted airplanes, US Department of Defense, 1980"
+    url: "https://everyspec.com/MIL-SPECS/MIL-SPECS-MIL-F/MIL-F-8785C_5295/"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Table IXa: Class I time to bank, level 1, 60 deg in 1.3 s (category A), 60 deg in 1.7 s (B), 30 deg in 1.3 s (C); Table VII: roll-mode time constant at most 1.0 s (level 1, categories A and C). For piloted aircraft."
+  - id: P105
+    class: P
+    title: "Easy Access Rules for Sailplanes and Powered Sailplanes (CS-22), Amendment 1, EASA, 2018, CS 22.147"
+    url: "https://www.easa.europa.eu/en/downloads/47168/en"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "CS 22.147: reverse a 45 deg banked turn to 45 deg the other way within b/3 seconds (b in m) at 1.4 VS1; a dimensional rule written for full-size sailplanes."
+  - id: P106
+    class: P
+    title: "Requirements for satisfactory flying qualities of airplanes, R. R. Gilruth, NACA Report 755, 1943"
+    url: "https://ntrs.nasa.gov/api/citations/19930091834/downloads/19930091834.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Airplanes giving p b/(2V) below 0.07 were always considered unsatisfactory; the roll damping rises with aspect ratio and falls with taper."
+  - id: P107
+    class: P
+    title: "System identification for small, low-cost, fixed-wing unmanned aircraft, A. Dorobantu, A. Murch, B. Mettler and G. Balas, University of Minnesota (course copy of the journal paper)"
+    url: "https://dept.aem.umn.edu/~mettler/"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Ultra Stick 25e, 1.27 m span, 1.96 kg, 19 m/s: roll mode 12.53 rad/s, short period 16.33 rad/s with damping 0.83, actuators second order at 50.27 rad/s with damping 0.80, a delay of 0.05 s. The URL is the group page; the file read is 2012_AIAA_JA_SYSID.pdf, whose journal details were not shown."
+  - id: P108
+    class: P
+    title: "Body-mounted video cameras reveal the bank angles of wandering albatrosses in dynamic soaring, S. Schoombie, R. P. Wilson and P. G. Ryan, Royal Society Open Science 10, 231363, 2023, with its data on figshare (21312678)"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC10698485/"
+    license: CC BY 4.0
+    read: partial
+    retrieved: 2026-10-29
+    note: "Bank angles from bird-borne video at 40 Hz over 414 min; a second reader computed from the data a half-cycle swing with median 95 deg in 3.9 s, a mean rate with median 25 deg/s, and a peak rate with median 66 deg/s at 0.5 s smoothing (90th percentile 116); no airspeed in the data."
+  - id: S3
+    class: S
+    title: "Introduction to aircraft stability and control, D. A. Caughey, course notes, Cornell University, 2011"
+    url: "https://courses.cit.cornell.edu/mae5070/Caughey_2011_04.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Strip-theory roll damping Clp of -a/6 for an untapered wing and -a/8 for elliptic loading (eq. 4.124 to 4.126); the roll-mode time constant follows from the roll inertia and Clp (eq. 4.77)."
+  - id: M12
+    class: M
+    title: "KST X10 Mini and X08N servo listings (retailer pages), speed without load"
+    url: "https://www.kstservos.com/"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "0.16 and 0.10 s per 60 deg at 4.8 and 8.4 V (X10 Mini); 0.18 and 0.09 s per 60 deg at 3.8 and 8.4 V (X08N); retailer listings, not datasheets; the URL is the maker's site, not the listing read."

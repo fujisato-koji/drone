@@ -740,3 +740,14 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-10-29
+  - id: Q-062
+    kind: question
+    text: "Settle the roll and pitch authority the flight models assume (docs/02-form.md#roll-authority): a non-dimensional roll rate p b/(2V) of ctrl.roll_pb2v, a lift-coefficient rate of ctrl.cl_rate_max_per_s, and an actuator lag of ctrl.actuator_tau_s with a delay of ctrl.actuator_delay_s. They rest on a flying-qualities floor for piloted aircraft (P106), one small glider's logs (P87), one small UAV's identification (P107) and the albatross video (P108). Settled when the aileron and wing design of the chosen form shows the roll rate with the roll-mode time constant from its inertia and damping (S3), and when a flight test of the first airframe measures both."
+    waits_for: assistant
+    affects:
+      - ctrl.roll_pb2v
+      - ctrl.cl_rate_max_per_s
+      - R-02
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-29
