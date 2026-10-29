@@ -619,55 +619,55 @@ items:
     basis:
       - docs/02-form.md#roll-authority
   - key: dsopt.sachs_coare_floor15_u10_ms
-    v: 14.85
+    v: 14.87
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#roll-authority
   - key: dsopt.sachs_coare_floor03_u10_ms
-    v: 14.06
+    v: 14.15
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#roll-authority
   - key: dsopt.albatross_coare_floor15_u10_ms
-    v: 9.28
+    v: 9.29
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#roll-authority
   - key: dsopt.albatross_coare_floor03_u10_ms
-    v: 8.72
+    v: 8.77
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#roll-authority
   - key: dsopt.sachs_coare_floor03_zmin_m
-    v: 0.86
+    v: 1.0
     unit: m
     status: calculated
     basis:
       - docs/02-form.md#energy-sources
   - key: dsopt.sachs_coare_notip_floor15_u10_ms
-    v: 14.15
+    v: 14.16
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#energy-sources
   - key: dsopt.sachs_coare_notip_floor05_u10_ms
-    v: 10.73
+    v: 10.74
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#energy-sources
   - key: dsopt.sachs_coare_notip_floor01_u10_ms
-    v: 7.8
+    v: 7.81
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#energy-sources
   - key: dsopt.sachs_z003_notip_floor05_u10_ms
-    v: 5.81
+    v: 5.82
     unit: m/s
     status: calculated
     basis:
@@ -679,7 +679,7 @@ items:
     basis:
       - docs/02-form.md#energy-sources
   - key: dsopt.albatross_coare_notip_floor01_u10_ms
-    v: 4.47
+    v: 4.49
     unit: m/s
     status: calculated
     basis:
@@ -721,7 +721,7 @@ items:
     basis:
       - docs/02-form.md#receding-horizon
   - key: mpc.margin_sea_survival_max_s
-    v: 45
+    v: 82
     unit: s
     status: calculated
     basis:

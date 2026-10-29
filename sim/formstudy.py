@@ -828,7 +828,8 @@ def clearance_study(path=CLEARANCE_PATH, floors=((1.5, 0.3), (1.0, 0.3), (1.0, 0
     """Minimum wind against the height floor and the wingtip clearance, COARE 3.5 roughness.
 
     The Sachs albatross model (P45, no speed floor) and albatross-3m (speed floor 1.1 Vs),
-    min_wind travel, geometric wingtip, self-consistent roughness, n = 40. A tip clearance of
+    min_wind travel, geometric wingtip, self-consistent roughness, n = 40, heights and the tip
+    held at the midpoints as well (K-011 found the tip dipping between nodes). A tip clearance of
     None switches the wingtip constraint off (h_tip_min -50 m); the Sachs model is also run with
     the literature's z0 of 0.03 m for those cases, for comparison with P45.
     """
@@ -846,7 +847,7 @@ def clearance_study(path=CLEARANCE_PATH, floors=((1.5, 0.3), (1.0, 0.3), (1.0, 0
                 info = solve_min_wind(ac, "self_consistent" if z0 is None else "fixed8", rough, z0,
                                       u10_ref=10.0, kind="log", cycle="travel", n=40, h_min=h_min,
                                       h_tip_min=-50.0 if tip is None else tip, seeds=(1, 0, 2, 3),
-                                      stop_after=2, tip_model="geometric", v_factor=vf)
+                                      stop_after=2, tip_model="geometric", v_factor=vf, midpoints=True)
                 rows.append({"aircraft": name, "roughness": rough, "z0": z0, "h_min": h_min,
                              "h_tip_min": tip, "u10": info["u10"], "success": bool(info["success"]),
                              "period": info["period"], "z_min": info["z_min"],
