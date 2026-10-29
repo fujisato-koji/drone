@@ -31,6 +31,17 @@ Wind without a magnetometer (airspeed-magnitude fit, needs no heading):
   and a horizontal circle manoeuvre gives no leverage on it.
 - The wind profile fit without a mag uses per-sample v_g - s Va along (v_g - W).
 
+sample_dt (default False, today's behaviour): the pitot and altimeter low-passes use the time since
+that sensor's own last sample instead of the time since the last update() call. It matters when
+update() is called faster than the sensor delivers (the lag was several times too long).
+
+Profile fit (profile_fit): "fixed_z0" (default) fits U = a ln(h / z0) with z0 = Z0_FIT; "two_param"
+fits U = a ln(h) + c by least squares on the buffered (height above the surface, along-wind
+wind) samples, u* = kappa a, z0 = exp(-c / a) clipped to [1e-6, 0.1] m; the fit is rejected when the
+height span is under 3 m or a <= 0. Both expose u10_est = (u* / kappa) ln(10 / z0) and z0_est
+(z0_est is NaN and u10_est 0 while there is no fit). Samples with h under 0.05 m are skipped
+in the two-parameter fit (ln h).
+
 Changes:
 - 2026-10-29 (check K-005): without a mag the ground course no longer serves as
   the heading (it hid the crosswind, 9 m/s error in a northward glide); the
@@ -68,6 +79,8 @@ class Estimate:
     valid: bool
     wind_valid: bool = False
     pitot_scale_est: float = 1.0
+    z0_est: float = Z0_FIT
+    u10_est: float = 0.0
 
 
 def _lp(old, new, dt, tau):
@@ -79,7 +92,12 @@ def _lp(old, new, dt, tau):
 
 class Estimator:
     def __init__(self, sensor_names, tau_z=20.0, tau_air=0.2, tau_wind=3.0, tau_h=0.1,
-                 buffer_s=60.0, z0=Z0_FIT):
+                 buffer_s=60.0, z0=Z0_FIT, profile_fit="fixed_z0", sample_dt=False):
+        if profile_fit not in ("fixed_z0", "two_param"):
+            raise ValueError("profile_fit must be 'fixed_z0' or 'two_param'")
+        self.profile_fit = profile_fit
+        self.sample_dt = sample_dt
+        self._pitot_t = None
         self.names = set(sensor_names)
         self.gnss_key = "rtk" if "rtk" in self.names else "gnss"
         self.has_altimeter = "altimeter" in self.names
@@ -105,6 +123,8 @@ class Estimator:
         self._last_buf_t = -1e9
         self._last_fit_t = -1e9
         self._fit = (0.0, 0.0)  # ustar, quality
+        self._z0_fit = float("nan")
+        self._u10_fit = 0.0
         self._dir = 0.0
         self._fitbuf = deque()  # (t, vgx, vgy, va_h), one per GNSS fix
         self._W = np.zeros(2)
@@ -187,7 +207,11 @@ class Estimator:
         # Air velocity.
         if "pitot" in meas:
             self._have_pitot = True
-            self._airspeed = _lp(self._airspeed, float(meas["pitot"]["airspeed"]), dt, self.tau_air)
+            dtp = dt
+            if self.sample_dt:
+                dtp = 0.0 if self._pitot_t is None else max(t - self._pitot_t, 0.0)
+                self._pitot_t = t
+            self._airspeed = _lp(self._airspeed, float(meas["pitot"]["airspeed"]), dtp, self.tau_air)
         if "probe" in meas:
             self._alpha = float(meas["probe"]["alpha"])
             self._beta = float(meas["probe"]["beta"])
@@ -233,7 +257,10 @@ class Estimator:
 
         # Height above the surface.
         if "altimeter" in meas:
-            self._h_alt = _lp(self._h_alt, float(meas["altimeter"]["h_surface"]), dt, self.tau_h)
+            dta = dt if not self.sample_dt else max(t - self._h_alt_t, 0.0)
+            if self.sample_dt and self._h_alt is None:
+                dta = 0.0
+            self._h_alt = _lp(self._h_alt, float(meas["altimeter"]["h_surface"]), dta, self.tau_h)
             self._h_alt_t = t
         if self.has_altimeter and self._h_alt is not None and t - self._h_alt_t <= 1.0:
             h = float(self._h_alt)
@@ -252,14 +279,22 @@ class Estimator:
         if len(self._buf) >= 20 and t - self._last_fit_t >= 0.5:
             self._last_fit_t = t
             self._fit_profile()
+        have = len(self._buf) >= 20 and self._fit[0] > 0.0
         ustar, quality = self._fit if len(self._buf) >= 20 else (0.0, 0.0)
+        z0_est = self._z0_fit if have else float("nan")
+        u10_est = self._u10_fit if have else 0.0
 
         return Estimate(t=t, pos=pos, v_ground=vg.copy(), v_air=v_air, airspeed=V,
                         heading=self._heading, wind=wind, h_surface=h, z=z,
                         ustar_est=float(ustar), wind_dir_est_deg=float(self._dir),
                         shear_quality=float(quality), valid=valid,
                         wind_valid=bool(wind_valid),
-                        pitot_scale_est=float(self._pitot_scale))
+                        pitot_scale_est=float(self._pitot_scale), z0_est=float(z0_est),
+                        u10_est=float(u10_est))
+
+    def _no_fit(self):
+        self._fit = (0.0, 0.0)
+        self._z0_fit, self._u10_fit = float("nan"), 0.0
 
     def _fit_profile(self):
         b = np.array(self._buf)
@@ -267,24 +302,40 @@ class Estimator:
         mw = b[:, 2:4].mean(axis=0)
         sp = np.hypot(mw[0], mw[1])
         if sp < 1e-6:
-            self._fit = (0.0, 0.0)
+            self._no_fit()
             return
         e = mw / sp
         self._dir = float((np.degrees(np.arctan2(mw[0], mw[1])) + 180.0) % 360.0)
-        ok = h > self.z0 * 10.0
+        two = self.profile_fit == "two_param"
+        ok = h > (0.05 if two else self.z0 * 10.0)
         if ok.sum() < 20:
-            self._fit = (0.0, 0.0)
+            self._no_fit()
             return
         h, u = h[ok], b[ok, 2] * e[0] + b[ok, 3] * e[1]
         span = float(h.max() - h.min())
         if span < 3.0:
-            self._fit = (0.0, 0.0)
+            self._no_fit()
             return
-        L = np.log(h / self.z0)
-        a = float(L @ u / (L @ L))  # least squares through the origin: U = a * L
-        rms = float(np.sqrt(np.mean((u - a * L) ** 2)))
+        if two:
+            lh = np.log(h)
+            A = np.column_stack([lh, np.ones_like(lh)])
+            (a, c), *_ = np.linalg.lstsq(A, u, rcond=None)
+            a, c = float(a), float(c)
+            if not a > 0.0:
+                self._no_fit()
+                return
+            z0 = float(np.clip(np.exp(-c / a), 1e-6, 0.1))
+            pred = a * lh + c
+        else:
+            L = np.log(h / self.z0)
+            a = float(L @ u / (L @ L))  # least squares through the origin: U = a * L
+            z0 = self.z0
+            pred = a * L
+        rms = float(np.sqrt(np.mean((u - pred) ** 2)))
         q = (span / 10.0) * (1.0 - rms / max(1.0, float(u.mean())))
         self._fit = (KARMAN * a, float(np.clip(q, 0.0, 1.0)))
+        self._z0_fit = z0
+        self._u10_fit = float(a * np.log(10.0 / z0))   # (u* / kappa) ln(10 / z0)
 
 
 def run_estimator(suite, estimator, states, env, times, mu=None):

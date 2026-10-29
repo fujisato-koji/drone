@@ -1,9 +1,11 @@
 """Point-mass glider flight model in a wind field."""
 import json
+from collections import deque
 from dataclasses import dataclass
 
 import numpy as np
 
+from sim.record import value
 from sim.seawind import RHO_AIR
 
 G = 9.81
@@ -105,8 +107,101 @@ def clip_controls(ac, cl, mu):
     return (min(max(cl, ac.cl_min), ac.cl_max), min(max(mu, -ac.mu_max), ac.mu_max))
 
 
-def derivatives(t, s, ac, env, cl, mu):
+def n_limited_cl(ac, V, cl):
+    """cl reduced so that n = 0.5 rho V^2 S cl / (m g) does not exceed ac.n_max at airspeed V.
+
+    Only the positive side is limited (the negative load factor is bounded by cl_min)."""
+    q = 0.5 * ac.rho * V * V * ac.wing_area
+    if not q > 0.0:
+        return cl
+    return min(cl, ac.n_max * ac.mass * G / q)
+
+
+class Actuators:
+    """Control surfaces between the commanded and the actual (cl, mu).
+
+    Each step: the command is clipped to the aircraft limits, delayed by a FIFO of `delay_s`,
+    the actual value moves toward it by a first-order lag (time constant tau, exact for a held
+    command), and the move is limited to rate * dt. The first call starts at the command (no
+    initial transient). Counts how often a rate limit reduced the move (n_mu_rate, n_cl_rate
+    out of n_steps).
+
+    rate_model "constant" (default, the old behaviour): bank rate limit ctrl.bank_rate_max_deg_s
+    (150 deg/s), cl rate ctrl.cl_rate_max_per_s (2 /s), lag ctrl.actuator_tau_s (0.1 s), no delay.
+    rate_model "pb2v": bank rate p_max = k 2 V / b with k = ctrl.roll_pb2v (0.08) and V the current
+    airspeed (step needs V), cl rate ctrl.cl_rate_max_per_s (1 /s), lag ctrl.actuator_tau_s
+    (0.05 s), delay ctrl.actuator_delay_s (0.05 s). Explicit arguments override the record.
+    """
+
+    def __init__(self, ac, tau=None, mu_rate_deg_s=None, cl_rate=None, rate_model="constant",
+                 delay_s=None, k_pb2v=None):
+        if rate_model not in ("constant", "pb2v"):
+            raise ValueError("rate_model must be 'constant' or 'pb2v'")
+        pb = rate_model == "pb2v"
+        self.ac, self.rate_model = ac, rate_model
+        self.tau = float(value("ctrl.actuator_tau_s", 0.05 if pb else 0.1) if tau is None else tau)
+        self.cl_rate = float(value("ctrl.cl_rate_max_per_s", 1.0 if pb else 2.0)
+                             if cl_rate is None else cl_rate)
+        self.mu_rate = np.radians(float(value("ctrl.bank_rate_max_deg_s", 150.0)
+                                        if mu_rate_deg_s is None else mu_rate_deg_s))
+        self.k_pb2v = float(value("ctrl.roll_pb2v", 0.08) if k_pb2v is None else k_pb2v)
+        self.delay = float(value("ctrl.actuator_delay_s", 0.05 if pb else 0.0)
+                           if delay_s is None else delay_s)
+        self.reset()
+
+    def reset(self):
+        self.cl = None
+        self.mu = None
+        self.cmd_last = None
+        self._q = None
+        self.n_steps = 0
+        self.n_mu_rate = 0
+        self.n_cl_rate = 0
+
+    def mu_rate_at(self, V):
+        """Bank rate limit (rad/s) at airspeed V (array ok)."""
+        if self.rate_model == "pb2v":
+            return self.k_pb2v * 2.0 * np.asarray(V, dtype=float) / self.ac.span
+        return self.mu_rate
+
+    def step(self, cl_cmd, mu_cmd, dt, V=None):
+        cl_cmd, mu_cmd = clip_controls(self.ac, cl_cmd, mu_cmd)
+        self.n_steps += 1
+        self.cmd_last = (float(cl_cmd), float(mu_cmd))
+        if self._q is None:
+            nd = int(round(self.delay / dt))
+            self._q = deque([self.cmd_last] * nd)
+        self._q.append(self.cmd_last)
+        cl_cmd, mu_cmd = self._q.popleft()
+        if self.cl is None:
+            self.cl, self.mu = float(cl_cmd), float(mu_cmd)
+            return self.cl, self.mu
+        if self.rate_model == "pb2v" and V is None:
+            raise ValueError("rate_model 'pb2v' needs the airspeed V")
+        a = 1.0 - np.exp(-dt / self.tau) if self.tau > 0 else 1.0
+        d_mu, d_cl = a * (mu_cmd - self.mu), a * (cl_cmd - self.cl)
+        lim_mu, lim_cl = float(self.mu_rate_at(V)) * dt, self.cl_rate * dt
+        if abs(d_mu) > lim_mu:
+            d_mu = float(np.copysign(lim_mu, d_mu))
+            self.n_mu_rate += 1
+        if abs(d_cl) > lim_cl:
+            d_cl = float(np.copysign(lim_cl, d_cl))
+            self.n_cl_rate += 1
+        self.mu += d_mu
+        self.cl += d_cl
+        return self.cl, self.mu
+
+    def bind_fractions(self):
+        n = max(self.n_steps, 1)
+        return {"mu_rate": self.n_mu_rate / n, "cl_rate": self.n_cl_rate / n}
+
+
+def derivatives(t, s, ac, env, cl, mu, n_limit=False):
+    """Derivatives of the state. With n_limit, cl is first reduced to the load-factor limit at
+    the current airspeed (n_limited_cl)."""
     x, y, z, V, g, p = s
+    if n_limit:
+        cl = n_limited_cl(ac, V, cl)
     eV, eg, ep = _unit_vectors(g, p)
     W, grad, dwdt = wind_derivs(env, x, y, z, t)
     vg = V * eV + W
@@ -134,7 +229,7 @@ def dumb_glide_ctrl(t, s, env, ac):
     return ac.cl_best_ld, 0.0
 
 
-def simulate(ac, env, ctrl, s0, t0, t_end, dt=0.02, stop=None):
+def simulate(ac, env, ctrl, s0, t0, t_end, dt=0.02, stop=None, n_limit=False):
     """Integrate with RK4 (controls evaluated at each stage). Returns dict of arrays."""
     if stop is None:
         def stop(t, s):
@@ -142,14 +237,16 @@ def simulate(ac, env, ctrl, s0, t0, t_end, dt=0.02, stop=None):
 
     def f(t, s):
         cl, mu = clip_controls(ac, *ctrl(t, s, env, ac))
-        return derivatives(t, s, ac, env, cl, mu)[0]
+        return derivatives(t, s, ac, env, cl, mu, n_limit)[0]
 
     rec = {k: [] for k in ("t", "x", "y", "z", "V", "gamma", "psi", "cl", "mu", "n",
                            "h", "e_air", "e_ground")}
 
     def record(t, s):
         cl, mu = clip_controls(ac, *ctrl(t, s, env, ac))
-        _, vg = derivatives(t, s, ac, env, cl, mu)
+        _, vg = derivatives(t, s, ac, env, cl, mu, n_limit)
+        if n_limit:
+            cl = n_limited_cl(ac, s[3], cl)
         q = 0.5 * ac.rho * s[3] ** 2 * ac.wing_area
         vals = (t, s[0], s[1], s[2], s[3], s[4], s[5], cl, mu,
                 q * cl / (ac.mass * G),
