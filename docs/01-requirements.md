@@ -133,21 +133,21 @@ The place of flight at sea and its climate are private facts and enter the recor
 R-01 and R-02 are the owner's core; R-03 and R-04 are the mission (D-009).
 R-05 and R-06 follow from a year at sea: the wind will fail, so the drone must live on the water, and the sea will get in unless it is sealed.
 R-07 follows from one person and the budget; R-08 from a year without a charger; R-09 and R-10 from the loads the environment imposes; R-11 from the law; R-12 from where the shear is.
-The design points carry assumed numbers (basis Q-009) until the literature and the simulation settle them, and every requirement awaits the owner's confirmation.
+The design points carry assumed numbers (basis Q-009) until the literature and the simulation settle them, and the owner confirmed every requirement on 2026-10-29 (D-011).
 
 <!-- tdr:table kind=requirement fields=id,text,design_point,verify,status -->
 | id | text | design_point | verify | status |
 |---|---|---|---|---|
-| R-01 | The drone stays over the sea for a year without a person touching it. | Airborne or afloat for ds.endurance_days without intervention. | demonstration | awaiting |
-| R-02 | The energy for flight comes from the wind shear over the waves (dynamic soaring), with no fuel and no propeller for cruise. | Sustained flight with no net energy loss at U10 >= ds.min_u10_ms over a neutral log profile. | test | awaiting |
-| R-03 | The drone goes on its own to a position it is given and comes back. | Reaches a waypoint ds.range_km from launch within 1 km and returns. | demonstration | awaiting |
-| R-04 | The drone sends a photo or a data record from the position. | An image of ds.photo_bytes is received on shore within one hour of capture. | demonstration | awaiting |
-| R-05 | When the wind is too weak to soar, the drone lands on the water, stays sealed, rights itself, and takes off again when the wind returns. | Survives afloat at significant wave height ds.survival_hs_m and takes off from the water at U10 >= ds.min_u10_ms. | test | awaiting |
-| R-06 | No sea water reaches the electronics in a year. | No ingress after immersion to 1 m for 24 h and after a year of spray. | test | awaiting |
-| R-07 | One person can carry and launch the drone by hand. | Mass <= ds.mass_max_kg and span <= ds.span_max_m. | inspection | awaiting |
-| R-08 | The avionics run for a year on solar power and a battery. | Average avionics draw <= ds.avionics_power_w and the solar yield on the darkest design day covers it with the battery bridging the night. | analysis | awaiting |
-| R-09 | The airframe carries the loads of soaring turns and gusts. | No failure at ds.n_limit times ds.safety_factor; no permanent deformation at ds.n_limit. | analysis | awaiting |
-| R-10 | The drone survives touching down on the water. | No damage after a stall-speed touchdown at significant wave height 2 m. | test | awaiting |
-| R-11 | The flight is legal where it flies. | The rules of Q-007 are identified and met before the first flight beyond visual line of sight. | inspection | awaiting |
-| R-12 | The drone flies in the layer where the shear is, and never below a safe height over the waves. | Operates between ds.clearance_min_m and ds.altitude_band_max_m above the local sea surface. | analysis | awaiting |
+| R-01 | The drone stays over the sea for a year without a person touching it. | Airborne or afloat for ds.endurance_days without intervention. | demonstration | confirmed |
+| R-02 | The energy for flight comes from the wind shear over the waves (dynamic soaring), with no fuel and no propeller for cruise. | Sustained flight with no net energy loss at U10 >= ds.min_u10_ms over a neutral log profile. | test | confirmed |
+| R-03 | The drone goes on its own to a position it is given and comes back. | Reaches a waypoint ds.range_km from launch within 1 km and returns. | demonstration | confirmed |
+| R-04 | The drone sends a photo or a data record from the position. | An image of ds.photo_bytes is received on shore within one hour of capture. | demonstration | confirmed |
+| R-05 | When the wind is too weak to soar, the drone lands on the water, stays sealed, rights itself, and takes off again when the wind returns. | Survives afloat at significant wave height ds.survival_hs_m and takes off from the water at U10 >= ds.min_u10_ms. | test | confirmed |
+| R-06 | No sea water reaches the electronics in a year. | No ingress after immersion to 1 m for 24 h and after a year of spray. | test | confirmed |
+| R-07 | One person can carry and launch the drone by hand. | Mass <= ds.mass_max_kg and span <= ds.span_max_m. | inspection | confirmed |
+| R-08 | The avionics run for a year on solar power and a battery. | Average avionics draw <= ds.avionics_power_w and the solar yield on the darkest design day covers it with the battery bridging the night. | analysis | confirmed |
+| R-09 | The airframe carries the loads of soaring turns and gusts. | No failure at ds.n_limit times ds.safety_factor; no permanent deformation at ds.n_limit. | analysis | confirmed |
+| R-10 | The drone survives touching down on the water. | No damage after a stall-speed touchdown at significant wave height 2 m. | test | confirmed |
+| R-11 | The flight is legal where it flies. | The rules of Q-007 are identified and met before the first flight beyond visual line of sight. | inspection | confirmed |
+| R-12 | The drone flies in the layer where the shear is, and never below a safe height over the waves. | Operates between ds.clearance_min_m and ds.altitude_band_max_m above the local sea surface. | analysis | confirmed |
 <!-- tdr:end -->
