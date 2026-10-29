@@ -863,5 +863,47 @@ def clearance_study(path=CLEARANCE_PATH, floors=((1.5, 0.3), (1.0, 0.3), (1.0, 0
     return out
 
 
+WINDDIFF_PATH = os.path.join("sim", "out", "dsopt_wind_difference.json")
+
+
+def wind_difference_study(path=WINDDIFF_PATH):
+    """Wind difference between the lowest and the highest point of the minimum-wind travel cycle.
+
+    The Sachs albatross model (with the wingtip held 0.3 m clear, without it at a 0.1 m floor, and
+    with the literature's z0 of 0.03 m), albatross-3m and baseline-2m, COARE 3.5 unless stated,
+    geometric wingtip, heights held at the midpoints, n = 40.
+    """
+    from sim.dsopt import sachs_albatross, solve_min_wind
+    from sim.seawind import Wind
+    from sim import record
+    cases = [("sachs-bird", "coare35", None, 1.5, 0.3, 0.0), ("sachs-bird", "coare35", None, 0.1, None, 0.0),
+             ("sachs-bird", "fixed_z0", 0.03, 1.5, 0.3, 0.0), ("albatross-3m", "coare35", None, 1.0, 0.3, 1.1),
+             ("baseline-2m", "coare35", None, 1.0, 0.3, 1.1)]
+    rows = []
+    for name, rough, z0f, h_min, tip, vf in cases:
+        ac = sachs_albatross()[0] if name == "sachs-bird" else by_name(name)
+        info = solve_min_wind(ac, "self_consistent" if z0f is None else "fixed8", rough, z0f, u10_ref=10.0,
+                              kind="log", cycle="travel", n=40, h_min=h_min,
+                              h_tip_min=-50.0 if tip is None else tip, seeds=(1, 0, 2, 3), stop_after=2,
+                              tip_model="geometric", v_factor=vf, midpoints=True)
+        u = info["u10"]
+        z0 = z0f if z0f is not None else Wind(u, 270.0, roughness="coare35").z0
+        speed = lambda z: u * np.log(z / z0) / np.log(10.0 / z0)
+        lo, hi = speed(info["z_min"]), speed(info["z_max"])
+        rows.append({"aircraft": name, "roughness": rough, "z0": z0, "h_min": h_min, "h_tip_min": tip,
+                     "lift_to_drag": ac.best_ld, "u10": u, "success": bool(info["success"]),
+                     "z_low": info["z_min"], "z_high": info["z_max"], "wind_low": lo, "wind_high": hi,
+                     "wind_difference": hi - lo, "period": info["period"]})
+        print(rows[-1], flush=True)
+    paths = ["sim/formstudy.py", "sim/dsopt.py", "sim/aircraft.py", "sim/aircraft_models.py",
+             "sim/seawind.py", "record/values.yaml"]
+    out = {"meta": record.meta("python -c \"from sim import formstudy; formstudy.wind_difference_study()\"", paths),
+           "rows": rows}
+    with open(path, "w", newline=chr(10)) as fh:
+        json.dump(out, fh, indent=1)
+        fh.write(chr(10))
+    return out
+
+
 if __name__ == "__main__":
     run()

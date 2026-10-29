@@ -744,6 +744,42 @@ items:
     status: sourced
     basis:
       - P81
+  - key: dsopt.sachs_coare_dw_ms
+    v: 4.02
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: dsopt.sachs_notip_dw_ms
+    v: 3.17
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: dsopt.albatross_coare_dw_ms
+    v: 1.92
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: dsopt.baseline_coare_dw_ms
+    v: 2.43
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: dsopt.sachs_coare_dw_ratio
+    v: 0.27
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: dsopt.sachs_z003_dw_ratio
+    v: 0.44
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
   - key: env.charnock
     v: 0.0144
     unit: 1

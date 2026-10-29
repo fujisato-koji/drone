@@ -159,6 +159,12 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | lit.bird_experienced_wind_ms | 8.7 | m/s | sourced | P73 |
 | lit.bird_flapping_time_fraction | 0.046 | 1 | sourced | P81 |
 | lit.bird_flapping_energy_fraction | 0.133 | 1 | sourced | P81 |
+| dsopt.sachs_coare_dw_ms | 4.02 | m/s | calculated | docs/02-form.md#energy-sources |
+| dsopt.sachs_notip_dw_ms | 3.17 | m/s | calculated | docs/02-form.md#energy-sources |
+| dsopt.albatross_coare_dw_ms | 1.92 | m/s | calculated | docs/02-form.md#energy-sources |
+| dsopt.baseline_coare_dw_ms | 2.43 | m/s | calculated | docs/02-form.md#energy-sources |
+| dsopt.sachs_coare_dw_ratio | 0.27 | 1 | calculated | docs/02-form.md#energy-sources |
+| dsopt.sachs_z003_dw_ratio | 0.44 | 1 | calculated | docs/02-form.md#energy-sources |
 | env.charnock | 0.0144 | 1 | assumed | Q-008 |
 | env.air_kinematic_viscosity | 1.46e-05 | m2/s | assumed | Q-008 |
 | env.jonswap_gamma | 3.3 | 1 | assumed | Q-008 |

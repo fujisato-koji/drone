@@ -214,6 +214,12 @@ What the model says about the first one: the gap is the wingtip, not the height.
 - So the bird gains by making its low turn in the slowest air with its lower wingtip almost on the water, which a point mass with a wingtip margin cannot do; how the bird turns low without a steep bank, and how much a wave trough slows the air there, are what the model does not yet capture, and no study has measured the wind at the bird's height (P116).
 - The drone cannot copy that: R-12 and the waves keep its wingtip well clear, so its low turn stays higher than the bird's.
 
+The wind difference a cycle needs, from its lowest to its highest point (`formstudy.wind_difference_study()`, `sim/out/dsopt_wind_difference.json`):
+
+- The Sachs model with its wingtip held clear needs dsopt.sachs_coare_dw_ms whether the roughness is the sea's or the land value; the roughness only decides how much wind at 10 m gives that difference over the heights the cycle spans, dsopt.sachs_coare_dw_ratio of the wind at 10 m over the sea against dsopt.sachs_z003_dw_ratio with the land value.
+- Without the wingtip constraint it needs dsopt.sachs_notip_dw_ms, close to the two-layer estimate of lit.rayleigh_min_wind_difference_ms for its lift-to-drag ratio (P42, P43); but that cycle banks steeply 0.1 m above the water, which no wing can do, so it is a bound, not a flight.
+- The candidates need less because they glide better: dsopt.albatross_coare_dw_ms for the albatross-like glider and dsopt.baseline_coare_dw_ms for the baseline; the difference times the lift-to-drag ratio is roughly constant.
+
 What the physics says about the second one: the vertical wave wind measured over swell from 2.6 to 15 m has the model's own form with an amplitude factor of lit.wave_induced_amp_w and a decay of lit.wave_induced_decay_w (P63), about 0.3 to 0.5 m/s near the surface over a 2 m swell, comparable to the sink rate of a glider; P64's single case is lower (Q-058).
 The log profile itself holds within a few percent down to about 0.1 m over waves (P111).
 

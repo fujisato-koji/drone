@@ -1,0 +1,89 @@
+{
+ "meta": {
+  "tdr_run": "python -c \"from sim import formstudy; formstudy.wind_difference_study()\"",
+  "commit": "b1ab0bc",
+  "stamp": "sha-ac88e4a18dd1"
+ },
+ "rows": [
+  {
+   "aircraft": "sachs-bird",
+   "roughness": "coare35",
+   "z0": 0.0008321088698718425,
+   "h_min": 1.5,
+   "h_tip_min": 0.3,
+   "lift_to_drag": 20.0,
+   "u10": 14.874732087037128,
+   "success": true,
+   "z_low": 1.5000000000000027,
+   "z_high": 18.95455249368421,
+   "wind_low": 11.870819600577226,
+   "wind_high": 15.88725582333907,
+   "wind_difference": 4.016436222761843,
+   "period": 7.253464675174356
+  },
+  {
+   "aircraft": "sachs-bird",
+   "roughness": "coare35",
+   "z0": 6.379961950973284e-05,
+   "h_min": 0.1,
+   "h_tip_min": null,
+   "lift_to_drag": 20.0,
+   "u10": 7.814145288637433,
+   "success": true,
+   "z_low": 0.1,
+   "z_high": 12.82869936363719,
+   "wind_low": 4.805917502967562,
+   "wind_high": 7.976864281932702,
+   "wind_difference": 3.17094677896514,
+   "period": 6.623661449209537
+  },
+  {
+   "aircraft": "sachs-bird",
+   "roughness": "fixed_z0",
+   "z0": 0.03,
+   "h_min": 1.5,
+   "h_tip_min": 0.3,
+   "lift_to_drag": 20.0,
+   "u10": 9.19823589321488,
+   "success": true,
+   "z_low": 1.5,
+   "z_high": 18.954871033109626,
+   "wind_low": 6.194323411148523,
+   "wind_high": 10.210786237644344,
+   "wind_difference": 4.016462826495821,
+   "period": 7.253464501234163
+  },
+  {
+   "aircraft": "albatross-3m",
+   "roughness": "coare35",
+   "z0": 0.0001236978820024056,
+   "h_min": 1.0,
+   "h_tip_min": 0.3,
+   "lift_to_drag": 38.37475154799332,
+   "u10": 9.286373550153034,
+   "success": true,
+   "z_low": 1.3895799708296421,
+   "z_high": 14.4233778241096,
+   "wind_low": 7.664513095359051,
+   "wind_high": 9.58736467382682,
+   "wind_difference": 1.9228515784677684,
+   "period": 6.502581876394514
+  },
+  {
+   "aircraft": "baseline-2m",
+   "roughness": "coare35",
+   "z0": 0.00022798400473949708,
+   "h_min": 1.0,
+   "h_tip_min": 0.3,
+   "lift_to_drag": 26.685095743011424,
+   "u10": 10.8224210973229,
+   "success": true,
+   "z_low": 1.084471477797314,
+   "z_high": 11.96623118249157,
+   "wind_low": 8.573162041051985,
+   "wind_high": 11.004168256327446,
+   "wind_difference": 2.4310062152754615,
+   "period": 5.850175819532501
+  }
+ ]
+}
