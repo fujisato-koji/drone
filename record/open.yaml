@@ -751,3 +751,13 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-10-29
+  - id: Q-063
+    kind: question
+    text: "Should the drone ever make its low turn with a wingtip close to the water, as the albatross does? The model says the low point of the cycle is the largest lever on the wind needed (docs/02-form.md#energy-sources: the Sachs albatross model needs dsopt.sachs_coare_floor03_u10_ms with its wingtip held clear and the bound dsopt.sachs_coare_notip_floor01_u10_ms without the constraint), but R-12 keeps a clearance, and skimming needs the height of the wingtip above the moving water to a few centimetres about half a second ahead, a path accurate to tens of centimetres in gusts, and a wing that survives a touch. Study first, without changing R-12: the gain of ground effect near the water, a wingtip skid or float, dihedral or a gull wing that lifts the low tip, and low turns only in the troughs of long, predictable swell; then the owner decides whether R-12 changes."
+    waits_for: "assistant, then owner"
+    affects:
+      - R-12
+      - R-02
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-30
