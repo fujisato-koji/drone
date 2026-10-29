@@ -820,5 +820,38 @@ def constraint_study2(path=CONSTRAINT_PATH, n=30, seeds=(0, 1, 2, 3, 4, 5), work
     return result
 
 
+CLEARANCE_PATH = os.path.join("sim", "out", "dsopt_clearance.json")
+
+
+def clearance_study(path=CLEARANCE_PATH, floors=((1.5, 0.3), (1.0, 0.3), (1.0, 0.1), (0.5, 0.1), (0.3, 0.05))):
+    """Minimum wind against the height floor and the wingtip clearance, COARE 3.5 roughness.
+
+    The Sachs albatross model (P45, no speed floor) and albatross-3m (speed floor 1.1 Vs),
+    min_wind travel, geometric wingtip, self-consistent roughness, n = 40.
+    """
+    from sim.dsopt import sachs_albatross, solve_min_wind
+    from sim import record
+    rows = []
+    for name, vf in (("sachs-bird", 0.0), ("albatross-3m", 1.1)):
+        ac = sachs_albatross()[0] if name == "sachs-bird" else by_name(name)
+        for h_min, tip in floors:
+            t0 = time.time()
+            info = solve_min_wind(ac, "self_consistent", "coare35", None, u10_ref=10.0, kind="log",
+                                  cycle="travel", n=40, h_min=h_min, h_tip_min=tip, seeds=(1, 0, 2, 3),
+                                  stop_after=2, tip_model="geometric", v_factor=vf)
+            rows.append({"aircraft": name, "h_min": h_min, "h_tip_min": tip, "u10": info["u10"],
+                         "success": bool(info["success"]), "period": info["period"],
+                         "runtime_s": time.time() - t0})
+            print(rows[-1], flush=True)
+    paths = ["sim/formstudy.py", "sim/dsopt.py", "sim/aircraft.py", "sim/aircraft_models.py",
+             "sim/seawind.py", "record/values.yaml"]
+    out = {"meta": record.meta("python -c \"from sim import formstudy; formstudy.clearance_study()\"", paths),
+           "rows": rows}
+    with open(path, "w", newline="\n") as fh:
+        json.dump(out, fh, indent=1)
+        fh.write("\n")
+    return out
+
+
 if __name__ == "__main__":
     run()

@@ -558,6 +558,90 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#roll-authority
+  - key: dsopt.pb2v008_u10_baseline_ms
+    v: 10.81
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.pb2v008_u10_albatross_ms
+    v: 9.19
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.roll30_u10_baseline_ms
+    v: 11.87
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.roll30_u10_albatross_ms
+    v: 9.85
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.midpoint_u10_baseline_ms
+    v: 10.76
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.midpoint_u10_albatross_ms
+    v: 9.06
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.margin2_u10_baseline_ms
+    v: 13.29
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.margin2_u10_albatross_ms
+    v: 10.09
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.margin3_u10_baseline_ms
+    v: 16.22
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.margin3_u10_albatross_ms
+    v: 12.34
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.sachs_coare_floor15_u10_ms
+    v: 14.85
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.sachs_coare_floor03_u10_ms
+    v: 14.06
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.albatross_coare_floor15_u10_ms
+    v: 9.28
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
+  - key: dsopt.albatross_coare_floor03_u10_ms
+    v: 8.72
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#roll-authority
   - key: env.charnock
     v: 0.0144
     unit: 1

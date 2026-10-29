@@ -133,6 +133,31 @@ What it means:
 - `sim/dsearch.py` searches a periodic bank and lift schedule that gains air-relative energy over one cycle without going below ds.clearance_min_m or above ds.n_limit, and bisects the smallest U10 at which such a cycle exists.
 - This search is the yardstick of the form study: for each candidate form, the smallest U10 that sustains soaring, and the ground speed it gives.
 
+### Roll and pitch authority {#roll-authority}
+
+The point mass takes its bank angle and lift coefficient as controls, and until this pass it could change them as fast as it liked; the optimal cycles used bank rates near 100 deg/s.
+How fast a glider can roll scales with its speed over its span, so the measure is the non-dimensional roll rate p b/(2V).
+
+What the sources give:
+
+- A floor for piloted aircraft: below lit.gilruth_pb2v_min pilots always found the roll unsatisfactory (P106); military flying qualities ask a light aircraft to bank 60 deg in 1.3 s (P104).
+- A 1.58 m glider flying autonomous circles reached p b/(2V) of lit.bronz_pb2v_p99_min to lit.bronz_pb2v_p99_max and a lift-coefficient rate of up to lit.bronz_cl_rate_p99_max_per_s at the 99th percentile of its logs (P87, computed from the logs).
+- Wandering albatrosses roll through a half cycle at a mean rate with a median of lit.albatross_bank_rate_mean_median_deg_s, with peaks of lit.albatross_bank_rate_peak_median_deg_s (median) and lit.albatross_bank_rate_peak_p90_deg_s (90th percentile), from bird-borne video (P108, computed from the data).
+- Bower's optimizer limited the roll rate to lit.bower_bank_rate_limit_deg_s and the lift-coefficient rate to lit.bower_cl_rate_limit_per_s per second and found them of little importance above about those values (P45).
+- A small UAV identified in flight had actuators of about 50 rad/s and a delay of 0.05 s (P107).
+
+What the models now assume (Q-062): a roll rate of ctrl.roll_pb2v in p b/(2V), a lift-coefficient rate of ctrl.cl_rate_max_per_s per second, and actuators with a lag of ctrl.actuator_tau_s and a delay of ctrl.actuator_delay_s; for a 2 m glider at 12 m/s this is about 55 deg/s, and for a 3 m glider about 37 deg/s.
+The optimizer holds these limits between nodes, and the flight model, the tracker and the receding-horizon planner fly through the actuators and the load-factor limit.
+
+What it costs, on a flat sea with the corrected settings (`python -m sim.dsopt --constraint-study` and `--constraint-study2`, `sim/out/dsopt_constraints.json`):
+
+- Holding the heights between nodes raises the minimum wind to dsopt.midpoint_u10_baseline_ms for the baseline and dsopt.midpoint_u10_albatross_ms for the albatross-like glider.
+- The roll limit at ctrl.roll_pb2v adds little more: dsopt.pb2v008_u10_baseline_ms and dsopt.pb2v008_u10_albatross_ms; only a limit as low as 30 deg/s costs about a metre per second (dsopt.roll30_u10_baseline_ms and dsopt.roll30_u10_albatross_ms).
+- Margins for control cost more: with a lowest point of 2 m, a load factor of 0.8 of the limit, 0.9 of the bank limit and 1.2 times the stall speed, the minimum wind becomes dsopt.margin2_u10_baseline_ms and dsopt.margin2_u10_albatross_ms, and with 3 m, 0.7, 0.85 and 1.3 times it becomes dsopt.margin3_u10_baseline_ms and dsopt.margin3_u10_albatross_ms.
+- Flying lower does not close the gap (`formstudy.clearance_study()`, `sim/out/dsopt_clearance.json`): with COARE 3.5, lowering the floor from 1.5 m to 0.3 m and the wingtip clearance from 0.3 to 0.05 m takes the Sachs albatross model from dsopt.sachs_coare_floor15_u10_ms to dsopt.sachs_coare_floor03_u10_ms and the albatross-like glider from dsopt.albatross_coare_floor15_u10_ms to dsopt.albatross_coare_floor03_u10_ms, so the thin layer of steep log shear near the water is not what the birds lack.
+
+So the controls are not the limit of soaring; the margins a real controller needs are, and they hit the baseline harder than the albatross-like glider, whose higher lift-to-drag ratio leaves room for them.
+
 ### Structural model (`sim/structure.py`) {#structural-model}
 
 - The wing is a cantilever half-span with an elliptical lift distribution; a round carbon tube spar carries all bending; the skin and core carry none.

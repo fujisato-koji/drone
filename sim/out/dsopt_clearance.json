@@ -1,0 +1,99 @@
+{
+ "meta": {
+  "tdr_run": "python -c \"from sim import formstudy; formstudy.clearance_study()\"",
+  "commit": "9b0547b",
+  "stamp": "sha-c38933c28727"
+ },
+ "rows": [
+  {
+   "aircraft": "sachs-bird",
+   "h_min": 1.5,
+   "h_tip_min": 0.3,
+   "u10": 14.845782352514313,
+   "success": true,
+   "period": 7.308696996684931,
+   "runtime_s": 10.299915075302124
+  },
+  {
+   "aircraft": "sachs-bird",
+   "h_min": 1.0,
+   "h_tip_min": 0.3,
+   "u10": 14.828535211323759,
+   "success": true,
+   "period": 7.375666809525983,
+   "runtime_s": 9.627310276031494
+  },
+  {
+   "aircraft": "sachs-bird",
+   "h_min": 1.0,
+   "h_tip_min": 0.1,
+   "u10": 14.380538675306294,
+   "success": true,
+   "period": 6.969192966068639,
+   "runtime_s": 8.386887550354004
+  },
+  {
+   "aircraft": "sachs-bird",
+   "h_min": 0.5,
+   "h_tip_min": 0.1,
+   "u10": 14.217069540141985,
+   "success": true,
+   "period": 7.326555428257149,
+   "runtime_s": 12.077534914016724
+  },
+  {
+   "aircraft": "sachs-bird",
+   "h_min": 0.3,
+   "h_tip_min": 0.05,
+   "u10": 14.05921185487907,
+   "success": true,
+   "period": 7.320339669142497,
+   "runtime_s": 11.915165662765503
+  },
+  {
+   "aircraft": "albatross-3m",
+   "h_min": 1.5,
+   "h_tip_min": 0.3,
+   "u10": 9.28007779084629,
+   "success": true,
+   "period": 6.513473241657662,
+   "runtime_s": 8.120032548904419
+  },
+  {
+   "aircraft": "albatross-3m",
+   "h_min": 1.0,
+   "h_tip_min": 0.3,
+   "u10": 9.263053634669284,
+   "success": true,
+   "period": 6.534158925110546,
+   "runtime_s": 11.778756380081177
+  },
+  {
+   "aircraft": "albatross-3m",
+   "h_min": 1.0,
+   "h_tip_min": 0.1,
+   "u10": 9.39970096291255,
+   "success": true,
+   "period": 6.380697186994232,
+   "runtime_s": 41.53362202644348
+  },
+  {
+   "aircraft": "albatross-3m",
+   "h_min": 0.5,
+   "h_tip_min": 0.1,
+   "u10": 9.372735270085,
+   "success": true,
+   "period": 6.275676108707592,
+   "runtime_s": 33.85031008720398
+  },
+  {
+   "aircraft": "albatross-3m",
+   "h_min": 0.3,
+   "h_tip_min": 0.05,
+   "u10": 8.719522141772284,
+   "success": true,
+   "period": 6.472734594377183,
+   "runtime_s": 11.024632692337036
+  }
+ ]
+}
