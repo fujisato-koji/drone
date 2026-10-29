@@ -148,6 +148,11 @@ class TestRoughness(unittest.TestCase):
     def test_fixed_z0_profile(self):
         self.assertEqual(profile_for(8.0, roughness="fixed_z0", z0=0.03).z0, 0.03)
 
+    def test_coare35_profile(self):
+        self.assertEqual(profile_for(10.0, roughness="coare35").z0,
+                         Wind(10.0, roughness="coare35").z0)
+        self.assertNotEqual(profile_for(10.0, roughness="coare35").z0, profile_for(10.0).z0)
+
 
 class _OneComponent:
     """Single-component train for sim.seawind.Environment (a, wavelength, phase; along the wind)."""

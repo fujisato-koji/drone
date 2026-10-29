@@ -322,6 +322,134 @@ items:
     status: assumed
     basis:
       - Q-008
+  - key: env.coare35_charnock_slope
+    v: 0.0017
+    unit: s/m
+    status: sourced
+    basis:
+      - P94
+      - P66
+  - key: env.coare35_charnock_intercept
+    v: -0.005
+    unit: 1
+    status: sourced
+    basis:
+      - P94
+      - P66
+  - key: env.coare35_charnock_max
+    v: 0.028
+    unit: 1
+    status: sourced
+    basis:
+      - P94
+  - key: lit.davenport_open_sea_z0_m
+    v: 0.0002
+    unit: m
+    status: sourced
+    basis:
+      - P99
+  - key: lit.davenport_open_flat_z0_m
+    v: 0.03
+    unit: m
+    status: sourced
+    basis:
+      - P99
+  - key: lit.sachs2013_effective_gradient_per_s
+    v: 0.1
+    unit: 1/s
+    status: sourced
+    basis:
+      - P47
+  - key: lit.sachs2013_required_gradient_per_s
+    v: 0.7
+    unit: 1/s
+    status: sourced
+    basis:
+      - P47
+  - key: env.sea_z0_min_m
+    v: 1e-05
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.sea_z0_max_m
+    v: 0.0007
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.sea_shear_1_10_min
+    v: 0.17
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.sea_shear_1_10_max
+    v: 0.24
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.z003_shear_1_10
+    v: 0.4
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.u1_over_u10_charnock_10ms
+    v: 0.79
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.u1_over_u10_z003_10ms
+    v: 0.6
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.swell_shear_2p5_8_measured_min
+    v: 0.11
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.swell_shear_2p5_8_measured_max
+    v: 0.25
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.swell_shear_2p5_8_log
+    v: 0.09
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.stability_factor_u4_warm_sea
+    v: 0.74
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.stability_factor_u4_cold_sea
+    v: 2.0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.stability_factor_u8_warm_sea
+    v: 0.9
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: env.stability_factor_u8_cold_sea
+    v: 1.21
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
   - key: env.charnock
     v: 0.0144
     unit: 1
@@ -1884,6 +2012,186 @@ items:
       - docs/02-form.md#form-comparison
   - key: form.sealedhull_2p5m.cross12_speed_knee_z003
     v: 19.98
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.u10_min_travel_log_coare35
+    v: 10.8
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.u10_min_loiter_log_coare35
+    v: 11.13
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.cross12_speed_log_coare35
+    v: 13.08
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.u10_min_travel_knee_coare35
+    v: 10.99
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.u10_min_loiter_knee_coare35
+    v: 11.65
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.cross12_speed_knee_coare35
+    v: 12.69
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_travel_log_coare35
+    v: 12.97
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_loiter_log_coare35
+    v: 13.32
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_travel_knee_coare35
+    v: 13.24
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_loiter_knee_coare35
+    v: 13.93
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_travel_log_coare35
+    v: 17.28
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_loiter_log_coare35
+    v: 17.74
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_travel_knee_coare35
+    v: 17.03
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_loiter_knee_coare35
+    v: 17.61
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_travel_log_coare35
+    v: 9.26
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_loiter_log_coare35
+    v: 9.58
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.cross12_speed_log_coare35
+    v: 18.06
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_travel_knee_coare35
+    v: 9.69
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_loiter_knee_coare35
+    v: 10.54
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.cross12_speed_knee_coare35
+    v: 17.12
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_travel_log_coare35
+    v: 13.8
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_loiter_log_coare35
+    v: 14.61
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_travel_knee_coare35
+    v: 13.52
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_loiter_knee_coare35
+    v: 14.14
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_travel_log_coare35
+    v: 11.17
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_loiter_log_coare35
+    v: 11.5
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.cross12_speed_log_coare35
+    v: 12.61
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_travel_knee_coare35
+    v: 11.36
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_loiter_knee_coare35
+    v: 12.11
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.cross12_speed_knee_coare35
+    v: 12.23
     unit: m/s
     status: calculated
     basis:

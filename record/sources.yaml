@@ -427,7 +427,7 @@ items:
     license: unknown
     read: partial
     retrieved: 2026-10-29
-    note: "Minimum reference wind at 10 m: 8.56 m/s for the albatross model (L/D 20) and 8.01 m/s for the 2 kg Mariner design (L/D 25, 70.6 N/m2, AR 15); large span, low cd0 and low mass help, span above 2.5 m gives little more."
+    note: "Minimum reference wind at 10 m: 8.56 m/s for the albatross model (L/D 20) and 8.01 m/s for the 2 kg Mariner design (L/D 25, 70.6 N/m2, AR 15); large span, low cd0 and low mass help, span above 2.5 m gives little more. The roughness z0 = 0.03 m is chosen to match previous researchers (Sachs 2005) and as a reasonable value for a rough sea, citing Stull for values from 1e-4 m for calm water to 0.03 m for cut grass or a very rough sea; his own wave model gives 0.0023 m at U10 11.28 m/s (read by a second reader on 2026-10-29)."
   - id: P46
     class: P
     title: "Flying at no mechanical energy cost: disclosing the secret of wandering albatrosses, G. Sachs et al., PLoS ONE 7(9), 2012"
@@ -443,7 +443,7 @@ items:
     license: unknown
     read: partial
     retrieved: 2026-10-29
-    note: Cycle about 10 s, heights 0 to 15 m, propulsive force peak about 1.2 times the weight.
+    note: "Cycle about 10 s, heights 0 to 15 m, propulsive force peak about 1.2 times the weight. The wind is taken from QuikSCAT at 10 m with a logarithmic model; the average effective wind gradient was about 0.1 1/s against about 0.7 1/s required, so the existing gradient is far too small (partial read by a second reader on 2026-10-29)."
   - id: P48
     class: P
     title: Towards robust optimization-based autonomous dynamic soaring with a fixed-wing UAV, M. Harms et al., arXiv 2512.06610, 2025
@@ -580,11 +580,11 @@ items:
   - id: P65
     class: P
     title: "Effects of transfer processes on the marine atmospheric boundary layer, A.-S. Smedman, U. Hogstrom and E. Sahlee, ECMWF workshop proceedings, 2008"
-    url: "https://www.ecmwf.int/"
+    url: "https://www.ecmwf.int/sites/default/files/elibrary/2009/76444-effects-transfer-processes-marine-atmospheric-boundary-layer_0.pdf"
     license: unknown
-    read: partial
+    read: full
     retrieved: 2026-10-29
-    note: "Under swell the log law fails; the wind has a maximum or knee at 5 to 10 m and is nearly constant above. The URL is a site root and the note holds one passage, so only that passage is confirmed as read."
+    note: "Under swell the log law fails; the wind has a maximum or knee at 5 to 10 m and is nearly constant above. Measured at Ostergarnsholm in the Baltic and on the ASIS buoy, not the open ocean. Section 3.1: during swell Monin-Obukhov similarity cannot be applied; the dimensionless shear is well above unity at 2.56 and 5.3 m and close to zero above the knee near 10 m. Read in full on 2026-10-29 by a second reader."
   - id: P66
     class: P
     title: "COARE 3.5 bulk flux algorithm, Python code coare35vn.py, NOAA Physical Sciences Laboratory"
@@ -830,3 +830,83 @@ items:
     read: full
     retrieved: 2026-10-29
     note: "Separated waves show a maximum crest angle of about 35 degrees (slope about 0.7), Kawai found 0.6; the maximum backflow is about 20% of the free-stream speed."
+  - id: P94
+    class: P
+    title: "On the exchange of momentum over the open ocean, J. B. Edson et al., Journal of Physical Oceanography 43, 1589-1610, 2013 (COARE 3.5)"
+    url: "https://airsea.ucsd.edu/wp-content/uploads/sites/10/2020/03/Edson-et-al.-2013-On-the-Exchange-of-Momentum-over-the-Open-Ocean.pdf"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Eq. 11: z0 = 0.11 nu/u* + alpha u*^2/g; eq. 13: alpha = m U10N + b, fitted between 7 and 18 m/s, capped at about 0.028; the printed m = 0.017 is a typo for 0.0017 (their Fig. 6 and the cap only fit 0.0017, as in P66). Smooth to rough between 4 and 8.5 m/s. Below 4 m/s the bin-averaged drag falls below COARE, since swell faster than the wind gives momentum back to the air; little wave influence on the profiles above 4 m for cp/U10N below 2.5; greatest uncertainty at low wind with swell."
+  - id: P95
+    class: P
+    title: "Diurnal to decadal global forcing for ocean and sea-ice models: the data sets and flux climatologies, W. G. Large and S. G. Yeager, NCAR Technical Note NCAR/TN-460+STR, 2004"
+    url: "https://www.clivar.org/sites/default/files/documents/Large%26Yeager2004.pdf"
+    license: CC BY-NC 4.0
+    read: partial
+    retrieved: 2026-10-29
+    note: "Section 2, eq. 6a: 1000 C_D10N = 2.70/U10N + 0.142 + U10N/13.09, from observations of 1 to more than 25 m/s; eq. 8 gives the stability functions. Over the ocean stability is usually near neutral."
+  - id: P96
+    class: P
+    title: "Wind stress over the open ocean, M. J. Yelland, PhD thesis, University of Southampton, 1997"
+    url: "https://eprints.soton.ac.uk/55375/1/yelland-thesis-1997.pdf"
+    license: "personal non-commercial use"
+    read: partial
+    retrieved: 2026-10-29
+    note: "Eq. 7.1 and 7.2 give C_D10N against U10N for 2 to 26 m/s; Table 7.1 compares Large and Pond 1981 (about 1.14e-3 at 4 to 10 m/s), Smith 1980 and Yelland and Taylor 1996; Smith 1988 gave a Charnock constant of 0.011. Drag measured in stable conditions is much lower, and the rise of C_D at low wind depends on the measurement height. Read sections 7.2 to 7.4 and 8.3."
+  - id: P97
+    class: P
+    title: "Upward momentum transfer in the marine boundary layer, A. A. Grachev and C. W. Fairall, Journal of Physical Oceanography 31, 1698-1711, 2001"
+    url: "https://downloads.psl.noaa.gov/BLO/Air-Sea/bulkalg/references/grachev_upwardmom_jpo_2000.pdf"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Under swell the stress reaches zero near U of 1.5 to 2 m/s (wave age about 10), and upward momentum transfer occurs about 10% of the time in some areas; the wave boundary layer can reach above 10 m; the neutral drag and roughness should be reconsidered for the swell regime, while similarity theory holds for young seas above the wave boundary layer."
+  - id: P98
+    class: P
+    title: "Evaluacion del flujo de momento entre la atmosfera y el oceano bajo diferentes condiciones de oleaje, H. Garcia Nava, MSc thesis, CICESE, 2006"
+    url: "https://cicese.repositorioinstitucional.mx/jspui/bitstream/1007/1185/1/168401.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Abstract only: in the Gulf of Tehuantepec, swell under low wind gave drag coefficients 2 to 6 times those of classical bulk formulas."
+  - id: P99
+    class: P
+    title: "Surface roughness (Davenport) code list, WMO Information System, codes.wmo.int/wmdr/SurfaceRoughnessDavenport"
+    url: "https://codes.wmo.int/wmdr/SurfaceRoughnessDavenport"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Davenport roughness classes: open sea or lake (irrespective of the wave size) 0.0002 m; open flat terrain with grass and few isolated obstacles 0.03 m."
+  - id: P100
+    class: P
+    title: "Observational study of marine atmospheric boundary layer characteristics during swell, A.-S. Smedman, U. Hogstrom, E. Sahlee et al., Journal of the Atmospheric Sciences 66, 2009, doi 10.1175/2009JAS2952.1"
+    url: "https://doi.org/10.1175/2009JAS2952.1"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "ASIS spar and a 30 m tower in the Baltic, 1.18 to 30 m: under swell with light wind a well-defined wind maximum at 5 to 10 m when cp/U8 exceeds 4 and a knee at 6 to 8 m otherwise, nearly constant above; a growing sea (cp/U8 0.63) follows similarity theory within 0.1 m/s at all levels from 1.18 m."
+  - id: P101
+    class: P
+    title: "Swell impacts on the wind profile over the South China Sea, Liu et al., Journal of Physical Oceanography 52, 2022, doi 10.1175/JPO-D-21-0164.1"
+    url: "https://doi.org/10.1175/JPO-D-21-0164.1"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Fixed platform, 8 to 36 m: the wind-sea profile is logarithmic; with swell following the wind the 8 m wind departs from the log profile, a wave layer below 20 m under swell only."
+  - id: P102
+    class: P
+    title: "Turbulence in the marine atmospheric surface layer over swell, A. Soloviev and V. Kudryavtsev, Boundary-Layer Meteorology 136, 2010"
+    url: "https://link.springer.com/article/10.1007/s10546-010-9506-z"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Abstract only: Black Sea platform, 1.3 to 21 m; no direct impact of swell on the mean profile at kp z above 0.1, which obeys similarity theory."
+  - id: P103
+    class: P
+    title: "Large-eddy simulations and observations of atmospheric marine boundary layers above nonequilibrium surface waves, P. P. Sullivan et al., Journal of the Atmospheric Sciences 65, 2008"
+    url: "https://doi.org/10.1175/2007JAS2427.1"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "With swell following the wind, a low-level jet above 1.1 times the geostrophic wind near 20 m in the simulation; observations after a storm go from a logarithmic to a nearly uniform profile."

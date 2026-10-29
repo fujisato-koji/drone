@@ -1,6 +1,6 @@
 {
  "meta": {
-  "tdr_run": "python -c 'from sim import formstudy; formstudy.run(path=\"sim/out/dsopt_z0_003.json\", tip_model=geometric z0_mode=fixed8 roughness=fixed_z0 z0=0.03)'",
+  "tdr_run": "python -c \"from sim import formstudy; formstudy.run(path='sim/out/dsopt_z0_003.json', tip_model='geometric', z0_mode='fixed8', roughness='fixed_z0', z0=0.03)\"",
   "commit": "2eab692",
   "stamp": "sha-9f5dbc24e170"
  },

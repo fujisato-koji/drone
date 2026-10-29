@@ -786,14 +786,14 @@ def sachs_albatross():
 
 # ---- roughness options and the self-consistent minimum wind (check K-007)
 def profile_for(u10, kind="log", roughness="charnock", z0=None, knee=7.5):
-    """Profile at u10. roughness "charnock": z0 from sim.seawind.Wind at this u10; "fixed_z0": z0."""
+    """Profile at u10. roughness "charnock" or "coare35": z0 from sim.seawind.Wind at this u10; "fixed_z0": z0."""
     if roughness == "fixed_z0":
         if z0 is None:
             raise ValueError("fixed_z0 needs z0")
         z0v = float(z0)
-    elif roughness == "charnock":
+    elif roughness in ("charnock", "coare35"):
         from sim.seawind import Wind
-        z0v = Wind(float(u10), 270.0).z0
+        z0v = Wind(float(u10), 270.0, roughness=roughness).z0
     else:
         raise ValueError(roughness)
     if kind == "knee":
@@ -803,14 +803,14 @@ def profile_for(u10, kind="log", roughness="charnock", z0=None, knee=7.5):
     return Profile(z0v, 10.0)
 
 
-def _scaled_fixed_point(K, kind, knee, u_guess):
+def _scaled_fixed_point(K, kind, knee, u_guess, roughness="charnock"):
     """u with u = K ln(zref / z0(u)) (the minimum u10 scales with ln(zref / z0))."""
     from scipy.optimize import brentq
     zref = min(10.0, knee) if kind == "knee" else 10.0
     from sim.seawind import Wind
 
     def g(u):
-        return u - K * np.log(zref / Wind(float(u), 270.0).z0)
+        return u - K * np.log(zref / Wind(float(u), 270.0, roughness=roughness).z0)
 
     try:
         return float(brentq(g, 0.05, 80.0, xtol=1e-6))
@@ -824,7 +824,7 @@ def solve_min_wind(ac, z0_mode="fixed8", roughness="charnock", z0=None, u10_ref=
     """Minimum-wind cycle with a chosen roughness treatment. kw go to solve (cycle, n, h_min,
     tip_model, wave, ...).
 
-    z0_mode "fixed8": z0 at u10 = u10_ref (today's behaviour). "self_consistent": Charnock z0 at
+    z0_mode "fixed8": z0 at u10 = u10_ref (today's behaviour). "self_consistent": Charnock (or COARE 3.5) z0 at
     the u10 the solution finds, by an outer fixed point. Each outer step is a direct re-solve,
     warm-started from the previous one. The next trial u10 is predicted with the scaling
     u10_min = K ln(zref / z0) (K from the last solve); the prediction is only a start, the loop
@@ -860,7 +860,7 @@ def solve_min_wind(ac, z0_mode="fixed8", roughness="charnock", z0=None, u10_ref=
             break
         xs = x
         K = info["u10"] / prof.L
-        predicted = _scaled_fixed_point(K, kind, knee, info["u10"])
+        predicted = _scaled_fixed_point(K, kind, knee, info["u10"], roughness)
         u_cur = predicted
     done = bool(info["success"] and abs(info["u10"] - hist[-1]["u10_for_z0"]) < tol_u10)
     err = None

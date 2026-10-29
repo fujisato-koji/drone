@@ -170,6 +170,20 @@ class TestSeaExtensions(unittest.TestCase):
         with self.assertRaises(ValueError):
             Wind(10.0, roughness="wave_age")
 
+    def test_coare35_drag(self):
+        # Edson et al. 2013 eq. 11 and 13; targets computed independently (x 1e-3)
+        for u, target in ((4, 0.90), (6, 0.98), (8, 1.14), (10, 1.32), (12, 1.52), (14, 1.72)):
+            w = Wind(float(u), roughness="coare35")
+            cd = (0.4 / np.log(10.0 / w.z0)) ** 2 * 1e3
+            print("coare35 U10", u, "CD x1e3", round(cd, 4), "target", target)
+            self.assertAlmostEqual(cd / target, 1.0, delta=0.03)
+        self.assertEqual(Wind(2.5, roughness="coare35").alpha, 0.0)
+        self.assertGreater(Wind(3.0, roughness="coare35").alpha, 0.0)
+        self.assertAlmostEqual(Wind(19.0, roughness="coare35").alpha, 0.0017 * 19 - 0.005, places=9)
+        self.assertEqual(Wind(20.0, roughness="coare35").alpha, 0.028)
+        self.assertEqual(Wind(10.0).z0, Wind(10.0, roughness="charnock").z0)
+        self.assertEqual(Wind(10.0).alpha, 0.0144)
+
 
 class TestSeaWindExtras(unittest.TestCase):
     def test_decay(self):

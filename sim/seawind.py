@@ -48,6 +48,11 @@ from sim.record import commit, stamp, value
 G = 9.81
 KARMAN = value("env.karman", 0.40)
 CHARNOCK = value("env.charnock", 0.0144)
+# COARE 3.5 Charnock parameter (Edson et al. 2013, JPO 43, 1589, eq. 11 and 13): alpha = clip(m U10N + b, 0, a_max).
+# The printed slope 0.017 is a typo; 0.0017 matches their Fig. 6 and the NOAA code.
+COARE35_SLOPE = value("env.coare35_charnock_slope", 0.0017)  # per m/s
+COARE35_INTERCEPT = value("env.coare35_charnock_intercept", -0.005)
+COARE35_MAX = value("env.coare35_charnock_max", 0.028)
 NU_AIR = value("env.air_kinematic_viscosity", 1.46e-5)
 JONSWAP_GAMMA = value("env.jonswap_gamma", 3.3)
 PM_HS = value("env.pm_hs_coefficient", 0.21)
@@ -121,6 +126,8 @@ class Wind:
         With Lp = g Tp^2 / (2 pi), cp = g Tp / (2 pi), and the smooth-flow
         term 0.11 nu / u* added in every option:
           "charnock" (default): z0 = charnock u*^2 / g
+          "coare35" (Edson et al. 2013): z0 = alpha u*^2 / g with
+                                alpha = clip(m U10 + b, 0, a_max), U10 as U10N
           "wave_age" (Taylor and Yelland 2001 steepness form):
                                 z0 = 1200 Hs (Hs / Lp)^4.5
           "drennan"  (Drennan et al. 2003 wave-age form):
@@ -129,7 +136,7 @@ class Wind:
         """
         if not self.u10 > 0:
             raise ValueError("u10 must be > 0")
-        if self.roughness not in ("charnock", "wave_age", "drennan"):
+        if self.roughness not in ("charnock", "coare35", "wave_age", "drennan"):
             raise ValueError("unknown roughness " + str(self.roughness))
         if self.profile not in ("log", "swell_knee"):
             raise ValueError("unknown profile " + str(self.profile))
@@ -143,7 +150,8 @@ class Wind:
             zref = min(10.0, float(self.knee_m))
         if self.sea is not None:
             self.hs, self.tp = self.sea
-        if self.roughness != "charnock" and not (
+        wind_only = self.roughness in ("charnock", "coare35")
+        if not wind_only and not (
                 self.hs is not None and self.tp is not None
                 and self.hs > 0 and self.tp > 0):
             raise ValueError("wave roughness needs hs > 0 and tp > 0")
@@ -151,18 +159,22 @@ class Wind:
         self.ex, self.ey = compass_to_vector(self.to_deg)
         ustar = 0.03 * self.u10 + 1e-3
         z0 = 0.0
-        if self.roughness != "charnock":
+        alpha = self.charnock
+        if self.roughness == "coare35":
+            alpha = float(np.clip(COARE35_SLOPE * self.u10 + COARE35_INTERCEPT, 0.0, COARE35_MAX))
+        self.alpha = alpha
+        if not wind_only:
             lp = G * self.tp**2 / (2.0 * np.pi)
             cp = G * self.tp / (2.0 * np.pi)
-        for _ in range(200 if self.roughness != "charnock" else 50):
-            if self.roughness == "charnock":
-                z0 = self.charnock * ustar**2 / G + 0.11 * NU_AIR / ustar
+        for _ in range(50 if wind_only else 200):
+            if wind_only:
+                z0 = alpha * ustar**2 / G + 0.11 * NU_AIR / ustar
             elif self.roughness == "wave_age":
                 z0 = 1200.0 * self.hs * (self.hs / lp) ** 4.5 + 0.11 * NU_AIR / ustar
             else:
                 z0 = 3.35 * self.hs * (ustar / cp) ** 3.4 + 0.11 * NU_AIR / ustar
             new = KARMAN * self.u10 / np.log(zref / z0)
-            ustar = new if self.roughness == "charnock" else 0.5 * (ustar + new)
+            ustar = new if wind_only else 0.5 * (ustar + new)
         self.ustar = float(ustar)
         self.z0 = float(z0)
 
@@ -187,7 +199,7 @@ class Wind:
 
 def _log_wind(wind: Wind) -> Wind:
     """Log-profile Wind with the same u10, from_deg and charnock as `wind`."""
-    if wind.profile == "log" and wind.roughness == "charnock":
+    if wind.profile == "log" and wind.roughness in ("charnock", "coare35"):
         return wind
     return Wind(wind.u10, wind.from_deg, charnock=wind.charnock)
 

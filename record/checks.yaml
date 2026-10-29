@@ -133,3 +133,14 @@ items:
     by: checker
     date: 2026-10-29
     detail: "The checker of K-008 re-solved two cases of the corrected form study exactly as their meta calls did and reproduced the stored values to every printed digit (baseline 10.7254 m/s, T 5.876 s; albatross-like glider with z0 0.03 m 4.7577 m/s, T 6.534 s). Its own inertial RK4 replay closes after one cycle to 1e-4 m and 1e-4 m/s, balances drag loss against shear gain (54.60 and 47.85 J/kg per cycle) and drifts at most 0.01 m and 0.1 J/kg over ten cycles. The z0 of the corrected case equals the Charnock z0 at the found wind (2.4337e-4 m). The load factor stays between 0.97 and 3.78, bank rates are at most 101 deg/s and lift-coefficient rates about 2.3 to 2.5 per second. Refuted: the flat mode constrains the wingtip only at the nodes, and between nodes the geometric tip height falls to 0.268 and 0.255 m against 0.3 m; the midpoint rows of the wave mode would fix it. On the literature roughness: under P45's settings the optimizer gives 8.566 m/s for the Sachs albatross and 9.85 m/s under the candidate settings; the albatross-like glider with its lift-to-drag ratio lowered to 20 needs 10.62 m/s, so the minimum wind scales about as the inverse of the lift-to-drag ratio and hardly with wing loading; z0 0.03 m is about 660 times the Charnock value at 4.76 m/s, so that number is not a sea value."
+  - id: K-010
+    target:
+      - env.coare35_charnock_slope
+      - env.coare35_charnock_intercept
+      - env.coare35_charnock_max
+    tier: T2
+    method: hand_calc
+    by: checker
+    result: pass
+    date: 2026-10-29
+    detail: "Before the COARE 3.5 option was written, a separate reader computed the neutral 10 m drag coefficient from the printed equations of P94 (eq. 11 and 13, slope 0.0017) for 4 to 14 m/s: 0.90, 0.98, 1.14, 1.32, 1.52 and 1.72 times 1e-3. The implementer received only those targets; the code gives 0.899, 0.974, 1.135, 1.321, 1.517 and 1.721, within 0.7% (sim/tests/test_seawind.py, test_coare35_drag). The form study rerun with the option (sim/out/dsopt_coare35.json) is not checked separately; it uses the optimizer checked in K-009."
