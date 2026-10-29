@@ -76,15 +76,23 @@ _OFFS = np.array([[_H, 0, 0], [-_H, 0, 0], [0, _H, 0], [0, -_H, 0],
 
 
 def wind_derivs(env, x, y, z, t):
-    """Return (W, grad W[i, j] = dW_i/dx_j, dW/dt) by central differences, one wind_at call."""
-    px = np.concatenate([[x], x + _OFFS[:, 0], [x, x]])
-    py = np.concatenate([[y], y + _OFFS[:, 1], [y, y]])
-    pz = np.concatenate([[z], z + _OFFS[:, 2], [z, z]])
+    """Return (W, grad W[i, j] = dW_i/dx_j, dW/dt) by central differences, one wind_at call.
+
+    If z - h would fall to the roughness length z0 or below, the z derivative uses the
+    one-sided pair (z + h, z) instead.
+    """
+    z0 = getattr(getattr(env, "wind", None), "z0", 0.0)
+    low = z - _H <= z0
+    zlo = z if low else z - _H
+    px = np.concatenate([[x], x + _OFFS[:4, 0], [x, x], [x, x]])
+    py = np.concatenate([[y], y + _OFFS[:4, 1], [y, y], [y, y]])
+    pz = np.concatenate([[z], [z] * 4, [z + _H, zlo], [z, z]])
     pt = np.concatenate([[t] * 7, [t + _DT, t - _DT]])
     w = np.asarray(env.wind_at(px, py, pz, pt), dtype=float)
     grad = np.empty((3, 3))
-    for j in range(3):
+    for j in range(2):
         grad[:, j] = (w[1 + 2 * j] - w[2 + 2 * j]) / (2 * _H)
+    grad[:, 2] = (w[5] - w[6]) / ((_H if low else 2 * _H))
     dwdt = (w[7] - w[8]) / (2 * _DT)
     return w[0], grad, dwdt
 
@@ -112,7 +120,8 @@ def derivatives(t, s, ac, env, cl, mu):
     m = ac.mass
     dV = -D / m - G * np.sin(g) - aW @ eV
     dg = (L * np.cos(mu) / m - G * np.cos(g) - aW @ eg) / V
-    dp = (L * np.sin(mu) / m - aW @ ep) / (V * np.cos(g))
+    cg = max(abs(np.cos(g)), 0.05)  # floor near vertical flight
+    dp = (L * np.sin(mu) / m - aW @ ep) / (V * cg)
     return np.array([vg[0], vg[1], vg[2], dV, dg, dp]), vg
 
 
@@ -153,13 +162,18 @@ def simulate(ac, env, ctrl, s0, t0, t_end, dt=0.02, stop=None):
         for k, v in zip(rec, vals):
             rec[k].append(float(v))
 
+    commit = getattr(ctrl, "commit", None)  # optional hook for stateful controllers
     s = np.asarray(s0, dtype=float)
     t = t0
+    if commit:
+        commit(t, s, env, ac)
     record(t, s)
     nsteps = int(round((t_end - t0) / dt))
     for i in range(nsteps):
         s = rk4_step(f, t, s, dt)
         t = t0 + (i + 1) * dt
+        if commit:
+            commit(t, s, env, ac)
         record(t, s)
         if stop(t, s) or not np.all(np.isfinite(s)):
             break

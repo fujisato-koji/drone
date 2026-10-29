@@ -396,3 +396,341 @@ items:
     license: unknown
     read: not_read
     note: Charnock coefficient 0.011 and the neutral log profile over the sea. Not read in this project; the formulas are implemented from textbook knowledge and are to be verified (Q-008).
+  - id: P42
+    class: P
+    title: How do albatrosses fly around the world without flapping their wings?, P. L. Richardson, Progress in Oceanography 88, 2011
+    url: https://doi.org/10.1016/j.pocean.2010.08.001
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: Rayleigh cycle minimum wind difference 3.4 to 3.6 m/s for an albatross with L/D 21; log profile form; quotes Sachs 2005 minimum V10 of about 9 m/s.
+  - id: P43
+    class: P
+    title: Upwind dynamic soaring of albatrosses and UAVs, P. L. Richardson, Progress in Oceanography, 2015
+    url: https://doi.org/10.1016/j.pocean.2014.11.002
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: 3.6 m/s as the minimum wind for sustained upwind soaring; UAV maximum airspeed about 9.5 times the upper-layer wind.
+  - id: P44
+    class: P
+    title: Optimal dynamic soaring consists of successive shallow arcs, G. D. Bousquet, M. S. Triantafyllou, J.-J. E. Slotine, Journal of the Royal Society Interface 14, 2017
+    url: https://doi.org/10.1098/rsif.2017.0496
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: Shear layer 1 to 3 m thick; turn angles of 54 to 78 degrees from GPS; birds use 25 to 50% of U10.
+  - id: P45
+    class: P
+    title: Boundary layer dynamic soaring for autonomous aircraft, G. C. Bower, PhD thesis, Stanford University, 2011
+    url: https://purl.stanford.edu/hp877by7094
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Minimum reference wind at 10 m: 8.56 m/s for the albatross model (L/D 20) and 8.01 m/s for the 2 kg Mariner design (L/D 25, 70.6 N/m2, AR 15); large span, low cd0 and low mass help, span above 2.5 m gives little more."
+  - id: P46
+    class: P
+    title: "Flying at no mechanical energy cost: disclosing the secret of wandering albatrosses, G. Sachs et al., PLoS ONE 7(9), 2012"
+    url: https://doi.org/10.1371/journal.pone.0041449
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: Cycle about 15 s, heights 0 to 15 m, ground speed peaks about 30 m/s at U10 11.3 m/s.
+  - id: P47
+    class: P
+    title: Experimental verification of dynamic soaring in albatrosses, G. Sachs et al., Journal of Experimental Biology 216, 2013
+    url: https://doi.org/10.1242/jeb.085209
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: Cycle about 10 s, heights 0 to 15 m, propulsive force peak about 1.2 times the weight.
+  - id: P48
+    class: P
+    title: Towards robust optimization-based autonomous dynamic soaring with a fixed-wing UAV, M. Harms et al., arXiv 2512.06610, 2025
+    url: https://arxiv.org/abs/2512.06610
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: EasyGlider 1.8 m, 1.35 kg, 0.4 m2; drag polar CD = 0.0169 - 0.0940 CL + 0.3580 CL^2; tests in 8 to 12 m/s wind.
+  - id: P49
+    class: P
+    title: "Design of small hand-launched solar-powered UAVs: from concept study to a multi-day world endurance record flight, P. Oettershagen et al., Journal of Field Robotics, 2017"
+    url: https://doi.org/10.1002/rob.21717
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: AtlantikSolar avionics 6 W including Iridium; SunPower E60 23.7%, 590 g/m2; design load factor 4 with safety factor 1.8.
+  - id: P50
+    class: P
+    title: INR-21700-P45B cell specification, version 0.2, E-One Moli Energy
+    url: https://www.kronium.cz/uploads/p45b-datasheet.pdf
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: Manufacturer datasheet. 4.5 Ah, 70 g, about 231 Wh/kg; discharge -40 to 60 C; 3.60 Ah at -20 C.
+  - id: P51
+    class: P
+    title: NASA POWER climatology, SYN1DEG 2001 to 2025, all-sky insolation
+    url: https://power.larc.nasa.gov/
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Home design point (private:loc-01): December 1.64, January 1.90, year 3.51 kWh/m2/day; 50S 70E: June 0.71, July 0.85, year 3.06 kWh/m2/day. Only two grid points were queried."
+  - id: P52
+    class: P
+    title: TriSonica Mini ultrasonic anemometer datasheet, Anemoment, 2018
+    url: https://www.licor.com/
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: Manufacturer datasheet. 50 g, 30 mA at 9 to 36 V, 0 to 30 m/s, 0.1 m/s, 10 Hz.
+  - id: P53
+    class: P
+    title: Miniature multihole airflow sensor for small UAVs, EPFL, arXiv 2505.03331, 2025
+    url: https://arxiv.org/abs/2505.03331
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: 9 g probe, 3 to 27 m/s, mean error 0.44 m/s and 0.16 degrees.
+  - id: P54
+    class: P
+    title: Technical data sheet, carbon fibre pultrusions, Easy Composites, v1.0, 2024-09-20
+    url: https://www.easycomposites.co.uk/
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Manufacturer datasheet. Pultruded carbon tube: density 1.30 to 1.50 g/cm3, modulus 28 to 40 GPa, tensile 400 to 500 MPa, flexural 250 to 400 MPa, 80 C service limit."
+  - id: P55
+    class: P
+    title: Certification Specifications for Sailplanes and Powered Sailplanes CS-22, Amendment 2, EASA
+    url: https://www.easa.europa.eu/
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: Safety factor 1.5 (22.303); utility category limit load factors +5.3 and -2.65 (22.337); gust 7.5 m/s.
+  - id: P56
+    class: P
+    title: Dynamic soaring of sailplanes over open fields, N. Sukumar and M. S. Selig, AIAA 2010-4953, 2010
+    url: https://doi.org/10.2514/6.2010-4953
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: 15 kg sailplane with L/D 26.6 needs about 13 m/s at the reference height, load factor peaks near 6; the albatross model needs about 7 m/s with peaks near 2.
+  - id: P57
+    class: P
+    title: FlyingFish UAS for ocean science missions, G. Meadows et al., 2010
+    url: https://www.unols.org/
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: A 26 kg seaplane UAV that took off from the water on its own 22 times, in waves up to 2 m, with a 30 m run.
+  - id: P58
+    class: P
+    title: Shore Protection Manual, US Army Coastal Engineering Research Center, 1984, chapter 3 wave prediction
+    url: "https://usace.contentdm.oclc.org/"
+    license: unknown
+    read: not_read
+    note: Duration-limited growth in the dimensionless forms X* = (t*/68.8)^1.5, g Hs/U^2 = 1.6e-3 X*^0.5, g Tp/U = 0.286 X*^(1/3) as implemented in sim/seawind.py; not read in this project, to be verified (Q-008).
+  - id: P59
+    class: P
+    title: The dependence of sea surface roughness on the height and steepness of the waves, P. K. Taylor and M. J. Yelland, Journal of Physical Oceanography 31, 2001
+    url: "https://doi.org/10.1175/1520-0485(2001)031<0572:TDOSSR>2.0.CO;2"
+    license: unknown
+    read: not_read
+    note: z0/Hs = 1200 (Hs/Lp)^4.5 as implemented for the wave_age roughness option; not read in this project, to be verified (Q-008).
+  - id: P60
+    class: P
+    title: On the wave age dependence of wind stress over pure wind seas, W. M. Drennan, H. C. Graber, D. Hauser and C. Quentin, Journal of Geophysical Research 108, 2003
+    url: "https://doi.org/10.1029/2000JC000715"
+    license: unknown
+    read: not_read
+    note: z0/Hs = 3.35 (u*/cp)^3.4 as implemented for the drennan roughness option; not read in this project, to be verified (Q-008).
+  - id: P61
+    class: P
+    title: "The global wind resource observed by scatterometer, I. R. Young, E. Kirezci and A. Ribal, Remote Sensing 12, 2920, 2020"
+    url: "https://doi.org/10.3390/rs12182920"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Southern Ocean monthly mean U10 about 12 m/s in winter and 10.5 m/s in summer; monthly 99th percentile about 22 m/s; percentile fields distributed as NetCDF."
+  - id: P62
+    class: P
+    title: "A global view on the wind sea and swell climate and variability from ERA-40, A. Semedo et al., Journal of Climate 24, 2011"
+    url: "https://doi.org/10.1175/2010JCLI3718.1"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Swell dominates about 90% of the time in the North and South Pacific; the swell energy share is lowest, 55 to 65%, in the Southern Ocean storm belt."
+  - id: P63
+    class: P
+    title: "Vertical profiles of the wave-induced airflow above ocean surface waves, L. Grare et al., Journal of Physical Oceanography 48, 2018"
+    url: "https://doi.org/10.1175/JPO-D-17-0012.1"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Wave-induced velocity amplitudes decay as exp(-a k z) with a about 0.77 for the horizontal and 0.62 for the vertical component, measured from 2.6 to 15 m on FLIP."
+  - id: P64
+    class: P
+    title: "Direct observations of airflow separation over ocean surface waves, M. P. Buckley et al., Nature Communications 16, 2025"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12214478/"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Over 70 to 100 m swell the wave-induced horizontal wind was about 1 m/s and the vertical about 0.3 m/s; short steep waves separate the airflow intermittently."
+  - id: P65
+    class: P
+    title: "Effects of transfer processes on the marine atmospheric boundary layer, A.-S. Smedman, U. Hogstrom and E. Sahlee, ECMWF workshop proceedings, 2008"
+    url: "https://www.ecmwf.int/"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Under swell the log law fails; the wind has a maximum or knee at 5 to 10 m and is nearly constant above."
+  - id: P66
+    class: P
+    title: "COARE 3.5 bulk flux algorithm, Python code coare35vn.py, NOAA Physical Sciences Laboratory"
+    url: "https://github.com/NOAA-PSL/COARE-algorithm"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Charnock coefficient 0.0017 U10N - 0.005 up to 19 m/s (about 0.012 at 10 m/s), smooth-flow term 0.11 nu/u*."
+  - id: P67
+    class: P
+    title: "Converging profile relationships for offshore wind speed and turbulence intensity, G. Jeans, Wind Energy Science 9, 2024"
+    url: "https://doi.org/10.5194/wes-9-2001-2024"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "ISO 19901-1 turbulence intensity Iu(z) = 0.06 (1 + 0.043 U10)(z/10)^-0.22 and its gust factor form."
+  - id: P68
+    class: P
+    title: "Guidelines for converting between various wind averaging periods in tropical cyclone conditions, B. A. Harper, J. D. Kepert and J. D. Ginger, WMO TD-1555, 2010"
+    url: "https://library.wmo.int/"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "At sea, 3 s gust over 10 min mean 1.23 at 10 m."
+  - id: P69
+    class: P
+    title: "ERA5 hourly data on single levels, Copernicus Climate Change Service, licence to use Copernicus products"
+    url: "https://cds.climate.copernicus.eu/"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Free, worldwide, perpetual, redistributable with the attribution: Generated using Copernicus Climate Change Service information [year]."
+  - id: P70
+    class: P
+    title: "Long-term wave hindcasts for the western North Pacific and Japan, T. Shimura and N. Mori, Coastal Engineering 151, 2019, data page of DPRI Kyoto University"
+    url: "https://coast.dpri.kyoto-u.ac.jp/english/?p=1763"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "JRA-55 forced WAVEWATCH III hindcast 1979 to 2017 at 7 km near Japan; NetCDF, free including commercial use, redistributable."
+  - id: P71
+    class: P
+    title: "Coastal Engineering Manual, Part II, chapter 2, Meteorology and wave climate, US Army Corps of Engineers, EM 1110-2-1100, Change 1, 31 July 2003"
+    url: "https://pdhonline.com/courses/c772/Part-II-Chap_2entire.pdf"
+    license: "Public domain (US federal government work)"
+    read: partial
+    retrieved: 2026-10-29
+    note: "Read on a course-site mirror (the USACE site refused the download); pages II-2-39 and II-2-41 to II-2-47 checked against page images. II-2-36 fetch growth, II-2-37 fully developed limits 211.5 and 239.8, II-2-38 duration to fetch X* = 5.23e-3 (g t/u*)^(3/2)."
+  - id: P72
+    class: P
+    title: "IEC 61400-1, Wind energy generation systems, Part 1, Design requirements, Kaimal turbulence model"
+    url: "https://webstore.iec.ch/"
+    license: unknown
+    read: not_read
+    note: "Lateral and vertical turbulence ratios 0.8 and 0.5 of the longitudinal intensity; to be verified (Q-008)."
+  - id: P73
+    class: P
+    title: "Albatrosses employ orientation and routing strategies similar to yacht racers, Y. Goto et al., PNAS 121(23), 2024"
+    url: "https://doi.org/10.1073/pnas.2312851121"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Albatrosses prefer headings about 83 degrees off the wind, like sailing yachts, and choose routes by the wind."
+  - id: P74
+    class: P
+    title: "Observations and models of across-wind flight speed of the wandering albatross, P. L. Richardson and E. D. Wakefield, Royal Society Open Science 9, 2022"
+    url: "https://doi.org/10.1098/rsos.211364"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Turn angle falls from about 137 degrees in light wind to about 15 degrees in strong wind; minimum wind 3.2 m/s for 137 degree turns."
+  - id: P75
+    class: P
+    title: "Optimal dynamic soaring trades off energy harvest and directional flight, L. Chen et al., iScience 28, 2025"
+    url: "https://doi.org/10.1016/j.isci.2025.112540"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Low shear gives serpentine paths and high shear flatter ones."
+  - id: P76
+    class: P
+    title: "The flight of petrels and albatrosses (Procellariiformes), observed in South Georgia and its vicinity, C. J. Pennycuick, Philosophical Transactions of the Royal Society B 300, 1982"
+    url: "https://doi.org/10.1098/rstb.1982.0158"
+    license: unknown
+    read: abstract
+    retrieved: 2026-10-29
+    note: "Proposes slope soaring along waves as the main method of the large species."
+  - id: P77
+    class: P
+    title: "Wave-slope soaring of the brown pelican, I. A. Stokes and A. J. Lucas, Movement Ecology 9, 13, 2021"
+    url: "https://doi.org/10.1186/s40462-021-00247-9"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Model: wave-slope soaring over 2 m, 15 s waves cuts the cost of transport by 60 to 70%."
+  - id: P78
+    class: P
+    title: "Gust soaring as a basis for the flight of petrels and albatrosses (Procellariiformes), C. J. Pennycuick, Avian Science 2, 2002"
+    url: "https://hdl.handle.net/1983/9e63f712-38e2-4f54-9ff3-998057ee555e"
+    license: unknown
+    read: not_read
+    note: "Proposes gust soaring; also the tube nose as an airspeed sensor."
+  - id: P79
+    class: P
+    title: "Optimization of dynamic soaring in a flap-gliding seabird affects its large-scale distribution at sea, J. A. Kempton et al., Science Advances 8, 2022"
+    url: "https://doi.org/10.1126/sciadv.abo0200"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Flap-gliding shearwaters reach about 40% of the theoretical optimum of dynamic soaring."
+  - id: P80
+    class: P
+    title: "Differential impacts of wind and waves on albatross flight performance in two ocean basins, I. J. Maywar et al., Movement Ecology, 2025"
+    url: "https://doi.org/10.1186/s40462-025-00614-w"
+    license: unknown
+    read: excerpt
+    retrieved: 2026-10-29
+    note: "Flapping falls 89 to 93% with wind speed in the Southern Ocean and with swell height in the North Pacific."
+  - id: P81
+    class: P
+    title: "Heart rate and estimated energy expenditure of flapping and gliding in black-browed albatrosses, K. Q. Sakamoto et al., Journal of Experimental Biology 216, 2013"
+    url: "https://journals.biologists.com/jeb/article/216/16/3175/"
+    license: unknown
+    read: not_read
+    note: "Cited by the overview page: most flight energy is spent in about 4.6% of the time spent flapping."
+  - id: P82
+    class: P
+    title: "Wandering albatrosses exert high take-off effort only when both wind and waves are gentle, L. Uesaka et al., eLife 12, 2023"
+    url: "https://doi.org/10.7554/eLife.87016"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Take-off run and flapping fall as wind and wave height rise; at 2 m/s wind the run is 8 s in a calm sea and 4 s with high waves."
+  - id: S1
+    class: S
+    title: "風を燃料にする翼：アホウドリの沈黙の飛行が拓く無燃料航空の未来, とまとの気分次第研究所 (note), 2026-05-08"
+    url: "https://note.com/lyco_pene/n/n33a724e39133"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "An overview the owner found; its 36 references were followed up in the source sweep."
+  - id: P83
+    class: P
+    title: "Shore Protection Manual, 4th edition, volume I, US Army Coastal Engineering Research Center, 1984"
+    url: "https://luk.staff.ugm.ac.id/USACE/USACE-ShoreProtectionManual1.pdf"
+    license: "Public domain (US federal government work)"
+    read: partial
+    retrieved: 2026-10-29
+    note: "Pages 3-30, 3-44, 3-45, 3-47 on a university mirror of the Internet Archive scan. Equations 3-28a, 3-33 to 3-38 in the adjusted wind UA = 0.71 U^1.23; not used by the model."

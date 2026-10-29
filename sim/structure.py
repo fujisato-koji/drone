@@ -29,9 +29,13 @@ class Material:
     sigma_allow: float
 
 
-# assumed, to be sourced (record Q)
 MATERIALS = {
-    "carbon_tube": Material("carbon tube pultruded", 1600.0, 120e9, 600e6),
+    # sourced, P54 (mid of the stated range)
+    # Easy Composites carbon fibre pultrusions TDS v1.0 2024-09-20; flexural strength 250-400 MPa
+    "carbon_tube": Material("carbon tube pultruded", 1400.0, 35e9, 300e6),
+    # assumed, to be sourced (Q-010)
+    "carbon_tube_wrapped": Material("carbon tube roll-wrapped", 1550.0, 90e9, 500e6),
+    # assumed, to be sourced (record Q)
     "fiberglass_skin": Material("fiberglass skin", 1900.0, 20e9, 150e6),
     "epp": Material("EPP foam", 30.0, 5e6, 0.3e6),
     "xps": Material("XPS foam", 33.0, 15e6, 0.4e6),
@@ -130,44 +134,58 @@ class TubeSpar:
 
 
 def size_tube_spar(geometry, mass_total, n_limit, safety_factor, material,
-                   wall_options=(0.5e-3, 0.75e-3, 1.0e-3, 1.5e-3), od_step=1e-3):
-    """Lightest constant round tube that passes at the root.
+                   wall_options=(0.5e-3, 0.75e-3, 1.0e-3, 1.5e-3, 2.0e-3), od_step=1e-3,
+                   deflection_limit=0.15):
+    """Lightest constant round tube passing stress and stiffness at the root.
 
     Simplest choice: the tube is constant over the whole half-span (the root
     section is used everywhere), so the "station where moment is small" is the tip.
+    Stress is checked at ultimate load; tip deflection / half span at limit load.
+    "limiting" is the criterion the next-lighter candidate failed (stress if it
+    failed both; "stress" if there is no lighter candidate).
     """
     span = geometry.span
+    half = span / 2.0
     lift_limit = n_limit * mass_total * G
     m_root_limit = lift_limit * span / (3.0 * np.pi)
     m_root_ult = safety_factor * m_root_limit
     od_max = float(geometry.max_spar_od(0.0))
-    best = None
+    y = np.linspace(0.0, half, 2001)
+    _, M = shear_and_moment(y, lift_limit, span)
+    w_unit = tip_deflection(y, M, 1.0)  # deflection for EI = 1; scale by 1/(E I)
+    cands = []
     od = 4e-3
     while od <= od_max + 1e-12:
         for wall in wall_options:
             if 2.0 * wall >= od:
                 continue
             spar = TubeSpar(od, wall, material)
-            if spar.stress(m_root_ult) <= material.sigma_allow:
-                if best is None or spar.mass_per_length < best.mass_per_length:
-                    best = spar
+            ok_stress = spar.stress(m_root_ult) <= material.sigma_allow
+            w_tip = w_unit[-1] / (material.E * spar.I)
+            ok_stiff = w_tip / half <= deflection_limit
+            cands.append((spar.mass_per_length, spar, ok_stress, ok_stiff, w_tip))
         od += od_step
-    if best is None:
+    cands.sort(key=lambda c: c[0])
+    best_i = next((i for i, c in enumerate(cands) if c[2] and c[3]), None)
+    if best_i is None:
         raise ValueError(
             f"No tube fits: root ultimate moment {m_root_ult:.2f} N m, "
-            f"max od {od_max * 1e3:.1f} mm, sigma_allow {material.sigma_allow / 1e6:.0f} MPa")
-    y = np.linspace(0.0, span / 2.0, 2001)
-    _, M = shear_and_moment(y, lift_limit, span)
-    w = tip_deflection(y, M, material.E * best.I)
+            f"max od {od_max * 1e3:.1f} mm, sigma_allow {material.sigma_allow / 1e6:.0f} MPa, "
+            f"deflection limit {deflection_limit}")
+    _, best, _, _, w_tip = cands[best_i]
+    limiting = "stress"
+    if best_i > 0:
+        prev = cands[best_i - 1]
+        limiting = "stress" if not prev[2] else "stiffness"
     stress_ult = best.stress(m_root_ult)
-    half = span / 2.0
     return {
         "od": best.od, "wall": best.wall, "I": best.I,
         "root_stress_ultimate": stress_ult,
         "margin": material.sigma_allow / stress_ult - 1.0,
         "mass": 2.0 * half * best.mass_per_length * 1.1,
-        "tip_deflection_limit": w[-1],
-        "deflection_ratio": w[-1] / half,
+        "tip_deflection_limit": w_tip,
+        "deflection_ratio": w_tip / half,
+        "limiting": limiting,
         "spar": best,
     }
 
@@ -239,9 +257,10 @@ def wing_strips(geometry, spar_mass, skin_core_mass, extra_mass=0.0, n_strips=20
     return comps
 
 
-def build_baseline(mass_total=1.5):
+def build_baseline(material_name="carbon tube pultruded", mass_total=1.5):
     geo = WingGeometry(span=2.0, root_chord=0.16, taper=0.6, thickness_ratio=0.10)
-    spar = size_tube_spar(geo, mass_total, 4.0, 1.5, MATERIALS["carbon_tube"])
+    mat = next(m for m in MATERIALS.values() if m.name == material_name)
+    spar = size_tube_spar(geo, mass_total, 4.0, 1.5, mat)
     sk = skin_mass(geo, MATERIALS["fiberglass_skin"], 0.2e-3, MATERIALS["xps"])
     solar = 0.08
     wing_mass = spar["mass"] + sk["total"] + solar
@@ -262,10 +281,12 @@ def build_baseline(mass_total=1.5):
 
 
 if __name__ == "__main__":
-    model, info = build_baseline()
-    s = info["spar"]
-    print(f"spar od {s['od']*1e3:.1f} mm wall {s['wall']*1e3:.2f} mm mass {s['mass']:.3f} kg "
-          f"margin {s['margin']:.2f} defl ratio {s['deflection_ratio']:.3f}")
-    print(f"wing mass {info['wing_mass']:.3f} kg (skin {info['skin']['skin']:.3f}, core {info['skin']['core']:.3f})")
-    print("summary:", model.summary())
-    print(f"target {info['mass_target']} kg, difference {info['mass_difference']:.3f} kg")
+    for name in ("carbon tube pultruded", "carbon tube roll-wrapped"):
+        model, info = build_baseline(name)
+        s = info["spar"]
+        print(f"[{name}]")
+        print(f"spar od {s['od']*1e3:.1f} mm wall {s['wall']*1e3:.2f} mm mass {s['mass']:.3f} kg "
+              f"margin {s['margin']:.2f} defl ratio {s['deflection_ratio']:.3f} limiting {s['limiting']}")
+        print(f"wing mass {info['wing_mass']:.3f} kg (skin {info['skin']['skin']:.3f}, core {info['skin']['core']:.3f})")
+        print("summary:", model.summary())
+        print(f"target {info['mass_target']} kg, difference {info['mass_difference']:.3f} kg")

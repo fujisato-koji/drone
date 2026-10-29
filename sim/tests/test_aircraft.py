@@ -71,6 +71,15 @@ class TestAircraft(unittest.TestCase):
             self.assertTrue(np.isfinite(e[k]))
         self.assertTrue(np.all(np.isfinite(e["mean_ground_velocity"])))
 
+    def test_rayleigh_smoke(self):
+        from sim.dsearch import RayleighCycleController, evaluate_controller
+        env = Environment.flat(Wind(12, 270))
+        psi_wind = np.arctan2(env.wind.ey, env.wind.ex)
+        ctrl = RayleighCycleController((1.0, 0.4, 0.9, 0.3, 10.0, 2.0, 1.0), psi_wind)
+        e = evaluate_controller(BASELINE, env, ctrl, 3.0, 2 * BASELINE.v_stall, 40.0)
+        self.assertGreaterEqual(len(ctrl.changes), 3)
+        self.assertTrue(np.all(np.isfinite(e["result"]["e_air"])))
+
 
 if __name__ == "__main__":
     unittest.main()

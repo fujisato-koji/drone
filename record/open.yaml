@@ -33,6 +33,8 @@ items:
     opened: 2026-10-26
     raised_by: assistant
     phase: design
+    closed: 2026-10-29
+    closed_by: D-012
   - id: Q-004
     kind: question
     text: Keep aiming for class 1 type certification (Level 4), or make the first type a class 2 type under cert.self_confirm_weight and take class 1 as the next step?
@@ -43,6 +45,8 @@ items:
     opened: 2026-10-26
     raised_by: assistant
     phase: design
+    closed: 2026-10-29
+    closed_by: D-012
   - id: Q-005
     kind: question
     text: The uniformity standard of type certification does not allow a split in which the designer, maker, inspector, and person responsible for a component are all the same single person with nobody else (P7 p244). Who will take at least one role (for example, inspection) and the independent audit, which may be held together with other roles?
@@ -52,6 +56,8 @@ items:
     opened: 2026-10-26
     raised_by: assistant
     phase: design
+    closed: 2026-10-29
+    closed_by: D-012
   - id: Q-006
     kind: question
     text: Find third party liability insurance that an individual can buy for a self-built aircraft flown at Level 3.5. The hobby policy covers hobby flights only and excludes work and research (M3), the business policy is for corporations and sole proprietors and for industrial aircraft with a sale price (M4), and another product excludes self-built aircraft (M5).
@@ -98,3 +104,43 @@ items:
     opened: 2026-10-29
     raised_by: assistant
     phase: design
+  - id: Q-010
+    kind: finding
+    text: With the pultruded carbon values of P54 the lightest spar that meets the stress criterion deflects 0.168 of the half span at limit load, above the 0.15 practice; the sizing routine has no stiffness criterion, and roll-wrapped or prepreg tubes (higher modulus) are not yet sourced. Add a deflection limit to the sizing and source a stiffer tube before the next pass.
+    waits_for: assistant
+    affects:
+      - spar.tip_deflection_ratio
+      - spar.od_mm
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-29
+  - id: Q-011
+    kind: finding
+    text: "The sea and wind model has no turbulence, keeps the log profile under swell although measurements show a wind maximum or knee at 5 to 10 m with a nearly constant wind above (P65), and decays the wave-induced perturbation as exp(-k z) where measurements give exp(-0.77 k z) and exp(-0.62 k z) (P63). Swell dominates about 90% of the time in the Pacific (P62), so the shear available for soaring may be overestimated above the knee. Add a turbulence model, a swell-knee profile option, and measured decay rates, and run the form study with both profiles."
+    waits_for: assistant
+    affects:
+      - R-02
+      - R-12
+      - env.charnock
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-29
+  - id: Q-012
+    kind: finding
+    text: "The baseline's wing carries an average of patterns.solar_avg_baseline_w of solar power against ds.avionics_power_w of avionics, so R-08 cannot be met as the design point stands; a year aloft needs average avionics power cut to a fraction of a watt by sleeping between tasks, more solar area, or both, and the darkest design day (lit.insolation_50s_june_kwh_m2_day) makes it harder. Settle the power budget before the form is chosen."
+    waits_for: assistant
+    affects:
+      - R-08
+      - ds.avionics_power_w
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-29
+  - id: Q-013
+    kind: finding
+    text: "Wave-slope soaring is sustainable for most candidates only near the surface (the analysis put its floor at patterns.wave_slope_floor_m) and only over swell of about 8 s period, below the clearance of R-12 (ds.clearance_min_m); either R-12 gets a lower floor for wave-slope flight, which is the owner's decision, or wave-slope soaring is not a usable pattern for these sizes. Rerun the analysis with the floor at ds.clearance_min_m."
+    waits_for: assistant
+    affects:
+      - R-12
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-29
