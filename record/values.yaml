@@ -450,6 +450,18 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#sea-roughness
+  - key: dsopt.sachs_sea_charnock_u10_ms
+    v: 15.46
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
+  - key: dsopt.sachs_sea_coare35_u10_ms
+    v: 14.85
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-roughness
   - key: env.charnock
     v: 0.0144
     unit: 1
