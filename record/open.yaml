@@ -22,6 +22,8 @@ items:
     opened: 2026-10-25
     raised_by: owner
     phase: design
+    closed: 2026-10-29
+    closed_by: D-009
   - id: Q-003
     kind: question
     text: Does the budget of D-005 include the fees paid to the State for inspection? If it does, every certification route uses most of the budget on fees alone (cert.fee_type_class2_under4kg, cert.fee_aircraft_class2_untyped_under4kg).
@@ -57,5 +59,42 @@ items:
     affects:
       - D-001
     opened: 2026-10-26
+    raised_by: assistant
+    phase: design
+  - id: Q-007
+    kind: question
+    text: Which rules apply to a year-long unmanned flight over the sea (night and beyond visual line of sight permissions inside Japanese airspace, the rules beyond it, and whether the certification aim of D-003 still applies), and what the drone must carry to be legal.
+    waits_for: assistant
+    affects:
+      - D-008
+      - D-003
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-008
+    kind: question
+    text: Verify the constants and formulas of the sea and wind model (sim/seawind.py) against the primary sources P38 to P41 and against measured wind profiles over waves; the wave-coherent perturbation is a crude potential-flow model and its size near the surface is unverified.
+    waits_for: assistant
+    affects:
+      - env.karman
+      - env.charnock
+      - env.air_kinematic_viscosity
+      - env.jonswap_gamma
+      - env.pm_hs_coefficient
+      - env.pm_peak_coefficient
+    opened: 2026-10-29
+    raised_by: assistant
+    phase: design
+  - id: Q-009
+    kind: question
+    text: Settle the assumed design points of the dynamic soaring drone (ds.min_u10_ms, ds.mass_max_kg, ds.span_max_m, ds.avionics_power_w, ds.n_limit, ds.safety_factor, ds.survival_hs_m, ds.altitude_band_max_m, ds.clearance_min_m, ds.photo_bytes) from the albatross and demonstrator literature and from the simulation, then ask the owner to confirm R-01 to R-12.
+    waits_for: assistant
+    affects:
+      - R-02
+      - R-05
+      - R-07
+      - R-08
+      - R-09
+    opened: 2026-10-29
     raised_by: assistant
     phase: design

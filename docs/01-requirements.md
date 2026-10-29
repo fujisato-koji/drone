@@ -87,4 +87,67 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | cost.non_airframe_once_typ | 391250 | JPY | calculated | docs/05-parts-and-cost.md#totals |
 | cost.non_airframe_year_min | 9167 | JPY | calculated | docs/05-parts-and-cost.md#totals |
 | cost.non_airframe_year_typ | 17183 | JPY | calculated | docs/05-parts-and-cost.md#totals |
+| env.karman | 0.4 | 1 | assumed | Q-008 |
+| env.charnock | 0.0144 | 1 | assumed | Q-008 |
+| env.air_kinematic_viscosity | 1.46e-05 | m2/s | assumed | Q-008 |
+| env.jonswap_gamma | 3.3 | 1 | assumed | Q-008 |
+| env.pm_hs_coefficient | 0.21 | 1 | assumed | Q-008 |
+| env.pm_peak_coefficient | 0.877 | 1 | assumed | Q-008 |
+| ds.endurance_days | 365 | d | decided | D-008 |
+| ds.range_km | 10 | km | decided | D-009 |
+| ds.photo_bytes | 10000 | B | assumed | Q-009 |
+| ds.min_u10_ms | 8 | m/s | assumed | Q-009 |
+| ds.mass_max_kg | 3 | kg | assumed | Q-009 |
+| ds.span_max_m | 3 | m | assumed | Q-009 |
+| ds.avionics_power_w | 3 | W | assumed | Q-009 |
+| ds.n_limit | 4 | 1 | assumed | Q-009 |
+| ds.safety_factor | 1.5 | 1 | assumed | Q-009 |
+| ds.survival_hs_m | 4 | m | assumed | Q-009 |
+| ds.altitude_band_max_m | 30 | m | assumed | Q-009 |
+| ds.clearance_min_m | 1 | m | assumed | Q-009 |
+| wing.span_m | 2.0 | m | assumed | Q-009 |
+| wing.root_chord_m | 0.16 | m | assumed | Q-009 |
+| wing.taper | 0.6 | 1 | assumed | Q-009 |
+| wing.thickness_ratio | 0.1 | 1 | assumed | Q-009 |
+| wing.design_mass_kg | 1.5 | kg | assumed | Q-009 |
+| spar.carbon_density | 1600 | kg/m3 | assumed | Q-009 |
+| spar.carbon_modulus | 120000000000.0 | Pa | assumed | Q-009 |
+| spar.carbon_allowable | 600000000.0 | Pa | assumed | Q-009 |
+| spar.od_mm | 10.0 | mm | calculated | docs/03-design.md#wing-spar |
+| spar.wall_mm | 0.5 | mm | calculated | docs/03-design.md#wing-spar |
+| spar.mass_kg | 0.053 | kg | calculated | docs/03-design.md#wing-spar |
+| spar.margin | 0.08 | 1 | calculated | docs/03-design.md#wing-spar |
+| spar.tip_deflection_ratio | 0.14 | 1 | calculated | docs/03-design.md#wing-spar |
+| wing.mass_kg | 0.392 | kg | calculated | docs/03-design.md#mass-model |
+| airframe.baseline_mass_kg | 1.072 | kg | calculated | docs/03-design.md#mass-model |
+<!-- tdr:end -->
+
+## Requirements for the dynamic soaring drone {#ds-requirements}
+
+The owner moved the project from a certifiable drone to a drone that stays over the sea for a year with dynamic soaring as its core (D-008), that goes on its own to a given place and sends photos or data from there (D-009), and asked for the computation environment first (D-010).
+The certification questions Q-003 to Q-005 wait until Q-007 says which rules apply to such a flight.
+
+The questions that rule a form out were asked before, and the answers that still stand are: a personal project built by one person (D-001), a budget of budget.total (D-005), Japan as the place of building and first flights, and a long aim of circling the globe (D-009).
+The place of flight at sea and its climate are private facts and enter the record only as derived values.
+
+R-01 and R-02 are the owner's core; R-03 and R-04 are the mission (D-009).
+R-05 and R-06 follow from a year at sea: the wind will fail, so the drone must live on the water, and the sea will get in unless it is sealed.
+R-07 follows from one person and the budget; R-08 from a year without a charger; R-09 and R-10 from the loads the environment imposes; R-11 from the law; R-12 from where the shear is.
+The design points carry assumed numbers (basis Q-009) until the literature and the simulation settle them, and every requirement awaits the owner's confirmation.
+
+<!-- tdr:table kind=requirement fields=id,text,design_point,verify,status -->
+| id | text | design_point | verify | status |
+|---|---|---|---|---|
+| R-01 | The drone stays over the sea for a year without a person touching it. | Airborne or afloat for ds.endurance_days without intervention. | demonstration | awaiting |
+| R-02 | The energy for flight comes from the wind shear over the waves (dynamic soaring), with no fuel and no propeller for cruise. | Sustained flight with no net energy loss at U10 >= ds.min_u10_ms over a neutral log profile. | test | awaiting |
+| R-03 | The drone goes on its own to a position it is given and comes back. | Reaches a waypoint ds.range_km from launch within 1 km and returns. | demonstration | awaiting |
+| R-04 | The drone sends a photo or a data record from the position. | An image of ds.photo_bytes is received on shore within one hour of capture. | demonstration | awaiting |
+| R-05 | When the wind is too weak to soar, the drone lands on the water, stays sealed, rights itself, and takes off again when the wind returns. | Survives afloat at significant wave height ds.survival_hs_m and takes off from the water at U10 >= ds.min_u10_ms. | test | awaiting |
+| R-06 | No sea water reaches the electronics in a year. | No ingress after immersion to 1 m for 24 h and after a year of spray. | test | awaiting |
+| R-07 | One person can carry and launch the drone by hand. | Mass <= ds.mass_max_kg and span <= ds.span_max_m. | inspection | awaiting |
+| R-08 | The avionics run for a year on solar power and a battery. | Average avionics draw <= ds.avionics_power_w and the solar yield on the darkest design day covers it with the battery bridging the night. | analysis | awaiting |
+| R-09 | The airframe carries the loads of soaring turns and gusts. | No failure at ds.n_limit times ds.safety_factor; no permanent deformation at ds.n_limit. | analysis | awaiting |
+| R-10 | The drone survives touching down on the water. | No damage after a stall-speed touchdown at significant wave height 2 m. | test | awaiting |
+| R-11 | The flight is legal where it flies. | The rules of Q-007 are identified and met before the first flight beyond visual line of sight. | inspection | awaiting |
+| R-12 | The drone flies in the layer where the shear is, and never below a safe height over the waves. | Operates between ds.clearance_min_m and ds.altitude_band_max_m above the local sea surface. | analysis | awaiting |
 <!-- tdr:end -->

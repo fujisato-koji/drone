@@ -45,3 +45,25 @@ items:
     what: Write the record, the docs, and commit messages in English, and talk with the owner in Japanese.
     touches:
       - D-002
+  - id: D-008
+    date: 2026-10-29
+    by: owner
+    what: Design a drone that stays aloft over the sea for a year with dynamic soaring as its core.
+    touches:
+      - D-001
+      - D-003
+      - D-004
+      - Q-002
+      - Q-004
+  - id: D-009
+    date: 2026-10-29
+    by: owner
+    what: The drone goes on its own to a place it is told, over the sea and at least 10 km away, and sends photos or data from there, preferably from the spot; the long aim is to circle the globe or to photograph Antarctica.
+    touches:
+      - Q-002
+  - id: D-010
+    date: 2026-10-29
+    by: owner
+    what: Build the computation environment first, starting with a model of the sea surface and the wind above it that can be viewed in three.js, and design the aircraft in the order requirements, form, structural design, structural model.
+    touches:
+      - D-008

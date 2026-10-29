@@ -1,3 +1,99 @@
 kind: requirement
 schema: 1
 items:
+  - id: R-01
+    text: The drone stays over the sea for a year without a person touching it.
+    origin: owner
+    design_point: Airborne or afloat for ds.endurance_days without intervention.
+    verify: demonstration
+    basis:
+      - D-008
+    status: awaiting
+  - id: R-02
+    text: The energy for flight comes from the wind shear over the waves (dynamic soaring), with no fuel and no propeller for cruise.
+    origin: owner
+    design_point: Sustained flight with no net energy loss at U10 >= ds.min_u10_ms over a neutral log profile.
+    verify: test
+    basis:
+      - D-008
+    status: awaiting
+  - id: R-03
+    text: The drone goes on its own to a position it is given and comes back.
+    origin: owner
+    design_point: Reaches a waypoint ds.range_km from launch within 1 km and returns.
+    verify: demonstration
+    basis:
+      - D-009
+    status: awaiting
+  - id: R-04
+    text: The drone sends a photo or a data record from the position.
+    origin: owner
+    design_point: An image of ds.photo_bytes is received on shore within one hour of capture.
+    verify: demonstration
+    basis:
+      - D-009
+    status: awaiting
+  - id: R-05
+    text: When the wind is too weak to soar, the drone lands on the water, stays sealed, rights itself, and takes off again when the wind returns.
+    origin: derived
+    design_point: Survives afloat at significant wave height ds.survival_hs_m and takes off from the water at U10 >= ds.min_u10_ms.
+    verify: test
+    basis:
+      - D-008
+    status: awaiting
+  - id: R-06
+    text: No sea water reaches the electronics in a year.
+    origin: derived
+    design_point: No ingress after immersion to 1 m for 24 h and after a year of spray.
+    verify: test
+    basis:
+      - D-008
+    status: awaiting
+  - id: R-07
+    text: One person can carry and launch the drone by hand.
+    origin: derived
+    design_point: Mass <= ds.mass_max_kg and span <= ds.span_max_m.
+    verify: inspection
+    basis:
+      - D-005
+    status: awaiting
+  - id: R-08
+    text: The avionics run for a year on solar power and a battery.
+    origin: derived
+    design_point: Average avionics draw <= ds.avionics_power_w and the solar yield on the darkest design day covers it with the battery bridging the night.
+    verify: analysis
+    basis:
+      - D-008
+    status: awaiting
+  - id: R-09
+    text: The airframe carries the loads of soaring turns and gusts.
+    origin: derived
+    design_point: No failure at ds.n_limit times ds.safety_factor; no permanent deformation at ds.n_limit.
+    verify: analysis
+    basis:
+      - D-008
+    status: awaiting
+  - id: R-10
+    text: The drone survives touching down on the water.
+    origin: derived
+    design_point: No damage after a stall-speed touchdown at significant wave height 2 m.
+    verify: test
+    basis:
+      - D-008
+    status: awaiting
+  - id: R-11
+    text: The flight is legal where it flies.
+    origin: derived
+    design_point: The rules of Q-007 are identified and met before the first flight beyond visual line of sight.
+    verify: inspection
+    basis:
+      - D-008
+    status: awaiting
+  - id: R-12
+    text: The drone flies in the layer where the shear is, and never below a safe height over the waves.
+    origin: derived
+    design_point: Operates between ds.clearance_min_m and ds.altitude_band_max_m above the local sea surface.
+    verify: analysis
+    basis:
+      - D-008
+    status: awaiting
