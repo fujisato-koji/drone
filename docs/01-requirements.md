@@ -241,6 +241,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | lit.so_u10_p99_ms | 22 | m/s | sourced | P61 |
 | lit.pacific_swell_dominance | 0.9 | 1 | sourced | P62 |
 | lit.wave_induced_decay_u | 0.77 | 1 | sourced | P63 |
+| lit.wave_induced_amp_u | 0.95 | 1 | sourced | P63 |
 | lit.wave_induced_amp_w | 1.07 | 1 | sourced | P63 |
 | lit.wave_induced_decay_w | 0.62 | 1 | sourced | P63 |
 | lit.swell_knee_height_m | 7.5 | m | sourced | P65 |

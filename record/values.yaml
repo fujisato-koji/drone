@@ -1241,6 +1241,12 @@ items:
     status: sourced
     basis:
       - P63
+  - key: lit.wave_induced_amp_u
+    v: 0.95
+    unit: 1
+    status: sourced
+    basis:
+      - P63
   - key: lit.wave_induced_amp_w
     v: 1.07
     unit: 1

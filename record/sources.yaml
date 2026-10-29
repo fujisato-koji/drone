@@ -443,7 +443,7 @@ items:
     license: unknown
     read: partial
     retrieved: 2026-10-29
-    note: "Cycle about 10 s, heights 0 to 15 m, propulsive force peak about 1.2 times the weight. The wind is taken from QuikSCAT at 10 m with a logarithmic model; the average effective wind gradient was about 0.1 1/s against about 0.7 1/s required, so the existing gradient is far too small (partial read by a second reader on 2026-10-29)."
+    note: "Cycle about 10 s, heights 0 to 15 m, propulsive force peak about 1.2 times the weight. The wind is taken from QuikSCAT at 10 m with a logarithmic model; the average effective wind gradient was about 0.1 1/s against about 0.7 1/s required, so the existing gradient is far too small (partial read by a second reader on 2026-10-29). On ground effect (p. 4228): it cannot increase the total energy because it merely reduces the drag, so it plays no role in the energy gain; the induced drag factor falls by about 10% at a height of a semispan, and a high bank reduces the effect."
   - id: P48
     class: P
     title: Towards robust optimization-based autonomous dynamic soaring with a fixed-wing UAV, M. Harms et al., arXiv 2512.06610, 2025
@@ -568,7 +568,7 @@ items:
     license: unknown
     read: partial
     retrieved: 2026-10-29
-    note: "Wave-induced velocity amplitudes decay as exp(-a k z) with a about 0.77 for the horizontal and 0.62 for the vertical component, measured from 2.6 to 15 m on FLIP. The fit of the vertical amplitude is Aw |1 - U(z)/c| a k c exp(-aw k z) with Aw 1.07 and aw 0.62 (0.83 in the other form); for low wind the wave-induced fluctuations reach up to 90% of the total. The paper prints doi 10.1175/JPO-D-18-0121.1 (the first entry gave a wrong doi); sections 2 to 3c and Table 1 read by a second reader on 2026-10-29."
+    note: "Wave-induced velocity amplitudes decay as exp(-a k z) with a about 0.77 for the horizontal and 0.62 for the vertical component, measured from 2.6 to 15 m on FLIP. The fit of the vertical amplitude is Aw |1 - U(z)/c| a k c exp(-aw k z) with Aw 1.07 and aw 0.62 (0.83 in the other form), and the horizontal amplitude Au 0.95 when fitted freely; near the critical height the amplitude stays at a finite minimum; for low wind the wave-induced fluctuations reach up to 90% of the total. The paper prints doi 10.1175/JPO-D-18-0121.1 (the first entry gave a wrong doi); sections 2 to 3c and Table 1 read by a second reader on 2026-10-29."
   - id: P64
     class: P
     title: "Direct observations of airflow separation over ocean surface waves, M. P. Buckley et al., Nature Communications 16, 2025"
@@ -897,7 +897,7 @@ items:
     note: "Fixed platform, 8 to 36 m: the wind-sea profile is logarithmic; with swell following the wind the 8 m wind departs from the log profile, a wave layer below 20 m under swell only."
   - id: P102
     class: P
-    title: "Turbulence in the marine atmospheric surface layer over swell, A. Soloviev and V. Kudryavtsev, Boundary-Layer Meteorology 136, 2010"
+    title: "Wind-speed undulations over swell: field experiment and interpretation, A. Soloviev and V. Kudryavtsev, Boundary-Layer Meteorology 136, 2010 (title corrected on 2026-10-30)"
     url: "https://link.springer.com/article/10.1007/s10546-010-9506-z"
     license: unknown
     read: partial
@@ -1023,3 +1023,219 @@ items:
     read: full
     retrieved: 2026-10-29
     note: "Three shy albatrosses with altimeters: mean height 4.48 m (median 3.91, interquartile 2.41 to 5.97, maximum 26.1) in the central scenario, cycle 10.4 s; the zero assumes skimming below 1 m. The URL is the repository root; the title is as given by a second reader."
+  - id: P118
+    class: P
+    title: "Wing resistance near the ground, C. Wieselsberger, NACA Technical Memorandum 77, 1922"
+    url: "https://ntrs.nasa.gov/api/citations/19930081293/downloads/19930081293.pdf"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "Induced drag factor near the ground sigma = (1 - 0.66 h/b)/(1.05 + 3.7 h/b) for h/b from 1/15 to 1/2, with h the gap between the wing and its image (twice the height); in terms of the height x = h_wing/b the ratio of induced drag is 1 - (1 - 1.32 x)/(1.05 + 7.4 x), valid for x from 1/30 to 1/4. A second reader's image-method calculation reproduces it to three digits."
+  - id: P119
+    class: P
+    title: "On the aerodynamics of animal flight in ground effect, J. M. V. Rayner, Philosophical Transactions of the Royal Society B 334, 119, 1991"
+    url: "https://doi.org/10.1098/rstb.1991.0101"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "The commonly printed McCormick formula omits a factor of pi; the corrected form is (16 x/pi)^2/(1 + (16 x/pi)^2) with x the height over the full span. For a bird of aspect ratio 8 the power at the minimum-cost speed falls 24% at x 0.15 and 30% at x 0.1; cost of transport falls up to 15% and mechanical power up to 35%."
+  - id: P120
+    class: P
+    title: "Ground effect correlations of Phillips and Hunsaker 2013 as reproduced by Zammit et al., WSEAS Transactions on Fluid Mechanics 19, 49, 2024"
+    url: "https://doi.org/10.37394/232013.2024.19.5"
+    license: CC BY 4.0
+    read: full
+    retrieved: 2026-10-30
+    note: "Induced drag ratio K = 1 - exp(-4.01 x^0.717) (eq. 5), and a planform-dependent form (eq. 6) with a lift correction; the original Phillips and Hunsaker paper could not be read."
+  - id: P121
+    class: P
+    title: "The significance of ground effect to the aerodynamic cost of flight and energetics of the black skimmer, P. C. Withers and P. L. Timko, Journal of Experimental Biology 70, 13, 1977"
+    url: "https://doi.org/10.1242/jeb.70.1.13"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "Minimum aerodynamic power falls from 4.4 W to 3.7 W at a height of 7 cm (about 16%)."
+  - id: P122
+    class: P
+    title: "Induced drag savings from ground effect and formation flight in brown pelicans, F. R. Hainsworth, Journal of Experimental Biology 135, 431, 1988"
+    url: "https://doi.org/10.1242/jeb.135.1.431"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "Pelicans fly 33 +- 5 cm above the water with a 2.10 m span (x 0.157), an induced drag saving of 49% by the paper's formula, which is misprinted."
+  - id: P123
+    class: P
+    title: "Ground effect in bats, L. C. Johansson et al., Current Biology 28, 3502, 2018"
+    url: "https://doi.org/10.1016/j.cub.2018.09.011"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "Measured 29% lower power at a height of 0.34 span."
+  - id: S4
+    class: S
+    title: "Comparison of Hmax and crest statistics with the Forristall distributions, Oceanweather Inc. technical note, 2002"
+    url: "https://oceanweather.com/about/COMPHMHC.pdf"
+    license: "all rights reserved"
+    read: full
+    retrieved: 2026-10-30
+    note: "Forristall 2000 short-crested crest distribution P(eta > eta_c) = exp(-(eta_c/(alpha Hs))^beta) with alpha = 0.3536 + 0.2568 S1 + 0.0800 Ur and beta = 2 - 1.7912 S1 - 0.5302 Ur + 0.284 Ur^2; the primary paper could not be read, and P124 prints 0.2561 for the S1 term."
+  - id: P124
+    class: P
+    title: "Large nearshore storm waves off the Irish coast, F. Fedele et al., arXiv 1703.08161, 2017"
+    url: "https://arxiv.org/abs/1703.08161"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "Methods: the Forristall crest law, the Rayleigh law P = exp(-8 (eta_c/Hs)^2), and the Tayfun second-order law."
+  - id: P125
+    class: P
+    title: "Stringari et al., arXiv 2101.11904, 2021 (appendix A1 on the breaking probability of dominant waves after Banner, Babanin and Young 2000)"
+    url: "https://arxiv.org/abs/2101.11904"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "Breaking probability of dominant waves Pb = 22 (eps_p - 0.055)^2.01 with eps_p = Hp kp/2 and Hp = 4 sqrt of the energy between 0.7 and 1.3 fp (printed with a plus sign that cannot be right); Banner et al. 2000 read as abstract only: negligible dominant breaking below the threshold."
+  - id: P126
+    class: P
+    title: "Observations of breaking ocean waves, M. Schwendeman, PhD thesis, University of Washington, 2016"
+    url: "https://digital.lib.washington.edu/researchworks/"
+    license: "copyright author"
+    read: partial
+    retrieved: 2026-10-30
+    note: "Field whitecaps, Hs 1.2 to 5.5 m: maximum slope about 0.57, local steepness at the break point 0.424 near the Stokes limit 0.443, the breaker lies almost fully above the mean water line, whitecaps are local regions of extreme gradients. The URL is the repository root."
+  - id: P127
+    class: P
+    title: "Observed physical and environmental causes of scatter in whitecap coverage values, A. Callaghan, G. de Leeuw, L. Cohen and C. D. ODowd, Geophysical Research Letters 35, L23609, 2008"
+    url: "https://publications.tno.nl/publication/34634744/GrDGh7/2008-U-P0367.pdf"
+    license: "copyright AGU"
+    read: full
+    retrieved: 2026-10-30
+    note: "Whitecap coverage W% = 3.18e-3 (U10 - 3.70)^3 for 3.70 to 11.25 m/s and 4.82e-4 (U10 + 1.98)^3 for 9.25 to 23.09 m/s, crossing at 10.18 m/s."
+  - id: P128
+    class: P
+    title: "Wave-coherent airflow and critical layers over ocean waves, L. Grare et al., Journal of Physical Oceanography 43, 2013, doi 10.1175/JPO-D-13-056.1"
+    url: "https://doi.org/10.1175/JPO-D-13-056.1"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "FLIP data: below the critical height the phase of the horizontal wave-coherent wind goes to 180 deg, so the air is faster over troughs; regimes slow for c/u* below 20, intermediate 20 to 30, fast above 30."
+  - id: P129
+    class: P
+    title: "Cao and Shen, large-eddy simulation of wind over waves of different wave age, Journal of Fluid Mechanics 919, A38, 2021"
+    url: "https://www.cambridge.org/core/product/FF1110E16EFB3390913DA47BB3F9DEFF/core-reader"
+    license: CC BY 4.0
+    read: partial
+    retrieved: 2026-10-30
+    note: "LES at ak 0.15, c/u* 3.46, 15.38 and 54.30: over fast waves the wave-coherent wind is positive over troughs and negative over crests, of the order of a k U0; at c/u* 15.4 it is large only in a very thin layer."
+  - id: P130
+    class: P
+    title: "Structure of the airflow above surface waves, M. P. Buckley, PhD thesis, University of Delaware, 2015"
+    url: "https://udspace.udel.edu/"
+    license: "all rights reserved"
+    read: partial
+    retrieved: 2026-10-30
+    note: "Young waves: the wind increases over crests and decreases over troughs; at Cp/u* 27.7 the trend is reversed; a sheltered region of very low air velocity downwind of the crest; separation over under 20% of waves at Cp/u* 3.7. The URL is the repository root."
+  - id: P131
+    class: P
+    title: "The second-order crest-height distribution and breaking, T. A. A. Adcock and S. Draper, University of Oxford"
+    url: "https://users.ox.ac.uk/~spet1235/2015-TPC-0515%20Adcock.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "Introduction: if there is significant breaking the second-order distribution over-predicts the crests."
+  - id: P132
+    class: P
+    title: "Turbulence spectra in the atmospheric surface layer, K. McNaughton, AMS conference paper 8.1"
+    url: "https://ams.confex.com/ams/pdfpapers/43874.pdf"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "Peak wavelengths of the spectra over height: Kaimal 1972 over land u 17, v 4, w 1.8; over the sea (Nicholls and Readings 1981) u 15, v 2.5, w 2.5."
+  - id: M13
+    class: M
+    title: "LIDAR-Lite v3 operation manual and technical specifications, Garmin"
+    url: "https://static.garmin.com/pumac/LIDAR_Lite_v3_Operation_Manual_and_Technical_Specifications.pdf"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "22 g, 5 V and 135 mA, 40 m, 270 Hz typical, +-2.5 cm under 5 m, 8 mrad beam; may fail to detect a specular object unless viewed from the normal."
+  - id: M14
+    class: M
+    title: "SF20/C and LW20/C product guides, SF11 and SF000 manuals and FAQ, LightWare LiDAR"
+    url: "https://lightwarelidar.com/"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "SF20 7.5 g, LW20 19.5 g, about 85 mA, 0.2 to 100 m, 48 to 5000 readings/s, +-5 cm, beam under 0.5 deg; SF11 latency at most 65 ms and 2 to 40 m over moving water; the FAQ says sunshine on water causes noise and false readings and advises low rates and a median filter."
+  - id: M15
+    class: M
+    title: "TF02-Pro, TFmini-S and TF-Luna datasheets, Benewake"
+    url: "https://en.benewake.com/"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "TF02-Pro 50 g, 1 W, 40 m at 90% reflectivity, 3 deg beam; water named as a failure case (signal saturated)."
+  - id: M16
+    class: M
+    title: "A121 pulsed coherent radar datasheet v1.3, Acconeer"
+    url: "https://docs.sparkfun.com/SparkFun_Qwiic_Pulsed_Radar_Sensor_XM125/"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "60 GHz chip about 5 mm, about 74 mA while measuring, water level to 20 m with a lens, beam 65 x 53 deg at half power."
+  - id: P133
+    class: P
+    title: "Development and application of an airborne system for ocean surface wave measurement, B. D. Reineman, PhD dissertation, UC San Diego, 2013"
+    url: "https://escholarship.org/content/qt5hm3q3d8/qt5hm3q3d8.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "Laser altimeter on a ScanEagle: 93% returns at 31 m over calm water (U10 2.3 to 4.1 m/s) and 75% at 300 m; the ocean swath is narrower than over land; spray seen several metres above the wake."
+  - id: P134
+    class: P
+    title: "Feddersen et al., wave measurement with a drone-borne lidar, Journal of Atmospheric and Oceanic Technology 41, 2024"
+    url: "https://escholarship.org/content/qt8448w9j3/qt8448w9j3.pdf"
+    license: CC BY 4.0
+    read: full
+    retrieved: 2026-10-30
+    note: "Velodyne VLP-32C at 33 m, Hs 1.17 m, wind 2.5 m/s: returns only near nadir, noise 0.06 m including the INS; clear water and no foam reduce returns."
+  - id: P135
+    class: P
+    title: "Sea surface mean square slope from CALIPSO lidar, Y. Hu et al., Atmospheric Chemistry and Physics 8, 3593, 2008"
+    url: "https://acp.copernicus.org/articles/8/3593/2008/acp-8-3593-2008.pdf"
+    license: CC BY 3.0
+    read: full
+    retrieved: 2026-10-30
+    note: "Specular return proportional to exp(-tan^2(theta)/s^2)/(s^2 cos^4(theta)); s^2 = 0.0146 sqrt(U) below 7 m/s, and the Cox and Munk law s^2 = 0.003 + 0.00512 U above."
+  - id: P136
+    class: P
+    title: "Bandini et al., UAV-borne radar and lidar water level measurement, Remote Sensing of Environment, 2020"
+    url: "https://backend.orbit.dtu.dk/ws/files/200377662/paperWSENoTrackedChanges.pdf"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "A Velodyne Puck LITE got no returns from a stream even at nadir; a 77 GHz radar measured the water level with 1.4 cm standard deviation."
+  - id: P137
+    class: P
+    title: "Wave radar footprint effects, K. Ewans, G. Feld and P. Jonathan, preprint 2014"
+    url: "https://www.lancaster.ac.uk/~jonathan/Rdr13.pdf"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "A 10 deg beam platform radar measures Hs -7% to +5% against buoys; errors arise when a higher section of water lies close to the point below; crests biased slightly high."
+  - id: P138
+    class: P
+    title: "Effects of fog, rain and spray on automotive lidar, H. Rasshofer et al., Advances in Radio Science 9, 49, 2011"
+    url: "https://ars.copernicus.org/articles/9/49/2011/ars-9-49-2011.pdf"
+    license: CC BY 3.0
+    read: full
+    retrieved: 2026-10-30
+    note: "Droplets within 10 m tend to overload the optical receiver, giving false near returns."
+  - id: P139
+    class: P
+    title: "Ground effect altitude control with sensors under wings, fuselage and tail, US patent 7,095,364 (Boeing)"
+    url: "https://patents.google.com/patent/US7095364"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "Altitude sensors under the wings, weighted more at the wingtips, attitude-corrected, spaced under a quarter of the shortest wave of interest (read through a summarising fetch)."
