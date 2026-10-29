@@ -564,11 +564,11 @@ items:
   - id: P63
     class: P
     title: "Vertical profiles of the wave-induced airflow above ocean surface waves, L. Grare et al., Journal of Physical Oceanography 48, 2018"
-    url: "https://doi.org/10.1175/JPO-D-17-0012.1"
+    url: "https://par.nsf.gov/servlets/purl/10130722"
     license: unknown
     read: partial
     retrieved: 2026-10-29
-    note: "Wave-induced velocity amplitudes decay as exp(-a k z) with a about 0.77 for the horizontal and 0.62 for the vertical component, measured from 2.6 to 15 m on FLIP."
+    note: "Wave-induced velocity amplitudes decay as exp(-a k z) with a about 0.77 for the horizontal and 0.62 for the vertical component, measured from 2.6 to 15 m on FLIP. The fit of the vertical amplitude is Aw |1 - U(z)/c| a k c exp(-aw k z) with Aw 1.07 and aw 0.62 (0.83 in the other form); for low wind the wave-induced fluctuations reach up to 90% of the total. The paper prints doi 10.1175/JPO-D-18-0121.1 (the first entry gave a wrong doi); sections 2 to 3c and Table 1 read by a second reader on 2026-10-29."
   - id: P64
     class: P
     title: "Direct observations of airflow separation over ocean surface waves, M. P. Buckley et al., Nature Communications 16, 2025"
@@ -647,7 +647,7 @@ items:
     license: unknown
     read: partial
     retrieved: 2026-10-29
-    note: "Albatrosses prefer headings about 83 degrees off the wind, like sailing yachts, and choose routes by the wind."
+    note: "Albatrosses prefer headings about 83 degrees off the wind, like sailing yachts, and choose routes by the wind. The wind the tracked birds met was 8.7 +- 3.4 m/s at 10 m (ERA5), read by a second reader on 2026-10-29."
   - id: P74
     class: P
     title: "Observations and models of across-wind flight speed of the wandering albatross, P. L. Richardson and E. D. Wakefield, Royal Society Open Science 9, 2022"
@@ -697,7 +697,7 @@ items:
     note: "Flap-gliding shearwaters reach about 40% of the theoretical optimum of dynamic soaring."
   - id: P80
     class: P
-    title: "Differential impacts of wind and waves on albatross flight performance in two ocean basins, I. J. Maywar et al., Movement Ecology, 2025"
+    title: "Differential impacts of wind and waves on albatross flight performance in two ocean basins, I. J. Maywar et al., Movement Ecology 14, 1, 2026"
     url: "https://doi.org/10.1186/s40462-025-00614-w"
     license: unknown
     read: excerpt
@@ -706,10 +706,11 @@ items:
   - id: P81
     class: P
     title: "Heart rate and estimated energy expenditure of flapping and gliding in black-browed albatrosses, K. Q. Sakamoto et al., Journal of Experimental Biology 216, 2013"
-    url: "https://journals.biologists.com/jeb/article/216/16/3175/"
+    url: "https://nora.nerc.ac.uk/503065/1/sakamoto_accepted.pdf"
     license: unknown
-    read: not_read
-    note: "Cited by the overview page: most flight energy is spent in about 4.6% of the time spent flapping."
+    read: full
+    retrieved: 2026-10-29
+    note: "Read in full in the accepted manuscript on 2026-10-29: flapping took 4.6% of the time and accounted for 13.3% of the total energy expenditure."
   - id: P82
     class: P
     title: "Wandering albatrosses exert high take-off effort only when both wind and waves are gentle, L. Uesaka et al., eLife 12, 2023"
@@ -944,12 +945,12 @@ items:
     note: "Ultra Stick 25e, 1.27 m span, 1.96 kg, 19 m/s: roll mode 12.53 rad/s, short period 16.33 rad/s with damping 0.83, actuators second order at 50.27 rad/s with damping 0.80, a delay of 0.05 s. The URL is the group page; the file read is 2012_AIAA_JA_SYSID.pdf, whose journal details were not shown."
   - id: P108
     class: P
-    title: "Body-mounted video cameras reveal the bank angles of wandering albatrosses in dynamic soaring, S. Schoombie, R. P. Wilson and P. G. Ryan, Royal Society Open Science 10, 231363, 2023, with its data on figshare (21312678)"
+    title: "A novel approach to seabird posture estimation: finding roll and yaw angles of dynamic soaring albatrosses using tri-axial magnetometers, S. Schoombie, R. P. Wilson and P. G. Ryan, Royal Society Open Science 10, 231363, 2023, with its data on figshare (21312678)"
     url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC10698485/"
     license: CC BY 4.0
     read: partial
     retrieved: 2026-10-29
-    note: "Bank angles from bird-borne video at 40 Hz over 414 min; a second reader computed from the data a half-cycle swing with median 95 deg in 3.9 s, a mean rate with median 25 deg/s, and a peak rate with median 66 deg/s at 0.5 s smoothing (90th percentile 116); no airspeed in the data."
+    note: "Roll angles of wandering albatrosses from bird-borne loggers at 40 Hz over 414 min (title corrected on 2026-10-29: the first entry named it wrongly); a second reader computed from the data a half-cycle swing with median 95 deg in 3.9 s, a mean rate with median 25 deg/s, and a peak rate with median 66 deg/s at 0.5 s smoothing (90th percentile 116); no airspeed in the data."
   - id: S3
     class: S
     title: "Introduction to aircraft stability and control, D. A. Caughey, course notes, Cornell University, 2011"
@@ -966,3 +967,59 @@ items:
     read: partial
     retrieved: 2026-10-29
     note: "0.16 and 0.10 s per 60 deg at 4.8 and 8.4 V (X10 Mini); 0.18 and 0.09 s per 60 deg at 3.8 and 8.4 V (X08N); retailer listings, not datasheets; the URL is the maker's site, not the listing read."
+  - id: P111
+    class: P
+    title: "Wind measurements near the surface of waves, A. V. Babanin and J. McConochie, OMAE2013-10146, 2013"
+    url: "https://ndownloader.figshare.com/files/47523731"
+    license: "in copyright"
+    read: full
+    retrieved: 2026-10-29
+    note: "A wave follower at 0.12 to 0.48 m above the instantaneous surface read on average 1.05 times the log extrapolation from higher levels, with log fits above 0.99 correlation (Hs 0.14 to 0.46 m, U10 5 to 20 m/s, shallow Lake George)."
+  - id: P112
+    class: P
+    title: "Flight performance of small UAVs in turbulence, and gust soaring, C. K. Patel, H.-T. Lee and I. M. Kroo, Technical Soaring 33(4), 2009"
+    url: "https://ts.journals.publicknowledgeproject.org/index.php/ts/article/download/11/9/37"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Natural turbulence with an intensity of 10 to 15% of cruise speed can sustain a small UAV; flight tests measured 46% average energy savings."
+  - id: P113
+    class: P
+    title: "Gust energy extraction for mini- and micro-uninhabited aerial vehicles, J. W. Langelaan and G. Bramesfeld, AIAA 2008-0223"
+    url: "https://www.aero.psu.edu/avia/pubs/LanBra08.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "A 10 kg glider gains net energy from vertical gusts only above an RMS of 2.1 m/s; smaller gusts reduce the loss."
+  - id: P114
+    class: P
+    title: "Coordinated mapping and exploration for autonomous soaring, N. T. Depenbusch and J. W. Langelaan, AIAA 2010-8177"
+    url: "https://www.aero.psu.edu/avia/pubs/DepLan10.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Very little improvement from gust soaring in the low-altitude, low-turbulence condition."
+  - id: P115
+    class: P
+    title: "Flight speed and performance of the wandering albatross with respect to wind, P. L. Richardson, E. D. Wakefield and R. A. Phillips, Movement Ecology 6, 3, 2018"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC5840797/"
+    license: CC BY 4.0
+    read: full
+    retrieved: 2026-10-29
+    note: "Wandering albatrosses spend considerable time below 5 m and in wave troughs."
+  - id: P116
+    class: P
+    title: "Flight paths of seabirds soaring over the ocean surface enable measurement of fine-scale wind speed and direction, Y. Yonehara et al., PNAS 113, 2016"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC4987799/"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Wind estimated from flight paths is lower than the satellite wind at 10 m (Vsat = 1.80 Vbird - 1.42); with a log profile the corresponding height would be below 1 m, and the shear alone does not explain the difference."
+  - id: P117
+    class: P
+    title: "Seabirds fly at low altitude: shy albatross altitudes from bird-borne altimeters, P. Miller, S. Hamilton and R. Clarke, Bird Conservation International 36, e39, 2026"
+    url: "https://tethys.pnnl.gov/"
+    license: CC BY 4.0
+    read: full
+    retrieved: 2026-10-29
+    note: "Three shy albatrosses with altimeters: mean height 4.48 m (median 3.91, interquartile 2.41 to 5.97, maximum 26.1) in the central scenario, cycle 10.4 s; the zero assumes skimming below 1 m. The URL is the repository root; the title is as given by a second reader."

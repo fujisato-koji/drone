@@ -142,7 +142,7 @@ What the sources give:
 
 - A floor for piloted aircraft: below lit.gilruth_pb2v_min pilots always found the roll unsatisfactory (P106); military flying qualities ask a light aircraft to bank 60 deg in 1.3 s (P104).
 - A 1.58 m glider flying autonomous circles reached p b/(2V) of lit.bronz_pb2v_p99_min to lit.bronz_pb2v_p99_max and a lift-coefficient rate of up to lit.bronz_cl_rate_p99_max_per_s at the 99th percentile of its logs (P87, computed from the logs).
-- Wandering albatrosses roll through a half cycle at a mean rate with a median of lit.albatross_bank_rate_mean_median_deg_s, with peaks of lit.albatross_bank_rate_peak_median_deg_s (median) and lit.albatross_bank_rate_peak_p90_deg_s (90th percentile), from bird-borne video (P108, computed from the data).
+- Wandering albatrosses roll through a half cycle at a mean rate with a median of lit.albatross_bank_rate_mean_median_deg_s, with peaks of lit.albatross_bank_rate_peak_median_deg_s (median) and lit.albatross_bank_rate_peak_p90_deg_s (90th percentile), from bird-borne loggers (P108, computed from the data).
 - Bower's optimizer limited the roll rate to lit.bower_bank_rate_limit_deg_s and the lift-coefficient rate to lit.bower_cl_rate_limit_per_s per second and found them of little importance above about those values (P45).
 - A small UAV identified in flight had actuators of about 50 rad/s and a delay of 0.05 s (P107).
 
@@ -191,6 +191,39 @@ lit.ds_turn_angle_deg is the midpoint of lit.ds_turn_angle_min_deg and lit.ds_tu
 lit.shear_layer_thickness_m is the midpoint of lit.shear_layer_thickness_min_m and lit.shear_layer_thickness_max_m (P44).
 lit.rayleigh_min_wind_difference_ms is the midpoint of lit.rayleigh_min_wind_difference_min_ms and lit.rayleigh_min_wind_difference_max_ms (P42).
 
+## What carries the albatross, and what the model must include {#energy-sources}
+
+The albatross model of Sachs and Bower needs about 15 m/s of wind at 10 m in this model (see the roughness of the open sea), while tracked albatrosses meet winds of lit.bird_experienced_wind_ms on average (P73) and are seen soaring in much less (P74).
+Two readings of the literature asked what fills that gap.
+
+A correction first: Sachs et al.'s gradient of lit.sachs2013_required_gradient_per_s is what a single steady climb needs to keep its airspeed, not what a closed cycle needs; they conclude that the energy comes from turning from windward to leeward in the upper curve, that is from the wind difference between the low and the high turn, and that the low turn loses little because the wind there is slow (P47).
+
+The mechanisms, ranked by the evidence from the birds:
+
+- The wind difference across the cycle, with the low turn close to the water or in a trough: energy gain from the wind is measured on birds with fast GPS (P46, P47), and the birds spend much of their time below 5 m and in troughs (P115, P117); crude estimates give it most of the energy in usual winds (P42).
+- Updrafts over swell: seen and correlated with flapping rather than measured at a bird (P76, P80, P82); it matters in light wind with swell and carries everything in a calm (P42, P74).
+- Flapping: measured on birds, lit.bird_flapping_time_fraction of the flight time and lit.bird_flapping_energy_fraction of the energy, in light wind, into the wind and at take-off (P81, P79, P80).
+- Sitting on the water until the wind returns, which is not an energy source (P82).
+- Separation behind crests (gust soaring) is weak: Sachs et al. saw the energy rise smoothly without pulses and found the same cycles over flat land (P47); turbulence has no bird data, and for small gliders it pays only well above the turbulence near the sea (P112, P113, P114).
+
+What the model says about the first one: the gap is the wingtip, not the height.
+
+- With the wingtip held clear, lowering the floor to 0.3 m and the clearance to 0.05 m takes the Sachs model only from dsopt.sachs_coare_floor15_u10_ms to dsopt.sachs_coare_floor03_u10_ms, and its centre never goes below dsopt.sachs_coare_floor03_zmin_m, because the low turn wants a steep bank and a 3.3 m wing then reaches the water.
+- Without the wingtip constraint the same model needs dsopt.sachs_coare_notip_floor15_u10_ms at a 1.5 m floor, dsopt.sachs_coare_notip_floor05_u10_ms at 0.5 m and dsopt.sachs_coare_notip_floor01_u10_ms at 0.1 m, and with the land value of z0 only dsopt.sachs_z003_notip_floor05_u10_ms and dsopt.sachs_z003_notip_floor01_u10_ms; the albatross-like glider needs dsopt.albatross_coare_notip_floor01_u10_ms at 0.1 m (`formstudy.clearance_study()`).
+- So the bird gains by making its low turn in the slowest air with its lower wingtip almost on the water, which a point mass with a wingtip margin cannot do; how the bird turns low without a steep bank, and how much a wave trough slows the air there, are what the model does not yet capture, and no study has measured the wind at the bird's height (P116).
+- The drone cannot copy that: R-12 and the waves keep its wingtip well clear, so its low turn stays higher than the bird's.
+
+What the physics says about the second one: the vertical wave wind measured over swell from 2.6 to 15 m has the model's own form with an amplitude factor of lit.wave_induced_amp_w and a decay of lit.wave_induced_decay_w (P63), about 0.3 to 0.5 m/s near the surface over a 2 m swell, comparable to the sink rate of a glider; P64's single case is lower (Q-058).
+The log profile itself holds within a few percent down to about 0.1 m over waves (P111).
+
+What the model must include, in this order:
+
+1. The wave wind, calibrated by P63 and bounded below by P64, with cycles that follow the wave phase reliably, also at long periods, and a planner that knows the waves; this is the only documented way to soar in light wind and the reason every flight over waves still ends (see the receding horizon below).
+2. The motor as the drone's flapping: the energy per hour it needs to bridge the winds below the soaring minimum (Q-055).
+3. Turbulence as a cost on the margins of the cycle rather than as a source.
+4. The profile shapes under swell and in stable air (Q-061).
+5. Separation behind crests stays a crude option and is not developed further.
+
 ## Flight patterns {#flight-patterns}
 
 Albatrosses use several patterns and switch between them with the wind and the sea; `sim/patterns.py` holds the catalogue with its sources and simulates the ones that are new to the environment.
@@ -232,6 +265,14 @@ What it means:
 
 - The limit is now the margin of the cycles and the prediction of the sea ahead, not the accuracy of the sensors on what is below.
 - The next pass gives the library cycles margin, adds cycles synchronized with the waves once Q-058 and Q-059 are settled, models a scanner that sees a wider swath ahead, and finds why the phasing hurts (Q-060).
+
+With margins and real control limits (`python -m sim.mpc --build-margin-library` and `--margin-exp`, `sim/out/mpc_library_margin.json`, `sim/out/mpc.json` key margin_exp):
+
+- The library was rebuilt with a lowest point of 2 m, a load factor of 0.8 of the limit, 0.9 of the bank limit and 1.2 times the stall speed (lighter margins where those did not converge), with COARE 3.5, the roll and lift-coefficient rates of Q-062 and the heights held between nodes; mpc.margin_library_entries of mpc.margin_library_slots cycles converged.
+- The flight now goes through the actuators and the load-factor limit, and ends when a wingtip touches the water.
+- On a flat sea with the true state and wind, every run flew the full mpc.margin_flat_truth_run_s, where the library without margins touched the water in every run: the margins are what a closed loop needs.
+- On a flat sea with the estimated state and wind, every run touched the water within mpc.margin_flat_est_survival_min_s to mpc.margin_flat_est_survival_max_s, so the estimate is the next limit there.
+- Over waves, with a planner that assumes a flat sea, a wingtip touched within mpc.margin_sea_survival_min_s to mpc.margin_sea_survival_max_s, and a planner on the fitted waves did no better; the planner needs the waves (item 1 of the list above).
 
 ## Candidate forms {#candidate-forms}
 

@@ -823,11 +823,14 @@ def constraint_study2(path=CONSTRAINT_PATH, n=30, seeds=(0, 1, 2, 3, 4, 5), work
 CLEARANCE_PATH = os.path.join("sim", "out", "dsopt_clearance.json")
 
 
-def clearance_study(path=CLEARANCE_PATH, floors=((1.5, 0.3), (1.0, 0.3), (1.0, 0.1), (0.5, 0.1), (0.3, 0.05))):
+def clearance_study(path=CLEARANCE_PATH, floors=((1.5, 0.3), (1.0, 0.3), (1.0, 0.1), (0.5, 0.1), (0.3, 0.05),
+                                                 (1.5, None), (0.5, None), (0.1, None))):
     """Minimum wind against the height floor and the wingtip clearance, COARE 3.5 roughness.
 
     The Sachs albatross model (P45, no speed floor) and albatross-3m (speed floor 1.1 Vs),
-    min_wind travel, geometric wingtip, self-consistent roughness, n = 40.
+    min_wind travel, geometric wingtip, self-consistent roughness, n = 40. A tip clearance of
+    None switches the wingtip constraint off (h_tip_min -50 m); the Sachs model is also run with
+    the literature's z0 of 0.03 m for those cases, for comparison with P45.
     """
     from sim.dsopt import sachs_albatross, solve_min_wind
     from sim import record
@@ -835,14 +838,20 @@ def clearance_study(path=CLEARANCE_PATH, floors=((1.5, 0.3), (1.0, 0.3), (1.0, 0
     for name, vf in (("sachs-bird", 0.0), ("albatross-3m", 1.1)):
         ac = sachs_albatross()[0] if name == "sachs-bird" else by_name(name)
         for h_min, tip in floors:
-            t0 = time.time()
-            info = solve_min_wind(ac, "self_consistent", "coare35", None, u10_ref=10.0, kind="log",
-                                  cycle="travel", n=40, h_min=h_min, h_tip_min=tip, seeds=(1, 0, 2, 3),
-                                  stop_after=2, tip_model="geometric", v_factor=vf)
-            rows.append({"aircraft": name, "h_min": h_min, "h_tip_min": tip, "u10": info["u10"],
-                         "success": bool(info["success"]), "period": info["period"],
-                         "runtime_s": time.time() - t0})
-            print(rows[-1], flush=True)
+            roughs = [("coare35", None)]
+            if name == "sachs-bird" and tip is None:
+                roughs.append(("fixed_z0", 0.03))
+            for rough, z0 in roughs:
+                t0 = time.time()
+                info = solve_min_wind(ac, "self_consistent" if z0 is None else "fixed8", rough, z0,
+                                      u10_ref=10.0, kind="log", cycle="travel", n=40, h_min=h_min,
+                                      h_tip_min=-50.0 if tip is None else tip, seeds=(1, 0, 2, 3),
+                                      stop_after=2, tip_model="geometric", v_factor=vf)
+                rows.append({"aircraft": name, "roughness": rough, "z0": z0, "h_min": h_min,
+                             "h_tip_min": tip, "u10": info["u10"], "success": bool(info["success"]),
+                             "period": info["period"], "z_min": info["z_min"],
+                             "runtime_s": time.time() - t0})
+                print(rows[-1], flush=True)
     paths = ["sim/formstudy.py", "sim/dsopt.py", "sim/aircraft.py", "sim/aircraft_models.py",
              "sim/seawind.py", "record/values.yaml"]
     out = {"meta": record.meta("python -c \"from sim import formstudy; formstudy.clearance_study()\"", paths),

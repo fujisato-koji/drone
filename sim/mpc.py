@@ -336,6 +336,9 @@ LIB_PATH = os.path.join(os.path.dirname(__file__), "out", "mpc_library.json")
 LIB_CHI_DEG = (0.0, 20.0, 45.0, 90.0)
 LIB_U10 = (11.0, 13.0, 16.0)
 LIB_FALLBACK_U10 = (11.5, 12.0, 12.5)
+LIB_MARGIN_PATH = os.path.join(os.path.dirname(__file__), "out", "mpc_library_margin.json")
+MARGIN_U10 = (11.0, 13.0, 16.0, 20.0)
+MARGIN_SETS = (("standard", (2.0, 0.8, 0.9, 1.2)), ("light", (1.5, 0.9, 0.95, 1.15)))
 
 
 def wrap(a):
@@ -399,6 +402,73 @@ def build_library(names=("baseline-2m", "albatross-3m"), u10s=LIB_U10, chis=LIB_
     return entries
 
 
+def _solve_margin_entry(job):
+    """One margin-library cycle: dsopt flat mode, max speed toward chi at fixed u10, coare35
+    roughness, geometric wingtip, Hermite-Simpson midpoints, pb2v rate limits, n >= 0, with the
+    standard margins and, if that fails, the lighter ones. The entry holds the margins used and
+    the dense-replay figures of dsopt.control_stats."""
+    from sim.aircraft_models import by_name
+    from sim.dsopt import control_stats, profile_for, solve
+    name, u10, chi_deg, n = job
+    ac = by_name(name)
+    prof = profile_for(u10, "log", roughness="coare35")
+    tried = []
+    for label, (h_min, n_frac, mu_frac, v_factor) in MARGIN_SETS:
+        t0 = time.time()
+        info, x, col = solve(ac, prof, mode="max_speed", cycle="travel", n=n, u10=u10,
+                             chi=np.radians(chi_deg), tip_model="geometric", midpoints=True,
+                             rate_limits=True, rate_model="pb2v", n_min=0.0, h_min=h_min,
+                             n_frac=n_frac, mu_frac=mu_frac, v_factor=v_factor,
+                             return_x=True, stop_after=1)
+        tried.append({"margins": label, "success": bool(info["success"]),
+                      "violation": float(info["violation"]), "runtime_s": time.time() - t0})
+        if info["success"]:
+            S, C, T, _ = col.unpack(x)
+            t = np.linspace(0.0, T, n)
+            r = lambda a: [float(f"{v:.6g}") for v in np.asarray(a)]
+            cs = control_stats(col, x)
+            return {"aircraft": name, "u10": float(u10), "u10_requested": float(u10),
+                    "chi_deg": float(chi_deg), "success": True, "period": float(T),
+                    "margin_set": label,
+                    "margins": {"h_min": h_min, "n_frac": n_frac, "mu_frac": mu_frac,
+                                "v_factor": v_factor, "n_min": 0.0, "h_tip_min": col.h_tip,
+                                "k_roll": col.k_roll, "cl_rate_max_per_s": col.r_max},
+                    "speed_along_chi": float(info["speed_along_chi"]),
+                    "z_min": float(info["z_min"]), "z_min_mid": float(info["z_min_mid"]),
+                    "n_max": float(info["n_max"]), "replay": cs, "tried": tried,
+                    "t": r(t), "x": r(S[:, 0]), "y": r(S[:, 1]), "z": r(S[:, 2]),
+                    "V": r(S[:, 3]), "gamma": r(S[:, 4]), "psi": r(S[:, 5]),
+                    "cl": r(C[:, 0]), "mu": r(C[:, 1])}
+    return {"aircraft": name, "u10": float(u10), "u10_requested": float(u10),
+            "chi_deg": float(chi_deg), "success": False, "missing": True, "tried": tried}
+
+
+def build_margin_library(names=("baseline-2m", "albatross-3m"), u10s=MARGIN_U10,
+                         chis=LIB_CHI_DEG, n=40, workers=6, path=LIB_MARGIN_PATH):
+    from concurrent.futures import ProcessPoolExecutor
+
+    from sim import record
+    jobs = [(a, u, c, n) for a in names for u in u10s for c in chis]
+    t0 = time.time()
+    with ProcessPoolExecutor(workers) as ex:
+        entries = list(ex.map(_solve_margin_entry, jobs, chunksize=1))
+    meta = record.meta("python -m sim.mpc --build-margin-library",
+                       [__file__, os.path.join(os.path.dirname(__file__), "dsopt.py")])
+    meta.update({"runtime_s": time.time() - t0, "n_nodes": n,
+                 "dsopt": "solve(mode=max_speed, cycle=travel, flat mode, tip_model=geometric, "
+                          "midpoints=True, rate_limits=True, rate_model=pb2v, n_min=0, "
+                          "profile_for(u10, log, roughness=coare35), default seeds and tolerance)",
+                 "margin_sets": {k: dict(zip(("h_min", "n_frac", "mu_frac", "v_factor"), v))
+                                 for k, v in MARGIN_SETS},
+                 "margin_order": "standard first; light only where standard did not converge",
+                 "frame": "wind toward +x, angles ccw from +x; z is the height above the surface"})
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", newline="\n") as fh:
+        json.dump({"meta": meta, "entries": entries}, fh, indent=1)
+        fh.write("\n")
+    return entries
+
+
 class Cycle:
     """One periodic library cycle in the wind frame (wind toward +x), optionally mirrored."""
 
@@ -446,6 +516,13 @@ class CycleLibrary:
     def load(cls, path=LIB_PATH):
         with open(path) as fh:
             return cls(json.load(fh)["entries"])
+
+    @classmethod
+    def from_keyword(cls, library_path=None):
+        """"margin" picks LIB_MARGIN_PATH, None the default file, else a file path."""
+        if library_path is None:
+            return cls.load()
+        return cls.load(LIB_MARGIN_PATH if library_path == "margin" else library_path)
 
     def pick(self, name, u10_est, chi_rad):
         """Cycle for the aircraft nearest to u10_est and |chi| (mirrored for negative chi)."""
@@ -593,7 +670,7 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             seed=1, planner_kw=None, dt=0.01, max_components=None, estimator=None, keep=False,
             library=None, wave_aware=True, state_source="truth", wind_source="truth",
             suite="standard", profile_fit="two_param", actuators=None, n_limit=False,
-            log_every_s=5.0, stop_on_tip=False):
+            log_every_s=5.0, stop_on_tip=False, library_path=None):
     """Closed loop: true dynamics (rk4, dt), planner every replan_s in the chosen world model.
 
     world_model: "truth" | "flat" | "estimated". sensors: list of SurfaceSensor (used only for
@@ -610,6 +687,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     """
     from sim.seasense import LocalWaveEstimator
     ac = aircraft
+    if library is None and library_path is not None:
+        library = CycleLibrary.from_keyword(library_path)   # a library file picked by keyword
     kw = dict(seed=seed)
     kw.update(planner_kw or {})
     pl = MPPIPlanner(ac, **kw)
@@ -635,8 +714,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     use_est = state_source == "estimate" or wind_source == "estimate"
     if state_source not in ("truth", "estimate") or wind_source not in ("truth", "estimate"):
         raise ValueError("state_source and wind_source must be 'truth' or 'estimate'")
-    if wind_source == "estimate" and world_model != "flat":
-        raise ValueError("wind_source='estimate' needs world_model='flat'")
+    if wind_source == "estimate" and world_model not in ("flat", "estimated"):
+        raise ValueError("wind_source='estimate' needs world_model 'flat' or 'estimated'")
     if use_est:
         from sim.estimator import Estimator
         from sim.sensors import SensorSuite, truth_from_state
@@ -716,10 +795,12 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                 f0 = time.process_time()
                 fit = est.fit(t)
                 fit_cpu.append(time.process_time() - f0)
+                est_w = wind_source == "estimate"
                 if fit is None:
-                    world = w_flat
+                    world = _flat_world_uf(u10_cur, from_cur) if est_w else w_flat
                 else:
-                    world = fit.environment(u10_est, from_deg, env_true.decay)
+                    world = fit.environment(u10_cur if est_w else u10_est,
+                                            from_cur if est_w else from_deg, env_true.decay)
                     fit_q.append(fit.quality)
                     fit_n.append(fit.n_samples)
             if state_source == "estimate":
@@ -805,6 +886,12 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         out["fit_samples_mean"] = float(np.mean(fit_n)) if fit_n else 0.0
         out["fit_available_frac"] = float(len(fit_q) / max(len(cpu), 1))
         out["eta_pred_rms"] = float(np.sqrt(np.mean(np.square(pred_err)))) if pred_err else None
+    if len(T) > 1:
+        Ta, Sa = np.asarray(T), np.asarray(ST)
+        j = int(np.searchsorted(Ta, Ta[-1] - 60.0))
+        Ea = G * Sa[:, 2] + 0.5 * Sa[:, 3] ** 2
+        out["energy_per_min_last60"] = float((Ea[-1] - Ea[j]) / (Ta[-1] - Ta[j]) * 60.0)
+        out["energy_trend_window_s"] = float(Ta[-1] - Ta[j])
     out["max_n_cmd"] = float(np.max(NCMD)) if NCMD else None
     out["max_n_flown"] = float(np.max(NN)) if NN else None
     out["n_limit_bind_frac"] = float(np.mean(NBND)) if NBND else 0.0
@@ -1050,6 +1137,97 @@ def est_main(a, exp2=False):
         fh.write(chr(10))
 
 
+MARGIN_CASES = (
+    # (label, sea, planner world, state/wind source)
+    ("a flat sea, truth", "flat", "flat", "truth"),
+    ("b flat sea, estimated", "flat", "flat", "estimate"),
+    ("c sea, flat world, truth", "waves", "flat", "truth"),
+    ("d sea, flat world, estimated", "waves", "flat", "estimate"),
+    ("e sea, wave-fit world, estimated", "waves", "estimated", "estimate"),
+)
+
+
+def run_margin_job(job):
+    """job = (aircraft, u10, case index, library keyword, t_end). Actuators pb2v, n_limit,
+    stop_on_tip, the sea of the earlier rows (make_env), one seed."""
+    from sim.aircraft import Actuators
+    from sim.aircraft_models import by_name
+    from sim.autonomy import make_env
+    name, u10, k, lib, t_end = job
+    label, sea, wm, src = MARGIN_CASES[k]
+    ac = by_name(name)
+    env = make_env(sea, u10)
+    t0 = time.time()
+    r = fly_mpc(ac, env, wm, _sensors("est-radar+fwd") if wm == "estimated" else [], t_end,
+                env.wind.to_deg - 20.0, u10, seed=1, planner_kw=dict(LIB_PKW),
+                library=CycleLibrary.from_keyword(lib), state_source=src, wind_source=src,
+                suite="standard", profile_fit="two_param",
+                actuators=Actuators(ac, rate_model="pb2v"), n_limit=True, stop_on_tip=True,
+                wave_aware=False)
+    r["wall_s"] = time.time() - t0
+    r = _no_nan(r)
+    r.pop("est_log", None)
+    return {"aircraft": name, "u10": u10, "case": label, "library": lib or "old", "sea": sea,
+            "planner_world": wm, "sources": src, **r}
+
+
+def margin_table(rows):
+    lines = ["| aircraft | u10 | case | lib | end (s) | cycles | min surf / tip (m) | "
+             "n cmd / flown | binds n / mu / cl | v toward (m/s) | dE/min last 60 s |",
+             "|" + "---|" * 11]
+    for r in rows:
+        ab = r.get("actuator_bind") or {}
+        lines.append("| %s | %g | %s | %s | %s %.0f | %s | %s / %s | %s / %s | %s / %s / %s | %s | %s |" % (
+            r["aircraft"], r["u10"], r["case"], r["library"], r["ended"], r["survival_s"],
+            r.get("cycles", "n/a"), _fmt(r.get("min_clear_surface"), "%.2f"),
+            _fmt(r.get("min_clear_wingtip"), "%.2f"), _fmt(r.get("max_n_cmd"), "%.2f"),
+            _fmt(r.get("max_n_flown"), "%.2f"), _fmt(r.get("n_limit_bind_frac"), "%.3f"),
+            _fmt(ab.get("mu_rate"), "%.3f"), _fmt(ab.get("cl_rate"), "%.3f"),
+            _fmt(r.get("v_toward_target"), "%.1f"), _fmt(r.get("energy_per_min_last60"), "%.0f")))
+    return chr(10).join(lines)
+
+
+def margin_main(a):
+    from concurrent.futures import ProcessPoolExecutor
+
+    from sim import record
+    u10s = [13.0, 16.0] if a.u10 == "10,13,16" else [float(v) for v in a.u10.split(",")]
+    jobs = [(n, u, k, "margin", a.t_end) for n in a.aircraft.split(",") for u in u10s
+            for k in range(len(MARGIN_CASES))]
+    jobs += [(n, u, k, None, a.t_end) for n in a.aircraft.split(",") for u in u10s for k in (0, 2)]
+    jobs.sort(key=lambda j: -(MARGIN_CASES[j[2]][2] == "estimated") * 2
+              - (MARGIN_CASES[j[2]][1] == "waves"))
+    t0 = time.time()
+    with ProcessPoolExecutor(a.workers) as ex:
+        rows = list(ex.map(run_margin_job, jobs, chunksize=1))
+    labels = [c[0] for c in MARGIN_CASES]
+    rows.sort(key=lambda r: (r["library"] == "old", r["aircraft"], r["u10"],
+                             labels.index(r["case"])))
+    print(margin_table(rows))
+    runtime = time.time() - t0
+    print("runtime %.0f s" % runtime)
+    d = json.load(open(a.out)) if os.path.exists(a.out) else {}
+    d["margin_exp"] = {
+        "meta": {**record.meta("python -m sim.mpc --margin-exp --t-end %g" % a.t_end,
+                               [__file__, LIB_PATH, LIB_MARGIN_PATH,
+                                os.path.join(os.path.dirname(__file__), "aircraft.py"),
+                                os.path.join(os.path.dirname(__file__), "estimator.py")]),
+                 "planner_kw": LIB_PKW, "runtime_s": runtime, "t_end": a.t_end, "seed": 1,
+                 "profile_fit": "two_param", "suite": "standard", "wave_aware": False,
+                 "sea": "make_env('waves', u10) for c, d, e; make_env('flat', u10) for a, b",
+                 "actuators": "rate_model pb2v (record ctrl.*)",
+                 "n_limit": True, "stop_on_tip": True,
+                 "rows_old_library": "cases a and c only, library sim/out/mpc_library.json",
+                 "case_e": "world_model estimated (local wave fit, radar + forward scanner), "
+                           "wind from the estimator",
+                 "energy_trend": "(E_end - E_start)/(t_end - t_start) * 60 over the last 60 s "
+                                 "flown, E = g z + V^2/2"},
+        "results": rows}
+    with open(a.out, "w", newline=chr(10)) as fh:
+        json.dump(_no_nan(d), fh, indent=1)
+        fh.write(chr(10))
+
+
 def _fmt(v, f):
     return "n/a" if v is None else f % v
 
@@ -1086,7 +1264,15 @@ def main():
     ap.add_argument("--lib-exp", action="store_true")
     ap.add_argument("--est-exp", action="store_true")
     ap.add_argument("--est-exp2", action="store_true")
+    ap.add_argument("--build-margin-library", action="store_true")
+    ap.add_argument("--margin-exp", action="store_true")
     a = ap.parse_args()
+    if a.build_margin_library:
+        build_margin_library(workers=a.workers)
+        return
+    if a.margin_exp:
+        margin_main(a)
+        return
     if a.build_library:
         build_library(workers=a.workers)
         return

@@ -642,6 +642,108 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#roll-authority
+  - key: dsopt.sachs_coare_floor03_zmin_m
+    v: 0.86
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: dsopt.sachs_coare_notip_floor15_u10_ms
+    v: 14.15
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: dsopt.sachs_coare_notip_floor05_u10_ms
+    v: 10.73
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: dsopt.sachs_coare_notip_floor01_u10_ms
+    v: 7.8
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: dsopt.sachs_z003_notip_floor05_u10_ms
+    v: 5.81
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: dsopt.sachs_z003_notip_floor01_u10_ms
+    v: 3.79
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: dsopt.albatross_coare_notip_floor01_u10_ms
+    v: 4.47
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#energy-sources
+  - key: mpc.margin_library_entries
+    v: 27
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.margin_library_slots
+    v: 32
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.margin_flat_truth_run_s
+    v: 300
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.margin_flat_est_survival_min_s
+    v: 60
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.margin_flat_est_survival_max_s
+    v: 201
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.margin_sea_survival_min_s
+    v: 4
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.margin_sea_survival_max_s
+    v: 45
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: lit.bird_experienced_wind_ms
+    v: 8.7
+    unit: m/s
+    status: sourced
+    basis:
+      - P73
+  - key: lit.bird_flapping_time_fraction
+    v: 0.046
+    unit: 1
+    status: sourced
+    basis:
+      - P81
+  - key: lit.bird_flapping_energy_fraction
+    v: 0.133
+    unit: 1
+    status: sourced
+    basis:
+      - P81
   - key: env.charnock
     v: 0.0144
     unit: 1
@@ -1099,6 +1201,12 @@ items:
       - P62
   - key: lit.wave_induced_decay_u
     v: 0.77
+    unit: 1
+    status: sourced
+    basis:
+      - P63
+  - key: lit.wave_induced_amp_w
+    v: 1.07
     unit: 1
     status: sourced
     basis:
