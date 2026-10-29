@@ -19,7 +19,7 @@ items:
     result: partial
     by: checker
     date: 2026-10-26
-    detail: Another agent tried to refute eight claims on the certification routes against primary sources. Seven passed, and one, the scope of registered inspection bodies, was partial because it is current practice rather than a legal limit. The paraphrase of the uniformity standard was broader than the source, so the certification routes section of docs/01-requirements.md was corrected.
+    detail: Another agent tried to refute eight claims on the certification routes against primary sources. Seven passed, and one, the scope of registered inspection bodies, was partial because it is current practice rather than a legal limit. The paraphrase of the uniformity standard was broader than the source, so the section docs/01-requirements.md#cert-routes was corrected.
   - id: K-002
     target:
       - cost.license_exam_written_2nd
@@ -45,7 +45,7 @@ items:
     result: partial
     by: checker
     date: 2026-10-26
-    detail: Another agent tried to refute eight claims on the costs other than the airframe. Six passed. The Level 3.5 requirement was partial because section 5-4 adds more criteria and the manual adds night limitation and a preference for no-fault insurance. The insurance claim was partial because the business policy also limits aircraft to industrial ones with a sale price. The totals add up. The section in docs/05-parts-and-cost.md was corrected.
+    detail: Another agent tried to refute eight claims on the costs other than the airframe. Six passed. The Level 3.5 requirement was partial because section 5-4 adds more criteria and the manual adds night limitation and a preference for no-fault insurance. The insurance claim was partial because the business policy also limits aircraft to industrial ones with a sale price. The totals add up. The section docs/05-parts-and-cost.md#non-airframe-costs was corrected.
   - id: K-003
     target:
       - env.charnock
@@ -94,3 +94,18 @@ items:
     by: checker
     date: 2026-10-29
     detail: "A separate checker opened the Coastal Engineering Manual (P71) and the Shore Protection Manual (P83) and checked the growth equations against the printed pages. The duration-to-fetch relation given to the implementer from memory (g t/u* = 77.23 X*^(2/3)) was wrong; 77.23 belongs to II-2-35, and the duration law is II-2-38, X* = 5.23e-3 (g t/u*)^(3/2). The code was corrected; at 15 m/s the sea now reaches 1.60, 2.70 and 4.53 m after 6, 12 and 24 h and the CEM limit of 7.88 m after about 50 h, matching the checker's computation from the printed equations."
+  - id: K-007
+    target:
+      - spar.od_mm
+      - spar.wall_mm
+      - spar.mass_kg
+      - spar.margin
+      - spar.tip_deflection_ratio
+      - dsopt.validation_u10_ms
+      - form.baseline_2m.u10_min_travel_log
+    tier: T2
+    method: independent_model
+    result: partial
+    by: checker
+    date: 2026-10-29
+    detail: "A separate checker worked from commit 86d6689 only. Spar: an exhaustive search with the sourced mid values reproduced 13.0 mm by 0.75 mm, 0.0889 kg, margin 0.339, deflection ratio 0.1496; with the lower bounds of P54 the tube becomes 14 mm by 0.75 mm. Defects: the limiting-criterion label is wrong (stiffness limits, not stress); the tube is checked for fit only at the root although it runs the whole span, so a 13 mm tube fits only the inner quarter of the half span; the prose said the stress-only tube was 13 by 0.75. Optimizer: the equations, periodicity and Hermite-Simpson defects are correct (residual 1e-14); replaying the optimal controls in an independent Cartesian model closes the cycle to 1e-4 m and balances drag loss and wind gain; without the 0.3 m wingtip constraint the albatross case gives 8.566 m/s against Bower's 8.56, so the 11% gap is the wingtip constraint, which uses (b/2)|mu| instead of (b/2) sin|mu| cos gamma; converged values are about 9.46 and 11.81 m/s; the period is not robust; fixing z0 at its 8 m/s value overstates every minimum wind by about 7% (self-consistent baseline 11.07 m/s)."

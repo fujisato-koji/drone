@@ -97,3 +97,104 @@ items:
     basis:
       - D-008
     status: confirmed
+  - id: R-13
+    text: Vessels, small craft and aircraft can see the drone by day and by night, in flight and afloat.
+    origin: derived
+    design_point: The fin, the hull sides, the wing tips and the underside of the wing are fluorescent orange and are seen by eye from a small boat at ds.day_sight_range_m in daylight, and an all-round flashing light is seen at ds.light_range_m at night, in flight and afloat.
+    verify: test
+    basis:
+      - H-01
+      - H-02
+      - H-03
+    status: confirmed
+  - id: R-14
+    text: A vessel's radar shows the drone afloat.
+    origin: derived
+    design_point: A small-craft X-band marine radar detects the drone afloat and upright at ds.radar_detect_range_m.
+    verify: test
+    basis:
+      - H-02
+    status: confirmed
+  - id: R-15
+    text: The drone stays inside the operating area it is given, and ends any flight on the water when it cannot, without needing the link.
+    origin: derived
+    design_point: The operating area lies at least ds.land_standoff_m off the coast outside the launch and recovery corridor and leaves out the surroundings of airports and heliports, ports, fairways, fixed net zones, and bathing and surfing areas, and in hardware-in-the-loop and flight tests a boundary breach, a position fix lost for ds.fix_loss_timeout_s, a fault that enters Safe, and a termination command each put the drone on the water within ds.termination_time_s without passing more than ds.geofence_margin_m beyond the boundary.
+    verify: test
+    basis:
+      - H-01
+      - H-02
+      - H-03
+      - H-05
+      - H-10
+      - H-12
+    status: confirmed
+  - id: R-16
+    text: A person who finds the drone, afloat or ashore, whole or broken, can tell what it is, that it holds lithium cells, and whom to call.
+    origin: derived
+    design_point: Labels on the hull and on the cell case give the owner's contact, the registration mark, a lithium cell warning and a request not to open it, in Japanese and English, and stay legible at ds.label_read_distance_m after ds.endurance_days of sea and sun.
+    verify: test
+    basis:
+      - H-06
+      - H-10
+      - H-12
+    status: confirmed
+  - id: R-17
+    text: Every drone is recovered at the end of its mission or when it fails, and no part of it is left at sea or ashore by plan.
+    origin: derived
+    design_point: Before each launch a recovery plan names the recovery point, the boat and its skipper, and a response within ds.recovery_response_h of a recovery call, the drone reports its position aloft or afloat at least every ds.position_report_interval_h until it is recovered, it flies to the recovery point at the end of the mission or when its battery capacity falls below ds.eol_capacity_fraction of the rating, and its cells go to a collection route for lithium ion cells and its composite to industrial waste.
+    verify: demonstration
+    basis:
+      - H-06
+      - H-10
+      - H-12
+      - H-14
+      - H-15
+    status: confirmed
+  - id: R-18
+    text: Every radio on the drone and on the ground is lawful for its band and its place of use, and none interferes with maritime, aviation or satellite radio.
+    origin: derived
+    design_point: Each transmitter carries the Japanese technical conformity mark or a station licence for its band and for use aloft (P34), the satellite terminal holds its service authorisation, and no transmitter emits in a maritime, aeronautical or radionavigation band.
+    verify: inspection
+    basis:
+      - H-11
+    status: confirmed
+    parent: R-11
+  - id: R-19
+    text: The lithium cells cannot start a fire or release gas in flight, afloat, on charge, in storage or in shipping, and stay inside the drone if it breaks up.
+    origin: derived
+    design_point: The cells sit in a sealed case of their own with a water sensor, fixed to the hull and apart from the avionics, the protection circuit stops charging outside ds.cell_charge_temp_min_c to ds.cell_charge_temp_max_c, on overvoltage, on overcurrent or when the sensor finds water and disconnects the cells on a short circuit, the drone is charged on the ground only on a non-combustible surface under watch and stored at ds.storage_soc_fraction of full charge in a fire-resistant container, and the pack and its shipping meet the lithium ion battery shipping rules identified before the first shipment.
+    verify: test
+    basis:
+      - H-06
+      - H-07
+      - H-08
+      - H-09
+      - H-14
+    status: confirmed
+  - id: R-20
+    text: The hand launch, the landing for recovery and the lift from the water keep everyone but the launcher and the crew clear of the drone, and the motor cannot run in a person's hands.
+    origin: derived
+    design_point: The launch and recovery procedure keeps everyone but the launcher at least ds.launch_clear_radius_m from the launcher and keeps people, vessels and structures out of ds.launch_clear_distance_m ahead in the launch direction, the motor starts only ds.motor_arm_delay_s after the drone detects its release, and for recovery the drone lands at least ds.recovery_approach_distance_m from the boat and reports its motor disarmed before the boat comes closer, with the crew in life jackets and cut-resistant gloves.
+    verify: demonstration
+    basis:
+      - H-04
+      - H-05
+      - H-14
+    status: confirmed
+  - id: R-21
+    text: Building, repairing and cutting up the drone does not harm the builder or anyone in the workshop.
+    origin: derived
+    design_point: Every material is used as its safety data sheet says, carbon and glass are cut and sanded wet or under extraction with a P2 respirator and eye protection, epoxy is handled with nitrile gloves, hot-wire cutting of foam runs under local extraction with no visible smoke and is never left powered unattended, and the workshop gets at least ds.workshop_air_changes_per_h air changes while resin cures, foam is cut or parts are soldered.
+    verify: inspection
+    basis:
+      - H-13
+    status: confirmed
+  - id: R-22
+    text: The drone keeps clear of the vessels it can detect, in flight and when it takes off from the water.
+    origin: derived
+    design_point: With recorded AIS traffic replayed into the flight controller, the drone keeps at least ds.vessel_standoff_m horizontally from every vessel it receives, and never starts a take-off from the water within ds.vessel_standoff_m of one.
+    verify: test
+    basis:
+      - H-01
+      - H-02
+    status: confirmed

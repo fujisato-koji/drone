@@ -7,36 +7,32 @@ Conventions follow sim.seawind (x east, y north, z up; compass degrees) and
 sim.aircraft (state [x, y, z, V, gamma, psi], psi = atan2(y, x)).
 """
 import json
-import re
-import subprocess
-import sys
 from pathlib import Path
 
 import numpy as np
 
+from sim import record
 from sim.aircraft import BASELINE, G, simulate
 from sim.seawind import Environment, WaveTrain, Wind, compass_to_vector
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_PATH = ROOT / "sim" / "out" / "patterns.json"
+_SIM = Path(__file__).resolve().parent
+# files the output depends on: the stamp covers them, in this order
+MODEL_FILES = [_SIM / "patterns.py", _SIM / "aircraft.py", _SIM / "aircraft_models.py",
+               _SIM / "seawind.py", record.VALUES_PATH]
 
 
 def tdr_value(key, default=None):
-    """Value of a record key through `python tools/tdr.py get <key>`; default if unavailable."""
-    tool = ROOT / "tools" / "tdr.py"
-    if not tool.exists():
-        return default
+    """Value of a record key through sim.record; default (None if not given) when the key is absent."""
     try:
-        r = subprocess.run([sys.executable, str(tool), "get", key], cwd=str(ROOT),
-                           capture_output=True, text=True, timeout=30)
-        m = re.search(r"^v:\s*(\S+)", r.stdout, re.M)
-        return float(m.group(1)) if m else default
-    except (OSError, ValueError, subprocess.SubprocessError):
-        return default
+        return record.value(key, default)
+    except KeyError:
+        return None
 
 
 # Minimum U10 for dynamic soaring: record value ds.min_u10_ms (read once at import), else 8.
-U10_MIN_DS = tdr_value("ds.min_u10_ms", 8.0)
+U10_MIN_DS = record.value("ds.min_u10_ms", 8.0)
 
 # ---------------------------------------------------------------- 1. catalogue
 
@@ -441,7 +437,8 @@ def main():
         print("%4.0f %4.1f %-10s %s" % (r["u10"], r["hs_swell"], r["battery"], r["pattern"]))
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(OUT_PATH, "w", newline="\n") as fh:
-        json.dump(_clean({"patterns": PATTERNS, "u10_min_ds": U10_MIN_DS, "wave_slope": ws,
+        json.dump(_clean({"meta": record.meta("python -m sim.patterns", MODEL_FILES),
+                          "patterns": PATTERNS, "u10_min_ds": U10_MIN_DS, "wave_slope": ws,
                           "flap_glide": fg, "selector_sweep": sw,
                           "assumptions": {"battery_mass_fraction": BATTERY_MASS_FRACTION,
                                           "solar_cell_eff": SOLAR_CELL_EFF,

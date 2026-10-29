@@ -1,3 +1,141 @@
 kind: hazard
 schema: 1
 items:
+  - id: H-01
+    text: In flight in the band of R-12, the drone strikes a vessel or small craft, its mast, rigging, deck or windows, or a person aboard or in the water.
+    phases:
+      - operate
+    at_risk: Crews and passengers of vessels and small craft, people in the water (swimmers, surfers, divers), and the vessels.
+    controls:
+      - R-13
+      - R-15
+      - R-22
+  - id: H-02
+    text: Afloat or taking off from the water, the drone is hit by a small craft or hits one, damaging a hull, a propeller or a water intake, or its own propeller strikes a person nearby.
+    phases:
+      - operate
+    at_risk: Crews of small craft and personal watercraft, people in the water, and the craft.
+    controls:
+      - R-05
+      - R-13
+      - R-14
+      - R-15
+      - R-22
+  - id: H-03
+    text: The drone collides with a manned aircraft flying low over the sea (a rescue or coast guard helicopter, a seaplane taking off or landing) or with another unmanned aircraft.
+    phases:
+      - operate
+    at_risk: Crews and passengers of manned aircraft, and the aircraft.
+    controls:
+      - R-11
+      - R-12
+      - R-13
+      - R-15
+  - id: H-04
+    text: At the hand launch, the drone, a wing tip or the propeller strikes the launcher or a bystander, or a failed launch puts the drone onto people on the shore or the deck.
+    phases:
+      - operate
+    at_risk: The launcher, helpers and bystanders at the launch point.
+    controls:
+      - R-20
+  - id: H-05
+    text: Coming back to the recovery point, the drone strikes people on the shore or the recovery crew, or lands among swimmers, surfers or small craft.
+    phases:
+      - operate
+    at_risk: People at the recovery point, coastal water users, and the recovery crew.
+    controls:
+      - R-15
+      - R-20
+  - id: H-06
+    text: A wreck, a loose cell or a broken spar washes ashore, and a finder, often a child, is burned by a cell that shorts, vents or burns, or is cut by carbon fibre, or the pack starts a fire on the beach.
+    phases:
+      - operate
+      - remove
+    at_risk: People on the coast, beach cleaners, and property ashore.
+    controls:
+      - R-16
+      - R-17
+      - R-19
+  - id: H-07
+    text: Sea water reaches the lithium cells in flight or afloat, the short makes heat, hydrogen and chlorine, and a cell goes into thermal runaway, possibly near a vessel or in the hands of a finder or the recovery crew.
+    phases:
+      - operate
+      - remove
+    at_risk: Crews of nearby vessels, the recovery crew, and finders.
+    controls:
+      - R-06
+      - R-19
+  - id: H-08
+    text: A lithium cell catches fire while it is charged, stored or worked on at home or in the workshop.
+    phases:
+      - build
+      - operate
+      - change
+      - remove
+    at_risk: The builder, the household and neighbours, and the building.
+    controls:
+      - R-19
+  - id: H-09
+    text: A lithium cell catches fire, or the pack is damaged, while the drone or its pack is shipped to the launch site or back.
+    phases:
+      - build
+      - operate
+      - change
+      - remove
+    at_risk: Carrier staff, the aircraft or vehicle that carries it and its passengers, and other cargo.
+    controls:
+      - R-19
+  - id: H-10
+    text: A navigation, software or power fault, a loss or spoofing of GNSS, or a lost link takes the drone out of its operating area toward land, ports, airports or restricted areas or across a border, or the drone drifts there afloat.
+    phases:
+      - operate
+    at_risk: People and property on land and in ports, aircraft near airports, and vessels in fairways.
+    controls:
+      - R-15
+      - R-16
+      - R-17
+  - id: H-11
+    text: A transmitter without the conformity mark or outside its permitted band, or one that interferes with maritime, aviation or satellite radio, degrades the safety communications of others.
+    phases:
+      - design
+      - operate
+    at_risk: Vessels, aircraft and stations that rely on maritime, aviation and satellite radio.
+    controls:
+      - R-11
+      - R-18
+  - id: H-12
+    text: A wreck or a floating drone fouls set nets, fixed nets or longlines, or comes up in a trawl, damaging gear and catch and leaving fishers to handle cells and carbon.
+    phases:
+      - operate
+      - remove
+    at_risk: Fishers, their gear and their catch.
+    controls:
+      - R-15
+      - R-16
+      - R-17
+  - id: H-13
+    text: Building, repairing or cutting up the drone exposes people to carbon and glass dust, to epoxy that sensitises the skin, to fumes and burns from hot-wire cutting of the foam core, and to solder fumes, or starts a fire in the workshop.
+    phases:
+      - build
+      - change
+      - remove
+    at_risk: The builder, anyone in the workshop, and the building.
+    controls:
+      - R-21
+  - id: H-14
+    text: Lifting the drone from the sea by boat, a crew member falls overboard, is cut by a broken spar, is hit by a propeller that starts, or handles a damaged pack.
+    phases:
+      - operate
+      - remove
+    at_risk: The recovery crew.
+    controls:
+      - R-17
+      - R-19
+      - R-20
+  - id: H-15
+    text: At the end of its life a cell put into household waste starts a fire in a collection vehicle or a waste plant, or composite scrap is burned in the open.
+    phases:
+      - remove
+    at_risk: Waste collection workers, waste plants, and neighbours of the place of disposal.
+    controls:
+      - R-17

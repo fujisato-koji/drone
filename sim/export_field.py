@@ -2,7 +2,10 @@
 
 import argparse
 import json
+import sys
+from pathlib import Path
 
+from . import record
 from .sea_history import SeaHistory, WindHistory
 from .seawind import Environment, WaveTrain, Wind
 
@@ -10,9 +13,18 @@ from .seawind import Environment, WaveTrain, Wind
 STORM = [(0, 4, 270), (6, 4, 270), (12, 15, 270), (30, 15, 270),
          (36, 15, 300), (42, 5, 300), (72, 5, 300)]
 FRAME_STEP_H = 3
+_HERE = Path(__file__).resolve().parent
+# files the output depends on: the stamp covers them, in this order
+MODEL_FILES = [_HERE / "export_field.py", _HERE / "seawind.py", _HERE / "sea_history.py",
+               record.VALUES_PATH]
 
 
-def export_scenario(a):
+def run_command(argv=None):
+    args = sys.argv[1:] if argv is None else list(argv)
+    return " ".join(["python -m sim.export_field"] + args)
+
+
+def export_scenario(a, command="python -m sim.export_field --scenario storm"):
     roughness = a.roughness or "wave_age"
     stokes = True if a.stokes is None else a.stokes
     sh = SeaHistory(WindHistory(STORM))
@@ -34,7 +46,9 @@ def export_scenario(a):
         rows.append((hour, env.wind.u10, sea["hs"] if sea else 0.0, sea["tp"] if sea else 0.0,
                      sw["hs"] if sw else 0.0, env.wind.ustar, env.wind.z0, wc))
     meta = dict(frames[0]["meta"])
-    meta.update({"scenario": "storm", "roughness": roughness, "stokes": bool(stokes),
+    c_id, s_id = record.commit(), record.stamp(MODEL_FILES)
+    meta.update({"generated": f"commit {c_id} stamp {s_id}", "commit": c_id, "stamp": s_id,
+                 "command": command, "scenario": "storm", "roughness": roughness, "stokes": bool(stokes),
                  "n_components": max(f["meta"]["n_components"] for f in frames),
                  "n_frames": len(frames), "frame_step_h": FRAME_STEP_H})
     for f in frames:
@@ -43,6 +57,7 @@ def export_scenario(a):
     for f in frames[1:]:
         f.pop("constants")
     with open(a.out, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(record.header(command, MODEL_FILES) + "\n")
         fh.write("window.FIELD = " + json.dumps(out) + ";\n")
     print(f"scenario storm, roughness {roughness}, stokes {stokes}, "
           f"max components per frame {meta['n_components']}")
@@ -67,7 +82,7 @@ def main(argv=None):
     p.add_argument("--stokes", action=argparse.BooleanOptionalAction, default=None)
     a = p.parse_args(argv)
     if a.scenario:
-        return export_scenario(a)
+        return export_scenario(a, run_command(argv))
     if a.roughness or a.stokes is not None:
         p.error("--roughness and --stokes need --scenario")
 
@@ -82,7 +97,7 @@ def main(argv=None):
         trains.append(WaveTrain(a.swell_hs, a.swell_tp, a.swell_to, gamma=7.0,
                                 n_omega=8, n_theta=4, name="swell"))
     env = Environment(wind, trains, seed=a.seed)
-    env.to_js(a.out)
+    env.to_js(a.out, header=record.header(run_command(argv), MODEL_FILES))
     print(f"ustar = {wind.ustar:.4f} m/s, z0 = {wind.z0:.3e} m")
     for tr, d in zip(trains, env.to_dict()["trains"]):
         print(f"{tr.name}: hs = {tr.hs:.3f} m, hs_discrete = {d['hs_discrete']:.3f} m, tp = {tr.tp:.3f} s")

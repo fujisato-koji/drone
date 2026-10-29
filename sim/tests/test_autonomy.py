@@ -6,7 +6,8 @@ from sim.aircraft import BASELINE
 from sim.autonomy import (HAND_PICKED, EstimatedDSController, Estimate, Estimator, Mode,
                           ModeMachine, Phase, SensorSuite, Thresholds, default_cycle, fly,
                           initial_state)
-from sim.autonomy import Environment, Wind
+from sim.autonomy import (Environment, PerfectEstimator, Reference, ReferenceTracker, Wind,
+                          initial_state_ref, reference_from_dsopt, run_case)
 
 
 def make_est(h=5.0, hd=np.pi, V=15.0, z=None, ustar=0.5, wind_from=270.0, valid=True):
@@ -138,6 +139,37 @@ class TestFly(unittest.TestCase):
                   "heading_rms"):
             self.assertTrue(np.isfinite(m[k]), k)
         self.assertTrue(np.all(np.isfinite(r["state"])))
+
+
+class TestReferenceTracker(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ref = reference_from_dsopt(BASELINE, 13.0, "log")
+
+    def test_phase_matching_returns_the_node(self):
+        ref = self.ref
+        for k in (0, 7, 15, 23, 31, ref.n - 1):
+            ph = ref.match(ref.z[k], ref.psi[k])
+            d = abs((ph - k + ref.n / 2) % ref.n - ref.n / 2)
+            self.assertLess(d, 1e-6, k)
+        # with the forward window from a nearby previous phase
+        self.assertAlmostEqual(ref.match(ref.z[20], ref.psi[20], prev=19.3), 20.0, places=6)
+
+    def test_tracker_phase_follows_rotated_wind_frame(self):
+        c = ReferenceTracker(BASELINE, self.ref)
+        k = 12
+        psi_w = np.radians(30.0)  # wind blows toward 30 deg (math angle)
+        e = make_est(h=float(self.ref.z[k]), hd=float(self.ref.psi[k]) + psi_w, V=15.0,
+                     wind_from=np.degrees(np.pi / 2 - psi_w) + 180.0)
+        e.wind_valid = True
+        c.command(e, 0.0)
+        self.assertAlmostEqual(c.phase_idx, k, places=4)
+
+    def test_perfect_estimate_flat_log_13(self):
+        m = run_case(BASELINE, "flat", 13.0, "truth", 120.0)
+        self.assertFalse(m["crashed"])
+        self.assertGreaterEqual(m["cycles"], 10)
+        self.assertGreaterEqual(m["energy_gain_per_cycle"], 0.0)
 
 
 if __name__ == "__main__":

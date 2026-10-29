@@ -3,9 +3,10 @@
 Why each requirement in record/requirements.yaml is what it is. Start with the questions that can rule a form out.
 
 
-## Certification routes (Q-001)
+## Certification routes (Q-001) {#cert-routes}
 
 The owner chose type certification (D-003) and flight beyond visual line of sight over places where people are (D-004).
+D-012 and D-013 have since replaced both choices for the drone that stays over the sea.
 Flight beyond visual line of sight over people is category III, which is allowed only with an aircraft holding class 1 aircraft certification, a first class remote pilot certificate, and a permission and approval (P2 Articles 132-85 and 132-86, P13).
 Flight beyond visual line of sight also needs the visual line of sight limitation on the remote pilot certificate to be lifted (P2 Article 132-43).
 Type certification certifies the design and the production process of a type, and it inspects the design, the production process, and the present state of one aircraft of the type (P2 Article 132-16, P3 Article 236-23).
@@ -110,7 +111,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | wing.taper | 0.6 | 1 | assumed | Q-009 |
 | wing.thickness_ratio | 0.1 | 1 | assumed | Q-009 |
 | wing.design_mass_kg | 1.5 | kg | assumed | Q-009 |
-| spar.carbon_density | 1600 | kg/m3 | assumed | Q-009 |
+| spar.carbon_density | 1400 | kg/m3 | sourced | P54 |
 | spar.carbon_modulus | 35000000000.0 | Pa | sourced | P54 |
 | spar.carbon_allowable | 300000000.0 | Pa | sourced | P54 |
 | spar.od_mm | 13.0 | mm | calculated | docs/03-design.md#wing-spar |
@@ -125,14 +126,22 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | lit.albatross_wing_area_m2 | 0.65 | m2 | sourced | P44, P45 |
 | lit.albatross_aspect_ratio | 16 | 1 | sourced | P45 |
 | lit.albatross_lift_to_drag | 21 | 1 | sourced | P42 |
-| lit.ds_cycle_period_s | 12 | s | sourced | P46, P47 |
+| lit.ds_cycle_period_min_s | 10 | s | sourced | P47 |
+| lit.ds_cycle_period_max_s | 15 | s | sourced | P46 |
+| lit.ds_cycle_period_s | 12 | s | calculated | docs/02-form.md#literature-numbers |
 | lit.ds_cycle_height_m | 15 | m | sourced | P46, P47 |
-| lit.ds_turn_angle_deg | 66 | deg | sourced | P44 |
-| lit.shear_layer_thickness_m | 2 | m | sourced | P44 |
+| lit.ds_turn_angle_min_deg | 54 | deg | sourced | P44 |
+| lit.ds_turn_angle_max_deg | 78 | deg | sourced | P44 |
+| lit.ds_turn_angle_deg | 66 | deg | calculated | docs/02-form.md#literature-numbers |
+| lit.shear_layer_thickness_min_m | 1 | m | sourced | P44 |
+| lit.shear_layer_thickness_max_m | 3 | m | sourced | P44 |
+| lit.shear_layer_thickness_m | 2 | m | calculated | docs/02-form.md#literature-numbers |
 | lit.min_u10_albatross_ms | 8.6 | m/s | sourced | P45 |
 | lit.min_u10_mariner_ms | 8.0 | m/s | sourced | P45 |
 | lit.min_u10_sailplane_15kg_ms | 13.2 | m/s | sourced | P56 |
-| lit.rayleigh_min_wind_difference_ms | 3.5 | m/s | sourced | P42, P43 |
+| lit.rayleigh_min_wind_difference_min_ms | 3.4 | m/s | sourced | P42 |
+| lit.rayleigh_min_wind_difference_max_ms | 3.6 | m/s | sourced | P42 |
+| lit.rayleigh_min_wind_difference_ms | 3.5 | m/s | calculated | docs/02-form.md#literature-numbers |
 | lit.easyglider_mass_kg | 1.35 | kg | sourced | P48 |
 | lit.easyglider_span_m | 1.8 | m | sourced | P48 |
 | lit.easyglider_wing_area_m2 | 0.4 | m2 | sourced | P48 |
@@ -168,20 +177,146 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | patterns.flapglide_baseline_wh_per_km_cross10 | 0.9 | Wh/km | calculated | docs/02-form.md#flight-patterns |
 | patterns.battery_fraction | 0.15 | 1 | assumed | Q-012 |
 | patterns.wave_slope_floor_m | 0.5 | m | assumed | Q-013 |
+| spar.fit_fraction | 0.9 | 1 | assumed | Q-015 |
+| spar.joiner_factor | 1.1 | 1 | assumed | Q-015 |
+| skin.thickness_mm | 0.2 | mm | assumed | Q-015 |
+| skin.density | 1900 | kg/m3 | assumed | Q-015 |
+| core.density | 33 | kg/m3 | assumed | Q-015 |
+| film.mass_kg | 0.08 | kg | assumed | Q-015 |
+| battery.mass_kg | 0.25 | kg | assumed | Q-015 |
+| avionics.mass_kg | 0.12 | kg | assumed | Q-015 |
+| camera.mass_kg | 0.05 | kg | assumed | Q-015 |
+| pod.mass_kg | 0.15 | kg | assumed | Q-015 |
+| boom.mass_kg | 0.06 | kg | assumed | Q-015 |
+| tail.mass_kg | 0.05 | kg | assumed | Q-015 |
+| env.cem_hm0_coeff | 0.0413 | 1 | sourced | P71 |
+| env.cem_tp_coeff | 0.651 | 1 | sourced | P71 |
+| env.cem_duration_coeff | 0.00523 | 1 | sourced | P71 |
+| env.cem_full_hm0_limit | 211.5 | 1 | sourced | P71 |
+| env.cem_full_tp_limit | 239.8 | 1 | sourced | P71 |
+| env.cd_law_a | 1.1 | 1 | sourced | P71 |
+| env.cd_law_b | 0.035 | s/m | sourced | P71 |
+| env.turb_v_ratio | 0.8 | 1 | assumed | Q-008 |
+| env.turb_w_ratio | 0.5 | 1 | assumed | Q-008 |
+| airframe.mass_gap_kg | 0.392 | kg | calculated | docs/03-design.md#mass-model |
+| lit.mariner_mass_kg | 2 | kg | sourced | P45 |
+| lit.mariner_lift_to_drag | 25 | 1 | sourced | P45 |
+| lit.mariner_wing_loading_n_m2 | 70.6 | N/m2 | sourced | P45 |
+| lit.sailplane_mass_kg | 15 | kg | sourced | P56 |
+| lit.atlantiksolar_load_factor | 4 | 1 | sourced | P49 |
+| lit.atlantiksolar_safety_factor | 1.8 | 1 | sourced | P49 |
+| lit.cell_p45b_min_discharge_temp_degc | -40 | degC | sourced | P50 |
+| lit.flyingfish_mass_kg | 26 | kg | sourced | P57 |
+| lit.flyingfish_wave_height_m | 2 | m | sourced | P57 |
+| lit.albatross_preferred_heading_deg | 83 | deg | sourced | P73 |
+| patterns.wave_slope_swell_period_s | 8 | s | calculated | docs/02-form.md#flight-patterns |
+| cost.insurance_hobby_period | 2 | year | sourced | M3 |
+| cost.renewal_medical | 5200 | JPY | assumed | Q-016 |
+| form.baseline_2m.wing_area_m2 | 0.25 | m2 | assumed | Q-014 |
+| form.baseline_2m.cd0 | 0.015 | 1 | assumed | Q-014 |
+| form.baseline_2m.oswald | 0.85 | 1 | assumed | Q-014 |
+| form.baseline_2m.cl_max | 1.2 | 1 | assumed | Q-014 |
+| form.demo_1p5m.span_m | 1.5 | m | assumed | Q-014 |
+| form.demo_1p5m.mass_kg | 1.07 | kg | assumed | Q-014 |
+| form.demo_1p5m.wing_area_m2 | 0.19 | m2 | assumed | Q-014 |
+| form.demo_1p5m.cd0 | 0.02 | 1 | assumed | Q-014 |
+| form.demo_1p5m.oswald | 0.8 | 1 | assumed | Q-014 |
+| form.demo_1p5m.cl_max | 1.1 | 1 | assumed | Q-014 |
+| form.easyglider_1p8m.span_m | 1.8 | m | assumed | Q-014 |
+| form.easyglider_1p8m.mass_kg | 1.35 | kg | assumed | Q-014 |
+| form.easyglider_1p8m.wing_area_m2 | 0.4 | m2 | assumed | Q-014 |
+| form.easyglider_1p8m.cd0 | 0.03 | 1 | assumed | Q-014 |
+| form.easyglider_1p8m.oswald | 0.75 | 1 | assumed | Q-014 |
+| form.easyglider_1p8m.cl_max | 1.2 | 1 | assumed | Q-014 |
+| form.albatross_3m.span_m | 3.0 | m | assumed | Q-014 |
+| form.albatross_3m.mass_kg | 3.0 | kg | assumed | Q-014 |
+| form.albatross_3m.wing_area_m2 | 0.36 | m2 | assumed | Q-014 |
+| form.albatross_3m.cd0 | 0.012 | 1 | assumed | Q-014 |
+| form.albatross_3m.oswald | 0.9 | 1 | assumed | Q-014 |
+| form.albatross_3m.cl_max | 1.3 | 1 | assumed | Q-014 |
+| form.flyingwing_2m.span_m | 2.0 | m | assumed | Q-014 |
+| form.flyingwing_2m.mass_kg | 1.3 | kg | assumed | Q-014 |
+| form.flyingwing_2m.wing_area_m2 | 0.4 | m2 | assumed | Q-014 |
+| form.flyingwing_2m.cd0 | 0.018 | 1 | assumed | Q-014 |
+| form.flyingwing_2m.oswald | 0.8 | 1 | assumed | Q-014 |
+| form.flyingwing_2m.cl_max | 0.9 | 1 | assumed | Q-014 |
+| form.sealedhull_2p5m.span_m | 2.5 | m | assumed | Q-014 |
+| form.sealedhull_2p5m.mass_kg | 2.2 | kg | assumed | Q-014 |
+| form.sealedhull_2p5m.wing_area_m2 | 0.34 | m2 | assumed | Q-014 |
+| form.sealedhull_2p5m.cd0 | 0.016 | 1 | assumed | Q-014 |
+| form.sealedhull_2p5m.oswald | 0.85 | 1 | assumed | Q-014 |
+| form.sealedhull_2p5m.cl_max | 1.2 | 1 | assumed | Q-014 |
+| form.baseline_2m.u10_min_travel_log | 11.86 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.baseline_2m.u10_min_loiter_log | 12.52 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.baseline_2m.cross12_speed_log | 12.48 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.baseline_2m.u10_min_travel_knee | 12.01 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.baseline_2m.u10_min_loiter_knee | 13.2 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.demo_1p5m.u10_min_travel_log | 15.38 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.demo_1p5m.u10_min_loiter_log | 16.09 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.demo_1p5m.u10_min_travel_knee | 15.54 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.demo_1p5m.u10_min_loiter_knee | 16.86 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.easyglider_1p8m.u10_min_travel_log | 22.66 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.easyglider_1p8m.u10_min_loiter_log | 23.65 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.easyglider_1p8m.u10_min_travel_knee | 22.42 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.easyglider_1p8m.u10_min_loiter_knee | 23.86 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.albatross_3m.u10_min_travel_log | 9.58 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.albatross_3m.u10_min_loiter_log | 10.18 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.albatross_3m.cross12_speed_log | 17.54 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.albatross_3m.u10_min_travel_knee | 10.03 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.albatross_3m.u10_min_loiter_knee | 11.39 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.albatross_3m.cross12_speed_knee | 16.76 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.flyingwing_2m.u10_min_travel_log | 16.09 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.flyingwing_2m.u10_min_loiter_log | 17.96 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.flyingwing_2m.u10_min_travel_knee | 16.01 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.flyingwing_2m.u10_min_loiter_knee | 17.37 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.sealedhull_2p5m.u10_min_travel_log | 12.05 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.sealedhull_2p5m.u10_min_loiter_log | 13.14 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.sealedhull_2p5m.u10_min_travel_knee | 12.51 | m/s | calculated | docs/02-form.md#form-comparison |
+| form.sealedhull_2p5m.u10_min_loiter_knee | 13.92 | m/s | calculated | docs/02-form.md#form-comparison |
+| dsopt.validation_u10_ms | 9.48 | m/s | calculated | docs/02-form.md#form-comparison |
+| ds.day_sight_range_m | 500 | m | assumed | Q-045 |
+| ds.light_range_m | 1000 | m | assumed | Q-045 |
+| ds.radar_detect_range_m | 500 | m | assumed | Q-045 |
+| ds.land_standoff_m | 1000 | m | assumed | Q-045 |
+| ds.fix_loss_timeout_s | 10 | s | assumed | Q-045 |
+| ds.termination_time_s | 30 | s | assumed | Q-045 |
+| ds.geofence_margin_m | 100 | m | assumed | Q-045 |
+| ds.label_read_distance_m | 1 | m | assumed | Q-045 |
+| ds.recovery_response_h | 72 | h | assumed | Q-045 |
+| ds.position_report_interval_h | 6 | h | assumed | Q-045 |
+| ds.eol_capacity_fraction | 0.7 | 1 | assumed | Q-045 |
+| ds.cell_charge_temp_min_c | 0 | degC | assumed | Q-045 |
+| ds.cell_charge_temp_max_c | 45 | degC | assumed | Q-045 |
+| ds.storage_soc_fraction | 0.3 | 1 | assumed | Q-045 |
+| ds.launch_clear_radius_m | 10 | m | assumed | Q-045 |
+| ds.launch_clear_distance_m | 50 | m | assumed | Q-045 |
+| ds.motor_arm_delay_s | 1 | s | assumed | Q-045 |
+| ds.recovery_approach_distance_m | 30 | m | assumed | Q-045 |
+| ds.workshop_air_changes_per_h | 6 | 1/h | assumed | Q-045 |
+| ds.vessel_standoff_m | 500 | m | assumed | Q-045 |
+| autonomy.test_u10_ms | 13 | m/s | decided | D-010 |
+| autonomy.flat_standard_cycles | 18 | count | calculated | docs/02-form.md#autonomy-check |
+| autonomy.flat_standard_ground_speed_ms | 21.1 | m/s | calculated | docs/02-form.md#autonomy-check |
+| autonomy.flat_truth_ground_speed_ms | 21.9 | m/s | calculated | docs/02-form.md#autonomy-check |
+| autonomy.flat_standard_wind_rms_ms | 1.38 | m/s | calculated | docs/02-form.md#autonomy-check |
+| autonomy.minimal_wind_rms_ms | 7.68 | m/s | calculated | docs/02-form.md#autonomy-check |
+| autonomy.waves_truth_crash_s | 73 | s | calculated | docs/02-form.md#autonomy-check |
+| autonomy.max_load_factor_waves | 7.34 | 1 | calculated | docs/02-form.md#autonomy-check |
+| autonomy.guard_floor_m | 0.5 | m | assumed | Q-051 |
 <!-- tdr:end -->
 
 ## Requirements for the dynamic soaring drone {#ds-requirements}
 
 The owner moved the project from a certifiable drone to a drone that stays over the sea for a year with dynamic soaring as its core (D-008), that goes on its own to a given place and sends photos or data from there (D-009), and asked for the computation environment first (D-010).
-The certification questions Q-003 to Q-005 wait until Q-007 says which rules apply to such a flight.
+Q-007 says which rules apply to such a flight.
 
-The questions that rule a form out were asked before, and the answers that still stand are: a personal project built by one person (D-001), a budget of budget.total (D-005), Japan as the place of building and first flights, and a long aim of circling the globe (D-009).
+The questions that rule a form out were asked before; the decisions recorded so far are D-001, D-005 (budget.total), D-006 and D-009, and the questions still open are Q-027.
 The place of flight at sea and its climate are private facts and enter the record only as derived values.
 
 R-01 and R-02 are the owner's core; R-03 and R-04 are the mission (D-009).
 R-05 and R-06 follow from a year at sea: the wind will fail, so the drone must live on the water, and the sea will get in unless it is sealed.
 R-07 follows from one person and the budget; R-08 from a year without a charger; R-09 and R-10 from the loads the environment imposes; R-11 from the law; R-12 from where the shear is.
-The design points carry assumed numbers (basis Q-009) until the literature and the simulation settle them, and the owner confirmed every requirement on 2026-10-29 (D-011).
+The design points name their values by key, the status and basis of each value are in the table above, and the owner confirmed every requirement on 2026-10-29 (D-011).
 
 <!-- tdr:table kind=requirement fields=id,text,design_point,verify,status -->
 | id | text | design_point | verify | status |
@@ -198,4 +333,14 @@ The design points carry assumed numbers (basis Q-009) until the literature and t
 | R-10 | The drone survives touching down on the water. | No damage after a stall-speed touchdown at significant wave height 2 m. | test | confirmed |
 | R-11 | The flight is legal where it flies. | The rules of Q-007 are identified and met before the first flight beyond visual line of sight. | inspection | confirmed |
 | R-12 | The drone flies in the layer where the shear is, and never below a safe height over the waves. | Operates between ds.clearance_min_m and ds.altitude_band_max_m above the local sea surface. | analysis | confirmed |
+| R-13 | Vessels, small craft and aircraft can see the drone by day and by night, in flight and afloat. | The fin, the hull sides, the wing tips and the underside of the wing are fluorescent orange and are seen by eye from a small boat at ds.day_sight_range_m in daylight, and an all-round flashing light is seen at ds.light_range_m at night, in flight and afloat. | test | confirmed |
+| R-14 | A vessel's radar shows the drone afloat. | A small-craft X-band marine radar detects the drone afloat and upright at ds.radar_detect_range_m. | test | confirmed |
+| R-15 | The drone stays inside the operating area it is given, and ends any flight on the water when it cannot, without needing the link. | The operating area lies at least ds.land_standoff_m off the coast outside the launch and recovery corridor and leaves out the surroundings of airports and heliports, ports, fairways, fixed net zones, and bathing and surfing areas, and in hardware-in-the-loop and flight tests a boundary breach, a position fix lost for ds.fix_loss_timeout_s, a fault that enters Safe, and a termination command each put the drone on the water within ds.termination_time_s without passing more than ds.geofence_margin_m beyond the boundary. | test | confirmed |
+| R-16 | A person who finds the drone, afloat or ashore, whole or broken, can tell what it is, that it holds lithium cells, and whom to call. | Labels on the hull and on the cell case give the owner's contact, the registration mark, a lithium cell warning and a request not to open it, in Japanese and English, and stay legible at ds.label_read_distance_m after ds.endurance_days of sea and sun. | test | confirmed |
+| R-17 | Every drone is recovered at the end of its mission or when it fails, and no part of it is left at sea or ashore by plan. | Before each launch a recovery plan names the recovery point, the boat and its skipper, and a response within ds.recovery_response_h of a recovery call, the drone reports its position aloft or afloat at least every ds.position_report_interval_h until it is recovered, it flies to the recovery point at the end of the mission or when its battery capacity falls below ds.eol_capacity_fraction of the rating, and its cells go to a collection route for lithium ion cells and its composite to industrial waste. | demonstration | confirmed |
+| R-18 | Every radio on the drone and on the ground is lawful for its band and its place of use, and none interferes with maritime, aviation or satellite radio. | Each transmitter carries the Japanese technical conformity mark or a station licence for its band and for use aloft (P34), the satellite terminal holds its service authorisation, and no transmitter emits in a maritime, aeronautical or radionavigation band. | inspection | confirmed |
+| R-19 | The lithium cells cannot start a fire or release gas in flight, afloat, on charge, in storage or in shipping, and stay inside the drone if it breaks up. | The cells sit in a sealed case of their own with a water sensor, fixed to the hull and apart from the avionics, the protection circuit stops charging outside ds.cell_charge_temp_min_c to ds.cell_charge_temp_max_c, on overvoltage, on overcurrent or when the sensor finds water and disconnects the cells on a short circuit, the drone is charged on the ground only on a non-combustible surface under watch and stored at ds.storage_soc_fraction of full charge in a fire-resistant container, and the pack and its shipping meet the lithium ion battery shipping rules identified before the first shipment. | test | confirmed |
+| R-20 | The hand launch, the landing for recovery and the lift from the water keep everyone but the launcher and the crew clear of the drone, and the motor cannot run in a person's hands. | The launch and recovery procedure keeps everyone but the launcher at least ds.launch_clear_radius_m from the launcher and keeps people, vessels and structures out of ds.launch_clear_distance_m ahead in the launch direction, the motor starts only ds.motor_arm_delay_s after the drone detects its release, and for recovery the drone lands at least ds.recovery_approach_distance_m from the boat and reports its motor disarmed before the boat comes closer, with the crew in life jackets and cut-resistant gloves. | demonstration | confirmed |
+| R-21 | Building, repairing and cutting up the drone does not harm the builder or anyone in the workshop. | Every material is used as its safety data sheet says, carbon and glass are cut and sanded wet or under extraction with a P2 respirator and eye protection, epoxy is handled with nitrile gloves, hot-wire cutting of foam runs under local extraction with no visible smoke and is never left powered unattended, and the workshop gets at least ds.workshop_air_changes_per_h air changes while resin cures, foam is cut or parts are soldered. | inspection | confirmed |
+| R-22 | The drone keeps clear of the vessels it can detect, in flight and when it takes off from the water. | With recorded AIS traffic replayed into the flight controller, the drone keeps at least ds.vessel_standoff_m horizontally from every vessel it receives, and never starts a take-off from the water within ds.vessel_standoff_m of one. | test | confirmed |
 <!-- tdr:end -->

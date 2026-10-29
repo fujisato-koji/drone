@@ -108,3 +108,41 @@ items:
     touches:
       - spar.deflection_limit
       - Q-010
+  - id: D-015
+    date: 2026-10-29
+    by: owner
+    what: Accept the hazards H-01 to H-15 and their controls, and confirm the derived requirements R-13 to R-22, whose design points carry assumed numbers until Q-045 settles them.
+    touches:
+      - H-01
+      - H-02
+      - H-03
+      - H-04
+      - H-05
+      - H-06
+      - H-07
+      - H-08
+      - H-09
+      - H-10
+      - H-11
+      - H-12
+      - H-13
+      - H-14
+      - H-15
+      - R-13
+      - R-14
+      - R-15
+      - R-16
+      - R-17
+      - R-18
+      - R-19
+      - R-20
+      - R-21
+      - R-22
+  - id: D-016
+    date: 2026-10-29
+    by: owner
+    what: Keep S-08 to people and property; harm to wildlife and the sea and the privacy of people in photos are carried as legal questions under Q-007 and R-11.
+    touches:
+      - Q-046
+      - Q-047
+      - Q-007

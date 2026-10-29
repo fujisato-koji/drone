@@ -30,29 +30,38 @@ Changes:
 
 from __future__ import annotations
 
-import datetime
 import json
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 
+from sim.record import commit, stamp, value
+
+# Keyed constants are read from the record (record/values.yaml); the default is the number used so far.
 G = 9.81
-KARMAN = 0.40  # env.karman
-CHARNOCK = 0.0144  # env.charnock
-NU_AIR = 1.46e-5  # env.air_kinematic_viscosity
-JONSWAP_GAMMA = 3.3  # env.jonswap_gamma
-PM_HS = 0.21  # env.pm_hs_coefficient
-PM_PEAK = 0.877  # env.pm_peak_coefficient
+KARMAN = value("env.karman", 0.40)
+CHARNOCK = value("env.charnock", 0.0144)
+NU_AIR = value("env.air_kinematic_viscosity", 1.46e-5)
+JONSWAP_GAMMA = value("env.jonswap_gamma", 3.3)
+PM_HS = value("env.pm_hs_coefficient", 0.21)
+PM_PEAK = value("env.pm_peak_coefficient", 0.877)
 RHO_AIR = 1.225
-DECAY_MEASURED = (0.77, 0.62)  # Grare et al. 2018 (record P63): (a_u, a_w) in exp(-a k zloc)
-KNEE_DEFAULT_M = 7.5  # Smedman et al. 2008, record P65, 5 to 10 m
+DECAY_MEASURED = (value("lit.wave_induced_decay_u", 0.77),
+                  value("lit.wave_induced_decay_w", 0.62))  # Grare et al. 2018 (record P63): (a_u, a_w) in exp(-a k zloc)
+KNEE_DEFAULT_M = value("lit.swell_knee_height_m", 7.5)  # Smedman et al. 2008, record P65, 5 to 10 m
 TURB_N_MODES = 64
-TURB_L = 50.0  # von Karman length scale, m
+TURB_L = value("env.turb_length_m", 50.0)  # von Karman length scale, m
 TURB_K_RANGE = (2.0 * np.pi / 500.0, 2.0 * np.pi / 2.0)  # rad/m
-TURB_W_RATIO = 0.5  # sigma_w / sigma_u (IEC 61400-1 Kaimal ratio; record P72, not read; to be verified, Q-008)
-TURB_V_RATIO = 0.8  # sigma_v / sigma_u (IEC 61400-1 Kaimal ratio; record P72, not read; to be verified, Q-008)
-CEM_HM0_FULL = 211.5  # g Hm0 / u*^2 at full development (CEM 2002, record P71, not read; Q-008)
-CEM_TP_FULL = 239.8  # g Tp / u* at full development (CEM 2002, record P71, not read; Q-008)
+TURB_W_RATIO = value("env.turb_w_ratio", 0.5)  # sigma_w / sigma_u (IEC 61400-1 Kaimal ratio; record P72, not read; to be verified, Q-008)
+TURB_V_RATIO = value("env.turb_v_ratio", 0.8)  # sigma_v / sigma_u (IEC 61400-1 Kaimal ratio; record P72, not read; to be verified, Q-008)
+CEM_HM0_FULL = value("env.cem_full_hm0_limit", 211.5)  # g Hm0 / u*^2 at full development (CEM 2002, record P71, not read; Q-008)
+CEM_TP_FULL = value("env.cem_full_tp_limit", 239.8)  # g Tp / u* at full development (CEM 2002, record P71; Q-008)
+CEM_HM0_COEFF = value("env.cem_hm0_coeff", 4.13e-2)  # g Hm0 / u*^2 = coeff X*^(1/2)
+CEM_TP_COEFF = value("env.cem_tp_coeff", 0.651)  # g Tp / u* = coeff X*^(1/3)
+CEM_DURATION_COEFF = value("env.cem_duration_coeff", 5.23e-3)  # X* = coeff (g t / u*)^(3/2)
+CD_LAW_A = value("env.cd_law_a", 1.1)  # Cd = 0.001 (a + b U10)
+CD_LAW_B = value("env.cd_law_b", 0.035)
 
 
 def compass_to_vector(deg):
@@ -154,7 +163,7 @@ def _log_wind(wind: Wind) -> Wind:
 
 def cem_limits(u10: float):
     """(u*, Hm0 limit, Tp limit) of the CEM 2002 forms for a 10 m wind (record P71, Q-008)."""
-    cd = 0.001 * (1.1 + 0.035 * u10)
+    cd = 0.001 * (CD_LAW_A + CD_LAW_B * u10)
     ust = float(np.sqrt(cd) * u10)
     return ust, CEM_HM0_FULL * ust**2 / G, CEM_TP_FULL * ust / G
 
@@ -224,9 +233,9 @@ class WaveTrain:
         if hours <= 0:
             raise ValueError("hours must be > 0")
         ust, hs_cap, tp_cap = cem_limits(wind.u10)
-        xstar = 5.23e-3 * (G * hours * 3600.0 / ust) ** 1.5
-        hs = 4.13e-2 * np.sqrt(xstar) * ust**2 / G
-        tp = 0.651 * xstar ** (1.0 / 3.0) * ust / G
+        xstar = CEM_DURATION_COEFF * (G * hours * 3600.0 / ust) ** 1.5
+        hs = CEM_HM0_COEFF * np.sqrt(xstar) * ust**2 / G
+        tp = CEM_TP_COEFF * xstar ** (1.0 / 3.0) * ust / G
         capped = hs >= hs_cap and tp >= tp_cap
         hs = min(hs, hs_cap)
         tp = min(tp, tp_cap)
@@ -245,8 +254,8 @@ class WaveTrain:
             return 0.0
         if hs >= hs_cap:
             return float("inf")
-        xstar = (hs * G / (4.13e-2 * ust**2)) ** 2
-        return float((xstar / 5.23e-3) ** (2.0 / 3.0) * ust / G / 3600.0)
+        xstar = (hs * G / (CEM_HM0_COEFF * ust**2)) ** 2
+        return float((xstar / CEM_DURATION_COEFF) ** (2.0 / 3.0) * ust / G / 3600.0)
 
     def components(self, rng):
         wp = 2.0 * np.pi / self.tp
@@ -494,8 +503,10 @@ class Environment:
             })
         comps = {key: _r6(c[key]) for key in ("a", "k", "omega", "dx", "dy", "phase")}
         comps["urel"] = _r6(self.urel)
+        c_id, s_id = commit(), stamp([Path(__file__)])
         return {
-            "meta": {"generated": datetime.date.today().isoformat(),
+            # no wall-clock date: the viewer shows "generated" as the commit and stamp
+            "meta": {"generated": f"commit {c_id} stamp {s_id}", "commit": c_id, "stamp": s_id,
                      "seed": self.seed, "n_components": self.n_components},
             "constants": {"g": G, "karman": KARMAN, "charnock": w.charnock,
                           "nu_air": NU_AIR, "rho_air": RHO_AIR},
@@ -511,6 +522,33 @@ class Environment:
                       "knee_m": w.knee_m, "turbulence": self.turbulence},
         }
 
-    def to_js(self, path, name="FIELD"):
+    def to_js(self, path, name="FIELD", header=None):
         with open(path, "w", encoding="utf-8", newline="\n") as f:
+            if header:
+                f.write(header + "\n")
             f.write(f"window.{name} = {json.dumps(self.to_dict())};\n")
+
+
+def gust_factor(u10=10.0, from_deg=270.0, z=10.0, duration=600.0, dt=0.1, window=3.0, seed=1):
+    """Gust factor of the turbulence model: max running mean over `window` s / mean wind speed.
+
+    Wind speed along the mean wind direction at a fixed point (x = y = 0, height z),
+    sampled every dt over `duration` s, in the frozen turbulence field of the given seed.
+    """
+    w = Wind(u10, from_deg)
+    env = Environment(w, [], seed=seed, turbulence="iso")
+    tt = np.arange(0.0, duration, dt)
+    s = env.wind_at(np.zeros_like(tt), np.zeros_like(tt), np.full_like(tt, z), tt)
+    spd = s[:, 0] * w.ex + s[:, 1] * w.ey
+    n = int(round(window / dt))
+    run = np.convolve(spd, np.ones(n) / n, mode="valid")
+    return float(run.max() / spd.mean())
+
+
+if __name__ == "__main__":
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--gust-factor", action="store_true", help="print the 3 s gust factor")
+    if ap.parse_args().gust_factor:
+        print(f"3 s gust factor {gust_factor():.4f}")
