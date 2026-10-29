@@ -373,9 +373,10 @@ items:
   - key: ds.min_u10_ms
     v: 8
     unit: m/s
-    status: assumed
+    status: sourced
     basis:
-      - Q-009
+      - P45
+      - P42
   - key: ds.mass_max_kg
     v: 3
     unit: kg
@@ -461,56 +462,350 @@ items:
     basis:
       - Q-009
   - key: spar.carbon_modulus
-    v: 120000000000.0
+    v: 35000000000.0
     unit: Pa
-    status: assumed
+    status: sourced
     basis:
-      - Q-009
+      - P54
   - key: spar.carbon_allowable
-    v: 600000000.0
+    v: 300000000.0
     unit: Pa
-    status: assumed
+    status: sourced
     basis:
-      - Q-009
+      - P54
   - key: spar.od_mm
-    v: 10.0
+    v: 13.0
     unit: mm
     status: calculated
     basis:
       - docs/03-design.md#wing-spar
   - key: spar.wall_mm
-    v: 0.5
+    v: 0.75
     unit: mm
     status: calculated
     basis:
       - docs/03-design.md#wing-spar
   - key: spar.mass_kg
-    v: 0.053
+    v: 0.089
     unit: kg
     status: calculated
     basis:
       - docs/03-design.md#wing-spar
   - key: spar.margin
-    v: 0.08
+    v: 0.34
     unit: 1
     status: calculated
     basis:
       - docs/03-design.md#wing-spar
   - key: spar.tip_deflection_ratio
-    v: 0.14
+    v: 0.15
     unit: 1
     status: calculated
     basis:
       - docs/03-design.md#wing-spar
   - key: wing.mass_kg
-    v: 0.392
+    v: 0.428
     unit: kg
     status: calculated
     basis:
       - docs/03-design.md#mass-model
   - key: airframe.baseline_mass_kg
-    v: 1.072
+    v: 1.108
     unit: kg
     status: calculated
     basis:
       - docs/03-design.md#mass-model
+  - key: lit.albatross_mass_kg
+    v: 9.5
+    unit: kg
+    status: sourced
+    basis:
+      - P44
+      - P45
+  - key: lit.albatross_span_m
+    v: 3.3
+    unit: m
+    status: sourced
+    basis:
+      - P45
+  - key: lit.albatross_wing_area_m2
+    v: 0.65
+    unit: m2
+    status: sourced
+    basis:
+      - P44
+      - P45
+  - key: lit.albatross_aspect_ratio
+    v: 16
+    unit: 1
+    status: sourced
+    basis:
+      - P45
+  - key: lit.albatross_lift_to_drag
+    v: 21
+    unit: 1
+    status: sourced
+    basis:
+      - P42
+  - key: lit.ds_cycle_period_s
+    v: 12
+    unit: s
+    status: sourced
+    basis:
+      - P46
+      - P47
+  - key: lit.ds_cycle_height_m
+    v: 15
+    unit: m
+    status: sourced
+    basis:
+      - P46
+      - P47
+  - key: lit.ds_turn_angle_deg
+    v: 66
+    unit: deg
+    status: sourced
+    basis:
+      - P44
+  - key: lit.shear_layer_thickness_m
+    v: 2
+    unit: m
+    status: sourced
+    basis:
+      - P44
+  - key: lit.min_u10_albatross_ms
+    v: 8.6
+    unit: m/s
+    status: sourced
+    basis:
+      - P45
+  - key: lit.min_u10_mariner_ms
+    v: 8.0
+    unit: m/s
+    status: sourced
+    basis:
+      - P45
+  - key: lit.min_u10_sailplane_15kg_ms
+    v: 13.2
+    unit: m/s
+    status: sourced
+    basis:
+      - P56
+  - key: lit.rayleigh_min_wind_difference_ms
+    v: 3.5
+    unit: m/s
+    status: sourced
+    basis:
+      - P42
+      - P43
+  - key: lit.easyglider_mass_kg
+    v: 1.35
+    unit: kg
+    status: sourced
+    basis:
+      - P48
+  - key: lit.easyglider_span_m
+    v: 1.8
+    unit: m
+    status: sourced
+    basis:
+      - P48
+  - key: lit.easyglider_wing_area_m2
+    v: 0.4
+    unit: m2
+    status: sourced
+    basis:
+      - P48
+  - key: lit.atlantiksolar_avionics_w
+    v: 6
+    unit: W
+    status: sourced
+    basis:
+      - P49
+  - key: lit.insolation_50s_june_kwh_m2_day
+    v: 0.71
+    unit: kWh/m2/d
+    status: sourced
+    basis:
+      - P51
+  - key: lit.insolation_home_december_kwh_m2_day
+    v: 1.64
+    unit: kWh/m2/d
+    status: sourced
+    basis:
+      - P51
+      - private:loc-01
+  - key: lit.cell_p45b_wh_per_kg
+    v: 231
+    unit: Wh/kg
+    status: sourced
+    basis:
+      - P50
+  - key: lit.cs22_limit_load_factor
+    v: 5.3
+    unit: 1
+    status: sourced
+    basis:
+      - P55
+  - key: lit.cs22_safety_factor
+    v: 1.5
+    unit: 1
+    status: sourced
+    basis:
+      - P55
+  - key: lit.anemometer_trisonica_mass_g
+    v: 50
+    unit: g
+    status: sourced
+    basis:
+      - P52
+  - key: lit.anemometer_trisonica_power_w
+    v: 0.36
+    unit: W
+    status: sourced
+    basis:
+      - P52
+  - key: lit.probe_epfl_mass_g
+    v: 9
+    unit: g
+    status: sourced
+    basis:
+      - P53
+  - key: lit.pultruded_modulus_pa
+    v: 35000000000.0
+    unit: Pa
+    status: sourced
+    basis:
+      - P54
+  - key: lit.pultruded_flexural_pa
+    v: 300000000.0
+    unit: Pa
+    status: sourced
+    basis:
+      - P54
+  - key: spar.deflection_limit
+    v: 0.15
+    unit: 1
+    status: decided
+    basis:
+      - D-014
+  - key: env.sea_grow_tau_h
+    v: 3
+    unit: h
+    status: assumed
+    basis:
+      - Q-008
+  - key: env.sea_decay_tau_h
+    v: 12
+    unit: h
+    status: assumed
+    basis:
+      - Q-008
+  - key: env.breaking_slope_limit
+    v: 0.3
+    unit: 1
+    status: assumed
+    basis:
+      - Q-008
+  - key: lit.so_u10_mean_winter_ms
+    v: 12
+    unit: m/s
+    status: sourced
+    basis:
+      - P61
+  - key: lit.so_u10_mean_summer_ms
+    v: 10.5
+    unit: m/s
+    status: sourced
+    basis:
+      - P61
+  - key: lit.so_u10_p99_ms
+    v: 22
+    unit: m/s
+    status: sourced
+    basis:
+      - P61
+  - key: lit.pacific_swell_dominance
+    v: 0.9
+    unit: 1
+    status: sourced
+    basis:
+      - P62
+  - key: lit.wave_induced_decay_u
+    v: 0.77
+    unit: 1
+    status: sourced
+    basis:
+      - P63
+  - key: lit.wave_induced_decay_w
+    v: 0.62
+    unit: 1
+    status: sourced
+    basis:
+      - P63
+  - key: lit.swell_knee_height_m
+    v: 7.5
+    unit: m
+    status: sourced
+    basis:
+      - P65
+  - key: lit.charnock_coare35_at_10ms
+    v: 0.012
+    unit: 1
+    status: sourced
+    basis:
+      - P66
+  - key: lit.gust_factor_3s_10min_sea
+    v: 1.23
+    unit: 1
+    status: sourced
+    basis:
+      - P68
+  - key: env.turb_length_m
+    v: 50
+    unit: m
+    status: assumed
+    basis:
+      - Q-008
+  - key: env.turb_gust_factor_check
+    v: 1.21
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-coupling
+  - key: patterns.solar_avg_baseline_w
+    v: 0.74
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#flight-patterns
+  - key: patterns.flapglide_baseline_wh_per_km_calm
+    v: 0.38
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#flight-patterns
+  - key: patterns.flapglide_baseline_wh_per_km_head10
+    v: 4.4
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#flight-patterns
+  - key: patterns.flapglide_baseline_wh_per_km_cross10
+    v: 0.9
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#flight-patterns
+  - key: patterns.battery_fraction
+    v: 0.15
+    unit: 1
+    status: assumed
+    basis:
+      - Q-012
+  - key: patterns.wave_slope_floor_m
+    v: 0.5
+    unit: m
+    status: assumed
+    basis:
+      - Q-013

@@ -31,10 +31,17 @@ class TestStructure(unittest.TestCase):
         r = st.size_tube_spar(geo, 1.5, 4.0, 1.5, st.MATERIALS["carbon_tube"])
         self.assertLessEqual(r["od"], geo.max_spar_od(0.0))
         self.assertGreaterEqual(r["margin"], 0.0)
-        self.assertLess(r["deflection_ratio"], 0.15)
-        self.assertTrue(0.02 < r["mass"] < 0.3)
+        self.assertLessEqual(r["deflection_ratio"], 0.15)
+        self.assertIn(r["limiting"], ("stress", "stiffness"))
+        self.assertTrue(0.02 < r["mass"] < 0.5)
         with self.assertRaises(ValueError):
             st.size_tube_spar(geo, 50.0, 4.0, 1.5, st.MATERIALS["carbon_tube"])
+
+    def test_wrapped_lighter_than_pultruded(self):
+        geo = st.WingGeometry(2.0, 0.16, 0.6)
+        a = st.size_tube_spar(geo, 1.5, 4.0, 1.5, st.MATERIALS["carbon_tube"])
+        b = st.size_tube_spar(geo, 1.5, 4.0, 1.5, st.MATERIALS["carbon_tube_wrapped"])
+        self.assertLess(b["mass"], a["mass"])
 
     def test_mass_model(self):
         model, _ = st.build_baseline()

@@ -42,6 +42,15 @@
   <h1>Sea and wind</h1>
   <div class="dim" id="meta">no data</div>
   <div class="warn" id="warn"></div>
+  <div id="scen" style="display:none">
+    <h3>Scenario</h3>
+    <div class="ctl"><label for="hour">Hour</label><input id="hour" type="range" min="0" max="72" step="0.1" value="0"><span class="val" id="hourv"></span></div>
+    <div class="ctl"><button id="play" type="button">Play</button>
+      <label for="rate" style="width:auto">rate</label>
+      <select id="rate"><option value="1">1 h/s</option><option value="3" selected>3 h/s</option><option value="6">6 h/s</option></select></div>
+    <table id="sro"></table>
+  </div>
+  <div class="dim" id="rough"></div>
   <h3>Readouts</h3>
   <table id="ro"></table>
   <h3>Controls</h3>
@@ -51,6 +60,7 @@
   <div class="ctl"><label><input id="pause" type="checkbox"> Pause</label>
     <label><input id="ptc" type="checkbox" checked> Particles</label></div>
   <div class="dim" id="mastpos"></div>
+  <div class="dim" id="lockNote" style="display:none">U10 and wind from: set by the scenario.</div>
   <div class="dim" style="margin-top:4px">Sea state from field.js; rerun the Python export to change it.</div>
   <h3>Charts</h3>
   <div class="card"><div class="ct">Wind speed vs height at the mast</div><canvas id="ch1" width="280" height="170"></canvas></div>
@@ -71,14 +81,67 @@ if (!F) {
   $('meta').textContent = 'window.FIELD missing: field.js not found next to index.html';
   throw new Error('FIELD missing');
 }
-const C = F.constants, W = F.wind, CO = F.components;
-const SEA = 240, HALF = SEA / 2, MAXC = 128;
-const N_ALL = CO.a.length, N = Math.min(N_ALL, MAXC);
-$('meta').textContent = 'generated ' + F.meta.generated + ', N = ' + N_ALL + ' components';
-if (N_ALL > MAXC) $('warn').textContent = 'Warning: ' + N_ALL + ' components, only the first ' + MAXC + ' are used.';
+const FR = F.frames || [F];                      // scenario frames, or the single field
+const SCEN = !!F.frames;
+const C = F.constants;
+const STOKES = !!(F.meta && F.meta.stokes);
+const ROUGH = (F.meta && F.meta.roughness) || 'charnock';
+const SEA = 240, HALF = SEA / 2, MAXC = 128, MAXM = 2 * MAXC;   // merged components: two frames
+const W = Object.assign({}, FR[0].wind);        // current (blended) wind
+let nMax = 0;
+for (const fr of FR) nMax = Math.max(nMax, fr.components.a.length);
+$('meta').textContent = 'generated ' + F.meta.generated + (SCEN
+  ? ', scenario ' + F.meta.scenario + ', ' + FR.length + ' frames, up to ' + nMax + ' components per frame'
+  : ', N = ' + nMax + ' components');
+if (nMax > MAXC) $('warn').textContent = 'Warning: ' + nMax + ' components in a frame, only the first ' + MAXC + ' are used.';
+$('rough').textContent = 'roughness model: ' + ROUGH + (STOKES ? ', second-order (Stokes) term on' : '');
+
+// ---------------------------------------------------------------- merged component set
+// CO holds the components of the two neighbouring frames, amplitudes already weighted
+// by (1 - f) and f. Phases are fixed per frame, time keeps running, so the sea stays continuous.
+const CO = { a: new Float64Array(MAXM), k: new Float64Array(MAXM), omega: new Float64Array(MAXM),
+  phase: new Float64Array(MAXM), dx: new Float64Array(MAXM), dy: new Float64Array(MAXM), urel: new Float64Array(MAXM) };
+let N = 0;
+function addFrame(fr, w) {
+  const c = fr.components, n = Math.min(c.a.length, MAXC);
+  for (let i = 0; i < n; i++, N++) {
+    CO.a[N] = c.a[i] * w; CO.k[N] = c.k[i]; CO.omega[N] = c.omega[i]; CO.phase[N] = c.phase[i];
+    CO.dx[N] = c.dx[i]; CO.dy[N] = c.dy[i]; CO.urel[N] = c.urel[i];
+  }
+}
+const wrap180 = (d) => d - 360 * Math.round(d / 360);
+const trainOf = (fr, name) => (fr.trains || []).find((t) => t.name === name);
+const SC = { hour: 0, u10: 0, from: 0, hsSea: 0, tpSea: 0, hsSwell: 0, wc: 0 };
+// set hour: blend wind scalars, merge the two neighbouring frames
+function setHour(hour) {
+  const nf = FR.length;
+  const step = nf > 1 ? FR[1].hour - FR[0].hour : 1;
+  const x = nf > 1 ? Math.min(nf - 1, Math.max(0, (hour - FR[0].hour) / step)) : 0;
+  const i = Math.max(0, Math.min(nf - 2, Math.floor(x)));
+  let f = nf > 1 ? x - i : 0;
+  const A = FR[i], B = FR[nf > 1 ? i + 1 : i];
+  if (typeof NEAREST !== 'undefined' && NEAREST) f = f < 0.5 ? 0 : 1;
+  const lerp = (a, b) => a + (b - a) * f;
+  SC.hour = hour;
+  W.u10 = lerp(A.wind.u10, B.wind.u10);
+  W.from_deg = (A.wind.from_deg + f * wrap180(B.wind.from_deg - A.wind.from_deg) + 360) % 360;
+  W.to_deg = (W.from_deg + 180) % 360;
+  const r = W.to_deg * Math.PI / 180;
+  W.ex = Math.sin(r); W.ey = Math.cos(r);
+  W.ustar = lerp(A.wind.ustar, B.wind.ustar); W.z0 = lerp(A.wind.z0, B.wind.z0);
+  const sea = (fr) => trainOf(fr, 'wind sea'), sw = (fr) => trainOf(fr, 'swell');
+  const hsOf = (fr, g) => (g(fr) ? g(fr).hs : 0);
+  SC.hsSea = lerp(hsOf(A, sea), hsOf(B, sea)); SC.hsSwell = lerp(hsOf(A, sw), hsOf(B, sw));
+  SC.tpSea = lerp(sea(A) ? sea(A).tp : 0, sea(B) ? sea(B).tp : 0);
+  SC.wc = lerp(A.whitecap_fraction || 0, B.whitecap_fraction || 0);
+  N = 0;
+  addFrame(A, 1 - f);
+  if (B !== A && f > 0) addFrame(B, f);
+  uploadC();
+}
 
 // ---------------------------------------------------------------- physics (sim coordinates)
-const cosT = new Float64Array(N), sinT = new Float64Array(N);
+const cosT = new Float64Array(MAXM), sinT = new Float64Array(MAXM);
 const surf = { eta: 0, ou: 0, ov: 0, ow: 0 };
 
 function surface(x, y, t) {
@@ -89,6 +152,7 @@ function surface(x, y, t) {
     cosT[i] = c; sinT[i] = s;
     const a = CO.a[i];
     eta += a * c;
+    if (STOKES) eta += 0.5 * a * a * CO.k[i] * Math.cos(2 * th);
     const ao = a * CO.omega[i];
     ou += ao * c * CO.dx[i]; ov += ao * c * CO.dy[i]; ow += ao * s;
   }
@@ -110,6 +174,7 @@ function windAt(h, o) {
   }
   o.u = u; o.v = v; o.w = w; return o;
 }
+// single-field mode only: Charnock wind from the sliders (scenario mode takes the exported wind)
 function setWind(u10, fromDeg) {
   W.u10 = u10; W.from_deg = fromDeg; W.to_deg = (fromDeg + 180) % 360;
   const r = W.to_deg * Math.PI / 180;
@@ -120,11 +185,11 @@ function setWind(u10, fromDeg) {
     us = C.karman * u10 / Math.log(10 / z0);
   }
   W.ustar = us; W.z0 = z0;
-  for (let i = 0; i < N_ALL; i++) {
+  for (let i = 0; i < N; i++) {
     const zref = Math.max(1 / CO.k[i], 2 * z0);
     CO.urel[i] = meanSpeed(zref) * (W.ex * CO.dx[i] + W.ey * CO.dy[i]) - CO.omega[i] / CO.k[i];
   }
-  uploadC2();
+  uploadC();
 }
 
 // ---------------------------------------------------------------- colour ramp (low = dark, high = light)
@@ -154,36 +219,48 @@ scene.add(sunLight);
 
 // sea
 const uC1 = [], uC2 = [];
-for (let i = 0; i < MAXC; i++) { uC1.push(new THREE.Vector4()); uC2.push(new THREE.Vector4()); }
-for (let i = 0; i < N; i++) uC1[i].set(CO.a[i], CO.k[i], CO.omega[i], CO.phase[i]);
-function uploadC2() { for (let i = 0; i < N; i++) uC2[i].set(CO.dx[i], CO.dy[i], CO.urel[i], 0); }
-uploadC2();
+for (let i = 0; i < MAXM; i++) { uC1.push(new THREE.Vector4()); uC2.push(new THREE.Vector4()); }
+function uploadC() {
+  for (let i = 0; i < N; i++) {
+    uC1[i].set(CO.a[i], CO.k[i], CO.omega[i], CO.phase[i]);
+    uC2[i].set(CO.dx[i], CO.dy[i], CO.urel[i], 0);
+  }
+  if (typeof seaMat !== 'undefined') seaMat.uniforms.uN.value = N;
+}
 let hsTot = 0;
-for (const tr of F.trains) hsTot += tr.hs;
+for (const fr of FR) hsTot = Math.max(hsTot, (fr.trains || []).reduce((s, t) => s + t.hs, 0));
 const seaMat = new THREE.ShaderMaterial({
   uniforms: {
-    uC1: { value: uC1 }, uC2: { value: uC2 }, uN: { value: N }, uT: { value: 0 },
+    uC1: { value: uC1 }, uC2: { value: uC2 }, uN: { value: 0 }, uT: { value: 0 },
+    uStokes: { value: STOKES ? 1.0 : 0.0 },
     uSun: { value: sunDir }, uRange: { value: Math.max(1, hsTot) }
   },
   vertexShader: `
-    #define MAXC ${MAXC}
-    uniform vec4 uC1[MAXC];
-    uniform vec4 uC2[MAXC];
+    #define MAXM ${MAXM}
+    uniform vec4 uC1[MAXM];   // a (frame-weighted), k, omega, phase
+    uniform vec4 uC2[MAXM];   // dx, dy, urel, unused
     uniform int uN;
     uniform float uT;
+    uniform float uStokes;
     varying vec3 vN;
     varying vec3 vW;
     varying float vH;
+    varying float vSl;
     void main() {
       float x = position.x, y = position.y;
       float eta = 0.0, sx = 0.0, sy = 0.0;
-      for (int i = 0; i < MAXC; i++) {
+      for (int i = 0; i < MAXM; i++) {
         if (i >= uN) break;
         vec4 c1 = uC1[i];
         vec4 c2 = uC2[i];
         float th = c1.y * (c2.x * x + c2.y * y) - c1.z * uT + c1.w;
         eta += c1.x * cos(th);
         float f = -c1.x * c1.y * sin(th);
+        if (uStokes > 0.5) {
+          // second order: 0.5 a^2 k cos(2 th); slope term -a^2 k^2 sin(2 th) (dx, dy)
+          eta += 0.5 * c1.x * c1.x * c1.y * cos(2.0 * th);
+          f -= c1.x * c1.x * c1.y * c1.y * sin(2.0 * th);
+        }
         sx += f * c2.x;
         sy += f * c2.y;
       }
@@ -191,6 +268,7 @@ const seaMat = new THREE.ShaderMaterial({
       vN = normalize(vec3(-sx, 1.0, sy));  // sim normal (-sx, -sy, 1) mapped the same way
       vW = p;
       vH = eta;
+      vSl = sqrt(sx * sx + sy * sy);       // slope magnitude, as in Environment.breaking
       gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
     }`,
   fragmentShader: `
@@ -199,6 +277,7 @@ const seaMat = new THREE.ShaderMaterial({
     varying vec3 vN;
     varying vec3 vW;
     varying float vH;
+    varying float vSl;
     void main() {
       vec3 N = normalize(vN);
       vec3 L = normalize(uSun);
@@ -210,9 +289,15 @@ const seaMat = new THREE.ShaderMaterial({
       vec3 deep = vec3(0.0863, 0.2275, 0.3725);   // #163a5f
       vec3 crest = vec3(0.6235, 0.8275, 0.9020);  // #9fd3e6
       vec3 col = mix(deep, crest, t) * (0.40 + 0.70 * lam) + vec3(spec);
+      float wc = smoothstep(0.25, 0.35, vSl);     // whitecaps: slope limit 0.3 with a soft edge
+      col = mix(col, vec3(0.9569, 0.9725, 0.9843), wc);  // #f4f8fb
       gl_FragColor = vec4(col, 1.0);
     }`
 });
+// if the device offers too few vertex uniforms for two frames, use the nearer frame only
+const gl0 = renderer.getContext();
+const NEAREST = gl0.getParameter(gl0.MAX_VERTEX_UNIFORM_VECTORS) < 2 * MAXM + 40;
+if (NEAREST && SCEN) $('warn').textContent = 'Few vertex uniforms on this device: nearest frame is used instead of a crossfade.';
 const seaGeo = new THREE.PlaneGeometry(SEA, SEA, 240, 240); // local xy plane = sim xy
 const sea = new THREE.Mesh(seaGeo, seaMat);
 sea.frustumCulled = false;
@@ -305,8 +390,21 @@ function updateGlider(t) {
 // ---------------------------------------------------------------- UI
 const u10El = $('u10'), fromEl = $('from'), spdEl = $('spd');
 u10El.value = W.u10; fromEl.value = Math.round(W.from_deg) % 360;
+const hourEl = $('hour'), rateEl = $('rate');
+let playing = false, hourNow = 0;   // hourNow keeps sub-step precision (the slider rounds to 0.1)
+function syncHour() {
+  $('hourv').textContent = (+hourEl.value).toFixed(1);
+  u10El.value = W.u10; fromEl.value = Math.round(W.from_deg) % 360;
+  syncLabels();
+}
+if (SCEN) {
+  $('scen').style.display = '';
+  u10El.disabled = true; fromEl.disabled = true; $('lockNote').style.display = '';
+  hourEl.addEventListener('input', () => { hourNow = +hourEl.value; setHour(hourNow); syncHour(); });
+  $('play').addEventListener('click', () => { playing = !playing; $('play').textContent = playing ? 'Pause' : 'Play'; });
+}
 function syncLabels() { $('u10v').textContent = (+u10El.value).toFixed(1); $('fromv').textContent = fromEl.value; $('spdv').textContent = (+spdEl.value).toFixed(1) + 'x'; }
-function onWind() { setWind(+u10El.value, +fromEl.value); syncLabels(); }
+function onWind() { if (SCEN) return; setWind(+u10El.value, +fromEl.value); syncLabels(); }
 u10El.addEventListener('input', onWind); fromEl.addEventListener('input', onWind);
 spdEl.addEventListener('input', syncLabels);
 $('ptc').addEventListener('change', () => { points.visible = $('ptc').checked; });
@@ -325,11 +423,24 @@ addEventListener('resize', resize); resize();
 
 // readouts
 const roRows = [['t', 't'], ['U10', 'u10'], ['u*', 'us'], ['z0', 'z0']];
-F.trains.forEach((tr, i) => roRows.push([tr.name + ' Hs / Tp', 'tr' + i]));
+if (!SCEN) F.trains.forEach((tr, i) => roRows.push([tr.name + ' Hs / Tp', 'tr' + i]));
 roRows.push(['eta at mast', 'eta'], ['wind @ 2 m', 'w2'], ['wind @ 10 m', 'w10'], ['vertical w @ 2 m', 'vw2']);
 $('ro').innerHTML = roRows.map((r) => '<tr><td>' + r[0] + '</td><td id="ro_' + r[1] + '"></td></tr>').join('');
 const setRo = (k, s) => { $('ro_' + k).textContent = s; };
-F.trains.forEach((tr, i) => setRo('tr' + i, tr.hs.toFixed(2) + ' m / ' + tr.tp.toFixed(1) + ' s'));
+if (!SCEN) F.trains.forEach((tr, i) => setRo('tr' + i, tr.hs.toFixed(2) + ' m / ' + tr.tp.toFixed(1) + ' s'));
+const scRows = [['Hour', 'hour'], ['U10', 'u10'], ['Wind from', 'from'], ['Hs sea', 'hss'], ['Tp sea', 'tps'],
+  ['Hs swell', 'hsw'], ['u*', 'us'], ['z0', 'z0'], ['Whitecap fraction', 'wc']];
+$('sro').innerHTML = scRows.map((r) => '<tr><td>' + r[0] + '</td><td id="sc_' + r[1] + '"></td></tr>').join('');
+const setSc = (k, s) => { $('sc_' + k).textContent = s; };
+function updateScRo() {
+  setSc('hour', SC.hour.toFixed(1) + ' h'); setSc('u10', W.u10.toFixed(1) + ' m/s');
+  setSc('from', W.from_deg.toFixed(0) + ' deg'); setSc('hss', SC.hsSea.toFixed(2) + ' m');
+  setSc('tps', SC.tpSea.toFixed(1) + ' s'); setSc('hsw', SC.hsSwell.toFixed(2) + ' m');
+  setSc('us', W.ustar.toFixed(3) + ' m/s'); setSc('z0', W.z0.toExponential(2) + ' m');
+  setSc('wc', (100 * SC.wc).toFixed(2) + ' %');
+}
+setHour(0);   // fill the merged components and the uniforms (after seaMat exists)
+if (SCEN) { syncHour(); updateScRo(); }
 
 // ---------------------------------------------------------------- charts
 // series colours: first two categorical slots of the default palette (validated, light mode)
@@ -437,6 +548,11 @@ function updateParticleBuffers(t) {
 function loop(now) {
   requestAnimationFrame(loop);
   const real = Math.min(0.25, (now - last) / 1000); last = now;
+  if (SCEN && playing) {
+    hourNow += real * (+rateEl.value);
+    if (hourNow > 72) hourNow -= 72;   // loop
+    hourEl.value = hourNow; setHour(hourNow); syncHour();
+  }
   const dt = $('pause').checked ? 0 : real * (+spdEl.value);
   if (dt > 0) {
     const ns = Math.ceil(dt / 0.05), h = dt / ns;
@@ -465,6 +581,7 @@ function loop(now) {
   setRo('t', T.toFixed(1) + ' s'); setRo('u10', W.u10.toFixed(1) + ' m/s');
   setRo('us', W.ustar.toFixed(3) + ' m/s'); setRo('z0', W.z0.toExponential(2) + ' m');
   setRo('eta', eta.toFixed(2) + ' m');
+  if (SCEN) updateScRo();
   $('mastpos').textContent = 'Mast at sim (' + mx + ', ' + my + ') m. Arrow keys move it.';
   drawCharts();
 

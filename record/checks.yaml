@@ -63,3 +63,34 @@ items:
     by: checker
     date: 2026-10-29
     detail: A separate checker read sim/seawind.py and sim/structure.py and recomputed by hand the log-profile fixed point (u* 0.3707, z0 2.06e-4), the PM relations (Hs 2.414 m, Tp 7.755 s), the JONSWAP integral (4 sqrt(m0)/Hs within 0.3%), the potential-flow perturbation and its signs, the surface slope and orbital terms, the elliptical lift integrals, the tube inertia and root stress (margin 0.081), the tip deflection (ratio 0.1405 by a closed form), and the spar fit. All matched the code; the only error was the tube inertia stated in the brief itself (1.09e-10 instead of 1.69e-10 m4), not in the code. Observed, not an error, that orbital() has no depth decay and that the perturbation decays from the local surface.
+  - id: K-004
+    target:
+      - R-02
+      - R-12
+    tier: T2
+    method: hand_calc
+    result: partial
+    by: checker
+    date: 2026-10-29
+    detail: A separate checker derived the point-mass equations in the air-relative frame with the wind acceleration as a pseudo-force and matched sim/aircraft.py line by line; numerical residuals 1e-14 in a linear wind field; energy conservation without drag to 4.5e-7 m; uniform wind leaves the air-relative motion unchanged; climbing into increasing headwind gains energy as derived; best L/D 26.685, v_best_ld 10.956 m/s and v_stall 8.949 m/s for the baseline match. The first dsearch.py had a periodicity penalty that cancelled the gain, a completion test that failed by round-off for half of all periods, and a penalty that could turn negative; these were sent back for repair and the model's status stays calculated-and-unverified until the revised search is checked again.
+  - id: K-005
+    target:
+      - env.sea_grow_tau_h
+      - env.sea_decay_tau_h
+      - env.turb_length_m
+      - lit.swell_knee_height_m
+    tier: T2
+    method: hand_calc
+    result: partial
+    by: checker
+    date: 2026-10-29
+    detail: "A separate checker recomputed the wave-age and Drennan roughness (all four cases match to four digits), the swell-knee profile (matches exactly), and the turbulence normalization (u std 0.854 against 0.858, w/u 0.50, advection downwind). It found that the duration-limited growth is labelled SPM 1984 but uses U10 instead of the SPM adjusted wind UA, so Hs is about 40% low against the stated source; that the fully developed sea under the knee profile is 11% low; that the sea history grows faster than its own duration law and decays the swell in the step it is created; that the lateral turbulence intensity equals the longitudinal one; and that without a magnetometer the estimator uses the ground course as the heading, which hides the crosswind (9 m/s error), and that the vertical wind is never observed. The pitot bias passes straight into the wind estimate as derived. All of these were sent back for repair."
+  - id: K-006
+    target:
+      - env.sea_grow_tau_h
+    tier: T2
+    method: refute
+    result: fail
+    by: checker
+    date: 2026-10-29
+    detail: "A separate checker opened the Coastal Engineering Manual (P71) and the Shore Protection Manual (P83) and checked the growth equations against the printed pages. The duration-to-fetch relation given to the implementer from memory (g t/u* = 77.23 X*^(2/3)) was wrong; 77.23 belongs to II-2-35, and the duration law is II-2-38, X* = 5.23e-3 (g t/u*)^(3/2). The code was corrected; at 15 m/s the sea now reaches 1.60, 2.70 and 4.53 m after 6, 12 and 24 h and the CEM limit of 7.88 m after about 50 h, matching the checker's computation from the printed equations."

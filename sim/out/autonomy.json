@@ -1,0 +1,110 @@
+{
+ "cycle": {
+  "p": {
+   "mu_turn": 1.0,
+   "gamma_climb": 0.35,
+   "gamma_desc": 0.35,
+   "cl_turn": 0.9,
+   "h_top": 12.0,
+   "h_bot": 2.0,
+   "turn_sign": 1
+  },
+  "V0": 17.897668300989515,
+  "source": "hand-picked"
+ },
+ "u10": 10.0,
+ "t_end": 120.0,
+ "results": {
+  "minimal/flat": {
+   "ended": "crash",
+   "n_steps": 568,
+   "transitions": [],
+   "guard_activations": 8,
+   "cycles": 0,
+   "energy_gain_per_cycle": null,
+   "min_h": 0.016286064337058218,
+   "max_n": 4.798767887281999,
+   "ground_speed_toward_target": 6.340045597023847,
+   "wind_rms": 5.087085527261846,
+   "h_rms": 1.02364839763308,
+   "heading_rms": 0.8660365067793484,
+   "duration_s": 11.34
+  },
+  "standard/flat": {
+   "ended": "crash",
+   "n_steps": 311,
+   "transitions": [],
+   "guard_activations": 0,
+   "cycles": 0,
+   "energy_gain_per_cycle": null,
+   "min_h": 0.04833688770630014,
+   "max_n": 4.907021992680462,
+   "ground_speed_toward_target": 4.526295910610453,
+   "wind_rms": 0.7211693745076277,
+   "h_rms": 1.0104750788164403,
+   "heading_rms": 0.03947424924080905,
+   "duration_s": 6.2
+  },
+  "full/flat": {
+   "ended": "crash",
+   "n_steps": 311,
+   "transitions": [],
+   "guard_activations": 0,
+   "cycles": 0,
+   "energy_gain_per_cycle": null,
+   "min_h": 0.046045557932837,
+   "max_n": 4.929722690349655,
+   "ground_speed_toward_target": 4.344541145765584,
+   "wind_rms": 0.7481853003950677,
+   "h_rms": 1.032089631329545,
+   "heading_rms": 0.03812120037248882,
+   "duration_s": 6.2
+  },
+  "minimal/waved": {
+   "ended": "crash",
+   "n_steps": 292,
+   "transitions": [],
+   "guard_activations": 1,
+   "cycles": 0,
+   "energy_gain_per_cycle": null,
+   "min_h": 0.006354128307203943,
+   "max_n": 4.593208142304283,
+   "ground_speed_toward_target": 4.948348082086601,
+   "wind_rms": 3.2286723435077733,
+   "h_rms": 1.5258483019983726,
+   "heading_rms": 0.6284607163246795,
+   "duration_s": 5.82
+  },
+  "standard/waved": {
+   "ended": "crash",
+   "n_steps": 305,
+   "transitions": [],
+   "guard_activations": 0,
+   "cycles": 0,
+   "energy_gain_per_cycle": null,
+   "min_h": 0.04658900969785873,
+   "max_n": 3.324918813468045,
+   "ground_speed_toward_target": 4.012730282202612,
+   "wind_rms": 0.7407234422183325,
+   "h_rms": 0.9874604368812399,
+   "heading_rms": 0.03956578262308077,
+   "duration_s": 6.08
+  },
+  "full/waved": {
+   "ended": "crash",
+   "n_steps": 305,
+   "transitions": [],
+   "guard_activations": 0,
+   "cycles": 0,
+   "energy_gain_per_cycle": null,
+   "min_h": 0.11658633041449606,
+   "max_n": 4.232492773446901,
+   "ground_speed_toward_target": 3.9536246532973087,
+   "wind_rms": 0.7314452140286285,
+   "h_rms": 0.9959755662099505,
+   "heading_rms": 0.03780594427361665,
+   "duration_s": 6.08
+  }
+ },
+ "runtime_s": 2.345365524291992
+}

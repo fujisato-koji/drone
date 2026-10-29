@@ -84,3 +84,27 @@ items:
       - R-10
       - R-11
       - R-12
+  - id: D-012
+    date: 2026-10-29
+    by: owner
+    what: The drone that stays over the sea for a year (D-008) does not aim for type certification.
+    supersedes: D-003
+    touches:
+      - D-008
+      - Q-003
+      - Q-004
+      - Q-005
+  - id: D-013
+    date: 2026-10-29
+    by: owner
+    what: The drone that stays over the sea for a year (D-008) does not fly over people.
+    supersedes: D-004
+    touches:
+      - D-008
+  - id: D-014
+    date: 2026-10-29
+    by: owner
+    what: Accept a wing tip deflection limit of 15% of the half span at limit load for the spar sizing (the limit the assistant had added without asking).
+    touches:
+      - spar.deflection_limit
+      - Q-010

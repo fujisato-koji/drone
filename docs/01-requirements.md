@@ -96,7 +96,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | ds.endurance_days | 365 | d | decided | D-008 |
 | ds.range_km | 10 | km | decided | D-009 |
 | ds.photo_bytes | 10000 | B | assumed | Q-009 |
-| ds.min_u10_ms | 8 | m/s | assumed | Q-009 |
+| ds.min_u10_ms | 8 | m/s | sourced | P45, P42 |
 | ds.mass_max_kg | 3 | kg | assumed | Q-009 |
 | ds.span_max_m | 3 | m | assumed | Q-009 |
 | ds.avionics_power_w | 3 | W | assumed | Q-009 |
@@ -111,15 +111,63 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | wing.thickness_ratio | 0.1 | 1 | assumed | Q-009 |
 | wing.design_mass_kg | 1.5 | kg | assumed | Q-009 |
 | spar.carbon_density | 1600 | kg/m3 | assumed | Q-009 |
-| spar.carbon_modulus | 120000000000.0 | Pa | assumed | Q-009 |
-| spar.carbon_allowable | 600000000.0 | Pa | assumed | Q-009 |
-| spar.od_mm | 10.0 | mm | calculated | docs/03-design.md#wing-spar |
-| spar.wall_mm | 0.5 | mm | calculated | docs/03-design.md#wing-spar |
-| spar.mass_kg | 0.053 | kg | calculated | docs/03-design.md#wing-spar |
-| spar.margin | 0.08 | 1 | calculated | docs/03-design.md#wing-spar |
-| spar.tip_deflection_ratio | 0.14 | 1 | calculated | docs/03-design.md#wing-spar |
-| wing.mass_kg | 0.392 | kg | calculated | docs/03-design.md#mass-model |
-| airframe.baseline_mass_kg | 1.072 | kg | calculated | docs/03-design.md#mass-model |
+| spar.carbon_modulus | 35000000000.0 | Pa | sourced | P54 |
+| spar.carbon_allowable | 300000000.0 | Pa | sourced | P54 |
+| spar.od_mm | 13.0 | mm | calculated | docs/03-design.md#wing-spar |
+| spar.wall_mm | 0.75 | mm | calculated | docs/03-design.md#wing-spar |
+| spar.mass_kg | 0.089 | kg | calculated | docs/03-design.md#wing-spar |
+| spar.margin | 0.34 | 1 | calculated | docs/03-design.md#wing-spar |
+| spar.tip_deflection_ratio | 0.15 | 1 | calculated | docs/03-design.md#wing-spar |
+| wing.mass_kg | 0.428 | kg | calculated | docs/03-design.md#mass-model |
+| airframe.baseline_mass_kg | 1.108 | kg | calculated | docs/03-design.md#mass-model |
+| lit.albatross_mass_kg | 9.5 | kg | sourced | P44, P45 |
+| lit.albatross_span_m | 3.3 | m | sourced | P45 |
+| lit.albatross_wing_area_m2 | 0.65 | m2 | sourced | P44, P45 |
+| lit.albatross_aspect_ratio | 16 | 1 | sourced | P45 |
+| lit.albatross_lift_to_drag | 21 | 1 | sourced | P42 |
+| lit.ds_cycle_period_s | 12 | s | sourced | P46, P47 |
+| lit.ds_cycle_height_m | 15 | m | sourced | P46, P47 |
+| lit.ds_turn_angle_deg | 66 | deg | sourced | P44 |
+| lit.shear_layer_thickness_m | 2 | m | sourced | P44 |
+| lit.min_u10_albatross_ms | 8.6 | m/s | sourced | P45 |
+| lit.min_u10_mariner_ms | 8.0 | m/s | sourced | P45 |
+| lit.min_u10_sailplane_15kg_ms | 13.2 | m/s | sourced | P56 |
+| lit.rayleigh_min_wind_difference_ms | 3.5 | m/s | sourced | P42, P43 |
+| lit.easyglider_mass_kg | 1.35 | kg | sourced | P48 |
+| lit.easyglider_span_m | 1.8 | m | sourced | P48 |
+| lit.easyglider_wing_area_m2 | 0.4 | m2 | sourced | P48 |
+| lit.atlantiksolar_avionics_w | 6 | W | sourced | P49 |
+| lit.insolation_50s_june_kwh_m2_day | 0.71 | kWh/m2/d | sourced | P51 |
+| lit.insolation_home_december_kwh_m2_day | 1.64 | kWh/m2/d | sourced | P51, private:loc-01 |
+| lit.cell_p45b_wh_per_kg | 231 | Wh/kg | sourced | P50 |
+| lit.cs22_limit_load_factor | 5.3 | 1 | sourced | P55 |
+| lit.cs22_safety_factor | 1.5 | 1 | sourced | P55 |
+| lit.anemometer_trisonica_mass_g | 50 | g | sourced | P52 |
+| lit.anemometer_trisonica_power_w | 0.36 | W | sourced | P52 |
+| lit.probe_epfl_mass_g | 9 | g | sourced | P53 |
+| lit.pultruded_modulus_pa | 35000000000.0 | Pa | sourced | P54 |
+| lit.pultruded_flexural_pa | 300000000.0 | Pa | sourced | P54 |
+| spar.deflection_limit | 0.15 | 1 | decided | D-014 |
+| env.sea_grow_tau_h | 3 | h | assumed | Q-008 |
+| env.sea_decay_tau_h | 12 | h | assumed | Q-008 |
+| env.breaking_slope_limit | 0.3 | 1 | assumed | Q-008 |
+| lit.so_u10_mean_winter_ms | 12 | m/s | sourced | P61 |
+| lit.so_u10_mean_summer_ms | 10.5 | m/s | sourced | P61 |
+| lit.so_u10_p99_ms | 22 | m/s | sourced | P61 |
+| lit.pacific_swell_dominance | 0.9 | 1 | sourced | P62 |
+| lit.wave_induced_decay_u | 0.77 | 1 | sourced | P63 |
+| lit.wave_induced_decay_w | 0.62 | 1 | sourced | P63 |
+| lit.swell_knee_height_m | 7.5 | m | sourced | P65 |
+| lit.charnock_coare35_at_10ms | 0.012 | 1 | sourced | P66 |
+| lit.gust_factor_3s_10min_sea | 1.23 | 1 | sourced | P68 |
+| env.turb_length_m | 50 | m | assumed | Q-008 |
+| env.turb_gust_factor_check | 1.21 | 1 | calculated | docs/02-form.md#sea-coupling |
+| patterns.solar_avg_baseline_w | 0.74 | W | calculated | docs/02-form.md#flight-patterns |
+| patterns.flapglide_baseline_wh_per_km_calm | 0.38 | Wh/km | calculated | docs/02-form.md#flight-patterns |
+| patterns.flapglide_baseline_wh_per_km_head10 | 4.4 | Wh/km | calculated | docs/02-form.md#flight-patterns |
+| patterns.flapglide_baseline_wh_per_km_cross10 | 0.9 | Wh/km | calculated | docs/02-form.md#flight-patterns |
+| patterns.battery_fraction | 0.15 | 1 | assumed | Q-012 |
+| patterns.wave_slope_floor_m | 0.5 | m | assumed | Q-013 |
 <!-- tdr:end -->
 
 ## Requirements for the dynamic soaring drone {#ds-requirements}
