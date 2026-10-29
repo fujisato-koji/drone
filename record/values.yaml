@@ -486,6 +486,18 @@ items:
     status: assumed
     basis:
       - Q-062
+  - key: ctrl.const_cl_rate_max_per_s
+    v: 2.0
+    unit: 1/s
+    status: assumed
+    basis:
+      - Q-062
+  - key: ctrl.const_actuator_tau_s
+    v: 0.1
+    unit: s
+    status: assumed
+    basis:
+      - Q-062
   - key: ctrl.bank_rate_max_deg_s
     v: 150
     unit: deg/s

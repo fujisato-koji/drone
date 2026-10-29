@@ -127,7 +127,8 @@ class Actuators:
     out of n_steps).
 
     rate_model "constant" (default, the old behaviour): bank rate limit ctrl.bank_rate_max_deg_s
-    (150 deg/s), cl rate ctrl.cl_rate_max_per_s (2 /s), lag ctrl.actuator_tau_s (0.1 s), no delay.
+    (150 deg/s), cl rate ctrl.const_cl_rate_max_per_s (2 /s), lag ctrl.const_actuator_tau_s (0.1 s),
+    no delay.
     rate_model "pb2v": bank rate p_max = k 2 V / b with k = ctrl.roll_pb2v (0.08) and V the current
     airspeed (step needs V), cl rate ctrl.cl_rate_max_per_s (1 /s), lag ctrl.actuator_tau_s
     (0.05 s), delay ctrl.actuator_delay_s (0.05 s). Explicit arguments override the record.
@@ -139,13 +140,15 @@ class Actuators:
             raise ValueError("rate_model must be 'constant' or 'pb2v'")
         pb = rate_model == "pb2v"
         self.ac, self.rate_model = ac, rate_model
-        self.tau = float(value("ctrl.actuator_tau_s", 0.05 if pb else 0.1) if tau is None else tau)
-        self.cl_rate = float(value("ctrl.cl_rate_max_per_s", 1.0 if pb else 2.0)
+        self.tau = float((value("ctrl.actuator_tau_s", 0.05) if pb else value("ctrl.const_actuator_tau_s", 0.1))
+                         if tau is None else tau)
+        self.cl_rate = float((value("ctrl.cl_rate_max_per_s", 1.0) if pb
+                              else value("ctrl.const_cl_rate_max_per_s", 2.0))
                              if cl_rate is None else cl_rate)
         self.mu_rate = np.radians(float(value("ctrl.bank_rate_max_deg_s", 150.0)
                                         if mu_rate_deg_s is None else mu_rate_deg_s))
         self.k_pb2v = float(value("ctrl.roll_pb2v", 0.08) if k_pb2v is None else k_pb2v)
-        self.delay = float(value("ctrl.actuator_delay_s", 0.05 if pb else 0.0)
+        self.delay = float((value("ctrl.actuator_delay_s", 0.05) if pb else 0.0)
                            if delay_s is None else delay_s)
         self.reset()
 

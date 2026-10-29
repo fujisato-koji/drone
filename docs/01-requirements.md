@@ -116,6 +116,8 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | ctrl.cl_rate_max_per_s | 1.0 | 1/s | assumed | Q-062 |
 | ctrl.actuator_tau_s | 0.05 | s | assumed | Q-062 |
 | ctrl.actuator_delay_s | 0.05 | s | assumed | Q-062 |
+| ctrl.const_cl_rate_max_per_s | 2.0 | 1/s | assumed | Q-062 |
+| ctrl.const_actuator_tau_s | 0.1 | s | assumed | Q-062 |
 | ctrl.bank_rate_max_deg_s | 150 | deg/s | assumed | Q-062 |
 | lit.gilruth_pb2v_min | 0.07 | 1 | sourced | P106 |
 | lit.bower_bank_rate_limit_deg_s | 90 | deg/s | sourced | P45 |

@@ -250,7 +250,7 @@ class TestConstraints(unittest.TestCase):
         self.assertTrue(info["success"], info["message"])
         tol = 1e-5
         self.assertLessEqual(info["bank_rate_max_deg_s"], 100.0 + tol)
-        self.assertLessEqual(info["cl_rate_max_per_s"], value("ctrl.cl_rate_max_per_s", 2.0) + tol)
+        self.assertLessEqual(info["cl_rate_max_per_s"], value("ctrl.const_cl_rate_max_per_s", 2.0) + tol)
         self.assertLessEqual(info["n_max_node"], 0.8 * ac.n_max + tol)
         self.assertGreaterEqual(info["n_min_node"], 0.2 - tol)
         self.assertLessEqual(info["mu_max_deg"], 0.9 * np.degrees(ac.mu_max) + tol)

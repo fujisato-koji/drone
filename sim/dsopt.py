@@ -308,7 +308,8 @@ class Collocation:
         self.rate_model = rate_model
         self.k_roll = float(roll_pb2v) if roll_pb2v is not None else value("ctrl.roll_pb2v", 0.08)
         self.r_max = (float(cl_rate_max_per_s) if cl_rate_max_per_s is not None
-                      else value("ctrl.cl_rate_max_per_s", 1.0 if rate_model == "pb2v" else 2.0))
+                      else (value("ctrl.cl_rate_max_per_s", 1.0) if rate_model == "pb2v"
+                            else value("ctrl.const_cl_rate_max_per_s", 2.0)))
         self.n_min = None if n_min is None else float(n_min)
         self.n_frac, self.mu_frac = float(n_frac), float(mu_frac)
         self.phase_pin = phase_pin
