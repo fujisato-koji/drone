@@ -761,3 +761,14 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-10-30
+  - id: Q-064
+    kind: finding
+    text: "The sea and wind model can compare soaring strategies but cannot yet verify a low turn within about a metre of the water (docs/02-form.md#simulator-fitness): the contact check uses a linear surface without sharp or breaking crests, the wave-coherent wind below 1 m is an extrapolation of P63 and the trough shelter is only the crude separation option, near-surface turbulence keeps a fixed length scale, stability and the swell profile are missing (Q-061), and no sensor measures the height under the low wingtip. Add crest geometry with second-order terms and breaking crests, the near-surface wave wind and trough shelter from published large-eddy simulations, height-scaled turbulence, and a wingtip height sensor model; then plan a low-turn flight test with RTK and a laser altimeter."
+    waits_for: assistant
+    affects:
+      - R-12
+      - R-02
+      - Q-063
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-30

@@ -117,6 +117,21 @@ What it means:
 - The birds fill the gap in other ways: they ride the slopes of waves (P76, P77), flap less as the swell rises as well as the wind (P80), spend most of their flight energy in the little time they flap (P81), and sit on the water in light wind, taking off harder when both wind and waves are gentle (P82).
 - The routes that remain towards R-02 are the same: a higher lift-to-drag ratio (K-009), the energy of the waves (Q-058), the extra shear under swell and in stable air (Q-061), the motor for the gaps (Q-055), and waiting on the water.
 
+### Is the simulator fit to check low, wave-using flight? {#simulator-fitness}
+
+The candidates that could reach R-02 make their low turn near the water and use the waves (see what carries the albatross), so the question is whether the sea and wind model can check such flight, not only rank it.
+The answer on 2026-10-30 is that it can compare strategies but cannot yet verify a low turn within about a metre of the water (Q-064):
+
+- Mean wind: the log profile with the roughness options holds for a wind sea in neutral air; stable air and the shear below the swell knee are missing (Q-061).
+- Surface: a linear sum of components, with an optional second-order term that the flight model does not use; real crests are sharper and higher and breaking crests are not in the geometry, so a wingtip contact check on this surface is optimistic.
+- Wave-coherent wind: linear potential flow, matched in form and size to the measurements from 2.6 to 15 m (P63); below 1 m it is an extrapolation, and the slow air of a sheltered trough exists only as the crude separation option.
+- Turbulence: a frozen von Karman field with a fixed length scale of env.turb_length_m, scaled to the offshore intensity; near the water the eddies should shrink with height, which the model does not do.
+- Ground effect: being added to the flight model; no measurement covers a banked wing over waves.
+- Sensors: the altimeters return the point under the beam axis and a forward scanner looks ahead; nothing measures the height under the low wingtip, and footprint, spray and the limits of prediction are only partly modelled.
+
+What to add before such flight can be checked, in order: crest geometry with second-order terms and breaking crests in the contact check and the flight; the wave-coherent wind and the trough shelter below 1 m from published large-eddy simulations; turbulence scaled with height near the water; stability and the swell profile (Q-061); and a sensor model for the height under the wingtip.
+After that, only a flight test can close it: low turns over a lake or a calm sea with RTK and a laser altimeter logging the height and the wind.
+
 ### Viewer (`sim/viewer/index.html`) {#viewer}
 
 - `python -m sim.export_field --u10 10 --from 270` writes `sim/viewer/field.js` with the wind parameters and the wave components.
