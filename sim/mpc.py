@@ -17,6 +17,21 @@ Choices the spec left open (simplest thing taken):
 - Sensor noise on z (0.1 m, white) is added in fly_mpc before the estimator sees the height.
 - Until the estimator has a fit (at least 40 samples spanning 4 s) the "estimated" model plans
   in the flat world.
+
+Estimates in the loop (state_source / wind_source = "estimate"; choices the spec left open):
+- A SensorSuite (default "standard") and the Estimator run at the integration step on the true
+  state; the actual bank (after the actuators) feeds the sensor truth.
+- The planner state is x, y from the estimate, z = h_surface_est + (planner world surface), V = est
+  airspeed, gamma = asin of the vertical component of est.v_air / |v_air| (the estimator's climb
+  angle from the GNSS climb rate over the airspeed), psi = est.heading.
+- The wind estimate used by the planner is ready when est.valid, est.wind_valid and a profile fit
+  exists (u10_est > 0). It is then held at its last ready value if the fit is lost. The planner
+  world is Environment.flat(Wind(u10_est, from_deg_est)) (Charnock z0 of the Wind class, not the
+  fitted z0); wind_source "estimate" needs world_model "flat".
+- Until the sources used are ready the aircraft flies a glide at best-L/D cl with a +-20 deg
+  bank that changes sign every 10 s (mu = +20 deg first).
+- The start state, and the u10_est argument, are the same as with the truth (the argument is the
+  nominal u10 for the start cycle only when wind_source is "estimate").
 """
 from __future__ import annotations
 
@@ -27,7 +42,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from sim.aircraft import _DT, _H, _OFFS, G, clip_controls, derivatives, rk4_step
+from sim.aircraft import (_DT, _H, _OFFS, G, clip_controls, derivatives, n_limited_cl,
+                          rk4_step)
 from sim.seawind import Environment, Wind
 
 # ---------------------------------------------------------------------------------------------
@@ -55,9 +71,12 @@ def wind_derivs_vec(world, x, y, z, t):
     return w[0], grad, (w[7] - w[8]) / (2 * _DT)
 
 
-def derivatives_vec(t, s, ac, world, cl, mu):
-    """s: (6, S) states; cl, mu: (S,). Returns (6, S) derivatives."""
+def derivatives_vec(t, s, ac, world, cl, mu, n_limit=False):
+    """s: (6, S) states; cl, mu: (S,). Returns (6, S) derivatives. With n_limit cl is first
+    reduced to the load-factor limit at each state's airspeed (as sim.aircraft.n_limited_cl)."""
     x, y, z, V, g, p = s
+    if n_limit:
+        cl = np.minimum(cl, ac.n_max * ac.mass * G / (0.5 * ac.rho * V * V * ac.wing_area))
     cg_, sg_, cp, sp = np.cos(g), np.sin(g), np.cos(p), np.sin(p)
     eV = np.stack([cg_ * cp, cg_ * sp, sg_], axis=1)
     eg = np.stack([-sg_ * cp, -sg_ * sp, cg_], axis=1)
@@ -107,7 +126,7 @@ class MPPIPlanner:
                  sigma_cl=0.15, sigma_mu=0.25, replan_s=0.5, seed=1, n_iter=2, n_iter_cold=4,
                  w_e=1.0, w_p=0.5, h_clear=1.0, clearance="height", w_clear=200.0,
                  w_n=50.0, w_stall=300.0, w_smooth=2.0, c_contact=1e4, smooth_modes=0,
-                 smooth_gain=3.0, w_d=10.0):
+                 smooth_gain=3.0, w_d=10.0, n_limit=False):
         self.ac = aircraft
         self.horizon_s, self.dt, self.n_samples, self.n_ctrl = horizon_s, dt, n_samples, n_ctrl
         self.lam, self.sigma_cl, self.sigma_mu, self.replan_s = lam, sigma_cl, sigma_mu, replan_s
@@ -117,6 +136,9 @@ class MPPIPlanner:
         self.c_contact = c_contact
         self.smooth_modes, self.smooth_gain = smooth_modes, smooth_gain
         self.w_d = w_d
+        self.act = None             # an sim.aircraft.Actuators: rollouts fly through its model
+        self.act_state = None       # (actual cl, actual mu, last cl command, last mu command)
+        self.n_limit = n_limit      # rollouts fly the load-limited cl (the cost still sees the commanded n)
         self.rng = np.random.default_rng(seed)
         self.nsteps = int(round(horizon_s / dt))
         self.knots_t = np.linspace(0.0, horizon_s, n_ctrl)
@@ -179,6 +201,22 @@ class MPPIPlanner:
         mu_all = Us[:, 1, i0] * (1 - fr) + Us[:, 1, i0 + 1] * fr
         cl_all = np.clip(cl_all, ac.cl_min, ac.cl_max)
         mu_all = np.clip(mu_all, -ac.mu_max, ac.mu_max)
+        act = self.act
+        if act is not None:
+            # delayed commands on the half-step grid (before the delay: the last command sent)
+            m = int(round(act.delay / (dt / 2.0)))
+            st = self.act_state
+            if st is None:
+                st = (cl_all[0, 0], mu_all[0, 0], cl_all[0, 0], mu_all[0, 0])
+            if m > 0:
+                cl_all = np.concatenate([np.full((S, m), st[2]), cl_all[:, :-m]], axis=1)
+                mu_all = np.concatenate([np.full((S, m), st[3]), mu_all[:, :-m]], axis=1)
+            x_cl, x_mu = np.full(S, st[0]), np.full(S, st[1])
+            hd = dt / 2.0
+            a_lag = 1.0 - np.exp(-hd / act.tau) if act.tau > 0 else 1.0
+
+            def _act(x, cmd, lim):
+                return x + np.clip(a_lag * (cmd - x), -lim, lim)
         s = np.repeat(np.asarray(s0, float)[:, None], S, axis=1)
         e0 = G * s0[2] + 0.5 * s0[3] ** 2
         cost = np.zeros(S)
@@ -191,10 +229,19 @@ class MPPIPlanner:
             t = t0 + i * dt
             c1, c2, c3 = cl_all[:, 2 * i], cl_all[:, 2 * i + 1], cl_all[:, 2 * i + 2]
             m1, m2, m3 = mu_all[:, 2 * i], mu_all[:, 2 * i + 1], mu_all[:, 2 * i + 2]
-            k1 = derivatives_vec(t, s, ac, world, c1, m1)
-            k2 = derivatives_vec(t + dt / 2, s + dt / 2 * k1, ac, world, c2, m2)
-            k3 = derivatives_vec(t + dt / 2, s + dt / 2 * k2, ac, world, c2, m2)
-            k4 = derivatives_vec(t + dt, s + dt * k3, ac, world, c3, m3)
+            c3_cmd = c3
+            if act is not None:
+                lim_mu = act.mu_rate_at(s[3]) * hd
+                lim_cl = act.cl_rate * hd
+                c1, m1 = x_cl, x_mu
+                x_cl = _act(x_cl, c2, lim_cl); x_mu = _act(x_mu, m2, lim_mu)
+                c2, m2 = x_cl, x_mu
+                x_cl = _act(x_cl, c3, lim_cl); x_mu = _act(x_mu, m3, lim_mu)
+                c3, m3 = x_cl, x_mu
+            k1 = derivatives_vec(t, s, ac, world, c1, m1, self.n_limit)
+            k2 = derivatives_vec(t + dt / 2, s + dt / 2 * k1, ac, world, c2, m2, self.n_limit)
+            k3 = derivatives_vec(t + dt / 2, s + dt / 2 * k2, ac, world, c2, m2, self.n_limit)
+            k4 = derivatives_vec(t + dt, s + dt * k3, ac, world, c3, m3, self.n_limit)
             sn = s + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
             sn = np.where(dead[None, :], s, sn)       # frozen once dead
             bad = ~np.all(np.isfinite(sn), axis=0) | (sn[3] < 0.5 * ac.v_stall)
@@ -204,7 +251,7 @@ class MPPIPlanner:
             hc = self.clearance_height(world, x, y, z, g, m3, t + dt)
             live = ~dead & ~bad
             q = 0.5 * ac.rho * V * V * ac.wing_area
-            n = q * c3 / (ac.mass * G)
+            n = q * c3_cmd / (ac.mass * G)
             pen = (self.w_clear * (np.maximum(0.0, self.h_clear - hc) / self.h_clear) ** 2
                    + self.w_n * np.maximum(0.0, n - ac.n_max) ** 2
                    + self.w_stall * (np.maximum(0.0, vmin - V) / ac.v_stall) ** 2)
@@ -518,6 +565,10 @@ def _flat_world(env_true, u10_est):
     return Environment.flat(Wind(u10_est, env_true.wind.from_deg))
 
 
+def _flat_world_uf(u10, from_deg):
+    return Environment.flat(Wind(u10, from_deg))
+
+
 def wingtip_height(ac, z, eta, g, mu):
     return z - eta - 0.5 * ac.span * np.sin(np.abs(mu)) * np.cos(g)
 
@@ -540,18 +591,30 @@ def traj_metrics(ac, env, t, st, mu, n, bearing_u):
 
 def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg, u10_est,
             seed=1, planner_kw=None, dt=0.01, max_components=None, estimator=None, keep=False,
-            library=None, wave_aware=True):
+            library=None, wave_aware=True, state_source="truth", wind_source="truth",
+            suite="standard", profile_fit="two_param", actuators=None, n_limit=False,
+            log_every_s=5.0, stop_on_tip=False):
     """Closed loop: true dynamics (rk4, dt), planner every replan_s in the chosen world model.
 
     world_model: "truth" | "flat" | "estimated". sensors: list of SurfaceSensor (used only for
     "estimated"; also fed to the estimator). max_components: restrict the "truth" world to its
     strongest components (speed). Returns a metrics dict (and the trajectory if keep).
+
+    state_source / wind_source: "truth" (today) or "estimate". With an estimate a SensorSuite
+    (suite: "minimal" | "standard" | "full") and an Estimator(profile_fit) run in the loop; the
+    planner then starts from the estimated state, and the library cycle and the flat world use the
+    estimated u10 and wind direction (see the module docstring). actuators: an
+    sim.aircraft.Actuators or None (fly the actual controls); n_limit: load-factor limit in the
+    flight model. The metrics then also hold max_n_cmd, max_n_flown, n_limit_bind_frac,
+    actuator_bind and, with estimates, the time series "est_log".
     """
     from sim.seasense import LocalWaveEstimator
     ac = aircraft
     kw = dict(seed=seed)
     kw.update(planner_kw or {})
     pl = MPPIPlanner(ac, **kw)
+    pl.n_limit = bool(n_limit)
+    pl.act = actuators
     rng = np.random.default_rng(seed + 1000)
     est = (estimator or LocalWaveEstimator()) if world_model == "estimated" else None
     for sn in sensors or []:
@@ -569,6 +632,18 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         k0 = int(np.argmax(c0.z))
         s = np.array([0.0, 0.0, float(env_true.surface(0.0, 0.0, 0.0)[0]) + c0.z[k0], c0.V[k0],
                       c0.g[k0], psi_w + c0.psi[k0]])
+    use_est = state_source == "estimate" or wind_source == "estimate"
+    if state_source not in ("truth", "estimate") or wind_source not in ("truth", "estimate"):
+        raise ValueError("state_source and wind_source must be 'truth' or 'estimate'")
+    if wind_source == "estimate" and world_model != "flat":
+        raise ValueError("wind_source='estimate' needs world_model='flat'")
+    if use_est:
+        from sim.estimator import Estimator
+        from sim.sensors import SensorSuite, truth_from_state
+        ssuite = getattr(SensorSuite, suite)(seed)
+        sest = Estimator(ssuite.names, profile_fit=profile_fit, sample_dt=True)
+    if actuators is not None:
+        actuators.reset()
     tau_prev, n_cyc, deltas, mdist = None, 0, [], []
     if world_model == "truth":
         w_truth = env_true if max_components is None else _Limited(env_true, max_components)
@@ -576,6 +651,12 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     from_deg = env_true.wind.from_deg
 
     T, ST, MU, CL, NN = [], [], [], [], []
+    NF, NBND, NCMD = [], [], []
+    est_log = []
+    e_cur, ready_wind, u10_cur, from_cur, psi_w_cur = None, False, u10_est, from_deg, psi_w
+    prev_truth = None
+    z0_true = float(env_true.wind.z0)
+    n_prelude = 0
     cpu, fit_cpu, fit_q, fit_n, pred_err, ess, ndead = [], [], [], [], [], [], []
     plan, t_plan = None, 0.0
     t, ended = 0.0, "complete"
@@ -583,21 +664,54 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     cl = ac.cl_best_ld
     nsteps = int(round(t_end / dt))
     steps_per_plan = int(round(pl.replan_s / dt))
+    t_ready = None
+    mu_a, cl_a = 0.0, ac.cl_best_ld
     for i in range(nsteps + 1):
         t = i * dt
         eta_t = float(env_true.surface(s[0], s[1], t)[0])
         if s[2] - eta_t < 0.0:
             ended = "contact"
             break
+        if stop_on_tip and wingtip_height(ac, s[2], eta_t, s[4], mu_a) < 0.0:
+            ended = "tip contact"
+            break
         if not np.all(np.isfinite(s)):
             ended = "non-finite"
             break
-        if i % steps_per_plan == 0:
+        ready = True
+        if use_est:
+            truth = truth_from_state(s, env_true, t, mu_a, prev_truth)
+            e_cur = sest.update(ssuite.measure(truth, t), t)
+            if (wind_source == "estimate" and e_cur.valid and e_cur.wind_valid
+                    and e_cur.u10_est > 0.0 and np.isfinite(e_cur.wind_dir_est_deg)):
+                ready_wind = True
+                u10_cur, from_cur = float(e_cur.u10_est), float(e_cur.wind_dir_est_deg)
+                psi_w_cur = float(np.pi / 2 - np.radians(from_cur + 180.0))
+            ready = ((state_source == "truth" or bool(e_cur.valid))
+                     and (wind_source == "truth" or ready_wind))
+            if ready and t_ready is None:
+                t_ready = t
+            if i % int(round(log_every_s / dt)) == 0:
+                w_t = np.asarray(env_true.wind_at(s[0], s[1], s[2], t), float).reshape(3)
+                w_e = np.asarray(e_cur.wind, float)
+                est_log.append({
+                    "t": t, "ready": bool(ready),
+                    "wind_speed_err": float(np.hypot(*w_e[:2]) - np.hypot(*w_t[:2])),
+                    "wind_dir_err_deg": float(np.degrees(wrap(np.arctan2(w_e[1], w_e[0])
+                                                               - np.arctan2(w_t[1], w_t[0])))),
+                    "profile_dir_err_deg": float(np.degrees(wrap(np.radians(
+                        e_cur.wind_dir_est_deg - env_true.wind.from_deg)))),
+                    "u10_est": float(e_cur.u10_est), "u10_true": float(env_true.wind.u10),
+                    "z0_est": float(e_cur.z0_est), "z0_true": z0_true,
+                    "h_err": float(e_cur.h_surface - (s[2] - eta_t)),
+                    "speed_err": float(e_cur.airspeed - s[3])})
+        if ready and (plan is None or i % steps_per_plan == 0):
             c0 = time.process_time()
             if world_model == "truth":
                 world = w_truth
             elif world_model == "flat":
-                world = w_flat
+                world = (_flat_world_uf(u10_cur, from_cur) if wind_source == "estimate"
+                         else w_flat)
             else:
                 f0 = time.process_time()
                 fit = est.fit(t)
@@ -608,18 +722,33 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                     world = fit.environment(u10_est, from_deg, env_true.decay)
                     fit_q.append(fit.quality)
                     fit_n.append(fit.n_samples)
+            if state_source == "estimate":
+                px_, py_ = float(e_cur.pos[0]), float(e_cur.pos[1])
+                va = np.asarray(e_cur.v_air, float)
+                gam_e = float(np.arcsin(np.clip(va[2] / max(float(np.linalg.norm(va)), 1e-6),
+                                                -1.0, 1.0)))
+                s_plan = np.array([px_, py_, float(e_cur.h_surface)
+                                   + float(world.surface(px_, py_, t)[0]),
+                                   float(e_cur.airspeed), gam_e, float(e_cur.heading)])
+            else:
+                s_plan = s
+            psi_p = psi_w_cur if wind_source == "estimate" else psi_w
+            chi_p = float(wrap(np.arctan2(u[1], u[0]) - psi_p))
+            u10_p = u10_cur if wind_source == "estimate" else u10_est
             guide = None
             if library is not None:
-                cyc = library.pick(ac.name, u10_est, chi)
-                guide = CycleGuide(cyc, world, t, s, psi_w, pl.horizon_s, wave_aware=wave_aware,
-                                  w_d=pl.w_d,
+                cyc = library.pick(ac.name, u10_p, chi_p)
+                guide = CycleGuide(cyc, world, t, s_plan, psi_p, pl.horizon_s,
+                                  wave_aware=wave_aware, w_d=pl.w_d,
                                   tau_hint=None if tau_prev is None else tau_prev + pl.replan_s)
                 if tau_prev is not None and guide.tau0 < tau_prev - 0.5 * cyc.T:
                     n_cyc += 1
                 tau_prev = guide.tau0
                 deltas.append(guide.delta)
                 mdist.append(guide.match_dist)
-            plan = pl.plan(world, t, s, u, guide=guide)
+            if actuators is not None and actuators.cl is not None:
+                pl.act_state = (actuators.cl, actuators.mu) + actuators.cmd_last
+            plan = pl.plan(world, t, s_plan, u, guide=guide)
             t_plan = t
             cpu.append(time.process_time() - c0)
             ess.append(plan.ess)
@@ -629,19 +758,32 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                 pe = np.asarray(world.surface(px, py, ptt)[0]) - np.asarray(
                     env_true.surface(px, py, ptt)[0])
                 pred_err.append(float(np.sqrt(np.mean(pe ** 2))))
-        cl, mu = clip_controls(ac, *plan.controls(t - t_plan))
+        if ready:
+            cl, mu = clip_controls(ac, *plan.controls(t - t_plan))
+        else:
+            n_prelude += 1
+            cl, mu = ac.cl_best_ld, np.radians(20.0) * (1.0 if int(t // 10.0) % 2 == 0 else -1.0)
         q = 0.5 * ac.rho * s[3] ** 2 * ac.wing_area
-        T.append(t); ST.append(s.copy()); MU.append(mu); CL.append(cl)
-        NN.append(q * cl / (ac.mass * G))
+        if n_limit:
+            cl = n_limited_cl(ac, s[3], cl)       # commanded cl is held to the limit
+        cl_a, mu_a = (cl, mu) if actuators is None else actuators.step(cl, mu, dt, s[3])
+        cl_f = n_limited_cl(ac, s[3], cl_a) if n_limit else cl_a
+        T.append(t); ST.append(s.copy()); MU.append(mu_a); CL.append(cl_f)
+        NN.append(q * cl_f / (ac.mass * G))
+        NCMD.append(q * cl / (ac.mass * G))
+        NBND.append(float(cl_f < cl_a - 1e-12))
         if world_model == "estimated":
             zk = float(s[2]) + 0.1 * rng.standard_normal()
             for sn in sensors:
-                got = sn.measure(s, mu, env_true, t, rng)
+                got = sn.measure(s, mu_a, env_true, t, rng)
                 if got:
                     est.add(got, zk)
         if i == nsteps:
             break
-        s = rk4_step(lambda tt, ss: derivatives(tt, ss, ac, env_true, cl, mu)[0], t, s, dt)
+        if use_est:
+            prev_truth = (s.copy(), t, mu_a)
+        s = rk4_step(lambda tt, ss: derivatives(tt, ss, ac, env_true, cl_a, mu_a, n_limit)[0],
+                     t, s, dt)
     if ended == "complete" and not np.all(np.isfinite(s)):
         ended = "non-finite"
     out = {"ended": ended, "survival_s": float(t if ended != "complete" else t_end)}
@@ -663,6 +805,22 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         out["fit_samples_mean"] = float(np.mean(fit_n)) if fit_n else 0.0
         out["fit_available_frac"] = float(len(fit_q) / max(len(cpu), 1))
         out["eta_pred_rms"] = float(np.sqrt(np.mean(np.square(pred_err)))) if pred_err else None
+    out["max_n_cmd"] = float(np.max(NCMD)) if NCMD else None
+    out["max_n_flown"] = float(np.max(NN)) if NN else None
+    out["n_limit_bind_frac"] = float(np.mean(NBND)) if NBND else 0.0
+    if actuators is not None:
+        out["actuator_bind"] = actuators.bind_fractions()
+    if use_est:
+        out["t_ready_s"] = t_ready
+        out["prelude_s"] = n_prelude * dt
+        out["est_log"] = est_log
+        post = [r for r in est_log if r["ready"]]
+        if post:
+            out["est_summary"] = {
+                "wind_speed_err_rms": float(np.sqrt(np.mean([r["wind_speed_err"] ** 2 for r in post]))),
+                "wind_dir_err_rms_deg": float(np.sqrt(np.mean([r["wind_dir_err_deg"] ** 2 for r in post]))),
+                "profile_dir_err_rms_deg": float(np.sqrt(np.mean([r["profile_dir_err_deg"] ** 2 for r in post]))),
+                "u10_est_last": post[-1]["u10_est"], "z0_est_last": post[-1]["z0_est"]}
     if keep:
         out["traj"] = {"t": np.array(T), "state": np.array(ST), "mu": np.array(MU),
                        "cl": np.array(CL)}
@@ -797,6 +955,101 @@ def lib_main(a):
         fh.write(chr(10))
 
 
+EST_CASES = (
+    # (label, sea, state/wind source, actuators + n_limit, suite)
+    ("a1 flat sea, truth", "flat", "truth", False, "standard"),
+    ("a2 flat sea, truth + act + nlim", "flat", "truth", True, "standard"),
+    ("a3 flat sea, est standard + act + nlim", "flat", "estimate", True, "standard"),
+    ("a4 flat sea, est full + act + nlim", "flat", "estimate", True, "full"),
+    ("b1 sea, flat world, truth + act + nlim", "waves", "truth", True, "standard"),
+    ("b2 sea, flat world, est standard + act + nlim", "waves", "estimate", True, "standard"),
+)
+
+
+def _no_nan(v):
+    """NaN to None, recursively (the JSON file must stay standard)."""
+    if isinstance(v, dict):
+        return {k: _no_nan(x) for k, x in v.items()}
+    if isinstance(v, list):
+        return [_no_nan(x) for x in v]
+    return None if isinstance(v, float) and v != v else v
+
+
+def run_est_job(job):
+    """job = (aircraft, u10, case index, t_end). The planner world is flat (the u10 of the case
+    or the estimate); the true sea is flat or make_env("waves")."""
+    from sim.aircraft import Actuators
+    from sim.aircraft_models import by_name
+    from sim.autonomy import make_env
+    name, u10, k, t_end = job[:4]
+    tip = len(job) > 4 and bool(job[4])
+    label, sea, src, act, suite = EST_CASES[k]
+    ac = by_name(name)
+    env = make_env(sea, u10)
+    t0 = time.time()
+    r = fly_mpc(ac, env, "flat", [], t_end, env.wind.to_deg - 20.0, u10, seed=1,
+                planner_kw=dict(LIB_PKW), library=CycleLibrary.load(), state_source=src,
+                wind_source=src, suite=suite, profile_fit="two_param",
+                actuators=Actuators(ac) if act else None, n_limit=act, stop_on_tip=tip)
+    r["wall_s"] = time.time() - t0
+    r = _no_nan(r)
+    return {"aircraft": name, "u10": u10, "case": label, "sea": sea, "sources": src,
+            "actuators_and_nlimit": act, "stop_on_tip": tip, "suite": suite if src == "estimate" else None, **r}
+
+
+def est_table(rows):
+    lines = ["| aircraft | case | ended | survival (s) | cycles | min clear surf / tip (m) | "
+             "max n cmd / flown | n-limit binds | mu / cl rate binds | wind err rms (m/s, deg) | "
+             "u10_est last | z0_est last |", "|" + "---|" * 12]
+    for r in rows:
+        ab = r.get("actuator_bind") or {}
+        es = r.get("est_summary") or {}
+        lines.append("| %s | %s | %s | %.0f | %s | %s / %s | %s / %s | %s | %s / %s | %s, %s | %s | %s |" % (
+            r["aircraft"], r["case"], r["ended"], r["survival_s"], r.get("cycles", "n/a"),
+            _fmt(r.get("min_clear_surface"), "%.2f"), _fmt(r.get("min_clear_wingtip"), "%.2f"),
+            _fmt(r.get("max_n_cmd"), "%.2f"), _fmt(r.get("max_n_flown"), "%.2f"),
+            _fmt(r.get("n_limit_bind_frac"), "%.3f"), _fmt(ab.get("mu_rate"), "%.3f"),
+            _fmt(ab.get("cl_rate"), "%.3f"), _fmt(es.get("wind_speed_err_rms"), "%.2f"),
+            _fmt(es.get("wind_dir_err_rms_deg"), "%.1f"), _fmt(es.get("u10_est_last"), "%.2f"),
+            _fmt(es.get("z0_est_last"), "%.1e")))
+    return chr(10).join(lines)
+
+
+def est_main(a, exp2=False):
+    from concurrent.futures import ProcessPoolExecutor
+    from sim import record
+    ks = (1, 4, 5) if exp2 else range(len(EST_CASES))
+    jobs = [(n, float(u), k, a.t_end, exp2) for n in a.aircraft.split(",")
+            for u in a.u10.split(",") for k in ks]
+    jobs.sort(key=lambda j: EST_CASES[j[2]][1] != "waves")           # slow ones first
+    t0 = time.time()
+    with ProcessPoolExecutor(a.workers) as ex:
+        rows = list(ex.map(run_est_job, jobs))
+    labels = [c[0] for c in EST_CASES]
+    rows.sort(key=lambda r: (r["aircraft"], r["u10"], labels.index(r["case"])))
+    print(est_table(rows))
+    runtime = time.time() - t0
+    print("runtime %.0f s" % runtime)
+    d = json.load(open(a.out)) if os.path.exists(a.out) else {}
+    d["estimates_exp2" if exp2 else "estimates_exp"] = {
+        "meta": {**record.meta("python -m sim.mpc --est-exp%s --u10 " % ("2" if exp2 else "") + a.u10 + " --aircraft "
+                               + a.aircraft, [__file__, LIB_PATH,
+                                              os.path.join(os.path.dirname(__file__), "aircraft.py"),
+                                              os.path.join(os.path.dirname(__file__), "estimator.py")]),
+                 "planner_kw": LIB_PKW, "runtime_s": runtime, "t_end": a.t_end, "seed": 1,
+                 "profile_fit": "two_param", "estimator": "sample_dt=True",
+                 "sea": "make_env('waves', u10): the sea of the library experiment; the planner "
+                        "world is flat in every case",
+                 "actuators": "tau, rate limits from record ctrl.* (defaults 0.1 s, 150 deg/s, 2 /s)",
+                 "est_log_every_s": 5.0, "stop_on_tip": exp2,
+                 "n_limit": "planner rollouts fly the limited cl, commanded cl held to the limit"
+                            if exp2 else "flight model only"},
+        "results": rows}
+    with open(a.out, "w", newline=chr(10)) as fh:
+        json.dump(d, fh, indent=1)
+        fh.write(chr(10))
+
+
 def _fmt(v, f):
     return "n/a" if v is None else f % v
 
@@ -831,9 +1084,14 @@ def main():
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "out", "mpc.json"))
     ap.add_argument("--build-library", action="store_true")
     ap.add_argument("--lib-exp", action="store_true")
+    ap.add_argument("--est-exp", action="store_true")
+    ap.add_argument("--est-exp2", action="store_true")
     a = ap.parse_args()
     if a.build_library:
         build_library(workers=a.workers)
+        return
+    if a.est_exp or a.est_exp2:
+        est_main(a, exp2=a.est_exp2)
         return
     if a.lib_exp:
         if a.models == ",".join(MODELS):

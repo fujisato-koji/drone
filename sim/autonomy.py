@@ -15,7 +15,7 @@ from enum import Enum
 
 import numpy as np
 
-from sim.aircraft import BASELINE, G, clip_controls, derivatives, rk4_step
+from sim.aircraft import (BASELINE, G, clip_controls, derivatives, n_limited_cl, rk4_step)
 from sim.estimator import Estimate, Estimator
 from sim.seawind import Environment, WaveTrain, Wind
 from sim.sensors import SensorSuite, truth_from_state
@@ -287,8 +287,13 @@ def initial_state(aircraft, env, cycle, h0=3.0):
 
 
 def fly(aircraft, env, suite, est, ctrl, s0, t_end, dt=0.02, seed=1, target=None,
-        thresholds=None, initial_mode=Mode.SOAR):
+        thresholds=None, initial_mode=Mode.SOAR, actuators=None, n_limit=False, stop_on_tip=False):
     """Closed loop on estimated states. `est` is the Estimator; the dynamics are true.
+
+    actuators: an sim.aircraft.Actuators (or None); when given the aircraft flies the actual
+    (lagged, rate-limited) controls, not the commanded ones. n_limit: reduce cl in the flight
+    model to the load-factor limit; stop_on_tip ends the run (ended "tip contact") when the wingtip,
+    (b/2) sin|mu| cos(gamma) below the centre with the flown mu, is under the true surface (records n_flown, n_limit_bind_frac).
 
     seed is accepted for the interface; the noise is seeded by the suite itself.
     The machine starts in `initial_mode` (SOAR) because LAUNCH is not flown.
@@ -299,7 +304,8 @@ def fly(aircraft, env, suite, est, ctrl, s0, t_end, dt=0.02, seed=1, target=None
     p0 = s[:2].copy()
     tgt = None if target is None else np.asarray(target, float)
     keys = ("t", "state", "est_pos", "est_wind", "est_h", "est_heading", "ustar_est", "mode",
-            "cl", "mu", "n", "h", "e_air", "wind_err", "h_err", "heading_err")
+            "cl", "mu", "n", "h", "e_air", "wind_err", "h_err", "heading_err",
+            "cl_act", "mu_act", "n_flown", "n_bound")
     rec = {k: [] for k in keys}
     ended = "complete"
     prev = None
@@ -328,6 +334,9 @@ def fly(aircraft, env, suite, est, ctrl, s0, t_end, dt=0.02, seed=1, target=None
         if h_true <= 0:
             ended = "crash"
             break
+        if stop_on_tip and prev is not None and h_true - 0.5 * ac.span * abs(np.sin(prev[2]))                 * np.cos(s[4]) < 0.0:
+            ended = "tip contact"
+            break
         margin = machine.margin(e)
         if mode is Mode.SOAR:
             bearing = None if tgt is None else float(np.arctan2(*(tgt - epos[:2])[::-1]))
@@ -335,6 +344,8 @@ def fly(aircraft, env, suite, est, ctrl, s0, t_end, dt=0.02, seed=1, target=None
         else:
             cl, mu = ctrl.land_command(e)
         cl, mu = clip_controls(ac, cl, mu)
+        cl_a, mu_a = (cl, mu) if actuators is None else actuators.step(cl, mu, dt, s[3])
+        cl_f = n_limited_cl(ac, s[3], cl_a) if n_limit else cl_a
         w_true = np.asarray(env.wind_at(s[0], s[1], s[2], t), float).reshape(3)
         q = 0.5 * ac.rho * s[3] ** 2 * ac.wing_area
         ew = np.asarray(e.wind, float)
@@ -344,13 +355,15 @@ def fly(aircraft, env, suite, est, ctrl, s0, t_end, dt=0.02, seed=1, target=None
                     e_air=s[2] + s[3] ** 2 / (2 * G),
                     wind_err=float(np.linalg.norm(ew[:2] - w_true[:2])),
                     h_err=float(e.h_surface) - h_true,
-                    heading_err=float(wrap(float(e.heading) - s[5])))
+                    heading_err=float(wrap(float(e.heading) - s[5])),
+                    cl_act=cl_a, mu_act=mu_a, n_flown=q * cl_f / (ac.mass * G),
+                    n_bound=float(cl_f < cl_a - 1e-12))
         for k, v in vals.items():
             rec[k].append(v)
         if i == nsteps:
             break
-        prev = (s.copy(), t, mu)
-        s = rk4_step(lambda tt, ss: derivatives(tt, ss, ac, env, cl, mu)[0], t, s, dt)
+        prev = (s.copy(), t, mu_a)
+        s = rk4_step(lambda tt, ss: derivatives(tt, ss, ac, env, cl_a, mu_a, n_limit)[0], t, s, dt)
         if not np.all(np.isfinite(s)):
             ended = "non-finite state"
             break
@@ -359,13 +372,18 @@ def fly(aircraft, env, suite, est, ctrl, s0, t_end, dt=0.02, seed=1, target=None
     out["ended"] = ended
     out["transitions"] = [(a, b.name, c.name, d) for a, b, c, d in machine.log]
     out["metrics"] = _metrics(ctrl, out, p0, tgt)
+    if len(out["t"]):
+        out["metrics"]["max_n_flown"] = float(np.max(out["n_flown"]))
+        out["metrics"]["n_limit_bind_frac"] = float(np.mean(out["n_bound"]))
+    if actuators is not None:
+        out["metrics"]["actuator_bind"] = actuators.bind_fractions()
     return out
 
 
 def _metrics(ctrl, r, p0, tgt):
     m = {"ended": r["ended"], "n_steps": int(len(r["t"])), "transitions": r["transitions"],
          "guard_activations": int(ctrl.guard_count),
-         "crashed": r["ended"] == "crash"}
+         "crashed": r["ended"] in ("crash", "tip contact")}
     if getattr(ctrl, "steps", 0):
         m["guard_share"] = float(ctrl.guard_steps / ctrl.steps)
     if len(r["t"]) < 2:
