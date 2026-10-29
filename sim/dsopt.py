@@ -127,9 +127,12 @@ class WaveParams:
     decay = (a_u, a_w): horizontal / vertical perturbation decay exp(-a k h) (default (1, 1)).
     shelter: lee-side sheltering (see wave_wind_accel). midpoints: also constrain h and the tip
     height at the Hermite-Simpson midpoints (default True).
+    u_scale, w_scale multiply the horizontal / vertical wave-coherent wind (default 1.0; K-008
+    used w_scale 0.6 to match the vertical wind measured by P64).
     """
 
-    def __init__(self, a, wavelength, to_deg, decay=(1.0, 1.0), shelter=False, midpoints=True):
+    def __init__(self, a, wavelength, to_deg, decay=(1.0, 1.0), shelter=False, midpoints=True,
+                 u_scale=1.0, w_scale=1.0):
         from sim.record import value
         self.a, self.wavelength, self.to_deg = float(a), float(wavelength), float(to_deg)
         self.k = 2.0 * np.pi / self.wavelength
@@ -140,6 +143,7 @@ class WaveParams:
         self.decay = (float(decay[0]), float(decay[1]))
         self.shelter = bool(shelter)
         self.midpoints = bool(midpoints)
+        self.u_scale, self.w_scale = float(u_scale), float(w_scale)
         self.F = value("env.shelter_factor", 1.0)
         self.D = value("env.shelter_decay_kz", 0.5)
 
@@ -200,8 +204,8 @@ def wave_wind_accel(S, wv, prof, tt, u10, phi0):
     zref = max(1.0 / wv.k, 2.0 * prof.z0)
     urel = u10 * float(prof.f(zref)) * wv.cw - wv.c
     base = urel * wv.a * wv.k
-    Pu = base * np.exp(-wv.decay[0] * wv.k * h)
-    Pw = base * np.exp(-wv.decay[1] * wv.k * h)
+    Pu = wv.u_scale * base * np.exp(-wv.decay[0] * wv.k * h)
+    Pw = wv.w_scale * base * np.exp(-wv.decay[1] * wv.k * h)
     Pu_h = -wv.decay[0] * wv.k * Pu
     Pw_h = -wv.decay[1] * wv.k * Pw
     Bx = u10 * prof.f(h) + Pu * ct * wv.cw
@@ -273,13 +277,20 @@ def dyn_jac_wave(A, tt, u10, phi0, ac, prof, wv):
 
 class Collocation:
     def __init__(self, ac, prof, mode="min_wind", cycle="travel", n=40, u10=None, chi=np.pi / 2,
-                 h_min=1.0, h_tip_min=0.3, v_factor=1.1, tip_model="abs", wave=None):
+                 h_min=1.0, h_tip_min=0.3, v_factor=1.1, tip_model="abs", wave=None,
+                 midpoints=False, rate_limits=False, n_min=None, n_frac=1.0, mu_frac=1.0,
+                 bank_rate_max_deg_s=None, cl_rate_max_per_s=None, phase_pin="theta",
+                 rate_model="constant", roll_pb2v=None):
+        if rate_model not in ("constant", "pb2v"):
+            raise ValueError(rate_model)
         if mode not in ("min_wind", "max_speed"):
             raise ValueError(mode)
         if cycle not in ("travel", "loiter"):
             raise ValueError(cycle)
         if tip_model not in ("abs", "geometric"):
             raise ValueError(tip_model)
+        if phase_pin not in ("theta", "gamma"):
+            raise ValueError(phase_pin)
         if mode == "max_speed" and u10 is None:
             raise ValueError("max_speed needs u10")
         self.ac, self.prof, self.mode, self.cycle, self.N = ac, prof, mode, cycle, n
@@ -288,6 +299,19 @@ class Collocation:
         self.tip_model = tip_model
         self.wv = None if wave is None else (wave if isinstance(wave, WaveParams)
                                              else WaveParams(**wave))
+        # midpoints: flat mode keyword; in the wave mode WaveParams.midpoints decides
+        self.mid = bool(midpoints) if self.wv is None else self.wv.midpoints
+        self.rate_limits = bool(rate_limits)
+        from sim.record import value
+        self.p_max = np.radians(float(bank_rate_max_deg_s) if bank_rate_max_deg_s is not None
+                                else value("ctrl.bank_rate_max_deg_s", 150.0))
+        self.rate_model = rate_model
+        self.k_roll = float(roll_pb2v) if roll_pb2v is not None else value("ctrl.roll_pb2v", 0.08)
+        self.r_max = (float(cl_rate_max_per_s) if cl_rate_max_per_s is not None
+                      else value("ctrl.cl_rate_max_per_s", 1.0 if rate_model == "pb2v" else 2.0))
+        self.n_min = None if n_min is None else float(n_min)
+        self.n_frac, self.mu_frac = float(n_frac), float(mu_frac)
+        self.phase_pin = phase_pin
         self.m = 0
         self.vmin = max(v_factor * ac.v_stall, 1.0)
         vs = ac.v_stall
@@ -335,9 +359,9 @@ class Collocation:
         ac, N = self.ac, self.N
         zlo = self.h_min if self.wv is None else -100.0
         lo = np.concatenate([np.tile([-1e4, -1e4, zlo, self.vmin, -1.2, -1e3], N),
-                             np.tile([ac.cl_min, -ac.mu_max], N), [1.0, 0.5]])
+                             np.tile([ac.cl_min, -ac.mu_max * self.mu_frac], N), [1.0, 0.5]])
         hi = np.concatenate([np.tile([1e4, 1e4, 200.0, 80.0, 1.2, 1e3], N),
-                             np.tile([ac.cl_max, ac.mu_max], N), [60.0, 60.0]])
+                             np.tile([ac.cl_max, ac.mu_max * self.mu_frac], N), [60.0, 60.0]])
         if self.wv is not None:
             lo, hi = np.append(lo, -100.0), np.append(hi, 100.0)
             lo[self.iU] = U10_FLOOR_WAVE  # a wave can carry the cycle with (almost) no mean wind
@@ -438,6 +462,16 @@ class Collocation:
         dCk1 += -h / 6.0 * 4 * (Jms @ (-h / 8.0 * Jk1[:, :, NS:8]))
         dh = -(Fk + 4 * Fm + Fk1) / 6.0 - h / 6.0 * 4 * np.einsum("kij,kj->ki", Jms, (Fk - Fk1) / 8.0)
         dT = dh / (N - 1)
+        if self.mid:  # midpoint state Sm and its physical Jacobian (as in the wave mode)
+            Jsm = np.zeros((M, NS, self.nv))
+            for k in range(M):
+                Jsm[k, :, k * NS:(k + 1) * NS] = 0.5 * I6 + h / 8.0 * Jk[k, :, :NS]
+                Jsm[k, :, (k + 1) * NS:(k + 2) * NS] = 0.5 * I6 - h / 8.0 * Jk1[k, :, :NS]
+                Jsm[k, :, N * NS + k * NC:N * NS + (k + 1) * NC] = h / 8.0 * Jk[k, :, NS:8]
+                Jsm[k, :, N * NS + (k + 1) * NC:N * NS + (k + 2) * NC] = -h / 8.0 * Jk1[k, :, NS:8]
+                Jsm[k, :, self.iT] = (Fk[k] - Fk1[k]) / 8.0 / (N - 1)
+                Jsm[k, :, self.iU] = h / 8.0 * (Jk[k, :, 8] - Jk1[k, :, 8])
+            self._mid = (Sm, Jsm)
         dU = -h / 6.0 * (Jk[:, :, 8] + 4 * (Jmu + np.einsum("kij,kj->ki", Jms,
                                                               h / 8.0 * (Jk[:, :, 8] - Jk1[:, :, 8])))
                          + Jk1[:, :, 8])
@@ -464,8 +498,15 @@ class Collocation:
             rows.append(({idx(N - 1, comp): 1.0, idx(0, comp): -1.0}, 0.0))
         dpsi = 2 * np.pi if self.cycle == "loiter" else 0.0
         rows.append(({idx(N - 1, 5): 1.0, idx(0, 5): -1.0}, dpsi))
-        rows.append(({idx(0, 4): 1.0}, 0.0))  # phase: gamma = 0 at the first node
         wv = self.wv
+        if wv is not None and wv.a > 0.0 and self.phase_pin == "theta":
+            # phase: theta(0) = 0 (x0 = y0 = 0, t = 0, so theta(0) = phi0); gamma stays free
+            rows.append(({self.iP: 1.0}, 0.0))
+        else:
+            rows.append(({idx(0, 4): 1.0}, 0.0))  # phase: gamma = 0 at the first node
+        if self.rate_limits:  # controls are continuous across the period seam
+            for j in range(NC):
+                rows.append(({N * NS + (N - 1) * NC + j: 1.0, N * NS + j: -1.0}, 0.0))
         if wv is not None and wv.a > 0.0:
             # the cycle repeats relative to the wave: theta(T) - theta(0) = -2 pi m
             rows.append(({idx(N - 1, 0): wv.k * wv.cw, idx(N - 1, 1): wv.k * wv.sw,
@@ -526,21 +567,95 @@ class Collocation:
             tip = hh - 0.5 * ac.span * sa * np.cos(gam) - self.h_tip
             Jt[i, N * NS + i * NC + 1] = -0.5 * ac.span * ca * np.cos(gam) * dabs
             Jt[i, i * NS + 4] = 0.5 * ac.span * sa * np.sin(gam) * sc[i * NS + 4]
-        f = [(ac.n_max - n) / ac.n_max]
+        f = [(self.n_frac * ac.n_max - n) / ac.n_max]
         J = [-Jn / ac.n_max]
+        if self.n_min is not None:
+            f.append((n - self.n_min) / ac.n_max)
+            J.append(Jn / ac.n_max)
         if self.wv is not None:
             f.append(hh - self.h_min)
             J.append(Jh)
         f.append(tip)
         J.append(Jt)
-        if self.wv is not None and self.wv.midpoints:
+        if self.mid:
             fm, Jm_ = self._path_mid(x)
             f.append(fm)
             J.append(Jm_)
+            if self.n_min is not None:
+                fn, Jn_ = self._n_mid(x)
+                f.append(fn)
+                J.append(Jn_)
+        if self.rate_limits:
+            fr, Jr = self._rates(x)
+            f.append(fr)
+            J.append(Jr)
         return np.concatenate(f), np.vstack(J)
 
+    def _n_mid(self, x):
+        """n >= n_min at the Hermite-Simpson midpoints (state Sm, control = node average)."""
+        self._defects(x)
+        Sm, Jsm = self._mid
+        _, C, _, _ = self.unpack(x)
+        ac, N = self.ac, self.N
+        M = N - 1
+        kk = np.arange(M)
+        K = 0.5 * ac.rho * ac.wing_area / (ac.mass * G)
+        clm = 0.5 * (C[:-1, 0] + C[1:, 0])
+        Vm = Sm[:, 3]
+        dcl = np.zeros((M, self.nv))
+        dcl[kk, N * NS + kk * NC] = 0.5
+        dcl[kk, N * NS + (kk + 1) * NC] = 0.5
+        n = K * Vm * Vm * clm
+        dn = K * ((2.0 * Vm * clm)[:, None] * Jsm[:, 3, :] + (Vm * Vm)[:, None] * dcl)
+        return (n - self.n_min) / ac.n_max, dn * self.sc[None, :] / ac.n_max
+
+    def _rates(self, x):
+        """|mu_{k+1} - mu_k| <= p_max dt and |cl_{k+1} - cl_k| <= r_max dt, dt = T / (N - 1).
+
+        Linear in the controls and in T (the period). Each bound is two rows, in seconds:
+        dt -/+ d / rate >= 0. The controls are piecewise linear between nodes (the midpoint
+        control is the node average), so the node pairs are all there is.
+        """
+        _, C, T, _ = self.unpack(x)
+        N = self.N
+        M = N - 1
+        kk = np.arange(M)
+        dt = T / (N - 1)
+        fs, Js = [], []
+        if self.rate_model == "pb2v":
+            # |dmu| <= (2 k V / b) dt with V the slower node of the interval (piecewise smooth:
+            # the Jacobian takes the active node); rows in rad: p dt -/+ d >= 0
+            ac = self.ac
+            V = self.unpack(x)[0][:, 3]
+            slow = V[1:] < V[:-1]
+            Vm = np.where(slow, V[1:], V[:-1])
+            pl = 2.0 * self.k_roll * Vm / ac.span
+            d = C[1:, 1] - C[:-1, 1]
+            for sign in (1.0, -1.0):
+                Jr = np.zeros((M, self.nv))
+                Jr[kk, N * NS + kk * NC + 1] = sign
+                Jr[kk, N * NS + (kk + 1) * NC + 1] = -sign
+                Jr[:, self.iT] = pl / (N - 1)
+                vi = np.where(slow, kk + 1, kk)
+                Jr[kk, vi * NS + 3] = 2.0 * self.k_roll / ac.span * dt
+                fs.append(pl * dt - sign * d)
+                Js.append(Jr * self.sc[None, :])
+            comps = ((0, self.r_max),)
+        else:
+            comps = ((1, self.p_max), (0, self.r_max))
+        for comp, rate in comps:
+            d = C[1:, comp] - C[:-1, comp]
+            for sign in (1.0, -1.0):
+                Jr = np.zeros((M, self.nv))
+                Jr[kk, N * NS + kk * NC + comp] = sign / rate
+                Jr[kk, N * NS + (kk + 1) * NC + comp] = -sign / rate
+                Jr[:, self.iT] = 1.0 / (N - 1)
+                fs.append(dt - sign * d / rate)
+                Js.append(Jr * self.sc[None, :])
+        return np.concatenate(fs), np.vstack(Js)
+
     def _path_mid(self, x):
-        """h >= h_min and the wingtip height at the Hermite-Simpson midpoints (wave mode)."""
+        """h >= h_min and the wingtip height at the Hermite-Simpson midpoints (flat and wave mode)."""
         self._defects(x)  # fills self._mid for this x
         Sm, Jsm = self._mid
         _, C, T, _ = self.unpack(x)
@@ -548,12 +663,16 @@ class Collocation:
         M = N - 1
         kk = np.arange(M)
         sc = self.sc
-        thm = wv.k * (wv.cw * Sm[:, 0] + wv.sw * Sm[:, 1]) - wv.om * (kk + 0.5) * T / (N - 1)             + self.phi0(x)
-        dth = wv.k * (wv.cw * Jsm[:, 0, :] + wv.sw * Jsm[:, 1, :])
-        dth[:, self.iT] += -wv.om * (kk + 0.5) / (N - 1)
-        dth[:, self.iP] += 1.0
-        hm = Sm[:, 2] - wv.a * np.cos(thm)
-        dh = Jsm[:, 2, :] + (wv.a * np.sin(thm))[:, None] * dth
+        if wv is None:
+            hm, dh = Sm[:, 2], Jsm[:, 2, :]
+        else:
+            thm = (wv.k * (wv.cw * Sm[:, 0] + wv.sw * Sm[:, 1]) - wv.om * (kk + 0.5) * T / (N - 1)
+                   + self.phi0(x))
+            dth = wv.k * (wv.cw * Jsm[:, 0, :] + wv.sw * Jsm[:, 1, :])
+            dth[:, self.iT] += -wv.om * (kk + 0.5) / (N - 1)
+            dth[:, self.iP] += 1.0
+            hm = Sm[:, 2] - wv.a * np.cos(thm)
+            dh = Jsm[:, 2, :] + (wv.a * np.sin(thm))[:, None] * dth
         mu = 0.5 * (C[:-1, 1] + C[1:, 1])
         dmu = np.zeros((M, self.nv))
         dmu[kk, N * NS + kk * NC + 1] = 0.5
@@ -637,6 +756,8 @@ class Collocation:
         if self.wv is not None:
             wv = self.wv
             phi0 = rng.uniform(0.0, 2 * np.pi)  # drawn last: the other draws match the flat guess
+            if self.phase_pin == "theta" and wv.a > 0.0:
+                phi0 = 0.0  # theta(0) = 0 is pinned
             z = z + wv.a * np.cos(wv.k * (wv.cw * x + wv.sw * y) - wv.om * t + phi0)
         else:
             phi0 = 0.0
@@ -660,9 +781,90 @@ def _summary(col, x, res, viol, ok, seed, runtime):
         F, _ = dyn_jac_wave(A, np.arange(N) * h, u, col.phi0(x), ac, col.prof, col.wv)
         zm = 0.5 * (S[:-1, 2] + S[1:, 2]) + h / 8 * (F[:-1, 2] - F[1:, 2])
     out = _summary_flat(col, x, res, viol, ok, seed, runtime, S, C, T, u, n, xe, ye, zm)
+    out.update(control_stats(col, x))
     if col.wv is not None:
         out.update(_wave_extra(col, x, S, C, T, u, F))
     return out
+
+
+def control_stats(col, x, sub=20):
+    """Rates of the node controls, n range, and a dense replay of the interval states.
+
+    The replay integrates the dynamics (RK4, sub steps per interval) from each node state with
+    the piecewise-linear controls, so it is independent of the Hermite-Simpson midpoint
+    interpolation; it reports the lowest height above the surface, the lowest geometric
+    wingtip height (z - (b/2) sin|mu| cos gamma) and the largest state mismatch at the next node.
+    """
+    S, C, T, u = col.unpack(x)
+    ac, N, wv = col.ac, col.N, col.wv
+    dt = T / (N - 1)
+    K = 0.5 * ac.rho * ac.wing_area / (ac.mass * G)
+    n = K * S[:, 3] ** 2 * C[:, 0]
+    dmu, dcl = np.diff(C[:, 1]), np.diff(C[:, 0])
+    phi = col.phi0(x) if wv is not None else 0.0
+
+    def f(s, c, t):
+        if wv is None:
+            return dyn(s, c, ac, col.prof, u)
+        return derivs_wave(s, c, ac, col.prof, wv, t, u, phi)
+
+    def height_tip(s, c, t):
+        hh = s[:, 2]
+        if wv is not None:
+            hh = hh - wv.a * np.cos(wv.k * (wv.cw * s[:, 0] + wv.sw * s[:, 1]) - wv.om * t + phi)
+        return hh, hh - 0.5 * ac.span * np.sin(np.abs(c[:, 1])) * np.cos(s[:, 4])
+
+    M = N - 1
+    kt = np.arange(M) * dt
+    s = S[:-1].copy()
+    hs, tips = [], []
+    for j in range(sub + 1):
+        fr = j / sub
+        c = C[:-1] + (C[1:] - C[:-1]) * fr
+        h_, t_ = height_tip(s, c, kt + fr * dt)
+        hs.append(h_.min())
+        tips.append(t_.min())
+        if j == sub:
+            break
+        hstep = dt / sub
+        cm = C[:-1] + (C[1:] - C[:-1]) * (fr + 0.5 / sub)
+        cn = C[:-1] + (C[1:] - C[:-1]) * (fr + 1.0 / sub)
+        t0_ = kt + fr * dt
+        k1 = f(s, c, t0_)
+        k2 = f(s + 0.5 * hstep * k1, cm, t0_ + 0.5 * hstep)
+        k3 = f(s + 0.5 * hstep * k2, cm, t0_ + 0.5 * hstep)
+        k4 = f(s + hstep * k3, cn, t0_ + hstep)
+        s = s + hstep / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4)
+    Vm = np.minimum(S[1:, 3], S[:-1, 3])
+    lim = (2.0 * col.k_roll * Vm / ac.span if col.rate_model == "pb2v"
+           else np.full(N - 1, col.p_max))
+    ip = int(np.argmax(np.abs(dmu) / dt / lim))
+    return {"bank_rate_peak_deg_s": float(np.degrees(abs(dmu[ip]) / dt)),
+            "bank_rate_limit_at_peak_deg_s": float(np.degrees(lim[ip])),
+            "bank_rate_over_limit_max": float(abs(dmu[ip]) / dt / lim[ip]),
+            "pb2v_used_max": float((np.abs(dmu) / dt * ac.span / (2.0 * Vm)).max()),
+            "bank_rate_max_deg_s": float(np.degrees(np.abs(dmu).max() / dt)),
+            "cl_rate_max_per_s": float(np.abs(dcl).max() / dt),
+            "control_seam_jump": [float(abs(C[-1, 0] - C[0, 0])), float(abs(C[-1, 1] - C[0, 1]))],
+            "n_min_node": float(n.min()), "n_max_node": float(n.max()),
+            "replay_h_min": float(min(hs)), "replay_tip_min": float(min(tips)),
+            "replay_closure": float(np.abs(s - S[1:]).max())}
+
+
+def rotate_start(col, x, delta_deg):
+    """Start vector x with the track rotated by delta_deg about the origin (x, y, psi).
+
+    With the wave direction rotated by the same angle the wave phase at every point of the track is
+    unchanged (phi0 stays); the wind direction is not rotated, so the result is only a start.
+    """
+    S, C, T, u = col.unpack(x)
+    d = np.radians(delta_deg)
+    c, s_ = np.cos(d), np.sin(d)
+    S2 = S.copy()
+    S2[:, 0] = c * S[:, 0] - s_ * S[:, 1]
+    S2[:, 1] = s_ * S[:, 0] + c * S[:, 1]
+    S2[:, 5] = S[:, 5] + d
+    return col.pack(S2, C, T, u, col.phi0(x) if col.wv is not None else 0.0)
 
 
 def _wave_extra(col, x, S, C, T, u, F):
@@ -690,7 +892,8 @@ def _wave_extra(col, x, S, C, T, u, F):
              else "forward face" if th_i > 0 else "rear face")
     return {"wave": {"a": wv.a, "wavelength": wv.wavelength, "to_deg": wv.to_deg,
                      "k": wv.k, "omega": wv.om, "c": wv.c, "decay": list(wv.decay),
-                     "shelter": wv.shelter, "midpoints": wv.midpoints},
+                     "shelter": wv.shelter, "midpoints": wv.midpoints,
+                     "u_scale": wv.u_scale, "w_scale": wv.w_scale},
             "m": int(col.m), "phi0": float(phi), "phase_advance": col.phase_advance(x),
             "h_min_achieved": float(min(hh.min(), hm.min())), "h_node_min": float(hh.min()), "h_mid_min": float(hm.min()),
             "theta_at_h_min_deg": float(np.degrees(th_i)), "eta_over_a_at_h_min": float(c),
@@ -720,17 +923,38 @@ def _summary_flat(col, x, res, viol, ok, seed, runtime, S, C, T, u, n, xe, ye, z
             "objective": float(u if col.mode == "min_wind" else -res.fun * 10.0)}
 
 
+def _better_info(a, b, mode):
+    """True if result a beats b: converged first, then the objective, else the violation."""
+    if b is None:
+        return True
+    if a["success"] != b["success"]:
+        return a["success"]
+    sgn = 1 if mode == "min_wind" else -1
+    if a["success"]:
+        return a["objective"] * sgn < b["objective"] * sgn
+    return a["violation"] < b["violation"]
+
+
 def solve(ac, prof, mode="min_wind", cycle="travel", n=40, u10=None, chi=np.pi / 2,
           h_min=1.0, h_tip_min=0.3, v_factor=1.1, seeds=(0, 1, 2), maxiter=300, tol=1e-5,
-          x0=None, return_x=False, verbose=False, stop_after=2, tip_model="abs", wave=None):
+          x0=None, return_x=False, verbose=False, stop_after=2, tip_model="abs", wave=None,
+          midpoints=False, rate_limits=False, n_min=None, n_frac=1.0, mu_frac=1.0,
+          bank_rate_max_deg_s=None, cl_rate_max_per_s=None, phase_pin="theta", m_search=(0,),
+          rate_model="constant", roll_pb2v=None):
     """Solve for the best converged cycle among the seeded initial guesses.
+
+    midpoints (flat mode; the wave mode has WaveParams.midpoints), rate_limits, n_min, n_frac,
+    mu_frac, the two rate keywords and phase_pin: see Collocation. m_search: offsets added to the
+    integer m taken from each start (wave mode, a > 0); each start is solved once per offset and
+    the best feasible result is kept. The defaults reproduce the earlier flat results exactly.
 
     tip_model "abs" or "geometric" (wingtip height, see Collocation._path). wave = {a, wavelength,
     to_deg} switches to the wave-synchronized mode (heights above the moving surface, wave wind,
     theta periodicity with m taken from each initial guess); x0 then needs the extra phi0 slot.
     """
     col = Collocation(ac, prof, mode, cycle, n, u10, chi, h_min, h_tip_min, v_factor,
-                      tip_model, wave)
+                      tip_model, wave, midpoints, rate_limits, n_min, n_frac, mu_frac,
+                      bank_rate_max_deg_s, cl_rate_max_per_s, phase_pin, rate_model, roll_pb2v)
     cons = [{"type": "eq", "fun": col.eq_fun, "jac": col.eq_jac},
             {"type": "ineq", "fun": col.ineq_fun, "jac": col.ineq_jac}]
     bnds = col.bounds()
@@ -744,23 +968,25 @@ def solve(ac, prof, mode="min_wind", cycle="travel", n=40, u10=None, chi=np.pi /
         lo = np.array([b[0] for b in bnds])
         hi = np.array([b[1] for b in bnds])
         xs = np.clip(xs, lo, hi)
-        col.set_m(xs)
-        res = minimize(col.objective, xs, jac=True, method="SLSQP", bounds=bnds,
-                       constraints=cons, options={"maxiter": maxiter, "ftol": 1e-9})
-        viol = col.violation(res.x)
-        ok = bool(res.success and viol < tol)
-        info = _summary(col, res.x, res, viol, ok, seed, time.time() - t0)
-        if verbose:
-            print(seed, info["success"], "%.2e" % viol, info["u10"], info["period"],
-                  info["ground_speed"], info["iterations"], "%.1fs" % info["runtime_s"], flush=True)
-        better = (best is None
-                  or (ok and not best[0]["success"])
-                  or (ok == best[0]["success"] and (
-                      (ok and info["objective"] * (1 if mode == "min_wind" else -1)
-                       < best[0]["objective"] * (1 if mode == "min_wind" else -1))
-                      or (not ok and viol < best[0]["violation"]))))
-        if better:
-            best = (info, res.x.copy())
+        m0 = col.set_m(xs)
+        offs = tuple(m_search) if (col.wv is not None and col.wv.a > 0.0) else (0,)
+        cand = None
+        for off in offs:
+            col.m = m0 + int(off)
+            res = minimize(col.objective, xs, jac=True, method="SLSQP", bounds=bnds,
+                           constraints=cons, options={"maxiter": maxiter, "ftol": 1e-9})
+            viol = col.violation(res.x)
+            ok = bool(res.success and viol < tol)
+            info = _summary(col, res.x, res, viol, ok, seed, time.time() - t0)
+            if verbose:
+                print(seed, off, info["success"], "%.2e" % viol, info["u10"], info["period"],
+                      info["ground_speed"], info["iterations"], "%.1fs" % info["runtime_s"],
+                      flush=True)
+            if _better_info(info, None if cand is None else cand[0], mode):
+                cand = (info, res.x.copy())
+        info, ok = cand[0], cand[0]["success"]
+        if _better_info(info, None if best is None else best[0], mode):
+            best = cand
         n_ok += int(ok)
         if n_ok >= stop_after:
             break
@@ -883,12 +1109,29 @@ def main(argv=None):
                     help="flat-sea references and wave-synchronized cycles -> sim/out/dsopt_wave.json")
     ap.add_argument("--wave-study2", action="store_true",
                     help="second pass: midpoint clearance, measured decay, steep waves with shelter")
+    ap.add_argument("--wave-study3", action="store_true",
+                    help="third pass: midpoints, rate limits, n >= 0, theta pin, m search, rotated "
+                         "starts -> sim/out/dsopt_constraints.json")
+    ap.add_argument("--constraint-study", action="store_true",
+                    help="flat-sea tables A and B -> sim/out/dsopt_constraints.json")
+    ap.add_argument("--constraint-study2", action="store_true",
+                    help="flat-sea tables A2 and B2 (roll rate p b / 2V) -> "
+                         "sim/out/dsopt_constraints.json")
     ap.add_argument("--nodes", type=int, default=30)
     ap.add_argument("--workers", type=int, default=7)
     args = ap.parse_args(argv)
     if args.wave_study:
         from sim.formstudy import wave_study
         wave_study(n=args.nodes, workers=args.workers)
+    elif args.constraint_study:
+        from sim.formstudy import constraint_study
+        constraint_study(n=args.nodes, workers=args.workers)
+    elif args.constraint_study2:
+        from sim.formstudy import constraint_study2
+        constraint_study2(n=args.nodes, workers=args.workers)
+    elif args.wave_study3:
+        from sim.formstudy import wave_study3
+        wave_study3(n=args.nodes, workers=args.workers)
     elif args.wave_study2:
         from sim.formstudy import wave_study2
         wave_study2(n=args.nodes, workers=args.workers)

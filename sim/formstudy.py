@@ -449,5 +449,376 @@ def wave_study(path=WAVE_PATH, n=30, seeds=(0, 1, 2, 3, 4, 5, 6, 7), workers=4, 
     return result
 
 
+CONSTRAINT_PATH = os.path.join("sim", "out", "dsopt_constraints.json")
+STUDY_AIRCRAFT = ("baseline-2m", "albatross-3m")
+# study A: label, solve keywords (all on the corrected settings: geometric tip, self-consistent z0)
+STUDY_A = (
+    ("(i) as today", dict()),
+    ("(ii) midpoints", dict(midpoints=True)),
+    ("(iii) mid + rates 150 deg/s, 2/s", dict(midpoints=True, rate_limits=True,
+                                              bank_rate_max_deg_s=150.0, cl_rate_max_per_s=2.0)),
+    ("(iv) mid + rates 100 deg/s, 2/s", dict(midpoints=True, rate_limits=True,
+                                             bank_rate_max_deg_s=100.0, cl_rate_max_per_s=2.0)),
+    ("(iv) mid + rates 60 deg/s, 2/s", dict(midpoints=True, rate_limits=True,
+                                            bank_rate_max_deg_s=60.0, cl_rate_max_per_s=2.0)),
+    ("(iv) mid + rates 30 deg/s, 2/s", dict(midpoints=True, rate_limits=True,
+                                            bank_rate_max_deg_s=30.0, cl_rate_max_per_s=2.0)),
+    ("(v) mid + rates 150, 2/s + n_min 0", dict(midpoints=True, rate_limits=True, n_min=0.0,
+                                                bank_rate_max_deg_s=150.0, cl_rate_max_per_s=2.0)),
+)
+STUDY_B_MARGINS = ((1.0, 1.0, 1.0, 1.1), (2.0, 0.8, 0.9, 1.2), (3.0, 0.7, 0.85, 1.3))
+STATS = ("success", "near_converged", "violation", "u10", "period", "z0", "outer_converged",
+         "n_max_node", "n_min_node", "bank_rate_max_deg_s", "cl_rate_max_per_s",
+         "control_seam_jump", "mu_max_deg", "replay_tip_min", "replay_h_min", "replay_closure",
+         "speed_along_chi", "ground_speed", "m", "runtime_s")
+
+
+def _stats(info, **extra):
+    r = {k: info.get(k) for k in STATS}
+    r.update(extra)
+    return r
+
+
+def constraint_task_a(job):
+    """One aircraft through the study-A variants, each also warm-started from the previous."""
+    from sim.dsopt import solve_min_wind
+    name, n, seeds = job
+    ac = by_name(name)
+    rows, prev = [], None
+    for label, kw in STUDY_A:
+        t0 = time.time()
+        base = dict(cycle="travel", n=n, h_min=1.0, tip_model="geometric",
+                    z0_mode="self_consistent", return_x=True, **kw)
+        cands = []
+        if prev is not None:
+            cands.append(solve_min_wind(ac, x0=prev, seeds=seeds[:2], stop_after=1, **base))
+        cands.append(solve_min_wind(ac, seeds=seeds, stop_after=3, **base))
+        best = None
+        for c in cands:
+            if _better(c[0], best[0] if best else None):
+                best = c
+        info = best[0]
+        if info["success"] and label.startswith(("(ii)", "(iii)")):
+            prev = best[1]
+        rows.append(_stats(info, aircraft=name, variant=label, total_s=time.time() - t0))
+        print("A %s %s: ok=%s u10=%.3f T=%.3f bank=%.0f cl_rate=%.2f (%.0f s)" % (
+            name, label, info["success"], info["u10"], info["period"],
+            info["bank_rate_max_deg_s"], info["cl_rate_max_per_s"], time.time() - t0), flush=True)
+    return rows
+
+
+def constraint_task_b(job):
+    """Control-library margins: max speed toward chi at fixed u10."""
+    from sim.dsopt import profile_for, solve
+    name, n, seeds, u10, chi_deg = job
+    ac = by_name(name)
+    prof = profile_for(u10)
+    rows = []
+    for h_min, n_frac, mu_frac, v_factor in STUDY_B_MARGINS:
+        t0 = time.time()
+        info = solve(ac, prof, "max_speed", "travel", n, u10=u10, chi=np.radians(chi_deg),
+                     h_min=h_min, v_factor=v_factor, tip_model="geometric", midpoints=True,
+                     rate_limits=True, bank_rate_max_deg_s=150.0, cl_rate_max_per_s=2.0,
+                     n_min=0.0, n_frac=n_frac, mu_frac=mu_frac, seeds=seeds, stop_after=3)
+        rows.append(_stats(info, aircraft=name, h_min=h_min, n_frac=n_frac, mu_frac=mu_frac,
+                           v_factor=v_factor, u10_fixed=u10, chi_deg=chi_deg,
+                           total_s=time.time() - t0))
+        print("B %s margins=%s: ok=%s v_chi=%.2f viol=%.1e (%.0f s)" % (
+            name, (h_min, n_frac, mu_frac, v_factor), info["success"],
+            info["speed_along_chi"], info["violation"], time.time() - t0), flush=True)
+    return rows
+
+
+def _record_files():
+    from sim import record
+    here = os.path.dirname(os.path.abspath(__file__))
+    files = [os.path.join(here, f) for f in ("dsopt.py", "formstudy.py", "aircraft.py",
+                                             "aircraft_models.py", "seawind.py")]
+    files.append(record.VALUES_PATH)
+    return files
+
+
+def _md(head, rows):
+    return "\n".join(["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
+                     + ["| " + " | ".join(r) + " |" for r in rows])
+
+
+def table_a(rows):
+    lines = []
+    for nm in dict.fromkeys(r["aircraft"] for r in rows):
+        lines += ["", "### study A: " + nm, ""]
+        body = []
+        for r in (r for r in rows if r["aircraft"] == nm):
+            body.append([r["variant"], "%.2f" % r["u10"], "%.2f" % r["period"],
+                         "%.0f" % r["bank_rate_max_deg_s"], "%.2f" % r["cl_rate_max_per_s"],
+                         "%.2f" % r["n_max_node"], "%.3f" % r["replay_tip_min"],
+                         "yes" if r["success"] else "NO"])
+        lines.append(_md(["variant", "u10_min", "T (s)", "max bank rate (deg/s)",
+                          "max CL rate (1/s)", "max n", "min tip, dense (m)", "conv"], body))
+    return "\n".join(lines)
+
+
+def table_b(rows):
+    body = []
+    for r in rows:
+        body.append([r["aircraft"], "%g, %g, %g, %g" % (r["h_min"], r["n_frac"], r["mu_frac"],
+                                                        r["v_factor"]),
+                     "%.2f" % r["speed_along_chi"], "%.2f" % r["period"] if r["period"] else "-",
+                     "yes" if r["success"] else "NO (viol %.1e)" % r["violation"]])
+    return _md(["aircraft", "(h_min, n_frac, mu_frac, v_factor)", "speed along chi (m/s)",
+                "T (s)", "conv"], body)
+
+
+def constraint_study(path=CONSTRAINT_PATH, n=30, seeds=(0, 1, 2, 3, 4, 5), workers=4,
+                     names=STUDY_AIRCRAFT, u10_b=13.0, chi_deg=20.0):
+    """Flat sea: study A (minimum wind under the new constraints) and B (control-library margins)."""
+    from multiprocessing import Pool
+    from sim import record
+    t_start = time.time()
+    with Pool(workers) as pool:
+        a = pool.map_async(constraint_task_a, [(nm, n, seeds) for nm in names], chunksize=1)
+        b = pool.map(constraint_task_b, [(nm, n, seeds + (6, 7), u10_b, chi_deg) for nm in names],
+                     chunksize=1)
+        a = a.get()
+    result = {"meta": record.meta("python -m sim.dsopt --constraint-study", _record_files()),
+              "settings": {"n_nodes": n, "seeds": list(seeds), "tip_model": "geometric",
+                           "z0_mode": "self_consistent", "roughness": "charnock", "h_min": 1.0,
+                           "study_b": {"u10": u10_b, "chi_deg": chi_deg,
+                                       "chi_frame": "optimizer frame, wind toward +x",
+                                       "margins": [list(m) for m in STUDY_B_MARGINS]},
+                           "replay": "RK4 from each node state, 20 steps per interval, controls "
+                                     "linear; tip = z - (b/2) sin|mu| cos(gamma)"},
+              "study_a": [r for x in a for r in x], "study_b": [r for x in b for r in x],
+              "runtime_s": time.time() - t_start}
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", newline="\n") as fh:
+        json.dump(result, fh, indent=1)
+        fh.write("\n")
+    print(table_a(result["study_a"]))
+    print("\n### study B\n")
+    print(table_b(result["study_b"]))
+    print("runtime %.0f s" % result["runtime_s"])
+    return result
+
+
+def _solve_wave3(ac, wave, n, seeds, starts, **extra):
+    """Best of the warm starts (list of x) and, if none converged, the cold seeds."""
+    from sim.dsopt import solve_min_wind
+    kw = dict(cycle="travel", n=n, h_min=1.0, tip_model="geometric", z0_mode="self_consistent",
+              wave=wave, return_x=True, midpoints=True, rate_limits=True, n_min=0.0,
+              bank_rate_max_deg_s=150.0, cl_rate_max_per_s=2.0, m_search=(-1, 0, 1), **extra)
+    best = None
+    for x0 in starts:
+        c = solve_min_wind(ac, x0=x0, seeds=seeds[:2], stop_after=1, **kw)
+        if _better(c[0], best[0] if best else None):
+            best = c
+    if best is None or not best[0]["success"]:
+        c = solve_min_wind(ac, seeds=seeds, stop_after=1, **kw)
+        if _better(c[0], best[0] if best else None):
+            best = c
+    return best
+
+
+def wave_chain3_task(job):
+    """One (aircraft, Tp, w_scale): across chain, then along chain started from the rotated across
+    solutions, then the across chain again started from the rotated along solutions."""
+    from sim.dsopt import rotate_start
+    from sim.record import value
+    name, tp, w_scale, n, seeds, hs_list, rotate = job
+    ac = by_name(name)
+    lam = 9.81 * tp * tp / (2.0 * np.pi)
+    decay = (value("lit.wave_induced_decay_u"), value("lit.wave_induced_decay_w"))
+    dirs = {"across": 90.0, "along": 0.0}
+    res = {d: {} for d in dirs}   # direction -> hs -> (info, x, col)
+    rows = []
+
+    def sweep(dlabel, other):
+        prev = None
+        for hs in hs_list:
+            t0 = time.time()
+            wave = {"a": hs / 2.0, "wavelength": lam, "to_deg": dirs[dlabel], "decay": decay,
+                    "w_scale": w_scale, "u_scale": 1.0}
+            starts = []
+            if prev is not None:
+                starts.append(prev)
+            if rotate and other is not None and hs in res[other] and res[other][hs][0]["success"]:
+                _, xo, colo = res[other][hs]
+                starts.append(rotate_start(colo, xo, dirs[dlabel] - dirs[other]))
+            c = _solve_wave3(ac, wave, n, seeds, starts)
+            old = res[dlabel].get(hs)
+            if old is None or _better(c[0], old[0]):
+                res[dlabel][hs] = c
+            c = res[dlabel][hs]
+            if c[0]["success"]:
+                prev = c[1]
+            print("%s Tp=%g w=%g %s Hs=%g: ok=%s u10=%.2f T=%.2f m=%s %s (%.0f s)" % (
+                name, tp, w_scale, dlabel, hs, c[0]["success"], c[0]["u10"], c[0]["period"],
+                c[0]["m"], c[0]["h_min_position"], time.time() - t0), flush=True)
+
+    sweep("across", None)
+    sweep("along", "across")
+    if rotate:
+        sweep("across", "along")
+    for dlabel in dirs:
+        for hs in hs_list:
+            info = res[dlabel][hs][0]
+            rows.append(_row(info, aircraft=name, hs=hs, tp=tp, direction=dlabel,
+                             to_deg=dirs[dlabel], a=hs / 2.0, wavelength=lam, w_scale=w_scale,
+                             decay=list(decay), **{k: info.get(k) for k in (
+                                 "bank_rate_max_deg_s", "cl_rate_max_per_s", "replay_tip_min",
+                                 "replay_h_min", "n_min_node", "n_max_node")}))
+    return rows
+
+
+def wave_study3(path=CONSTRAINT_PATH, n=30, seeds=(0, 1, 2), workers=6, names=WAVE_AIRCRAFT,
+                hs_list=WAVE_HS, tps=WAVE_TP, w_scales=(1.0, 0.6), rotate=True):
+    """Third wave pass (Q-059): the 36-case grid of wave_study2 with midpoints, rate limits 150 deg/s
+    and 2/s, n >= 0, the theta pin, m_search (-1, 0, 1), rotated starts and the measured decay, for
+    each w_scale. Added to path under "wave_pass3"."""
+    from multiprocessing import Pool
+    from sim import record
+    t_start = time.time()
+    jobs = [(nm, tp, w, n, seeds, hs_list, rotate) for w in w_scales for nm in names for tp in tps]
+    with Pool(workers) as pool:
+        out = pool.map(wave_chain3_task, jobs, chunksize=1)
+    rows = [r for o in out for r in o]
+    result = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            result = json.load(fh)
+    meta = record.meta("python -m sim.dsopt --wave-study3", _record_files())
+    result["meta_wave_pass3"] = meta
+    if "meta" not in result:
+        result["meta"] = meta
+    result["wave_pass3_settings"] = {
+        "n_nodes": n, "seeds": list(seeds), "midpoints": True, "rate_limits_deg_s_and_per_s":
+        [150.0, 2.0], "n_min": 0.0, "phase_pin": "theta", "m_search": [-1, 0, 1],
+        "rotate_starts": rotate, "decay": "measured (lit.wave_induced_decay_u, _w)",
+        "w_scales": list(w_scales), "u_scale": 1.0, "tip_model": "geometric",
+        "z0_mode": "self_consistent", "u10_floor": 0.1}
+    result["wave_pass3"] = rows
+    result["wave_pass3_runtime_s"] = time.time() - t_start
+    with open(path, "w", newline="\n") as fh:
+        json.dump(result, fh, indent=1)
+        fh.write("\n")
+    print(wave3_tables(rows, w_scales))
+    print("runtime pass 3: %.0f s" % result["wave_pass3_runtime_s"])
+    return result
+
+
+def wave3_tables(rows, w_scales):
+    lines = []
+    for w in w_scales:
+        sel = [r for r in rows if r["w_scale"] == w]
+        floor = [r for r in sel if r.get("u10_at_floor") and r["success"]]
+        bad = [r for r in sel if not r["success"]]
+        lines += ["", "### w_scale %g: %d of %d cases at the u10 floor, %d not converged" % (
+            w, len(floor), len(sel), len(bad)), ""]
+        rest = [r for r in sel if not (r.get("u10_at_floor") and r["success"])]
+        if rest:
+            lines.append(_table_rows(rest))
+    return "\n".join(lines)
+
+
+STUDY_A2 = tuple(("k %.2f, CL rate %g/s" % (k, r), dict(
+    midpoints=True, rate_limits=True, n_min=0.0, rate_model="pb2v", roll_pb2v=k,
+    cl_rate_max_per_s=r)) for k, r in ((0.07, 1.0), (0.08, 1.0), (0.10, 1.0), (0.08, 0.5)))
+STATS2 = STATS + ("bank_rate_peak_deg_s", "bank_rate_limit_at_peak_deg_s",
+                  "bank_rate_over_limit_max", "pb2v_used_max")
+
+
+def constraint_task_a2(job):
+    from sim.dsopt import solve_min_wind
+    name, n, seeds = job
+    ac = by_name(name)
+    rows, prev = [], None
+    for label, kw in STUDY_A2:
+        t0 = time.time()
+        base = dict(cycle="travel", n=n, h_min=1.0, tip_model="geometric",
+                    z0_mode="self_consistent", return_x=True, **kw)
+        cands = []
+        if prev is not None:
+            cands.append(solve_min_wind(ac, x0=prev, seeds=seeds[:2], stop_after=1, **base))
+        cands.append(solve_min_wind(ac, seeds=seeds, stop_after=3, **base))
+        best = None
+        for c in cands:
+            if _better(c[0], best[0] if best else None):
+                best = c
+        info = best[0]
+        rows.append({**{k: info.get(k) for k in STATS2}, "aircraft": name, "variant": label,
+                     "k": kw["roll_pb2v"], "cl_rate_limit": kw["cl_rate_max_per_s"],
+                     "total_s": time.time() - t0})
+        print("A2 %s %s: ok=%s u10=%.3f T=%.3f peak %.0f of %.0f deg/s, cl_rate=%.2f (%.0f s)" % (
+            name, label, info["success"], info["u10"], info["period"],
+            info["bank_rate_peak_deg_s"], info["bank_rate_limit_at_peak_deg_s"],
+            info["cl_rate_max_per_s"], time.time() - t0), flush=True)
+    return rows
+
+
+def constraint_task_b2(job):
+    from sim.dsopt import profile_for, solve
+    name, n, seeds, u10, chi_deg = job
+    ac = by_name(name)
+    prof = profile_for(u10)
+    rows = []
+    for h_min, n_frac, mu_frac, v_factor in STUDY_B_MARGINS:
+        t0 = time.time()
+        info = solve(ac, prof, "max_speed", "travel", n, u10=u10, chi=np.radians(chi_deg),
+                     h_min=h_min, v_factor=v_factor, tip_model="geometric", midpoints=True,
+                     rate_limits=True, rate_model="pb2v", roll_pb2v=0.08, cl_rate_max_per_s=1.0,
+                     n_min=0.0, n_frac=n_frac, mu_frac=mu_frac, seeds=seeds, stop_after=3)
+        rows.append({**{k: info.get(k) for k in STATS2}, "aircraft": name, "h_min": h_min,
+                     "n_frac": n_frac, "mu_frac": mu_frac, "v_factor": v_factor,
+                     "u10_fixed": u10, "chi_deg": chi_deg, "total_s": time.time() - t0})
+        print("B2 %s margins=%s: ok=%s v_chi=%.2f viol=%.1e (%.0f s)" % (
+            name, (h_min, n_frac, mu_frac, v_factor), info["success"],
+            info["speed_along_chi"], info["violation"], time.time() - t0), flush=True)
+    return rows
+
+
+def table_a2(rows):
+    lines = []
+    for nm in dict.fromkeys(r["aircraft"] for r in rows):
+        lines += ["", "### study A2: " + nm, ""]
+        body = [[r["variant"], "%.2f" % r["u10"], "%.2f" % r["period"],
+                 "%.0f of %.0f" % (r["bank_rate_peak_deg_s"], r["bank_rate_limit_at_peak_deg_s"]),
+                 "%.3f" % r["pb2v_used_max"], "%.2f" % r["cl_rate_max_per_s"],
+                 "yes" if r["success"] else "NO"] for r in rows if r["aircraft"] == nm]
+        lines.append(_md(["variant", "u10_min", "T (s)", "bank rate peak of limit there (deg/s)",
+                          "max p b / 2V", "max CL rate (1/s)", "conv"], body))
+    return "\n".join(lines)
+
+
+def constraint_study2(path=CONSTRAINT_PATH, n=30, seeds=(0, 1, 2, 3, 4, 5), workers=4,
+                      names=STUDY_AIRCRAFT, u10_b=13.0, chi_deg=20.0):
+    """Studies A2 (minimum wind, roll rate p b / 2V <= k) and B2 (margins), added to path."""
+    from multiprocessing import Pool
+    from sim import record
+    t_start = time.time()
+    with Pool(workers) as pool:
+        a = pool.map_async(constraint_task_a2, [(nm, n, seeds) for nm in names], chunksize=1)
+        b = pool.map(constraint_task_b2, [(nm, n, seeds + (6, 7), u10_b, chi_deg) for nm in names],
+                     chunksize=1)
+        a = a.get()
+    with open(path, encoding="utf-8") as fh:
+        result = json.load(fh)
+    result["meta_study2"] = record.meta("python -m sim.dsopt --constraint-study2", _record_files())
+    result["settings_study2"] = {
+        "rate_model": "pb2v: |dmu| <= (2 k V / b) dt, V the slower node of the interval",
+        "n_min": 0.0, "midpoints": True, "n_nodes": n, "seeds": list(seeds),
+        "b2": {"k": 0.08, "cl_rate": 1.0, "u10": u10_b, "chi_deg": chi_deg}}
+    result["study_a2"] = [r for x in a for r in x]
+    result["study_b2"] = [r for x in b for r in x]
+    result["runtime_study2_s"] = time.time() - t_start
+    with open(path, "w", newline="\n") as fh:
+        json.dump(result, fh, indent=1)
+        fh.write("\n")
+    print(table_a2(result["study_a2"]))
+    print("\n### study B2 (pb2v k 0.08, CL rate 1.0)\n")
+    print(table_b(result["study_b2"]))
+    print("runtime %.0f s" % result["runtime_study2_s"])
+    return result
+
+
 if __name__ == "__main__":
     run()
