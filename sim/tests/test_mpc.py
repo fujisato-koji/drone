@@ -1,0 +1,119 @@
+import unittest
+
+import numpy as np
+
+from sim.aircraft import BASELINE, derivatives
+from sim.mpc import (Cycle, CycleGuide, CycleLibrary, MPPIPlanner, derivatives_vec, fly_mpc,
+                     wrap)
+from sim.seawind import Environment, WaveTrain, Wind
+
+
+def wave_env(u10=13.0):
+    w = Wind(u10, 270.0)
+    return Environment(w, [WaveTrain.fully_developed(w, n_omega=4, n_theta=3)], seed=1)
+
+
+class TestMPC(unittest.TestCase):
+    def test_vectorized_dynamics_match(self):
+        env = wave_env()
+        rng = np.random.default_rng(0)
+        S = 20
+        s = np.stack([rng.uniform(-50, 50, S), rng.uniform(-50, 50, S), rng.uniform(0.2, 12, S),
+                      rng.uniform(8, 20, S), rng.uniform(-0.4, 0.4, S), rng.uniform(-3, 3, S)])
+        cl, mu = rng.uniform(0.0, 1.2, S), rng.uniform(-1.0, 1.0, S)
+        dv = derivatives_vec(3.3, s, BASELINE, env, cl, mu)
+        for i in range(S):
+            d = derivatives(3.3, s[:, i], BASELINE, env, cl[i], mu[i])[0]
+            self.assertLess(np.max(np.abs(dv[:, i] - d)) / np.max(np.abs(d)), 1e-9)
+
+    def test_contact_costs_more(self):
+        env = Environment.flat(Wind(13.0, 270.0))
+        pl = MPPIPlanner(BASELINE, n_samples=4, dt=0.1, horizon_s=4.0, n_ctrl=5)
+        s0 = np.array([0.0, 0.0, 8.0, 10.0, 0.0, 0.0])
+        level = np.array([[BASELINE.cl_best_ld] * 5, [0.0] * 5])
+        dive = np.array([[-0.3] * 5, [0.0] * 5])     # pushes the nose down into the sea
+        cost, _, dead = pl.rollout(env, 0.0, s0, np.stack([level, dive]), (1.0, 0.0))
+        self.assertFalse(dead[0])
+        self.assertTrue(dead[1])
+        self.assertGreater(cost[1], cost[0] + 1000.0)
+
+    def test_flat_sea_truth_stays_aloft_60s(self):
+        env = Environment.flat(Wind(13.0, 270.0))
+        r = fly_mpc(BASELINE, env, "truth", [], 60.0, env.wind.to_deg - 20.0, 13.0, seed=1,
+                    planner_kw={"n_samples": 96, "dt": 0.1, "n_iter": 1})
+        self.assertEqual(r["ended"], "complete")
+        self.assertGreater(r["min_clear_surface"], 0.0)
+
+
+def synthetic_cycle(mirror=False):
+    n, T = 40, 6.0
+    t = np.linspace(0.0, T, n)
+    w = 2 * np.pi / T
+    d = {"period": T, "t": t, "x": 12.0 * t, "y": 3.0 * t + np.sin(w * t),
+         "z": 6.0 + 5.0 * np.cos(w * t), "V": 14.0 + 3.0 * np.sin(w * t),
+         "gamma": 0.3 * np.sin(w * t), "psi": 1.0 * np.sin(w * t),
+         "cl": 0.8 + 0.3 * np.cos(w * t), "mu": 0.6 * np.sin(w * t)}
+    return Cycle(d, mirror)
+
+
+class TestLibrary(unittest.TestCase):
+    def test_phase_match_recovers_phase(self):
+        cyc = synthetic_cycle()
+        env = Environment.flat(Wind(13.0, 270.0))
+        psi_w = float(np.arctan2(env.wind.ey, env.wind.ex))
+        tau = 2.1
+        h, V, g, pr = cyc.state(tau)
+        s = [5.0, 7.0, h, V, g, psi_w + pr]
+        gd = CycleGuide(cyc, env, 0.0, s, psi_w, 6.0)
+        dphase = (gd.tau0 - tau + 3.0) % 6.0 - 3.0
+        self.assertLess(abs(dphase), 0.1)
+        self.assertEqual(gd.delta, 0.0)            # flat sea: no wave, no shift
+        self.assertEqual(gd.nominal(np.linspace(0, 6, 12)).shape, (2, 12))
+        # the terminal cost is small at the cycle's own end state, larger away from it
+        ht, Vt, gt, pt = gd.target
+        end = np.array([[0.0], [0.0], [ht], [Vt], [gt], [psi_w + pt]])
+        near = gd.terminal_cost(env, 6.0, end, type("P", (), {"w_e": 1.0})())
+        far = gd.terminal_cost(env, 6.0, end + np.array([[0], [0], [5.0], [0], [0], [0]]),
+                               type("P", (), {"w_e": 1.0})())
+        self.assertLess(float(near[0]), 1.0)
+        self.assertGreater(float(far[0]), float(near[0]) + 5.0)
+
+    def test_mirror_flips_turn(self):
+        a, b = synthetic_cycle(), synthetic_cycle(True)
+        self.assertTrue(np.allclose(a.mu, -b.mu))
+        self.assertTrue(np.allclose(a.x, b.x) and np.allclose(a.y, -b.y))
+
+    def test_wave_aware_shift_moves_low_point_toward_forward_face(self):
+        cyc = synthetic_cycle()
+        w = Wind(13.0, 270.0)
+        env = Environment(w, [WaveTrain.fully_developed(w, n_omega=2, n_theta=1)], seed=3)
+        psi_w = float(np.arctan2(w.ey, w.ex))
+        h, V, g, pr = cyc.state(1.0)
+        eta0 = float(env.surface(0.0, 0.0, 0.0)[0])
+        s = [0.0, 0.0, h + eta0, V, g, psi_w + pr]
+        g0 = CycleGuide(cyc, env, 0.0, s, psi_w, 6.0, wave_aware=False)
+        g1 = CycleGuide(cyc, env, 0.0, s, psi_w, 6.0, wave_aware=True)
+        self.assertEqual(g0.delta, 0.0)
+        self.assertLessEqual(abs(g1.delta), 0.15 * cyc.T + 1e-9)
+        err = lambda th: abs(float(wrap(th - np.pi / 3)))
+        self.assertIsNotNone(g1.theta_low)
+        # the scan includes delta = 0, so the chosen shift cannot be worse than no shift
+        self.assertLessEqual(err(g1.theta_low), err(g1._theta0) + 1e-9)
+
+    def test_planner_with_guide_follows_nominal_in_flat_sea(self):
+        cyc = synthetic_cycle()
+        env = Environment.flat(Wind(13.0, 270.0))
+        psi_w = float(np.arctan2(env.wind.ey, env.wind.ex))
+        h, V, g, pr = cyc.state(0.0)
+        s = np.array([0.0, 0.0, h, V, g, psi_w + pr])
+        pl = MPPIPlanner(BASELINE, n_samples=32, dt=0.1, n_iter=1, sigma_cl=0.05, sigma_mu=0.05,
+                         clearance="wingtip", h_clear=0.3)
+        gd = CycleGuide(cyc, env, 0.0, s, psi_w, pl.horizon_s)
+        plan = pl.plan(env, 0.0, s, (1.0, 0.0), guide=gd)
+        nom = gd.nominal(pl.knots_t)
+        self.assertLess(np.max(np.abs(plan.cl_knots - nom[0])), 0.5)
+        self.assertEqual(plan.cl.shape, plan.t.shape)
+
+
+if __name__ == "__main__":
+    unittest.main()

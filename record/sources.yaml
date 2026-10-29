@@ -782,3 +782,51 @@ items:
     read: partial
     retrieved: 2026-10-29
     note: "1.05 kg hotliner, S 0.21 m2, AR 11.84, CD0 0.028, e 0.85; 100 Hz logs of autonomous inclined circles."
+  - id: P88
+    class: P
+    title: "A global climatology of wind-wave interaction, M. E. Hanley, S. E. Belcher and P. P. Sullivan, Journal of Physical Oceanography 40, 1263-1282, 2010"
+    url: "https://centaur.reading.ac.uk/7479/1/2010JPO4377.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Inverse wave age (U10 cos theta)/cp: wind-driven waves above 0.83 (the Pierson-Moskowitz limit 1/1.2), wave-driven wind between 0 and 0.15, mixed between; the authors say the limits are not hard and the transition is likely smooth. Negative values are counterswell. Read the introduction and section 4."
+  - id: P89
+    class: P
+    title: "Airflow separation over wind waves and its effect on the air-sea momentum flux, M. P. Buckley, F. Veron and K. Yousefi, Journal of Fluid Mechanics 905, A31, 2020"
+    url: "https://par.nsf.gov/servlets/purl/10389428"
+    license: CC BY 4.0
+    read: full
+    retrieved: 2026-10-29
+    note: "Per-wave steepness gamma = pi H / lambda; the 50% separation contour is gamma = 0.1 + 0.3 / (1 + ((u*/c)/0.3)^(5/2)), eq. (4.8): about 0.4 at u*/c below 0.1, 0.25 at 0.3, 0.1 above 0.9. Separation over 0.4% of waves at ak 0.06 and 87% at ak 0.21 (a = sqrt(2) a_rms)."
+  - id: P90
+    class: P
+    title: "Momentum fluxes over wind waves, K. Yousefi, F. Veron and M. P. Buckley, Journal of Fluid Mechanics 895, A15, 2020"
+    url: "https://personal.utdallas.edu/~kyousefi/files/momentum-fluxes-over-wind-waves.pdf"
+    license: CC BY 4.0
+    read: full
+    retrieved: 2026-10-29
+    note: "A separating wave had a maximum local slope of 0.31 and a non-separating one 0.18; the turbulent stress recovers to the total stress at about k_p zeta = 0.5 above the surface."
+  - id: P91
+    class: P
+    title: "Boundary layer turbulence over surface waves in a strongly forced condition: LES and observation, N. T. Husain et al., Journal of Physical Oceanography 49, 2019"
+    url: "https://personal.utdallas.edu/~kyousefi/files/turbulence-surface-waves-LES-observations.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-29
+    note: "Leeward velocities are dramatically reduced but stay positive in the phase average; the profiles depart from the log profile below about kz = 0.7; separation is intermittent at c/u* of 2.5 and 3.7."
+  - id: P92
+    class: P
+    title: "The spatial structure of air flow separation over unsteady breaking waves, N. Reul, H. Branger and J.-P. Giovanangeli, Physics of Fluids 11, 1959, 1999"
+    url: "https://hal.science/hal-00192471"
+    license: unknown
+    read: full
+    retrieved: 2026-10-29
+    note: "Over breaking waves a recirculation extends from the trough up to the crest, with a maximum backflow of about 20% of the free-stream speed; maximum local slopes were always above 0.7."
+  - id: P93
+    class: P
+    title: "Air flow structure over short-gravity breaking water waves, N. Reul, H. Branger and J.-P. Giovanangeli, Boundary-Layer Meteorology 126, 477, 2008"
+    url: "https://hal.science/hal-00193129"
+    license: CC BY-NC 4.0
+    read: full
+    retrieved: 2026-10-29
+    note: "Separated waves show a maximum crest angle of about 35 degrees (slope about 0.7), Kawai found 0.6; the maximum backflow is about 20% of the free-stream speed."

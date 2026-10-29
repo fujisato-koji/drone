@@ -19,7 +19,13 @@ Model assumptions:
 
 Constants (record keys in comments): see the module-level names below.
 
+- Optional (opt-in, Environment keywords; defaults reproduce the plain model):
+  profile_mode="auto" picks the mean profile from the wave age (log to swell
+  knee, Hanley et al. 2010); shelter=True adds a crude airflow-separation
+  stand-in behind steep crests (see the Environment docstring).
+
 Changes:
+- 2026-10-29: Environment(profile_mode="auto") and Environment(shelter=True), both opt-in.
 - 2026-10-29 (check K-005): duration_limited uses the CEM 2002 friction-velocity
   forms with their own fully developed limits (was SPM-style forms in U10).
 - 2026-10-29 (check K-005): fully_developed takes u19.5 from the log profile with
@@ -50,6 +56,19 @@ RHO_AIR = 1.225
 DECAY_MEASURED = (value("lit.wave_induced_decay_u", 0.77),
                   value("lit.wave_induced_decay_w", 0.62))  # Grare et al. 2018 (record P63): (a_u, a_w) in exp(-a k zloc)
 KNEE_DEFAULT_M = value("lit.swell_knee_height_m", 7.5)  # Smedman et al. 2008, record P65, 5 to 10 m
+# Hanley, Belcher and Sullivan 2010 inverse wave age U10/cp: wind-driven above the first, wave-driven below the second.
+# Record source to be added by the main session; thresholds to be verified (Q-008).
+A_WIND_DRIVEN = value("env.inverse_wave_age_wind_driven", 0.83)
+A_WAVE_DRIVEN = value("env.inverse_wave_age_wave_driven", 0.15)
+# Sheltering stand-in: assumed constants, to be verified (Q-008, Q-011).
+# Onset slope from the 50% separation contour of Buckley, Veron and Yousefi 2020 (JFM 905 A31, eq. 4.8).
+SEP_GAMMA_FLOOR = value("env.separation_gamma_floor", 0.1)
+SEP_GAMMA_SPAN = value("env.separation_gamma_span", 0.3)
+SEP_USTAR_C_REF = value("env.separation_ustar_c_ref", 0.3)
+SEP_EXPONENT = value("env.separation_exponent", 2.5)
+SHELTER_RAMP_RATIO = value("env.shelter_ramp_ratio", 1.5)  # r = 0.5 at the 50% contour; assumed (Q-008)
+SHELTER_FACTOR = value("env.shelter_factor", 1.0)
+SHELTER_DECAY_KZ = value("env.shelter_decay_kz", 0.5)  # reduction decays as exp(-k zloc / this); assumed
 TURB_N_MODES = 64
 TURB_L = value("env.turb_length_m", 50.0)  # von Karman length scale, m
 TURB_K_RANGE = (2.0 * np.pi / 500.0, 2.0 * np.pi / 2.0)  # rad/m
@@ -62,6 +81,18 @@ CEM_TP_COEFF = value("env.cem_tp_coeff", 0.651)  # g Tp / u* = coeff X*^(1/3)
 CEM_DURATION_COEFF = value("env.cem_duration_coeff", 5.23e-3)  # X* = coeff (g t / u*)^(3/2)
 CD_LAW_A = value("env.cd_law_a", 1.1)  # Cd = 0.001 (a + b U10)
 CD_LAW_B = value("env.cd_law_b", 0.035)
+
+
+def separation_steepness(ustar, c):
+    """Onset slope s_c = gamma50 / R of the sheltering ramp (numpy arrays accepted).
+
+    gamma50 = g0 + span / (1 + ((ustar/c)/ref)^p), the 50% separation contour of
+    Buckley, Veron and Yousefi 2020 (JFM 905 A31, eq. 4.8); R is
+    env.shelter_ramp_ratio, so that r = 0.5 exactly at gamma50.
+    """
+    q = np.asarray(ustar, dtype=float) / np.asarray(c, dtype=float)
+    g50 = SEP_GAMMA_FLOOR + SEP_GAMMA_SPAN / (1.0 + (q / SEP_USTAR_C_REF) ** SEP_EXPONENT)
+    return g50 / SHELTER_RAMP_RATIO
 
 
 def compass_to_vector(deg):
@@ -296,11 +327,45 @@ class Environment:
     stokes=True adds the second-order self-interaction term of each component
     to surface() only. orbital() and wind_at() keep the linear terms.
     Cross-component second-order terms are omitted.
+
+    profile_mode="fixed" (default) uses wind.speed as the mean profile.
+    profile_mode="auto" mixes the log and the swell_knee profiles by the wave
+    age of the most energetic train (largest sum of a^2), U = (1 - f) U_log +
+    f U_knee, both with U(10) = u10. With cp = g Tp / 2 pi of that train and
+    A = U10 cos(theta) / cp (theta: wind to train direction), f is a smoothstep from A = 0.83 (f = 0, wind-driven) down to
+    A = 0.15 (f = 1, wave-driven), the thresholds of Hanley et al. 2010 (record
+    source to be added). No trains: f = 0. The turbulence intensity (gust)
+    keeps using wind.speed.
+
+    shelter=True (default off) is a crude stand-in for airflow separation
+    behind steep crests, motivated by Buckley et al. 2025 (record P64) and the
+    classical sheltering idea; the constants are assumed, to be verified
+    (Q-008, Q-011). The trigger is the local slope of the summed surface, so
+    it acts on a spectral sea whose single components are all gentle. Let
+    w_hat be the horizontal unit vector the wind blows towards, and count
+    only the components the wind outruns (urel > 0). Their linear slope along
+    the wind is s = sum grad(eta_i) . w_hat at (x, y, t) (Stokes term
+    ignored), the lee steepness is sigma = max(0, -s), and
+    r = clip((sigma - s_c) / s_c, 0, 1), with s_c = separation_steepness(
+    ustar, c_s) (ustar of the mean wind, c_s = sqrt(g / k_s)); shelter_slope,
+    when given, overrides s_c. The along-wind horizontal wind (mean plus
+    wave perturbation) is multiplied by 1 - F r exp(-k_s zloc / D), with F =
+    shelter_factor (default env.shelter_factor = 1.0), D = env.shelter_decay_kz
+    (0.5) and k_s = sum(a k^2) / sum(a k) over the counted components. The
+    wave-coherent vertical perturbation of every component is multiplied by
+    (1 - r). The turbulence (gust) is not sheltered.
     """
 
     def __init__(self, wind: Wind, trains=(), seed=1, stokes=False,
-                 decay=(1.0, 1.0), turbulence=None):
+                 decay=(1.0, 1.0), turbulence=None, profile_mode="fixed",
+                 shelter=False, shelter_slope=None, shelter_factor=None):
         self.wind = wind
+        if profile_mode not in ("fixed", "auto"):
+            raise ValueError("unknown profile_mode " + str(profile_mode))
+        self.profile_mode = profile_mode
+        self.shelter = bool(shelter)
+        self.shelter_slope = None if shelter_slope is None else float(shelter_slope)  # None: computed
+        self.shelter_factor = float(SHELTER_FACTOR if shelter_factor is None else shelter_factor)
         self.stokes = bool(stokes)
         self.decay = (float(decay[0]), float(decay[1]))
         if turbulence not in (None, "iso"):
@@ -321,13 +386,85 @@ class Environment:
         for p in parts:
             self._train_slices.append(slice(i, i + p["a"].size))
             i += p["a"].size
+        self._wave_age = self._compute_wave_age()
+        if profile_mode == "auto":
+            self._w_log = wind if wind.profile == "log" else _log_wind(wind)
+            self._w_knee = wind if wind.profile == "swell_knee" else Wind(
+                wind.u10, wind.from_deg, charnock=wind.charnock, profile="swell_knee")
         k = self.c["k"]
         if k.size:
             zref = np.maximum(1.0 / k, 2.0 * wind.z0)
             along = wind.ex * self.c["dx"] + wind.ey * self.c["dy"]
-            self.urel = wind.speed(zref) * along - self.c["omega"] / k
+            self.urel = self._mean_speed(zref) * along - self.c["omega"] / k
         else:
             self.urel = np.zeros(0)
+        # sheltering: components the wind outruns, their slope weights and the slope wavenumber
+        self._sh_n = 0
+        if self.shelter and k.size:
+            cnt = self.urel > 0.0
+            self._sh_cnt = cnt
+            self._sh_n = int(cnt.sum())
+            if self._sh_n:
+                ak = self.c["a"][cnt] * k[cnt]
+                self._sh_ks = float(np.sum(ak * k[cnt]) / np.sum(ak))
+                self._sh_sc = (self.shelter_slope if self.shelter_slope is not None
+                               else float(separation_steepness(
+                                   self.wind.ustar, np.sqrt(G / self._sh_ks))))
+                # slope along the wind of component i: -a k p sin(theta), p = d . w_hat
+                self._sh_ak = np.zeros(k.size)
+                self._sh_ak[cnt] = (ak * (self.wind.ex * self.c["dx"][cnt]
+                                          + self.wind.ey * self.c["dy"][cnt]))
+
+    def shelter_r(self, x, y, t):
+        """Separation strength r in [0, 1] at (x, y, t); zeros unless shelter=True."""
+        x, y, t = np.broadcast_arrays(*(np.asarray(v, float) for v in (x, y, t)))
+        r = np.zeros(x.shape)
+        if not (self.shelter and self._sh_n):
+            return r
+        s = np.zeros(x.shape)
+        for sl in self._chunks():
+            th = self._theta(sl, x, y, t)
+            s -= (self._sh_ak[sl] * np.sin(th)).sum(-1)
+        sig = np.maximum(0.0, -s)
+        return np.clip((sig - self._sh_sc) / self._sh_sc, 0.0, 1.0)
+
+    def _compute_wave_age(self):
+        """(cp, A, f) of the most energetic train; (inf, 0, 0) without trains.
+
+        A = U10 cos(theta) / cp (Hanley et al. 2010), theta the angle between the
+        wind and the train's travel direction. f = 0 when A <= 0 (counterswell:
+        no knee; its enhanced drag is not modelled).
+        """
+        best, e_best = None, -1.0
+        for tr, sl in zip(self.trains, self._train_slices):
+            e = float(np.sum(self.c["a"][sl] ** 2))
+            if e > e_best:
+                best, e_best = tr, e
+        if best is None:
+            return (float("inf"), 0.0, 0.0)
+        cp = G * best.tp / (2.0 * np.pi)
+        dx, dy = compass_to_vector(best.to_deg)
+        a = self.wind.u10 * (self.wind.ex * dx + self.wind.ey * dy) / cp
+        if a <= 0.0:
+            return (float(cp), float(a), 0.0)  # counterswell or crossing at 90 deg: no knee
+        t = float(np.clip((A_WIND_DRIVEN - a) / (A_WIND_DRIVEN - A_WAVE_DRIVEN), 0.0, 1.0))
+        return (float(cp), float(a), t * t * (3.0 - 2.0 * t))
+
+    def wave_age(self):
+        """(cp, A, f): phase speed of the most energetic train, inverse wave age U10 cos(theta)/cp, wave-driven fraction."""
+        return self._wave_age
+
+    def _mean_speed(self, z):
+        if self.profile_mode == "fixed":
+            return self.wind.speed(z)
+        f = self._wave_age[2]
+        return (1.0 - f) * self._w_log.speed(z) + f * self._w_knee.speed(z)
+
+    def _mean_vector(self, z):
+        if self.profile_mode == "fixed":
+            return self.wind.vector(z)
+        s = self._mean_speed(z)
+        return s[..., None] * np.array([self.wind.ex, self.wind.ey, 0.0])
 
     @staticmethod
     def _make_turbulence(seed):
@@ -468,8 +605,10 @@ class Environment:
         zloc = z - eta
         above = zloc > w0.z0
         zl = np.where(above, zloc, w0.z0 * 2.0)
-        out = w0.vector(zl)
+        out = self._mean_vector(zl)
         c = self.c
+        sh = self.shelter and self._sh_n > 0
+        rr = self.shelter_r(x, y, t) if sh else None
         for sl in self._chunks():
             th = self._theta(sl, x, y, t)
             base = self.urel[sl] * c["a"][sl] * c["k"][sl]
@@ -479,7 +618,12 @@ class Environment:
             up = amp * np.cos(th)
             out[..., 0] += (up * c["dx"][sl]).sum(-1)
             out[..., 1] += (up * c["dy"][sl]).sum(-1)
-            out[..., 2] += (-ampw * np.sin(th)).sum(-1)
+            out[..., 2] += (-ampw * np.sin(th)).sum(-1) * (1.0 if rr is None else 1.0 - rr)
+        if sh:
+            fac = 1.0 - self.shelter_factor * rr * np.exp(-self._sh_ks * zl / SHELTER_DECAY_KZ)
+            al = out[..., 0] * w0.ex + out[..., 1] * w0.ey
+            out[..., 0] += (fac - 1.0) * al * w0.ex
+            out[..., 1] += (fac - 1.0) * al * w0.ey
         out = out + self.gust(x, y, z, t)
         if not above.all():
             u, v, w = self.orbital(x, y, t)
@@ -503,6 +647,8 @@ class Environment:
             })
         comps = {key: _r6(c[key]) for key in ("a", "k", "omega", "dx", "dy", "phase")}
         comps["urel"] = _r6(self.urel)
+        wa = self._wave_age
+        cp_json = float(f"{wa[0]:.6g}") if np.isfinite(wa[0]) else None
         c_id, s_id = commit(), stamp([Path(__file__)])
         return {
             # no wall-clock date: the viewer shows "generated" as the commit and stamp
@@ -519,7 +665,13 @@ class Environment:
                       "perturbation": "linear potential flow over each component, "
                                       "decaying as exp(-k*zloc)",
                       "decay": list(self.decay), "profile": w.profile,
-                      "knee_m": w.knee_m, "turbulence": self.turbulence},
+                      "knee_m": w.knee_m, "turbulence": self.turbulence,
+                      "profile_mode": self.profile_mode,
+                      "wave_age": {"cp": cp_json, "A": float(f"{wa[1]:.6g}"),
+                                   "f": float(f"{wa[2]:.6g}")},
+                      "shelter": {"on": self.shelter, "steepness": (self._sh_sc if self.shelter and self._sh_n else self.shelter_slope),
+                                  "factor": self.shelter_factor,
+                                  "decay_kz": SHELTER_DECAY_KZ}},
         }
 
     def to_js(self, path, name="FIELD", header=None):

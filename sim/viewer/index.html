@@ -53,6 +53,20 @@
   <div class="dim" id="rough"></div>
   <h3>Readouts</h3>
   <table id="ro"></table>
+  <h3>Flight</h3>
+  <div id="fl">
+    <div class="ctl"><label for="flAc">Aircraft</label><select id="flAc"></select></div>
+    <div class="ctl"><label for="flCyc">Cycle</label><select id="flCyc"><option value="travel">travel</option><option value="loiter">loiter</option></select></div>
+    <div class="ctl"><label for="flPos">Launch at</label><select id="flPos"><option value="mast">mast</option><option value="click">clicked point</option></select></div>
+    <div class="dim" id="flPt">Click the sea to choose the launch point.</div>
+    <div class="ctl"><label for="flHead">Heading</label><select id="flHead"><option value="up">upwind</option><option value="down">downwind</option><option value="left">crosswind, left</option><option value="right">crosswind, right</option><option value="ref">reference (rotated into the wind)</option></select></div>
+    <div class="ctl"><button id="flGo" type="button">Launch</button><button id="flStop" type="button">Stop</button>
+      <label style="width:auto"><input id="flChase" type="checkbox"> Chase camera</label></div>
+    <div class="ctl"><label style="width:auto"><input id="flFreeze" type="checkbox" checked> Freeze scenario hour while flying</label></div>
+    <div class="dim" id="flNote"></div>
+    <div class="warn" id="flSplash"></div>
+    <table id="flro"></table>
+  </div>
   <h3>Controls</h3>
   <div class="ctl"><label for="u10">U10 (m/s)</label><input id="u10" type="range" min="2" max="25" step="0.5"><span class="val" id="u10v"></span></div>
   <div class="ctl"><label for="from">Wind from (deg)</label><input id="from" type="range" min="0" max="359" step="1"><span class="val" id="fromv"></span></div>
@@ -71,6 +85,8 @@
 
 <script src="field.js"></script>
 <script src="traj.js"></script>
+<script src="flight.js"></script>
+<script src="refs.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -387,6 +403,219 @@ function updateGlider(t) {
   glider.rotation.x = L(traj.mu);
 }
 
+// ---------------------------------------------------------------- flight (live, uses flight.js)
+const REFS = window.REFS || null;
+const FDT = 0.01, FMAX_STEPS = 20, TRAIL_DT = 0.1, TRAIL_N = 600;   // 60 s of trail
+const fwv = { u: 0, v: 0, w: 0 };
+// the viewer's own wind and surface, as the mast uses them (scenario blend, second-order surface)
+const fSurface = (x, y, t) => surface(x, y, t).eta;
+const fWind = (x, y, z, t) => {
+  const e = surface(x, y, t).eta;
+  windAt(z - e, fwv);
+  return [fwv.u, fwv.v, fwv.w];
+};
+Object.defineProperty(fWind, 'z0', { get: () => W.z0 });
+const FL = { on: false, started: false, s: null, ac: null, tr: null, cl: 0, mu: 0, acc: 0, el: 0,
+  trail: [], splash: null, pt: null, refText: '-', uText: '-' };
+
+// aircraft shape: two thin wing boxes and a fuselage, true size; local +X forward, +Y up, +Z right
+const flightMesh = new THREE.Group();
+flightMesh.rotation.order = 'YZX';   // heading, then flight path angle, then bank
+flightMesh.visible = false;
+scene.add(flightMesh);
+function buildShape(ac) {
+  while (flightMesh.children.length) {
+    const c = flightMesh.children.pop(); c.geometry.dispose(); c.material.dispose();
+  }
+  const b = ac.span, chord = ac.wing_area / ac.span;
+  for (const sgn of [-1, 1]) {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(chord, 0.02 * b, b / 2),
+      new THREE.MeshLambertMaterial({ color: 0xffffff }));
+    wing.position.set(0, 0, sgn * b / 4);
+    flightMesh.add(wing);
+  }
+  const fus = new THREE.Mesh(new THREE.BoxGeometry(0.5 * b, 0.025 * b, 0.025 * b),
+    new THREE.MeshLambertMaterial({ color: 0xf2c200 }));
+  fus.position.set(-0.1 * b, 0, 0);
+  flightMesh.add(fus);
+}
+// trail: last 60 s, coloured by height above the surface with the existing ramp
+const trailPos = new Float32Array((TRAIL_N + 2) * 3), trailCol = new Float32Array((TRAIL_N + 2) * 3);
+const trailGeo = new THREE.BufferGeometry();
+trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+trailGeo.setAttribute('color', new THREE.BufferAttribute(trailCol, 3));
+trailGeo.setDrawRange(0, 0);
+const trailLine = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({ vertexColors: true }));
+trailLine.frustumCulled = false;
+scene.add(trailLine);
+// splash marker and its label
+const splashMark = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 8), new THREE.MeshBasicMaterial({ color: 0xd62020 }));
+splashMark.visible = false; scene.add(splashMark);
+const splashLbl = document.createElement('div');
+splashLbl.style.cssText = 'position:fixed;display:none;pointer-events:none;color:#d62020;font-size:12px;font-weight:600;background:rgba(255,255,255,0.8);padding:0 4px;border-radius:3px;z-index:9';
+document.body.appendChild(splashLbl);
+// chosen launch point
+const ptMark = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 8, 0)]),
+  new THREE.LineBasicMaterial({ color: 0xf2c200 }));
+ptMark.visible = false; ptMark.frustumCulled = false; scene.add(ptMark);
+
+const flRows = [['Flight time', 'el'], ['Airspeed', 'v'], ['Height above surface', 'h'], ['Energy z + V^2/2g', 'e'],
+  ['Load factor', 'n'], ['Cycle phase', 'ph'], ['Guard active', 'gd'], ['Energy change per cycle', 'de'],
+  ['u10 used / wind now', 'u'], ['Reference', 'ref']];
+$('flro').innerHTML = flRows.map((r) => '<tr><td>' + r[0] + '</td><td id="fl_' + r[1] + '"></td></tr>').join('');
+const setFl = (k, s) => { $('fl_' + k).textContent = s; };
+for (const r of flRows) setFl(r[1], '-');
+if (!REFS || !Object.keys(REFS).length) {
+  $('flNote').textContent = 'window.REFS missing: run python -m sim.export_refs to create refs.js. Flight is off.';
+  for (const id of ['flAc', 'flCyc', 'flPos', 'flHead', 'flGo', 'flStop', 'flChase', 'flFreeze']) $(id).disabled = true;
+} else {
+  $('flAc').innerHTML = Object.keys(REFS).map((n) => '<option>' + n + '</option>').join('');
+  const showRefs = () => {
+    const e = REFS[$('flAc').value][$('flCyc').value] || {};
+    const ks = Object.keys(e).map(Number).sort((a, b) => a - b);
+    $('flNote').textContent = ks.length ? 'references at u10 = ' + ks.join(', ') + ' m/s' : 'no reference for this cycle: guard mode only';
+  };
+  $('flAc').addEventListener('change', showRefs); $('flCyc').addEventListener('change', showRefs);
+  showRefs();
+}
+function launchPoint() {
+  if ($('flPos').value === 'click' && FL.pt) return FL.pt;
+  return { x: mx, y: my };
+}
+function stopFlight() { FL.on = false; }
+function launch() {
+  if (!REFS) return;
+  if ($('flPos').value === 'click' && !FL.pt) { $('flNote').textContent = 'Click the sea to choose a launch point first.'; return; }
+  const entry = REFS[$('flAc').value], cyc = $('flCyc').value, ac = entry.params;
+  const table = entry[cyc] || {};
+  let ref = null, uUsed = null;
+  for (const k of Object.keys(table).map(Number)) if (uUsed === null || Math.abs(k - W.u10) < Math.abs(uUsed - W.u10)) uUsed = k;
+  if (uUsed !== null) ref = table[String(uUsed)];
+  const p = launchPoint();
+  const psiW = Flight.windPsi(fWind, fSurface, p.x, p.y, T, Math.atan2(W.ey, W.ex));
+  let zr = 10, V, gam = 0, psiRef = null;
+  if (ref) {   // the highest node of the reference
+    const n = ref.z.length - 1;
+    let k = 0;
+    for (let i = 1; i < n; i++) if (ref.z[i] > ref.z[k]) k = i;
+    zr = ref.z[k]; V = ref.V[k]; gam = ref.gamma[k]; psiRef = ref.psi[k];
+  } else {
+    V = Math.sqrt(2 * ac.mass * Flight.G / (ac.rho * ac.wing_area * Math.sqrt(ac.cd0 / ac.k_induced)));
+  }
+  const head = $('flHead').value;
+  let psi = psiW + Math.PI;   // upwind
+  if (head === 'down') psi = psiW;
+  else if (head === 'left') psi = psiW + Math.PI / 2;
+  else if (head === 'right') psi = psiW - Math.PI / 2;
+  else if (head === 'ref' && psiRef !== null) psi = psiRef + psiW;
+  FL.ac = ac; FL.tr = new Flight.Tracker(ref, ac);
+  FL.s = [p.x, p.y, fSurface(p.x, p.y, T) + zr, V, gam, psi];
+  FL.cl = 0; FL.mu = 0; FL.acc = 0; FL.el = 0; FL.trail = []; FL.splash = null; FL.started = true; FL.on = true;
+  FL.uText = uUsed === null ? '-' : uUsed + ' / ' + W.u10.toFixed(1) + ' m/s';
+  FL.refText = ref ? cyc + ', period ' + ref.period + ' s' : 'no reference (guard mode only)';
+  splashMark.visible = false; splashLbl.style.display = 'none'; $('flSplash').textContent = '';
+  buildShape(ac);
+  flightMesh.visible = true;
+}
+$('flGo').addEventListener('click', launch);
+$('flStop').addEventListener('click', stopFlight);
+
+// pick the launch point by a click (not a drag) on the sea
+{
+  const cv = $('c'), ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const hit = new THREE.Vector3();
+  let down = null;
+  cv.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+  cv.addEventListener('pointerup', (e) => {
+    if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4 || performance.now() - down.t > 500) return;
+    ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
+    if (!ray.ray.intersectPlane(plane, hit)) return;
+    if (Math.abs(hit.x) > HALF || Math.abs(hit.z) > HALF) return;
+    FL.pt = { x: +hit.x.toFixed(1), y: +(-hit.z).toFixed(1) };
+    $('flPos').value = 'click';
+    $('flPt').textContent = 'Launch point: sim (' + FL.pt.x + ', ' + FL.pt.y + ') m';
+    ptMark.visible = true;
+  });
+}
+
+// Advance the flight by up to dtWanted of sea time, starting at sea time t0; returns the sea
+// time actually used (at most 20 steps of 0.01 s per frame, so the sea slows down if the
+// machine cannot keep up).
+function flightAdvance(dtWanted, t0) {
+  FL.acc += dtWanted;
+  let n = Math.floor(FL.acc / FDT + 1e-9);
+  if (n > FMAX_STEPS) { n = FMAX_STEPS; FL.acc = 0; } else FL.acc -= n * FDT;
+  let done = 0;
+  for (let i = 0; i < n && FL.on; i++) {
+    const t = t0 + i * FDT;
+    const c = FL.tr.command(FL.s, fWind, fSurface, t);
+    FL.cl = c.cl; FL.mu = c.mu;
+    FL.s = Flight.rk4(FL.s, c.cl, c.mu, FL.ac, fWind, t, FDT);
+    FL.el += FDT; done++;
+    if (!FL.s.every(Number.isFinite)) { stopFlight(); $('flSplash').textContent = 'Numerical failure at t = ' + FL.el.toFixed(1) + ' s'; break; }
+    const hgt = FL.s[2] - fSurface(FL.s[0], FL.s[1], t + FDT);
+    if (Math.round(FL.el / FDT) % Math.round(TRAIL_DT / FDT) === 0) {
+      FL.trail.push([FL.s[0], FL.s[2], -FL.s[1], hgt]);
+      if (FL.trail.length > TRAIL_N) FL.trail.shift();
+    }
+    if (hgt < 0) {
+      FL.splash = { x: FL.s[0], y: FL.s[1], z: FL.s[2], t: FL.el };
+      splashMark.position.set(FL.s[0], FL.s[2], -FL.s[1]); splashMark.visible = true;
+      $('flSplash').textContent = 'Splashed at t = ' + FL.el.toFixed(1) + ' s';
+      stopFlight();
+      break;
+    }
+  }
+  return done * FDT;
+}
+const _fp = new THREE.Vector3(), _fd = new THREE.Vector3();
+function updateFlightView() {
+  if (FL.pt) { surface(FL.pt.x, FL.pt.y, T); ptMark.position.set(FL.pt.x, surf.eta, -FL.pt.y); }
+  if (!FL.started) return;
+  const s = FL.s;
+  flightMesh.position.set(s[0], s[2], -s[1]);
+  flightMesh.rotation.set(-FL.mu, s[5], s[4]);   // x = bank (left wing down for mu > 0), y = heading, z = pitch
+  // trail, ending at the aircraft
+  const n = FL.trail.length;
+  for (let i = 0; i < n; i++) {
+    const q = FL.trail[i];
+    trailPos.set([q[0], q[1], q[2]], i * 3);
+    ramp(Math.max(0.3, q[3]), tmpC); trailCol.set([tmpC.r, tmpC.g, tmpC.b], i * 3);
+  }
+  const hnow = s[2] - fSurface(s[0], s[1], T);
+  trailPos.set([s[0], s[2], -s[1]], n * 3);
+  ramp(Math.max(0.3, hnow), tmpC); trailCol.set([tmpC.r, tmpC.g, tmpC.b], n * 3);
+  trailGeo.setDrawRange(0, n + 1);
+  trailGeo.attributes.position.needsUpdate = true; trailGeo.attributes.color.needsUpdate = true;
+  // readouts
+  const m = Flight.metrics(s, FL.ac, fWind, fSurface, T, FL.cl);
+  const pa = FL.tr.passes;
+  setFl('el', FL.el.toFixed(1) + ' s' + (FL.on ? '' : ' (stopped)'));
+  setFl('v', m.airspeed.toFixed(1) + ' m/s');
+  setFl('h', m.height.toFixed(2) + ' m');
+  setFl('e', (m.energy * Flight.G).toFixed(0) + ' J/kg');
+  setFl('n', m.loadFactor.toFixed(2));
+  setFl('ph', FL.tr.phase === null ? '-' : (FL.tr.phase / FL.tr.ref.n).toFixed(2));
+  setFl('gd', FL.tr.guard ? 'yes' : 'no');
+  setFl('de', pa.length >= 2 ? ((pa[pa.length - 1].energy - pa[pa.length - 2].energy) * Flight.G).toFixed(1) + ' J/kg' : 'n/a');
+  setFl('u', FL.uText); setFl('ref', FL.refText);
+  // splash label
+  if (FL.splash) {
+    _fp.set(FL.splash.x, FL.splash.z, -FL.splash.y).project(camera);
+    if (_fp.z < 1) {
+      splashLbl.style.display = 'block';
+      splashLbl.textContent = 'splashed at t = ' + FL.splash.t.toFixed(1) + ' s';
+      splashLbl.style.left = ((_fp.x + 1) / 2 * innerWidth + 8) + 'px';
+      splashLbl.style.top = ((1 - _fp.y) / 2 * innerHeight - 8) + 'px';
+    } else splashLbl.style.display = 'none';
+  }
+  // chase camera: keep the orbit offset, move the target onto the aircraft
+  if ($('flChase').checked) {
+    _fd.copy(flightMesh.position).sub(controls.target);
+    camera.position.add(_fd); controls.target.copy(flightMesh.position);
+  }
+}
+
 // ---------------------------------------------------------------- UI
 const u10El = $('u10'), fromEl = $('from'), spdEl = $('spd');
 u10El.value = W.u10; fromEl.value = Math.round(W.from_deg) % 360;
@@ -548,12 +777,13 @@ function updateParticleBuffers(t) {
 function loop(now) {
   requestAnimationFrame(loop);
   const real = Math.min(0.25, (now - last) / 1000); last = now;
-  if (SCEN && playing) {
+  if (SCEN && playing && !(FL.on && $('flFreeze').checked)) {
     hourNow += real * (+rateEl.value);
     if (hourNow > 72) hourNow -= 72;   // loop
     hourEl.value = hourNow; setHour(hourNow); syncHour();
   }
-  const dt = $('pause').checked ? 0 : real * (+spdEl.value);
+  let dt = $('pause').checked ? 0 : real * (+spdEl.value);
+  if (FL.on && dt > 0) dt = flightAdvance(dt, T);   // sea time follows the steps actually taken
   if (dt > 0) {
     const ns = Math.ceil(dt / 0.05), h = dt / ns;
     if (points.visible) for (let s = 0; s < ns; s++) stepParticles(h, T + s * h);
@@ -586,6 +816,7 @@ function loop(now) {
   drawCharts();
 
   updateGlider(T);
+  updateFlightView();
   controls.update();
   renderer.render(scene, camera);
 }

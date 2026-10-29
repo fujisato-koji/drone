@@ -981,6 +981,127 @@ items:
     status: assumed
     basis:
       - Q-008
+  - key: env.inverse_wave_age_wind_driven
+    v: 0.83
+    unit: 1
+    status: sourced
+    basis:
+      - P88
+  - key: env.inverse_wave_age_wave_driven
+    v: 0.15
+    unit: 1
+    status: sourced
+    basis:
+      - P88
+  - key: env.separation_gamma_floor
+    v: 0.1
+    unit: 1
+    status: sourced
+    basis:
+      - P89
+  - key: env.separation_gamma_span
+    v: 0.3
+    unit: 1
+    status: sourced
+    basis:
+      - P89
+  - key: env.separation_ustar_c_ref
+    v: 0.3
+    unit: 1
+    status: sourced
+    basis:
+      - P89
+  - key: env.separation_exponent
+    v: 2.5
+    unit: 1
+    status: sourced
+    basis:
+      - P89
+  - key: env.shelter_ramp_ratio
+    v: 1.5
+    unit: 1
+    status: assumed
+    basis:
+      - Q-008
+  - key: env.shelter_factor
+    v: 1.0
+    unit: 1
+    status: sourced
+    basis:
+      - P92
+      - P93
+  - key: env.shelter_decay_kz
+    v: 0.5
+    unit: 1
+    status: assumed
+    basis:
+      - Q-008
+  - key: env.full_sea_inverse_wave_age
+    v: 0.826
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-age-knee
+  - key: env.storm_h42_inverse_wave_age
+    v: 0.331
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-age-knee
+  - key: env.storm_h42_wave_driven_fraction
+    v: 0.824
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-age-knee
+  - key: env.storm_h42_shear_2_20_log_ms
+    v: 0.942
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-age-knee
+  - key: env.storm_h42_shear_2_20_auto_ms
+    v: 0.623
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-age-knee
+  - key: env.shelter_case_lee_drop_fraction
+    v: 0.137
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#crest-shelter
+  - key: env.shelter_full_sea_u15_fraction
+    v: 0.0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#crest-shelter
+  - key: env.full_sea_u15_max_slope
+    v: 0.266
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#crest-shelter
+  - key: env.shelter_onset_30m_u10_10
+    v: 0.264
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#crest-shelter
+  - key: env.shelter_onset_3m_u10_10
+    v: 0.227
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#crest-shelter
+  - key: env.shelter_depth_3m_m
+    v: 0.24
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#crest-shelter
   - key: airframe.mass_gap_kg
     v: 0.392
     unit: kg
@@ -1270,173 +1391,581 @@ items:
     basis:
       - Q-014
   - key: form.baseline_2m.u10_min_travel_log
-    v: 11.86
+    v: 10.73
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.baseline_2m.u10_min_loiter_log
-    v: 12.52
+    v: 11.09
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.baseline_2m.cross12_speed_log
-    v: 12.48
+    v: 12.94
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.baseline_2m.u10_min_travel_knee
-    v: 12.01
+    v: 10.93
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.baseline_2m.u10_min_loiter_knee
-    v: 13.2
+    v: 11.7
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.demo_1p5m.u10_min_travel_log
-    v: 15.38
+    v: 13.19
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.demo_1p5m.u10_min_loiter_log
-    v: 16.09
+    v: 13.6
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.demo_1p5m.u10_min_travel_knee
-    v: 15.54
+    v: 13.5
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.demo_1p5m.u10_min_loiter_knee
-    v: 16.86
+    v: 14.31
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.easyglider_1p8m.u10_min_travel_log
-    v: 22.66
+    v: 18.27
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.easyglider_1p8m.u10_min_loiter_log
-    v: 23.65
+    v: 18.88
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.easyglider_1p8m.u10_min_travel_knee
-    v: 22.42
+    v: 18.04
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.easyglider_1p8m.u10_min_loiter_knee
-    v: 23.86
+    v: 18.75
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.albatross_3m.u10_min_travel_log
-    v: 9.58
+    v: 9.03
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.albatross_3m.u10_min_loiter_log
-    v: 10.18
+    v: 9.38
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.albatross_3m.cross12_speed_log
-    v: 17.54
+    v: 17.94
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.albatross_3m.u10_min_travel_knee
-    v: 10.03
+    v: 9.49
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.albatross_3m.u10_min_loiter_knee
-    v: 11.39
+    v: 10.44
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.albatross_3m.cross12_speed_knee
-    v: 16.76
+    v: 17.1
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.flyingwing_2m.u10_min_travel_log
-    v: 16.09
+    v: 14.15
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.flyingwing_2m.u10_min_loiter_log
-    v: 17.96
+    v: 15.1
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.flyingwing_2m.u10_min_travel_knee
-    v: 16.01
+    v: 13.83
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.flyingwing_2m.u10_min_loiter_knee
-    v: 17.37
+    v: 14.56
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.sealedhull_2p5m.u10_min_travel_log
-    v: 12.05
+    v: 11.14
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.sealedhull_2p5m.u10_min_loiter_log
-    v: 13.14
+    v: 11.51
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.sealedhull_2p5m.u10_min_travel_knee
-    v: 12.51
+    v: 11.35
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: form.sealedhull_2p5m.u10_min_loiter_knee
-    v: 13.92
+    v: 12.21
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.cross12_speed_knee
+    v: 12.67
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.cross12_speed_log
+    v: 12.47
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.cross12_speed_knee
+    v: 12.21
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: dsopt.flat_tip_mid_min_baseline_m
+    v: 0.268
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: dsopt.flat_tip_mid_min_albatross_m
+    v: 0.255
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: dsopt.sachs_candidate_settings_u10_ms
+    v: 9.85
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: dsopt.albatross3m_ld20_u10_ms
+    v: 10.62
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: dsopt.z003_over_charnock_ratio
+    v: 660
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: mpc.first_pass_survival_max_s
+    v: 124
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.library_cycles
+    v: 24
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.flat_survival_min_s
+    v: 120
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.flat_survival_max_s
+    v: 162
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.wave_survival_min_s
+    v: 6
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.wave_survival_max_s
+    v: 145
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.phasing_worse_pairs
+    v: 4
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.phasing_pairs
+    v: 4
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.fit_surface_error_min_m
+    v: 1.1
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.fit_surface_error_max_m
+    v: 1.61
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.sea_std_u13_m
+    v: 1.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: dsopt.validation_no_tip_u10_ms
+    v: 8.566
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.u10_min_travel_log_z003
+    v: 5.86
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.u10_min_loiter_log_z003
+    v: 6.11
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.cross12_speed_log_z003
+    v: 20.84
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.u10_min_travel_knee_z003
+    v: 5.87
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.u10_min_loiter_knee_z003
+    v: 6.38
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.baseline_2m.cross12_speed_knee_z003
+    v: 20.63
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_travel_log_z003
+    v: 7.57
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_loiter_log_z003
+    v: 7.86
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.cross12_speed_log_z003
+    v: 17.41
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_travel_knee_z003
+    v: 7.62
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.u10_min_loiter_knee_z003
+    v: 8.2
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.demo_1p5m.cross12_speed_knee_z003
+    v: 17.45
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_travel_log_z003
+    v: 11.43
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_loiter_log_z003
+    v: 11.89
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.cross12_speed_log_z003
+    v: 8.52
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_travel_knee_z003
+    v: 11.0
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.u10_min_loiter_knee_z003
+    v: 11.56
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.easyglider_1p8m.cross12_speed_knee_z003
+    v: 9.12
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_travel_log_z003
+    v: 4.76
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_loiter_log_z003
+    v: 4.98
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.cross12_speed_log_z003
+    v: 26.1
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_travel_knee_z003
+    v: 4.92
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.u10_min_loiter_knee_z003
+    v: 5.54
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.albatross_3m.cross12_speed_knee_z003
+    v: 24.97
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_travel_log_z003
+    v: 8.26
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_loiter_log_z003
+    v: 9.04
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.cross12_speed_log_z003
+    v: 13.49
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_travel_knee_z003
+    v: 7.86
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.u10_min_loiter_knee_z003
+    v: 8.38
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.flyingwing_2m.cross12_speed_knee_z003
+    v: 13.83
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_travel_log_z003
+    v: 6.14
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_loiter_log_z003
+    v: 6.4
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.cross12_speed_log_z003
+    v: 20.29
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_travel_knee_z003
+    v: 6.15
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.u10_min_loiter_knee_z003
+    v: 6.73
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#form-comparison
+  - key: form.sealedhull_2p5m.cross12_speed_knee_z003
+    v: 19.98
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
   - key: dsopt.validation_u10_ms
-    v: 9.48
+    v: 9.17
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#form-comparison
+  - key: dsopt.wave_cases
+    v: 36
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave_floor_cases
+    v: 17
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave_steady_ride_cases
+    v: 24
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave_vertical_ratio_model
+    v: 0.95
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave_vertical_ratio_measured
+    v: 0.6
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave_model_w_at_p64_ms
+    v: 0.09
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave_scaled_u10_baseline_tp8_hs2_ms
+    v: 3.73
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave_scaled_u10_albatross_tp6_hs1_ms
+    v: 2.95
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.measured_decay_max_shift_ms
+    v: 0.45
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.shelter_albatross_l20_off_ms
+    v: 8.34
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.shelter_albatross_l20_on_ms
+    v: 6.83
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave_cycle_floquet_max
+    v: 2.45
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
   - key: ds.day_sight_range_m
     v: 500
     unit: m

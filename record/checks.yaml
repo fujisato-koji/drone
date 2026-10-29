@@ -109,3 +109,27 @@ items:
     by: checker
     date: 2026-10-29
     detail: "A separate checker worked from commit 86d6689 only. Spar: an exhaustive search with the sourced mid values reproduced 13.0 mm by 0.75 mm, 0.0889 kg, margin 0.339, deflection ratio 0.1496; with the lower bounds of P54 the tube becomes 14 mm by 0.75 mm. Defects: the limiting-criterion label is wrong (stiffness limits, not stress); the tube is checked for fit only at the root although it runs the whole span, so a 13 mm tube fits only the inner quarter of the half span; the prose said the stress-only tube was 13 by 0.75. Optimizer: the equations, periodicity and Hermite-Simpson defects are correct (residual 1e-14); replaying the optimal controls in an independent Cartesian model closes the cycle to 1e-4 m and balances drag loss and wind gain; without the 0.3 m wingtip constraint the albatross case gives 8.566 m/s against Bower's 8.56, so the 11% gap is the wingtip constraint, which uses (b/2)|mu| instead of (b/2) sin|mu| cos gamma; converged values are about 9.46 and 11.81 m/s; the period is not robust; fixing z0 at its 8 m/s value overstates every minimum wind by about 7% (self-consistent baseline 11.07 m/s)."
+  - id: K-008
+    target:
+      - dsopt.wave_floor_cases
+      - dsopt.wave_steady_ride_cases
+      - dsopt.wave_vertical_ratio_model
+      - dsopt.shelter_albatross_l20_on_ms
+      - env.shelter_onset_30m_u10_10
+    tier: T2
+    method: independent_model
+    result: partial
+    by: checker
+    date: 2026-10-29
+    detail: "A separate checker, told to refute, worked on the uncommitted wave mode of sim/dsopt.py and sim/out/dsopt_wave.json. (A) Swell cases at the u10 floor: replays of the optimal controls in its own inertial point-mass model (RK4, its own wind, matching sim.seawind to 2.5e-5 m/s) close after one cycle (height within 0.01 m) and balance drag against updraft and gust gain; ten open-loop cycles drift at most 0.8 J/kg; the cycles are unstable (per-cycle growth 1.06 to 2.45) and need feedback; heights between nodes stay at 1 m and the wingtip at 0.3 m. So the cycles are real solutions of the model. But the count is an optimizer artefact: the phase-slip integer m is fixed by the starting guess, and across-wave floor solutions rotated into the along-wave set-up reach the floor too, where the stored along values sit in local minima near 10 m/s; a steady-ride estimate puts at least 24 of 36 cases at the floor. The physical support is weak: the model's vertical wave wind is about 0.95 of the water orbital speed in calm air, while P64 measured about 0.3 m/s against about 0.5 m/s orbital (about 0.6); scaled to 0.6 the two replayed cases need 3.73 and 2.95 m/s of wind. At P64's own conditions the model gives about 0.09 m/s. (B) Steep-wave cases at the floor (a k 0.3, calm air): refuted; the 1.13 s cycle swings CL fully and the bank at up to 1154 deg/s, with 94% of the gain from the gust term, and linear potential flow is not credible at a k 0.3. (C) The claim that sheltering hardly acts because the onset slope is about 0.265: refuted; at the floor the gate is shut because the wave outruns the air, and where the gate is open (albatross, 20 m wave) sheltering lowered the minimum wind from 8.34 to 6.83 m/s, confirmed by a warm re-solve. Also: sim/patterns.py's wave-slope test is a stricter, different experiment (straight, steady, fixed height, with-wind swell only), not a contradiction; gamma(0) = 0 excludes the steady ride; there are no control-rate limits or n >= 0."
+  - id: K-009
+    target:
+      - form.baseline_2m.u10_min_travel_log
+      - form.albatross_3m.u10_min_travel_log_z003
+      - dsopt.validation_u10_ms
+    tier: T2
+    method: independent_model
+    result: partial
+    by: checker
+    date: 2026-10-29
+    detail: "The checker of K-008 re-solved two cases of the corrected form study exactly as their meta calls did and reproduced the stored values to every printed digit (baseline 10.7254 m/s, T 5.876 s; albatross-like glider with z0 0.03 m 4.7577 m/s, T 6.534 s). Its own inertial RK4 replay closes after one cycle to 1e-4 m and 1e-4 m/s, balances drag loss against shear gain (54.60 and 47.85 J/kg per cycle) and drifts at most 0.01 m and 0.1 J/kg over ten cycles. The z0 of the corrected case equals the Charnock z0 at the found wind (2.4337e-4 m). The load factor stays between 0.97 and 3.78, bank rates are at most 101 deg/s and lift-coefficient rates about 2.3 to 2.5 per second. Refuted: the flat mode constrains the wingtip only at the nodes, and between nodes the geometric tip height falls to 0.268 and 0.255 m against 0.3 m; the midpoint rows of the wave mode would fix it. On the literature roughness: under P45's settings the optimizer gives 8.566 m/s for the Sachs albatross and 9.85 m/s under the candidate settings; the albatross-like glider with its lift-to-drag ratio lowered to 20 needs 10.62 m/s, so the minimum wind scales about as the inverse of the lift-to-drag ratio and hardly with wing loading; z0 0.03 m is about 660 times the Charnock value at 4.76 m/s, so that number is not a sea value."

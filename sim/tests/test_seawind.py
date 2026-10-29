@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from sim.seawind import G, Environment, WaveTrain, Wind, gust_factor
+from sim.seawind import G, Environment, WaveTrain, Wind, gust_factor, separation_steepness
 
 
 class Mono(WaveTrain):
@@ -236,6 +236,183 @@ class TestSeaWindExtras(unittest.TestCase):
         self.assertEqual(m["knee_m"], 7.5)
         self.assertEqual(m["turbulence"], "iso")
         self.assertNotIn("kx", json.dumps(env.to_dict()))
+
+
+class SteepMono(WaveTrain):
+    """One east-going component, k = 0.1, amplitude set by `ak`."""
+
+    ak = 0.35
+
+    def components(self, rng):
+        k = 0.1
+        return {"a": np.array([self.ak / k]), "k": np.array([k]),
+                "omega": np.array([np.sqrt(G * k)]), "dx": np.array([1.0]),
+                "dy": np.array([0.0]), "phase": np.array([0.0])}
+
+
+class TestWaveWindInteraction(unittest.TestCase):
+    def test_auto_wind_sea_is_log(self):
+        w = Wind(10.0)
+        tr = WaveTrain.fully_developed(w)
+        env = Environment(w, [tr], profile_mode="auto")
+        cp, a, f = env.wave_age()
+        self.assertAlmostEqual(cp, G * tr.tp / (2 * np.pi), places=9)
+        self.assertAlmostEqual(a, 10.0 / cp, places=9)
+        # A is 0.826 for a fully developed sea, just inside the 0.83 threshold,
+        # so f is about 1e-4 rather than exactly 0.
+        self.assertLess(f, 5e-4)
+        z = np.array([0.5, 2.0, 7.5, 10.0, 30.0])
+        np.testing.assert_allclose(env._mean_speed(z), w.speed(z), rtol=1e-3)
+        flat = Environment(w, [], profile_mode="auto")
+        self.assertEqual(flat.wave_age()[2], 0.0)
+        np.testing.assert_array_equal(flat._mean_speed(z), w.speed(z))
+
+    def test_auto_swell_is_knee(self):
+        w = Wind(10.0)
+        # cp = 7 U10 (A = 0.143 < 0.15). The spec's cp = 3 U10 gives A = 0.333, f = 0.82, not 1.
+        tp = 2 * np.pi * 70.0 / G
+        env = Environment(w, [WaveTrain(hs=2.0, tp=tp, to_deg=90.0)], profile_mode="auto")
+        cp, a, f = env.wave_age()
+        self.assertAlmostEqual(cp, 70.0, places=9)
+        self.assertAlmostEqual(f, 1.0, places=9)
+        knee = Wind(10.0, profile="swell_knee")
+        z = np.array([0.5, 2.0, 7.5, 10.0, 30.0])
+        np.testing.assert_allclose(env._mean_speed(z), knee.speed(z), rtol=1e-12)
+        self.assertAlmostEqual(float(env._mean_speed(10.0)), 10.0, places=9)
+
+    def test_f_monotonic_in_wave_age(self):
+        w = Wind(10.0)
+        fs = []
+        for cpv in (8.0, 10.0, 12.0, 20.0, 40.0, 80.0):
+            env = Environment(w, [WaveTrain(hs=1.0, tp=2 * np.pi * cpv / G, to_deg=90.0)],
+                              profile_mode="auto")
+            fs.append((env.wave_age()[1], env.wave_age()[2]))
+        fs.sort()
+        self.assertTrue(all(b[1] <= a[1] + 1e-12 for a, b in zip(fs, fs[1:])))
+        self.assertAlmostEqual(fs[0][1], 1.0)
+
+    def test_fixed_default_unchanged(self):
+        w = Wind(10.0)
+        tr = WaveTrain.fully_developed(w)
+        a = Environment(w, [tr])
+        b = Environment(w, [tr], profile_mode="fixed", shelter=False)
+        x = np.linspace(0, 300, 40)
+        np.testing.assert_array_equal(a.wind_at(x, 0 * x, 5 + 0 * x, 0 * x),
+                                      b.wind_at(x, 0 * x, 5 + 0 * x, 0 * x))
+        with self.assertRaises(ValueError):
+            Environment(w, [], profile_mode="x")
+
+    def _lee_mean(self, env, zloc, ak=0.35):
+        k = 0.1
+        th = np.linspace(0.0, 2 * np.pi, 4001)[:-1]
+        x = th / k  # phase = k x at t = 0 (phase 0)
+        eta, _, _ = env.surface(x, 0 * x, 0 * x)
+        u = env.wind_at(x, 0 * x, eta + zloc, 0 * x)[:, 0]  # wind blows east
+        return u[th < np.pi].mean(), u[th >= np.pi].mean()
+
+    def test_shelter(self):
+        w = Wind(30.0, 270.0)
+        tr = SteepMono(hs=1.0, tp=5.0, to_deg=90.0)
+        off = Environment(w, [tr])
+        on = Environment(w, [tr], shelter=True)
+        self.assertGreater(on.urel[0], 0.0)
+        lee_off, win_off = self._lee_mean(off, 1.0)
+        lee_on, win_on = self._lee_mean(on, 1.0)
+        self.assertAlmostEqual(win_on, win_off, places=9)  # windward half untouched
+        self.assertLess(lee_on, win_on)
+        self.assertLess(lee_on, lee_off - 0.5)
+        # gone by 3/k
+        lee3, _ = self._lee_mean(on, 30.0)
+        lee3o, _ = self._lee_mean(off, 30.0)
+        self.assertLess(abs(lee3 - lee3o) / lee3o, 5e-3)
+        # vertical perturbation scaled by (1 - r)
+        x = np.array([0.5 * np.pi / 0.1])
+        z = np.array([5.0])
+        r = float(on.shelter_r(x, 0 * x, 0 * x)[0])
+        sc = float(separation_steepness(w.ustar, np.sqrt(G / 0.1)))
+        self.assertAlmostEqual(r, min(1.0, (0.35 - sc) / sc), places=6)
+        self.assertGreater(r, 0.0)
+        wo = off.wind_at(x, 0 * x, z, 0 * x)[0, 2]
+        self.assertAlmostEqual(on.wind_at(x, 0 * x, z, 0 * x)[0, 2] / wo, 1.0 - r, places=9)
+
+    def test_shelter_gentle_and_slow(self):
+        w = Wind(30.0, 270.0)
+        gentle = SteepMono(hs=1.0, tp=5.0, to_deg=90.0)
+        gentle.ak = 0.05
+        x = np.linspace(0, 60, 50)
+        a = Environment(w, [gentle]).wind_at(x, 0 * x, 2 + 0 * x, 0 * x)
+        b = Environment(w, [gentle], shelter=True).wind_at(x, 0 * x, 2 + 0 * x, 0 * x)
+        np.testing.assert_array_equal(a, b)
+        # wave faster than the wind: no separation
+        slow_wind = Wind(5.0, 270.0)
+        steep = SteepMono(hs=1.0, tp=5.0, to_deg=90.0)
+        env = Environment(slow_wind, [steep], shelter=True)
+        self.assertLess(env.urel[0], 0.0)
+        ref = Environment(slow_wind, [steep])
+        np.testing.assert_array_equal(env.wind_at(x, 0 * x, 2 + 0 * x, 0 * x),
+                                      ref.wind_at(x, 0 * x, 2 + 0 * x, 0 * x))
+
+    def test_wave_age_direction(self):
+        w = Wind(10.0, 270.0)  # blows toward 90
+        tp = 2 * np.pi * 70.0 / G
+
+        def wa(to_deg):
+            return Environment(w, [WaveTrain(hs=2.0, tp=tp, to_deg=to_deg)],
+                               profile_mode="auto").wave_age()
+        _, a0, f0 = wa(90.0)
+        self.assertAlmostEqual(f0, 1.0, places=9)
+        _, a60, _ = wa(30.0)
+        self.assertAlmostEqual(a60, 0.5 * a0, places=9)
+        _, ac, fc = wa(270.0)
+        self.assertLess(ac, 0.0)
+        self.assertEqual(fc, 0.0)
+
+    def test_shelter_two_components(self):
+        w = Wind(30.0, 270.0)
+        lam = (40.0, 44.0)
+
+        class Two(WaveTrain):
+            def components(self, rng):
+                k = 2 * np.pi / np.array(lam)
+                return {"a": 0.12 / k, "k": k, "omega": np.sqrt(G * k),
+                        "dx": np.ones(2), "dy": np.zeros(2), "phase": np.zeros(2)}
+        tr = Two(hs=1.0, tp=5.0, to_deg=90.0)
+        off = Environment(w, [tr])
+        on = Environment(w, [tr], shelter=True)
+        x = np.linspace(0.0, 440.0, 8801)
+        r = on.shelter_r(x, 0 * x, 0 * x)
+        self.assertGreater(r.max(), 0.0)
+        i = int(np.argmax(r))
+        pt = (x[i:i + 1], np.zeros(1), 1.0 + on.surface(x[i:i + 1], 0 * x[i:i + 1], 0 * x[i:i + 1])[0], np.zeros(1))
+        self.assertLess(on.wind_at(*pt)[0, 0], off.wind_at(*pt)[0, 0])
+
+    def test_shelter_fully_developed(self):
+        w = Wind(15.0, 270.0)
+        env = Environment(w, [WaveTrain.fully_developed(w)], shelter=True)
+        g = np.linspace(0.0, 200.0, 101)
+        xx, yy = np.meshgrid(g, g)
+        r = env.shelter_r(xx, yy, 0 * xx)
+        env.wind_at(xx.ravel()[:50], yy.ravel()[:50], 5 + 0 * xx.ravel()[:50], 0 * xx.ravel()[:50])
+        print("fully developed u10 15: fraction of surface with r > 0 =", float((r > 0).mean()))
+
+    def test_separation_steepness(self):
+        self.assertAlmostEqual(float(separation_steepness(0.05, 1.0)), 0.396 / 1.5, delta=0.003)
+        self.assertAlmostEqual(float(separation_steepness(2.0, 1.0)), 0.1026 / 1.5, delta=0.001)
+        q = np.logspace(-2, 1, 50)
+        v = separation_steepness(q, 1.0)
+        self.assertEqual(v.shape, q.shape)
+        self.assertTrue(np.all(np.diff(v) < 0.0))
+
+    def test_to_dict_wave_wind(self):
+        w = Wind(10.0)
+        env = Environment(w, [WaveTrain.fully_developed(w)], profile_mode="auto", shelter=True)
+        m = json.loads(json.dumps(env.to_dict()))["model"]
+        self.assertEqual(m["profile_mode"], "auto")
+        self.assertEqual(set(m["wave_age"]), {"cp", "A", "f"})
+        self.assertTrue(m["shelter"]["on"])
+        self.assertGreater(m["shelter"]["steepness"], 0.0)
+        flat = json.loads(json.dumps(Environment(w, []).to_dict()))["model"]
+        self.assertIsNone(flat["wave_age"]["cp"])
 
 
 if __name__ == "__main__":

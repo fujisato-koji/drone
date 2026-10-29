@@ -81,7 +81,7 @@ items:
     blocks: design_build
   - id: Q-008
     kind: question
-    text: "Verify the constants and formulas of the sea and wind model (sim/seawind.py and sim/sea_history.py), one constant at a time, against primary sources. env.karman, env.charnock and env.air_kinematic_viscosity: read P38 and P41, and compare env.charnock with lit.charnock_coare35_at_10ms (P66); settled when the values are adopted from a read source or the difference is explained. env.jonswap_gamma: read P40. env.pm_hs_coefficient and env.pm_peak_coefficient: read P39. env.sea_decay_tau_h: settled by a source for the decay time of swell over the open ocean, or by recording it as a model choice with its effect on the shear. env.breaking_slope_limit: settled by a source for the slope at which a wave breaks. env.turb_length_m: settled by a source for the turbulence length scale over the sea; until then env.turb_gust_factor_check against lit.gust_factor_3s_10min_sea (P68) is a consistency check only. env.turb_v_ratio and env.turb_w_ratio: read P72 (IEC 61400-1), which is not read yet. env.sea_grow_tau_h is not used by the code any more (the equivalent-duration growth law of P71 replaced it, K-006); it stays in the record because K-005 targets it, until the standard has a withdrawn status. The wave-coherent perturbation is a crude potential-flow model and its size near the surface is unverified. Treat the growth law and the wave figures shown to the owner as provisional until the check of the growth law against the printed pages passes."
+    text: "Verify the constants and formulas of the sea and wind model (sim/seawind.py and sim/sea_history.py), one constant at a time, against primary sources. env.karman, env.charnock and env.air_kinematic_viscosity: read P38 and P41, and compare env.charnock with lit.charnock_coare35_at_10ms (P66); settled when the values are adopted from a read source or the difference is explained. env.jonswap_gamma: read P40. env.pm_hs_coefficient and env.pm_peak_coefficient: read P39. env.sea_decay_tau_h: settled by a source for the decay time of swell over the open ocean, or by recording it as a model choice with its effect on the shear. env.breaking_slope_limit: settled by a source for the slope at which a wave breaks. env.turb_length_m: settled by a source for the turbulence length scale over the sea; until then env.turb_gust_factor_check against lit.gust_factor_3s_10min_sea (P68) is a consistency check only. env.turb_v_ratio and env.turb_w_ratio: read P72 (IEC 61400-1), which is not read yet. env.shelter_ramp_ratio and env.shelter_decay_kz: the crude sheltering behind steep crests; the onset steepness and the deficit are sourced (P89, P92, P93), but how the separated share grows with slope and the height the deficit reaches are not stated by any source read (P90 and P91 support the height only indirectly). env.sea_grow_tau_h is not used by the code any more (the equivalent-duration growth law of P71 replaced it, K-006); it stays in the record because K-005 targets it, until the standard has a withdrawn status. The wave-coherent perturbation is a crude potential-flow model and its size near the surface is unverified. Treat the growth law and the wave figures shown to the owner as provisional until the check of the growth law against the printed pages passes."
     waits_for: assistant
     affects:
       - env.karman
@@ -96,6 +96,8 @@ items:
       - env.turb_length_m
       - env.turb_v_ratio
       - env.turb_w_ratio
+      - env.shelter_ramp_ratio
+      - env.shelter_decay_kz
     opened: 2026-10-29
     raised_by: assistant
     phase: design
@@ -328,8 +330,8 @@ items:
     phase: design
   - id: Q-024
     kind: finding
-    text: "The collocation optimizer (docs/02-form.md#form-comparison) found that no candidate form sustains a travelling cycle at ds.min_u10_ms. The lowest minimum wind is form.albatross_3m.u10_min_travel_log, which is also the candidate with the highest wing loading of the six, and the validation against P45 gave dsopt.validation_u10_ms where P45 gives lit.min_u10_albatross_ms. The owner decides which to change, with the current and the proposed design side by side: lower the wing loading (a lighter or larger wing, against ds.mass_max_kg and ds.span_max_m), change the form, or raise the design wind of R-02 (ds.min_u10_ms)."
-    waits_for: owner
+    text: "The collocation optimizer (docs/02-form.md#form-comparison) found that no candidate form sustains a travelling cycle at ds.min_u10_ms. The lowest minimum wind is form.albatross_3m.u10_min_travel_log, which is also the candidate with the highest wing loading of the six, and the validation against P45 gave dsopt.validation_u10_ms where P45 gives lit.min_u10_albatross_ms. With the corrections of K-007 the gap narrowed, and under the roughness the soaring literature uses (z0 = 0.03 m) the baseline, the albatross-like glider, the sealed hull and the small demonstrator all come below ds.min_u10_ms (form.<candidate>.u10_min_travel_log_z003), so the answer first depends on which roughness the open sea has (Q-008). K-009 found that the minimum wind scales about as the inverse of the lift-to-drag ratio and hardly with the wing loading, so the lever is the lift-to-drag ratio, which is assumed for every candidate (Q-014). After that, the owner decides which to change, with the current and the proposed design side by side: lower the wing loading (a lighter or larger wing, against ds.mass_max_kg and ds.span_max_m), change the form, or raise the design wind of R-02 (ds.min_u10_ms)."
+    waits_for: "assistant, then owner"
     affects:
       - R-02
       - ds.min_u10_ms
@@ -650,7 +652,7 @@ items:
     blocks: design_build
   - id: Q-054
     kind: finding
-    text: "The cycle optimizer's wingtip constraint is conservative ((b/2)|mu| in place of (b/2) sin|mu| cos gamma), and the form study fixes the Charnock roughness at its 8 m/s value, which overstates every minimum wind by about 7% (K-007); also the literature convention z0 = 0.03 m gives about 1.9 times the Charnock shear (source sweep). Fix both, rerun the form study, and report the minimum winds for both roughness assumptions until Q-008 settles which one the sea follows."
+    text: "The cycle optimizer's wingtip constraint is conservative ((b/2)|mu| in place of (b/2) sin|mu| cos gamma), and the form study fixes the Charnock roughness at its 8 m/s value, which overstates every minimum wind by about 7% (K-007); also the literature convention z0 = 0.03 m gives about 1.9 times the Charnock shear (source sweep). Fix both, rerun the form study, and report the minimum winds for both roughness assumptions until Q-008 settles which one the sea follows. Done on 2026-10-29: tip_model geometric and the self-consistent z0 are in sim/dsopt.py, and the form study was rerun with Charnock and with z0 = 0.03 m (docs/02-form.md#form-comparison); K-009 confirmed both fixes and reproduced the rerun, and the defect it found between nodes moved to Q-059."
     waits_for: assistant
     affects:
       - dsopt.validation_u10_ms
@@ -660,6 +662,8 @@ items:
     raised_by: checker
     phase: design
     opened: 2026-10-29
+    closed: 2026-10-29
+    closed_by: K-009
   - id: Q-055
     kind: question
     text: "Birds lighter than about 1.5 kg flap during the upwind climb and only the 9.6 kg wandering albatross gains energy by rolling alone (P84); the only funded competitor building a year-long soaring drone carries propellers (S2), and no real UAV has flown energy-positive soaring yet. Should R-02 (energy from the wind shear only) stay, or should the project stage it, with motor-assisted cycles first and wind-only cycles as the aim?"
@@ -677,6 +681,51 @@ items:
     affects:
       - R-12
       - R-08
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-29
+  - id: Q-057
+    kind: question
+    text: "Replace flight on a precomputed flat-sea cycle by moment-to-moment decisions from the aircraft's own view of the sea, as the owner asked (2026-10-29): sense the surface (radar or lidar altimeter, optionally a forward scanner), estimate the local waves and predict the surface and the wave-coherent wind a few seconds ahead, and re-plan the next seconds of flight every half second in that prediction (receding horizon). Compare perfect wave knowledge, the flat-sea assumption and each sensor set, and report survival, energy, clearance, load factor, progress and the planner's computing time, so that the sensors can be weighed against Q-012 and Q-056. First results: docs/02-form.md#receding-horizon and Q-060."
+    waits_for: assistant
+    affects:
+      - R-02
+      - R-12
+      - Q-050
+      - Q-056
+    raised_by: owner
+    phase: design
+    opened: 2026-10-29
+  - id: Q-058
+    kind: finding
+    text: "The wave-coherent air motion of the model (linear potential flow relative to the wind, sim/seawind.py) disagrees with the measurement it should match (K-008): in calm air its vertical wind is about dsopt.wave_vertical_ratio_model of the water orbital speed against about dsopt.wave_vertical_ratio_measured measured over swell (P64), and at P64's own conditions it gives dsopt.wave_model_w_at_p64_ms where about 0.3 m/s was measured. Every result in which the waves alone carry the glider depends on this. Calibrate the vertical and horizontal wave wind against P64 and further measurements, or replace it by a wave-driven model for wind slower than the waves, and report the wave-only results with the calibrated model."
+    waits_for: assistant
+    affects:
+      - R-02
+      - R-12
+      - dsopt.wave_floor_cases
+    raised_by: checker
+    phase: design
+    opened: 2026-10-29
+  - id: Q-059
+    kind: finding
+    text: "The cycle optimizer finds local optima and can cheat (K-008): the phase-slip integer m is fixed by the starting guess, so along-wave runs stay in dynamic-soaring minima near 10 m/s while the same waves carry the rotated across-wave cycle; the phase condition gamma(0) = 0 excludes a steady ride on the face; there are no limits on the rate of bank or lift coefficient, nor n >= 0, which let a 1.1 s cycle swing the controls fully. The flat mode also constrains the wingtip only at the nodes, so between nodes it dips to dsopt.flat_tip_mid_min_albatross_m against 0.3 m (K-009). Search several m values and rotations, set the phase condition on the wave phase, add rate limits and n >= 0, and rerun the wave study and the form study."
+    waits_for: assistant
+    affects:
+      - dsopt.wave_floor_cases
+      - dsopt.shelter_albatross_l20_on_ms
+      - R-02
+    raised_by: checker
+    phase: design
+    opened: 2026-10-29
+  - id: Q-060
+    kind: finding
+    text: "The receding-horizon planner of Q-057 (sim/mpc.py) does not yet keep the drone in the air over waves (docs/02-form.md#receding-horizon): planning from scratch only glides; seeded with a library of optimizer cycles it flies a flat sea for mpc.flat_survival_min_s to mpc.flat_survival_max_s but still touches the water, because the cycles sit on the load-factor limit and the clearance edge; over waves it lasts mpc.wave_survival_min_s to mpc.wave_survival_max_s, a fitted sea is not consistently better than a flat one, and shifting the low point onto the forward face of the fitted wave made it worse in every pair tried. The few-component fit has no skill for the surface ahead in a wind sea (error mpc.fit_surface_error_min_m to mpc.fit_surface_error_max_m against a standard deviation of mpc.sea_std_u13_m). Give the library cycles margin (a higher minimum height and a load factor below the limit), add cycles synchronized with the waves once Q-058 and Q-059 are settled, model a scanner that sees a wider swath ahead, and find why the phasing hurts."
+    waits_for: assistant
+    affects:
+      - R-02
+      - R-12
+      - Q-057
     raised_by: assistant
     phase: design
     opened: 2026-10-29
