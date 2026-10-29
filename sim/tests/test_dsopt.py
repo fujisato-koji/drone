@@ -6,6 +6,7 @@ from sim.aircraft import BASELINE, derivatives
 from sim.aircraft_models import by_name
 from sim.dsopt import (Collocation, Profile, WaveParams, derivs, profile_for, sachs_albatross,
                        solve, solve_min_wind, wave_wind_accel)
+from sim.record import value
 from sim.seawind import Environment, Wind
 
 BOWER_U10 = 8.56  # m/s, Bower 2011 recomputation of Sachs 2005 (record P45)
@@ -132,9 +133,15 @@ class TestWaveMode(unittest.TestCase):
         # midpoints False: the flat mode has no midpoint clearance constraint (with it the wave
         # mode is stricter than flat, by 0.05 m/s for this aircraft)
         wave = solve(ac, prof, wave={"a": 0.0, "wavelength": 80.0, "to_deg": 0.0,
-                                     "midpoints": False}, **kw)
+                                     "midpoints": False}, phase_pin="gamma", **kw)
         self.assertTrue(flat["success"] and wave["success"])
         self.assertAlmostEqual(wave["u10"], flat["u10"], delta=0.02)
+        # the theta pin (default): with a = 0 the wave phase is inert, so the time shift is still
+        # fixed by gamma(0) = 0 and the result stays with the flat one
+        wave_t = solve(ac, prof, wave={"a": 0.0, "wavelength": 80.0, "to_deg": 0.0,
+                                       "midpoints": False}, phase_pin="theta", **kw)
+        self.assertTrue(wave_t["success"])
+        self.assertAlmostEqual(wave_t["u10"], flat["u10"], delta=0.05)
 
 
 class TestRoughness(unittest.TestCase):
@@ -147,6 +154,132 @@ class TestRoughness(unittest.TestCase):
 
     def test_fixed_z0_profile(self):
         self.assertEqual(profile_for(8.0, roughness="fixed_z0", z0=0.03).z0, 0.03)
+
+
+def _fd_check(test, col, x, tol=1e-6):
+    for fun, jac in ((col.eq_fun, col.eq_jac), (col.ineq_fun, col.ineq_jac)):
+        J = jac(x)
+        Jn = np.zeros_like(J)
+        for i in range(x.size):
+            xp, xm = x.copy(), x.copy()
+            xp[i] += 1e-6
+            xm[i] -= 1e-6
+            Jn[:, i] = (fun(xp) - fun(xm)) / 2e-6
+        test.assertLess(np.abs(J - Jn).max(), tol * max(1.0, np.abs(Jn).max()))
+
+
+class TestConstraints(unittest.TestCase):
+    """Midpoints in the flat mode, rate limits, n_min, margins, the theta pin, m_search."""
+
+    NEW = dict(midpoints=True, rate_limits=True, n_min=0.2, n_frac=0.8, mu_frac=0.9)
+
+    def test_jacobians_flat(self):
+        prof = profile_for(10.0)
+        for tip in ("abs", "geometric"):
+            col = Collocation(by_name("baseline-2m"), prof, "min_wind", "travel", 9,
+                              tip_model=tip, bank_rate_max_deg_s=100.0, **self.NEW)
+            rng = np.random.default_rng(2)
+            x = col.guess(rng) * (1 + 0.01 * rng.standard_normal(col.nv))
+            f, J = col.ineq_fun(x), col.ineq_jac(x)
+            self.assertEqual(f.size, 9 + 9 + 9 + 8 + 8 + 8 + 4 * 8)  # n, n_min, tip, h mid, tip mid, n mid, rates
+            _fd_check(self, col, x)
+
+    def test_jacobians_pb2v(self):
+        prof = profile_for(10.0)
+        col = Collocation(by_name("baseline-2m"), prof, "min_wind", "travel", 9,
+                          tip_model="geometric", midpoints=True, rate_limits=True, n_min=0.0,
+                          rate_model="pb2v", roll_pb2v=0.08)
+        self.assertEqual(col.r_max, 1.0)  # CL rate default of the pb2v model
+        rng = np.random.default_rng(4)
+        x = col.guess(rng) * (1 + 0.02 * rng.standard_normal(col.nv))
+        _fd_check(self, col, x)
+        # the limit is on the slower node: halve V at node 3, the rows of intervals 2 and 3 follow
+        S, C, T, u = col.unpack(x)
+        f0 = col._rates(x)[0]
+        S[3, 3] *= 0.5
+        f1 = col._rates(col.pack(S, C, T, u))[0]
+        M = col.N - 1
+        for off in (0, M):  # the two sign rows of the bank rate
+            self.assertTrue(np.all(f1[off + 2:off + 4] < f0[off + 2:off + 4]))
+            self.assertAlmostEqual(f1[off], f0[off], places=12)
+
+    def test_pb2v_solution(self):
+        ac = by_name("baseline-2m")
+        info = solve(ac, profile_for(11.0), "min_wind", "travel", 30, seeds=(0, 1, 2),
+                     stop_after=1, tip_model="geometric", midpoints=True, rate_limits=True,
+                     n_min=0.0, rate_model="pb2v", roll_pb2v=0.08)
+        self.assertTrue(info["success"], info["message"])
+        self.assertLessEqual(info["pb2v_used_max"], 0.08 + 1e-5)
+        self.assertLessEqual(info["cl_rate_max_per_s"], 1.0 + 1e-5)
+        self.assertLessEqual(info["bank_rate_over_limit_max"], 1.0 + 1e-5)
+
+    def test_jacobians_wave(self):
+        prof = profile_for(8.0)
+        wave = {"a": 1.0, "wavelength": 60.0, "to_deg": 37.0, "decay": (0.77, 0.62),
+                "u_scale": 0.9, "w_scale": 0.6}
+        col = Collocation(by_name("albatross-3m"), prof, "min_wind", "travel", 9,
+                          tip_model="geometric", wave=wave, **self.NEW)
+        rng = np.random.default_rng(1)
+        x = col.guess(rng) * (1 + 0.01 * rng.standard_normal(col.nv))
+        col.set_m(x)
+        _fd_check(self, col, x)
+        rows = col._periodic(x)[0].size
+        self.assertEqual(rows, 4 + 1 + 2 + 1)  # z V gamma psi, theta pin, seam controls, m
+
+    def test_wave_scales(self):
+        prof = profile_for(8.0)
+        S = np.array([3.0, 4.0, 5.0, 12.0, 0.1, 0.5])
+        W1, _ = wave_wind_accel(S, WaveParams(1.0, 60.0, 20.0), prof, 1.0, 8.0, 0.3)
+        W2, _ = wave_wind_accel(S, WaveParams(1.0, 60.0, 20.0, u_scale=0.5, w_scale=0.6),
+                                prof, 1.0, 8.0, 0.3)
+        base = float(prof.f(5.0 - 1.0 * np.cos(WaveParams(1.0, 60.0, 20.0).k * (
+            np.cos(np.radians(20.0)) * 3.0 + np.sin(np.radians(20.0)) * 4.0)
+            - WaveParams(1.0, 60.0, 20.0).om + 0.3))) * 8.0
+        self.assertAlmostEqual(W2[2], 0.6 * W1[2], places=12)
+        self.assertAlmostEqual(W2[0] - base, 0.5 * (W1[0] - base), places=10)
+
+    def test_solution_satisfies_new_constraints(self):
+        ac = by_name("baseline-2m")
+        info = solve(ac, profile_for(11.0), "min_wind", "travel", 30, seeds=(0, 1, 2),
+                     stop_after=1, tip_model="geometric", bank_rate_max_deg_s=100.0, **self.NEW)
+        self.assertTrue(info["success"], info["message"])
+        tol = 1e-5
+        self.assertLessEqual(info["bank_rate_max_deg_s"], 100.0 + tol)
+        self.assertLessEqual(info["cl_rate_max_per_s"], value("ctrl.cl_rate_max_per_s", 2.0) + tol)
+        self.assertLessEqual(info["n_max_node"], 0.8 * ac.n_max + tol)
+        self.assertGreaterEqual(info["n_min_node"], 0.2 - tol)
+        self.assertLessEqual(info["mu_max_deg"], 0.9 * np.degrees(ac.mu_max) + tol)
+        self.assertLess(max(info["control_seam_jump"]), tol)
+        self.assertGreaterEqual(info["z_min"], 1.0 - tol)
+        self.assertGreaterEqual(info["replay_tip_min"], 0.3 - 0.03)  # dense replay, see below
+
+    def test_flat_midpoints_hold_the_tip(self):
+        ac, prof = by_name("baseline-2m"), profile_for(11.0)
+        kw = dict(cycle="travel", n=30, tip_model="geometric", seeds=(0, 1, 2), stop_after=1)
+        nodes = solve(ac, prof, "min_wind", **kw)
+        mid = solve(ac, prof, "min_wind", midpoints=True, **kw)
+        self.assertTrue(nodes["success"] and mid["success"])
+        self.assertLess(nodes["replay_tip_min"], 0.27)  # K-009: the tip dips between nodes
+        self.assertGreaterEqual(mid["replay_tip_min"], 0.3 - 0.03)
+        self.assertGreaterEqual(mid["replay_h_min"], 1.0 - 0.03)
+        self.assertGreater(mid["u10"], nodes["u10"] - 1e-9)
+
+    def test_rate_limits_off_reproduce_baseline(self):
+        info = solve(by_name("baseline-2m"), profile_for(8.0), "min_wind", "travel", 30,
+                     seeds=(0, 1, 2), stop_after=1, rate_limits=False)
+        self.assertAlmostEqual(info["u10"], 11.864159641948673, places=10)
+
+    def test_m_search_is_no_worse(self):
+        ac = by_name("baseline-2m")
+        lam = 9.81 * 8.0 ** 2 / (2.0 * np.pi)
+        wave = {"a": 1.0, "wavelength": lam, "to_deg": 0.0}
+        kw = dict(cycle="travel", n=30, tip_model="geometric", seeds=(0,), stop_after=1,
+                  wave=wave, midpoints=True)
+        prof = profile_for(10.7)
+        one = solve(ac, prof, "min_wind", **kw)
+        many = solve(ac, prof, "min_wind", m_search=(-1, 0, 1), **kw)
+        self.assertTrue(one["success"] and many["success"])
+        self.assertLessEqual(many["u10"], one["u10"] + 1e-9)
 
 
 class _OneComponent:
