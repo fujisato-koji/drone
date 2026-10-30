@@ -424,7 +424,7 @@ items:
     class: P
     title: Boundary layer dynamic soaring for autonomous aircraft, G. C. Bower, PhD thesis, Stanford University, 2011
     url: https://purl.stanford.edu/hp877by7094
-    license: unknown
+    license: "CC BY-NC 3.0"
     read: partial
     retrieved: 2026-10-29
     note: "Minimum reference wind at 10 m: 8.56 m/s for the albatross model (L/D 20) and 8.01 m/s for the 2 kg Mariner design (L/D 25, 70.6 N/m2, AR 15); large span, low cd0 and low mass help, span above 2.5 m gives little more. The roughness z0 = 0.03 m is chosen to match previous researchers (Sachs 2005) and as a reasonable value for a rough sea, citing Stull for values from 1e-4 m for calm water to 0.03 m for cut grass or a very rough sea; his own wave model gives 0.0023 m at U10 11.28 m/s (read by a second reader on 2026-10-29). His optimizer limits the roll rate to 90 deg/s, the lift-coefficient rate to 0.5 per second and the bank to 60 deg, and finds these constraints of minimal importance so long as they are larger than about 0.5 per second and 60 deg/s (sections 5.1 and 5.4 to 5.6)."
@@ -451,7 +451,7 @@ items:
     license: unknown
     read: partial
     retrieved: 2026-10-29
-    note: EasyGlider 1.8 m, 1.35 kg, 0.4 m2; drag polar CD = 0.0169 - 0.0940 CL + 0.3580 CL^2; tests in 8 to 12 m/s wind. Its optimizer bounds the bank change by 2.0 rad per second (Table I) and has no bound on the lift-coefficient rate.
+    note: "EasyGlider 1.8 m, 1.35 kg, 0.4 m2; drag polar CD = 0.0172 - 0.0943 CL + 0.358 CL^2 (from the v2 Table II, CD(alpha) = 0.029 + 0.378 alpha + 1.984 alpha^2 and CL = 0.356 + 2.354 alpha; an identified control model, not a physical polar); tests in 8 to 12 m/s wind. Its optimizer bounds the bank change by 2.0 rad per second (Table I) and has no bound on the lift-coefficient rate."
   - id: P49
     class: P
     title: "Design of small hand-launched solar-powered UAVs: from concept study to a multi-day world endurance record flight, P. Oettershagen et al., Journal of Field Robotics, 2017"
@@ -1367,3 +1367,51 @@ items:
     read: partial
     retrieved: 2026-10-30
     note: "Quoting Waseda et al. 2001: waves adjust to a wind change in 15 to 20 periods for c/u* of 1 to 1.5 and 210 to 420 periods for c/u* of 9; quoting Hwang et al. 2011: decay is much slower than growth."
+  - id: P155
+    class: P
+    title: "Summary of Low-Speed Airfoil Data, volumes 1, 2, 3 and 5, M. S. Selig, C. A. Lyon, P. Giguere, C. Ninham, J. Guglielmo et al., University of Illinois, 1995 to 2012 (data files)"
+    url: "https://m-selig.ae.illinois.edu/pd/pub/lsat/"
+    license: "data may be freely copied and used (README03); GPL files in volumes 1 to 3"
+    read: partial
+    retrieved: 2026-10-30
+    note: "Measured polars at Re 60k to 300k. A second reader fitted cd = (a0 + a1 cl + a2 cl^2)(Re/2e5)^-n + a8 cl^8 over Re 98k to 300k and cl 0.1 to 1.25: SD7037 0.01061, -0.00677, 0.01036, n 0.59, a8 0.00135 (rms 5%); AG35-r 0.00828, 0.00150, 0.00400, n 0.59, a8 0.00641; MH32 0.01162, -0.00785, 0.00901, n 0.61, a8 0.00564; SD7062 0.01373, -0.00121, 0.00249, n 0.72, a8 0.00072; cl_max about 1.26, 1.14, 1.18 and 1.63 at 200k; below 80k drag rises steeply (SD7037 cd 0.028 to 0.031 at 60k)."
+  - id: P156
+    class: P
+    title: "Estimating the Oswald factor from basic aircraft geometrical parameters, M. Nita and D. Scholz, DLRK 2012"
+    url: "https://www.fzt.haw-hamburg.de/pers/Scholz/OPerA/OPerA_PUB_DLRK_12-09-10.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "e_theo = 1/(1 + f(lambda) A) with f(lambda) = 0.0524 lambda^4 - 0.15 lambda^3 + 0.1659 lambda^2 - 0.0706 lambda + 0.0119 (Hoerner, unswept); fuselage factor k_eF = 1 - 2 (dF/b)^2; Raymer's straight-wing formula fails at high aspect ratio."
+  - id: S6
+    class: S
+    title: "DSOPT dynamic soaring optimizer 1.14 and its sample gliders, M. Drela, MIT"
+    url: "https://web.mit.edu/drela/Public/web/dsopt/"
+    license: GPL v2
+    read: partial
+    retrieved: 2026-10-30
+    note: "Profile drag model cd = cd0 + cd1 cl + cd2 cl^2 + cd8 cl^8 with a separate induced term; sample dynamic-soaring gliders use span efficiencies of 0.94 to 0.95."
+  - id: S7
+    class: S
+    title: "Parasite drag tool documentation, OpenVSP wiki"
+    url: "https://openvsp.org/wiki/doku.php?id=parasitedrag"
+    license: CC BY-SA 4.0
+    read: full
+    retrieved: 2026-10-30
+    note: "Component build-up with skin friction, form factors (Hoerner's streamlined body 1 + 1.5/FR^1.5 + 7/FR^3) and wetted areas."
+  - id: S8
+    class: S
+    title: "Drag of aileron and flap linkages, M. Hepperle after G. Wurz"
+    url: "https://www.mh-aerotools.de/airfoils/linkage.htm"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "On an F3B sailplane the fuselage is about 30% of the total drag at CL 0.2 and 10% at CL 0.85; the four linkages add about as much as the horizontal tail."
+  - id: M17
+    class: M
+    title: "Plan sheets and specifications of RC sailplanes: Drela Supra, Bubble Dancer and Aegea (charlesriverrc.org), and manufacturers' data of F5J, F3F, F3B and F3K models (hyperflight.co.uk, f3j.com, rc-network.de, flightpoint.co)"
+    url: "https://charlesriverrc.org/"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "Wing areal mass about 0.75 to 1.13 kg/m2 for thermal sailplanes of 2 to 4 m and about 2.0 to 2.5 kg/m2 for F3F and F3B slope racers; everything except the wing about 0.11 to 0.45 kg for thermal models and about 0.7 kg for F3F. The URL is the site of the Drela sheets; the other sites are listed in the title."

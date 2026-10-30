@@ -443,6 +443,24 @@ What it found:
 What it means: a large swell can carry the drone with no wind, if it follows the wave phase; a small swell cannot, and the wind must do it.
 This is the bird's light-wind behaviour (P42, P74, P80), and it makes the wave-aware closed loop the next thing to show (Q-060).
 
+## Wing sizing with measured airfoil data {#wing-sizing}
+
+Until this pass the candidate forms carried assumed drag polars and masses (Q-014); the owner asked whether the wing itself had been optimized, and it had not.
+`sim/wingopt.py` builds a design from its span, aspect ratio, taper and airfoil and ranks it (`python -m sim.wingopt`, `sim/out/wingopt.json`):
+
+- Profile drag from measured low-speed airfoil polars, fitted with a Reynolds-number scaling over 98k to 300k (P155); a design whose mean chord falls below a Reynolds number of wing.re_floor at 1.2 times its stall speed is left out, since the data end there and the drag rises steeply below.
+- Induced drag with the span efficiency of Nita and Scholz for the taper and the fuselage (P156), and a separate drag area for the fuselage and tail of wing.cda_par_base_m2 (S7, S8, P145), so a larger wing does not hide the body's drag.
+- Wing mass from an areal density of wing.rho_a_base_kg_m2, between thermal sailplanes and slope racers (M17), plus the spar caps for the ultimate load and a joiner; the rest from the component masses of the mass model.
+- The optimizer's soaring minimum with the control library's margins, COARE 3.5, the roll and lift-coefficient rates and the heights held between nodes; the upwind progress from the polar's courses.
+
+What it found:
+
+- The best design is wing.best_span_m in span with an aspect ratio of wing.best_ar and the AG35 airfoil, wing.best_mass_kg, with a maximum lift-to-drag ratio of wing.best_ld_max; it soars from wing.best_u10_min_ms with the margins and makes wing.best_upwind_vmg_u16_ms towards a target straight upwind at 16 m/s.
+- Rebuilt with the same polar and mass model, the old candidates need wing.rebuilt_albatross_u10_min_ms (the albatross-like glider), wing.rebuilt_baseline_u10_min_ms (the baseline) and wing.rebuilt_sealedhull_u10_min_ms (the sealed hull); the lower minimum winds of the form comparison came from assumed polars that were too clean and from flying without the control margins.
+- Slender wings lose: at this size an aspect ratio above about 16 gives a chord too small for the airfoils to work well, and most such designs fall below the Reynolds-number floor; a broad wing of aspect ratio 12 to 16 wins.
+- A heavier skin helps a little: at the slope racers' areal density the minimum wind falls by wing.heavy_skin_gain_min_ms to wing.heavy_skin_gain_max_ms, since the faster flight raises the Reynolds number; a fat sensor pod (twice the drag area) costs wing.fat_pod_loss_min_ms to wing.fat_pod_loss_max_ms, so the body must stay slim; the taper hardly matters.
+- So on a flat sea in neutral air, with the margins a controller needs, the wind alone carries the drone only from about 13 m/s; the routes to R-02's design point are the swell (see the cycles synchronized with the waves), the extra shear under swell and in stable air (Q-061), and the motor (Q-055).
+
 ## Navigation: the speed polar and the tactical layer {#navigation}
 
 The planner flies a cycle at the course it is given; which course to take towards a target is the navigation's job, and like a yacht the drone cannot sail straight into the wind (Q-066).
