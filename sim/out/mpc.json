@@ -128054,5 +128054,171 @@
     "recorded_ended": "tip contact"
    }
   ]
+ },
+ "wave_loop_exp": {
+  "meta": {
+   "tdr_run": "python -m sim.mpc --wave-loop-exp --workers 1 --wave-only 'albatross-3m,3,along,6,p63'",
+   "commit": "8313d20",
+   "stamp": "sha-a27015736519",
+   "runtime_s": 11.034053564071655,
+   "t_end": 20.0,
+   "seed": 1,
+   "workers": 1,
+   "planner_kw": {
+    "n_samples": 96,
+    "dt": 0.1,
+    "n_iter": 1,
+    "n_ctrl": 24,
+    "lam": 0.2,
+    "sigma_cl": 0.08,
+    "sigma_mu": 0.12,
+    "clearance": "wingtip",
+    "h_clear": 0.3,
+    "thrust_sampling": "sustained",
+    "fold_switch": "state",
+    "thrust_update": "raw",
+    "h_ceil": 28.5,
+    "smooth_modes": 3
+   },
+   "energy_level": "normal (k = 2)",
+   "sea": "swell_env: one regular long-crested swell component, Hs and Tp 10 s, along or against the wind (from 270 deg), COARE 3.5 log wind of u10 (calm flown at 0.1 m/s), the wave wind of the preset, second-order surface; the planner flies the same sea (oracle)",
+   "start": "in flat flight: the navigation's steady motor leg (level at 10 m above the local surface, airspeed of least energy per metre) along the swell's travel (flat_start_entry); the wave library's entry is taken at a wave-phase match (at most 60 s of waiting)",
+   "wave_library": "WavePilot policy energy: soaring entries first (crest rides first, slowest along-crest speed), else the least average power, unless that motor entry needs at least the flat library's least power at the wind (then the start's steady flat leg is flown on); guide WaveCycleGuide",
+   "state_source": "truth",
+   "wind_source": "truth",
+   "reflex": false,
+   "actuators": "rate_model pb2v",
+   "n_limit": true,
+   "stop_on_tip": true,
+   "counts": "ended complete and flight_margins valid: heights relative to the local surface inside the band of R-12, wingtip at least 0.3 m, no loop, no flight below the stall speed, load factor within its limit",
+   "motor_on": "thrust above 0.01 of the weight",
+   "after_entry": "average power, motor-on share and median height from the first switch onto a wave entry to the end",
+   "flat": "the flat motor library's entry of least average power at the same wind (any course)",
+   "complete": true
+  },
+  "results": [
+   {
+    "aircraft": "albatross-3m",
+    "hs": 3.0,
+    "tp": 10.0,
+    "direction": "along",
+    "u10": 6.0,
+    "preset": "p63",
+    "t_end": 20.0,
+    "planner_sea_error": null,
+    "ended": "complete",
+    "survival_s": 20.0,
+    "wall_s": 9.680218696594238,
+    "margins": {
+     "height_median_m": 11.03967152793643,
+     "height_min_m": 6.884671420954086,
+     "height_max_m": 14.54559304944901,
+     "wingtip_min_m": 6.367617989052241,
+     "airspeed_min_ms": 11.84600233265606,
+     "stall_speed_ms": 10.132559390974077,
+     "loop_s": 0.0,
+     "below_stall_s": 0.0,
+     "max_n_flown": 1.52516775062125,
+     "band_m": [
+      1.0,
+      30.0
+     ],
+     "in_band": true,
+     "margins_ok": true,
+     "valid": true,
+     "counts_as_arrived": false,
+     "counts": true
+    },
+    "motor": {
+     "w_energy": 0.3,
+     "t_max_n": 14.715,
+     "eta_total": 0.44999999999999996,
+     "duration_s": 20.01,
+     "energy_j": 320.51359672619054,
+     "energy_wh": 0.08903155464616404,
+     "avg_power_w": 16.01767100080912,
+     "wh_per_hour": 16.017671000809123,
+     "thrust_on_share": 0.7901049475262368,
+     "mean_thrust_frac_weight": 0.019966240738815706,
+     "peak_thrust_frac_weight": 0.03828862431429269,
+     "n_bursts": 2,
+     "burst_threshold_n": 0.2943,
+     "h_median_all_m": 11.03967152793643,
+     "burst_len_median_s": 7.905,
+     "burst_len_mean_s": 7.905,
+     "burst_len_max_s": 15.75,
+     "burst_peak_thrust_frac": 0.05089295844498454,
+     "burst_h_start_median_m": 11.651781320155077,
+     "burst_h_start_q25_q75_m": [
+      10.825890660077539,
+      12.477671980232614
+     ],
+     "burst_phase_hist8": [
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "burst_phase_circ_mean": 0.028750000000000053,
+     "burst_phase_concentration": 0.9837286289495358,
+     "burst_phase_rel_low_circ_mean": 0.028750000000000053,
+     "burst_phase_rel_low_concentration": 0.9837286289495358,
+     "bursts": [
+      {
+       "t_s": 0.0,
+       "len_s": 15.75,
+       "h_m": 10.0,
+       "phase": 0.0,
+       "phase_rel_low": 0.0,
+       "peak_n": 1.1268342135696339
+      },
+      {
+       "t_s": 16.46,
+       "len_s": 0.06,
+       "h_m": 13.303562640310153,
+       "phase": 0.05750000000000011,
+       "phase_rel_low": 0.05750000000000011,
+       "peak_n": 0.3709455534662611
+      }
+     ]
+    },
+    "after_entry": {
+     "t_entry_s": 15.5,
+     "duration_s": 4.5,
+     "avg_power_w": 4.137302124260873,
+     "thrust_on_share": 0.06873614190687362,
+     "height_median_m": 8.662371722692548
+    },
+    "entry": {
+     "course_rel_deg": -39.78192045715015,
+     "crest": true,
+     "kind": "soaring",
+     "power_avg_w": 0.0,
+     "h": 3.4752330263363547
+    },
+    "wave_switches": [
+     [
+      15.5,
+      -39.78192045715015,
+      true,
+      "soaring"
+     ]
+    ],
+    "flat": {
+     "u10": 6.0,
+     "chi_deg": 20.0,
+     "kind": "motor",
+     "power_avg_w": 20.928292514881242,
+     "speed_along_chi": 7.151968573664078
+    },
+    "cpu_mean_s": 0.18940548780487804,
+    "max_n_flown": 1.52516775062125,
+    "min_clear_wingtip": 6.367617989052241
+   }
+  ]
  }
 }

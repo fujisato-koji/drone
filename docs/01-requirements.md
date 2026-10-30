@@ -880,10 +880,10 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | wave.lib_albatross_p63_hs2_tp8_crest_seas | 9 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_albatross_p63_hs2_tp8_crest_motor_seas | 1 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_albatross_p63_hs2_tp8_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_albatross_p63_hs2_tp10_soaring | 2 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_albatross_p63_hs2_tp10_motor | 3 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_albatross_p63_hs2_tp10_motor_near_zero | 3 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_albatross_p63_hs2_tp10_missing | 6 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_albatross_p63_hs2_tp10_soaring | 14 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_albatross_p63_hs2_tp10_motor | 12 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_albatross_p63_hs2_tp10_motor_near_zero | 12 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_albatross_p63_hs2_tp10_missing | 7 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_albatross_p63_hs2_tp10_crest_seas | 7 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_albatross_p63_hs2_tp10_crest_motor_seas | 3 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_albatross_p63_hs2_tp10_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
@@ -915,10 +915,10 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | wave.lib_albatross_p64_hs2_tp8_crest_seas | 6 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_albatross_p64_hs2_tp8_crest_motor_seas | 4 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_albatross_p64_hs2_tp8_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_albatross_p64_hs2_tp10_soaring | 0 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_albatross_p64_hs2_tp10_motor | 0 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_albatross_p64_hs2_tp10_motor_near_zero | 0 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_albatross_p64_hs2_tp10_missing | 11 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_albatross_p64_hs2_tp10_soaring | 11 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_albatross_p64_hs2_tp10_motor | 1 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_albatross_p64_hs2_tp10_motor_near_zero | 1 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_albatross_p64_hs2_tp10_missing | 21 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_albatross_p64_hs2_tp10_crest_seas | 0 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_albatross_p64_hs2_tp10_crest_motor_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_albatross_p64_hs2_tp10_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
@@ -950,10 +950,10 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | wave.lib_baseline_p63_hs2_tp8_crest_seas | 7 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p63_hs2_tp8_crest_motor_seas | 3 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p63_hs2_tp8_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_baseline_p63_hs2_tp10_soaring | 0 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_baseline_p63_hs2_tp10_motor | 0 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_baseline_p63_hs2_tp10_motor_near_zero | 0 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_baseline_p63_hs2_tp10_missing | 11 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_baseline_p63_hs2_tp10_soaring | 8 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_baseline_p63_hs2_tp10_motor | 1 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_baseline_p63_hs2_tp10_motor_near_zero | 1 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_baseline_p63_hs2_tp10_missing | 24 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p63_hs2_tp10_crest_seas | 0 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p63_hs2_tp10_crest_motor_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p63_hs2_tp10_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
@@ -985,10 +985,10 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | wave.lib_baseline_p64_hs2_tp8_crest_seas | 0 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p64_hs2_tp8_crest_motor_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p64_hs2_tp8_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_baseline_p64_hs2_tp10_soaring | 0 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_baseline_p64_hs2_tp10_motor | 0 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_baseline_p64_hs2_tp10_soaring | 3 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_baseline_p64_hs2_tp10_motor | 1 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p64_hs2_tp10_motor_near_zero | 0 | 1 | calculated | docs/02-form.md#wave-loop |
-| wave.lib_baseline_p64_hs2_tp10_missing | 10 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.lib_baseline_p64_hs2_tp10_missing | 29 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p64_hs2_tp10_crest_seas | 0 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p64_hs2_tp10_crest_motor_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p64_hs2_tp10_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
@@ -1008,6 +1008,13 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | wave.lib_baseline_p64_hs3_tp12_crest_seas | 0 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p64_hs3_tp12_crest_motor_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.lib_baseline_p64_hs3_tp12_seas | 10 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.loop_albatross_hs3_along_u6_p63_aloft_s | 20.0 | s | calculated | docs/02-form.md#wave-loop |
+| wave.loop_albatross_hs3_along_u6_p63_counted | 1 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.loop_albatross_hs3_along_u6_p63_power_w | 16.0 | W | calculated | docs/02-form.md#wave-loop |
+| wave.loop_albatross_hs3_along_u6_p63_power_after_w | 4.1 | W | calculated | docs/02-form.md#wave-loop |
+| wave.loop_albatross_hs3_along_u6_p63_motor_share | 0.79 | 1 | calculated | docs/02-form.md#wave-loop |
+| wave.loop_albatross_hs3_along_u6_p63_height_median_m | 11.0 | m | calculated | docs/02-form.md#wave-loop |
+| wave.loop_albatross_hs3_along_u6_p63_flat_power_w | 20.9 | W | calculated | docs/02-form.md#wave-loop |
 <!-- tdr:end -->
 
 ## Requirements for the dynamic soaring drone {#ds-requirements}

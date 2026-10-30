@@ -587,11 +587,27 @@ A run counts when it flew the whole time inside the band of R-12 (heights above 
 The power is the average electric power over the run (the same number as the energy per hour in Wh/h), and also from the entry onto the wave library on; the flat sea's figure is the flat motor library's least average power at the same wind (any course).
 
 <!-- wave_loop_keys begin -->
+| aircraft | Hs | swell | u10 | wave wind | aloft s | counted | power w | power after w | motor share | height median m | flat power w |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| albatross | 3 | along | 6 | p63 | wave.loop_albatross_hs3_along_u6_p63_aloft_s | wave.loop_albatross_hs3_along_u6_p63_counted | wave.loop_albatross_hs3_along_u6_p63_power_w | wave.loop_albatross_hs3_along_u6_p63_power_after_w | wave.loop_albatross_hs3_along_u6_p63_motor_share | wave.loop_albatross_hs3_along_u6_p63_height_median_m | wave.loop_albatross_hs3_along_u6_p63_flat_power_w |
 <!-- wave_loop_keys end -->
 
 ### Navigation over swell
 
+`--wave-nav-exp`: the albatross-like glider over a 3 m swell of 10 s running along a 6 m/s wind, to a target 5 km away, the velocity hull built from the wave library's entries at that sea and wind with their mirror images (the sea is symmetric about the wind axis), the hull navigator of the navigation section with its steady motor legs, and the planner flying what it names, the wave entries through the wave guide.
+The run starts in flat flight towards the target and the prediction is the kinematic run on the same hull (`sail_hull`).
+The target asked for lies across the swell's travel (here across the wind as well); a second run, added because every soaring point of this hull travels with the swell, puts the target along the swell's travel instead.
+
+<!-- wave_nav_keys begin -->
+<!-- wave_nav_keys end -->
+
 ### What the planner needs to know of the sea (stage 2)
+
+`--wave-sense-exp` flies one case of the closed loop (the albatross-like glider, 3 m swell of 10 s along a 6 m/s wind, P63, 5 minutes) with the planner's sea carrying an error while the aircraft flies the true one: the swell's phase shifted by a constant angle, so that the planner places the crests ahead of or behind where they are, or its height scaled.
+This says what the sensing of stage 2 (Q-064) must deliver, in the quantities a sensor has to estimate.
+
+<!-- wave_sense_keys begin -->
+<!-- wave_sense_keys end -->
 
 ### What failed, and what remains
 

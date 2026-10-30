@@ -14,7 +14,8 @@ Key names:
   crest ride, of seas seas.
 - wave.sense_<phase|height>_<value>_<field> (sense_none: no error): the planner's sea known with an error, fields
   aloft_s, counted, power_after_w, motor_share and height_median_m (see the loop fields).
-- wave.nav_<field>: the navigation run over swell, fields as sim.nav_keys (arrival_s 0 when it did not count).
+- wave.nav_<field>_<across|with>: the navigation runs over swell, by where the target lies relative to the
+  swell's travel; the fields are those of sim.nav_keys (arrival_s is 0 when the run did not count).
 - wave.loop_<aircraft>_hs<H>_<along|against|calm>_u<U>_<p63|p64>_<field>: the closed-loop runs, fields aloft_s,
   counted (1 when the run flew the whole time inside the band and the margins), power_w (average electric power
   over the run, W, the same number as the energy per hour in Wh/h), power_after_w (the same from the entry onto
@@ -176,6 +177,14 @@ def sense_values(rows):
     return out
 
 
+def nav_values_all(rows):
+    out = {}
+    for r in rows:
+        for k, v in nav_values(r).items():
+            out["%s_%s" % (k, r["target_rel_swell"])] = v
+    return out
+
+
 def nav_values(r):
     nv, m, p = r.get("nav") or {}, r["motor"], r["predicted"]
     counted = bool(nv.get("counts_as_arrived"))
@@ -198,7 +207,7 @@ def values_block():
     if "wave_sense_exp" in d:
         parts.append(sense_values(d["wave_sense_exp"]["results"]))
     if "wave_nav_exp" in d:
-        parts.append(nav_values(d["wave_nav_exp"]["results"][0]))
+        parts.append(nav_values_all(d["wave_nav_exp"]["results"]))
     out = [BEGIN]
     for p in parts:
         for k, (v, u) in p.items():
@@ -233,6 +242,29 @@ def lib_table(lib):
     return chr(10).join(lines) + chr(10)
 
 
+def sense_table(rows):
+    fields = ("aloft_s", "counted", "power_after_w", "motor_share", "height_median_m")
+    lines = ["| planner's sea | " + " | ".join(f.replace("_", " ") for f in fields) + " |",
+             "|" + "---|" * (1 + len(fields))]
+    for r in rows:
+        e = r.get("planner_sea_error")
+        name = "as it is" if e is None else ("phase %+g rad" % e[1] if e[0] == "phase" else "height x %g" % e[1])
+        cid = sense_id(r)
+        lines.append("| %s | " % name + " | ".join("wave.%s_%s" % (cid, f) for f in fields) + " |")
+    return chr(10).join(lines) + chr(10)
+
+
+def nav_table(rows):
+    fields = ("arrival_s", "counted", "vmg_ms", "hull_ms", "hull_s", "energy_wh", "motor_share", "height_median_m",
+              "height_min_m", "height_max_m", "hull_points")
+    lines = ["| target | " + " | ".join(f.replace("_", " ") for f in fields) + " |",
+             "|" + "---|" * (1 + len(fields))]
+    for r in rows:
+        lines.append("| %s the swell | " % r["target_rel_swell"]
+                     + " | ".join("wave.nav_%s_%s" % (f, r["target_rel_swell"]) for f in fields) + " |")
+    return chr(10).join(lines) + chr(10)
+
+
 def _replace(text, tag, body):
     b, e = "<!-- %s begin -->" % tag + chr(10), "<!-- %s end -->" % tag
     if b not in text:
@@ -258,6 +290,10 @@ def main():
         t = _replace(t, "wave_lib_keys", lib_table(lib))
     if "wave_loop_exp" in d:
         t = _replace(t, "wave_loop_keys", loop_table(d["wave_loop_exp"]["results"]))
+    if "wave_sense_exp" in d:
+        t = _replace(t, "wave_sense_keys", sense_table(d["wave_sense_exp"]["results"]))
+    if "wave_nav_exp" in d:
+        t = _replace(t, "wave_nav_keys", nav_table(d["wave_nav_exp"]["results"]))
     with open(DOC, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(t)
 

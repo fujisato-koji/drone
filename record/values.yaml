@@ -5085,25 +5085,25 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_albatross_p63_hs2_tp10_soaring
-    v: 2
+    v: 14
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_albatross_p63_hs2_tp10_motor
-    v: 3
+    v: 12
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_albatross_p63_hs2_tp10_motor_near_zero
-    v: 3
+    v: 12
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_albatross_p63_hs2_tp10_missing
-    v: 6
+    v: 7
     unit: 1
     status: calculated
     basis:
@@ -5295,25 +5295,25 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_albatross_p64_hs2_tp10_soaring
-    v: 0
+    v: 11
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_albatross_p64_hs2_tp10_motor
-    v: 0
+    v: 1
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_albatross_p64_hs2_tp10_motor_near_zero
-    v: 0
+    v: 1
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_albatross_p64_hs2_tp10_missing
-    v: 11
+    v: 21
     unit: 1
     status: calculated
     basis:
@@ -5505,25 +5505,25 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_baseline_p63_hs2_tp10_soaring
-    v: 0
+    v: 8
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_baseline_p63_hs2_tp10_motor
-    v: 0
+    v: 1
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_baseline_p63_hs2_tp10_motor_near_zero
-    v: 0
+    v: 1
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_baseline_p63_hs2_tp10_missing
-    v: 11
+    v: 24
     unit: 1
     status: calculated
     basis:
@@ -5715,13 +5715,13 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_baseline_p64_hs2_tp10_soaring
-    v: 0
+    v: 3
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_baseline_p64_hs2_tp10_motor
-    v: 0
+    v: 1
     unit: 1
     status: calculated
     basis:
@@ -5733,7 +5733,7 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.lib_baseline_p64_hs2_tp10_missing
-    v: 10
+    v: 29
     unit: 1
     status: calculated
     basis:
@@ -5849,6 +5849,48 @@ items:
   - key: wave.lib_baseline_p64_hs3_tp12_seas
     v: 10
     unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p63_aloft_s
+    v: 20.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p63_power_w
+    v: 16.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p63_power_after_w
+    v: 4.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p63_motor_share
+    v: 0.79
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p63_height_median_m
+    v: 11.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p63_flat_power_w
+    v: 20.9
+    unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop

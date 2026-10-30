@@ -920,7 +920,7 @@ def wave_exp_main(a):
     when --wave-only runs a subset)."""
     import json
     import time
-    from concurrent.futures import ProcessPoolExecutor
+    from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
     from sim import record
     from sim.mpc import BURST_ON_FRAC, W_ENERGY_LEVELS
     here = _os.path.dirname(__file__)
@@ -931,15 +931,18 @@ def wave_exp_main(a):
         cases = [c for c in cases if "%s,%g,%s,%g,%s" % c in keys]
     jobs = [c + (t_end,) for c in cases]
     t0 = time.time()
-    with ProcessPoolExecutor(a.workers) as ex:
-        rows = list(ex.map(run_wave_job, jobs, chunksize=1))
-    print(wave_exp_table(rows))
     d = json.load(open(a.out)) if _os.path.exists(a.out) else {}
-    old = d.get(WAVE_EXP_KEY, {}).get("results", []) if a.wave_only else []
-    ids = {(r["aircraft"], r["hs"], r["direction"], r["u10"], r["preset"]) for r in rows}
-    rows = [r for r in old if (r["aircraft"], r["hs"], r["direction"], r["u10"], r["preset"]) not in ids] + rows
+    kept = d.get(WAVE_EXP_KEY, {}).get("results", []) if a.wave_only else []
+    rows = [r for r in kept if (r["aircraft"], r["hs"], r["direction"], r["u10"], r["preset"]) not in set(cases)]
     order = {c: i for i, c in enumerate(wave_exp_cases())}
-    rows.sort(key=lambda r: order.get((r["aircraft"], r["hs"], r["direction"], r["u10"], r["preset"]), 1e9))
+
+    def dump(done):
+        rows.sort(key=lambda r: order.get((r["aircraft"], r["hs"], r["direction"], r["u10"], r["preset"]), 1e9))
+        d[WAVE_EXP_KEY] = {"meta": dict(meta, runtime_s=time.time() - t0, complete=done), "results": rows}
+        with open(a.out, "w", newline=chr(10)) as fh:
+            json.dump(d, fh, indent=1)
+            fh.write(chr(10))
+
     meta = record.meta("python -m sim.mpc --wave-loop-exp --workers %d" % a.workers
                        + (" --wave-only '%s'" % a.wave_only if a.wave_only else ""),
                        [_os.path.join(here, "mpc.py"), __file__, WAVE_LIB_PATH,
@@ -966,10 +969,20 @@ def wave_exp_main(a):
                  "after_entry": "average power, motor-on share and median height from the first switch onto a wave "
                                 "entry to the end",
                  "flat": "the flat motor library's entry of least average power at the same wind (any course)"})
-    d[WAVE_EXP_KEY] = {"meta": meta, "results": rows}
-    with open(a.out, "w", newline=chr(10)) as fh:
-        json.dump(d, fh, indent=1)
-        fh.write(chr(10))
+    with ProcessPoolExecutor(a.workers) as ex:
+        pending = {ex.submit(run_wave_job, j): j for j in jobs}
+        while pending:
+            done, _ = wait(pending, return_when=FIRST_COMPLETED)
+            for f in done:
+                pending.pop(f)
+                r = f.result()
+                rows.append(r)
+                print("%d/%d %s %.0f counts %d P %.1f" % (len(rows), len(jobs), r["ended"], r["survival_s"],
+                                                          r["margins"]["counts"], r["motor"]["avg_power_w"]),
+                      flush=True)
+            dump(False)
+    print(wave_exp_table(rows))
+    dump(True)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1021,7 +1034,11 @@ def wave_sense_main(a):
 # ---------------------------------------------------------------------------------------------
 
 WAVE_NAV_KEY = "wave_nav_exp"
-WAVE_NAV_CASE = ("albatross-3m", 3.0, "along", 6.0, "p63", 5000.0)    # target across the swell (and the wind)
+# (aircraft, Hs, swell direction, u10, preset, distance, target): "across" is across the swell's travel (and, with
+# the swell along the wind, across the wind too); "with" is along the swell's travel, the direction its soaring
+# entries carry the aircraft
+WAVE_NAV_CASES = (("albatross-3m", 3.0, "along", 6.0, "p63", 5000.0, "across"),
+                  ("albatross-3m", 3.0, "along", 6.0, "p63", 5000.0, "with"))
 
 
 def wave_hull_entries(entries, name, preset, hs, tp, direction, u10):
@@ -1042,7 +1059,7 @@ def run_wave_nav(job):
     from sim.aircraft_models import by_name
     from sim import mpc
     from sim.navigator import HullNavigator, HullSource, SteadyModel, sail_hull
-    name, hs, d, u10, preset, dist = job
+    name, hs, d, u10, preset, dist, target = job
     ac = by_name(name)
     env = swell_env(u10, hs, WAVE_EXP_TP, d, preset)
     with open(WAVE_LIB_PATH) as fh:
@@ -1050,13 +1067,15 @@ def run_wave_nav(job):
     es = wave_hull_entries(entries, name, preset, hs, WAVE_EXP_TP, d, u10)
     src = HullSource.from_entries(es, name)
     steady = SteadyModel.from_aircraft(ac)
-    tgt = (0.0, dist)          # north; the wind blows from the west and the swell runs east
+    rel = np.radians(SWELL_DIRS[d] + (0.0 if target == "with" else 90.0))
+    # the wind blows from the west (toward +x), so the swell's travel is at SWELL_DIRS[d] from +x
+    tgt = (dist * float(np.cos(rel)), dist * float(np.sin(rel)))
     pred = sail_hull(src, lambda t: (u10, env.wind.from_deg), (0.0, 0.0), tgt,
                      nav=HullNavigator(src, arrival_radius=mpc.NAV_ARRIVAL_M, steady=steady), t_max=6 * 3600.0)
     first = HullNavigator(src, arrival_radius=mpc.NAV_ARRIVAL_M, steady=steady).step(
         0.0, (0.0, 0.0), u10, env.wind.from_deg, tgt)
     t_end = min(2.0 * pred["time"] + 600.0, 7200.0) if pred["arrived"] else 3600.0
-    start = flat_start_entry(ac, u10, 90.0)
+    start = flat_start_entry(ac, u10, float(np.degrees(rel)))
     t0 = time.time()
     r = mpc.fly_mpc(ac, env, "truth", [], t_end, 0.0, max(u10, CALM_U10), seed=1, planner_kw=wave_pkw(),
                     library=mpc.CycleLibrary.from_keyword("motor"), state_source="truth", wind_source="truth",
@@ -1074,31 +1093,39 @@ def run_wave_nav(job):
     r["hull"] = [{"vx": p.vx, "vy": p.vy, "power": p.power, "kind": p.kind, "key": p.key,
                   "crest": bool((p.entry or {}).get("crest"))} for p in hull.points]
     return {"aircraft": name, "hs": hs, "tp": WAVE_EXP_TP, "direction": d, "u10": u10, "preset": preset,
-            "distance_m": dist, "target": list(tgt), "hull_points": len(hull.points), **r}
+            "distance_m": dist, "target_rel_swell": target, "target": list(tgt),
+            "hull_points": len(hull.points), **r}
 
 
 def wave_nav_main(a):
     import json
     import time
+    from concurrent.futures import ProcessPoolExecutor
     from sim import record
     here = _os.path.dirname(__file__)
     t0 = time.time()
-    r = run_wave_nav(WAVE_NAV_CASE)
-    nv = r.get("nav") or {}
-    print(r["ended"], nv.get("arrival_time_s"), nv.get("counts_as_arrived"), nv.get("mean_vmg_ms"),
-          r["motor"]["energy_wh"], r["motor"]["thrust_on_share"], nv.get("height_median_m"), r["predicted"])
+    with ProcessPoolExecutor(min(a.workers, len(WAVE_NAV_CASES))) as ex:
+        rows = list(ex.map(run_wave_nav, WAVE_NAV_CASES, chunksize=1))
+    for r in rows:
+        nv = r.get("nav") or {}
+        print(r["target_rel_swell"], r["ended"], nv.get("arrival_time_s"), nv.get("counts_as_arrived"),
+              round(nv.get("mean_vmg_ms") or 0, 2), round(r["motor"]["energy_wh"], 1),
+              round(r["motor"]["thrust_on_share"], 2), nv.get("height_median_m"),
+              {k: r["predicted"][k] for k in ("arrived", "time_s", "n_legs", "plan_kind", "plan_vmg_ms")},
+              nv.get("kind_time_s"))
     d = json.load(open(a.out)) if _os.path.exists(a.out) else {}
     meta = record.meta("python -m sim.mpc --wave-nav-exp",
                        [_os.path.join(here, "mpc.py"), __file__, WAVE_LIB_PATH, _os.path.join(here, "navigator.py"),
                         _os.path.join(here, "out", "mpc_library_motor.json")])
-    meta.update({"runtime_s": time.time() - t0, "case": list(WAVE_NAV_CASE), "planner_kw": wave_pkw(),
-                 "sea": "swell_env (oracle), wind from 270 deg, swell running east (along the wind); target %g m "
-                        "north, across the swell and the wind" % WAVE_NAV_CASE[-1],
+    meta.update({"runtime_s": time.time() - t0, "cases": [list(c) for c in WAVE_NAV_CASES],
+                 "planner_kw": wave_pkw(),
+                 "sea": "swell_env (oracle), wind from 270 deg, swell running east (along the wind); the target "
+                        "lies across the swell's travel (north) or with it (east)",
                  "hull": "the wave library's entries at the sea and wind with their mirror images "
                          "(sim.navigator.HullSource), the steady motor legs of the flat sea (SteadyModel)",
                  "start": "flat flight: the steady motor leg towards the target (flat_start_entry)",
                  "arrival": "within %g m; counts_as_arrived also needs the band and the margins" % 200.0})
-    d[WAVE_NAV_KEY] = {"meta": meta, "results": [r]}
+    d[WAVE_NAV_KEY] = {"meta": meta, "results": rows}
     with open(a.out, "w", newline=chr(10)) as fh:
         json.dump(d, fh, indent=1)
         fh.write(chr(10))
