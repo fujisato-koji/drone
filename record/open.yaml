@@ -783,3 +783,13 @@ items:
     raised_by: owner
     phase: design
     opened: 2026-10-30
+  - id: Q-066
+    kind: question
+    text: "How does the drone choose its course towards a target that lies upwind or downwind? The receding-horizon planner only flies a cycle at a course it is given (Q-057), and a dynamic-soaring glider, like a yacht, cannot sail straight into the wind; albatrosses choose headings about lit.albatross_preferred_heading_deg off the wind and route like yacht racers (P73) and can travel upwind (P43). Build the autonomy in three layers: a strategic layer that routes over forecast wind and waves and decides when to rest on the water or use the motor; a tactical layer that chooses the course relative to the wind from the aircraft's speed polar for the best progress towards the target, and when to tack or gybe; and the planner that flies it. Settled when a closed-loop flight reaches a target 10 km upwind in the simulation (D-009)."
+    waits_for: assistant
+    affects:
+      - R-02
+      - Q-057
+    raised_by: owner
+    phase: design
+    opened: 2026-10-30
