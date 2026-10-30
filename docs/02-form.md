@@ -333,11 +333,12 @@ The motor as a third control (`python -m sim.mpc --burst-exp`, `sim/out/mpc.json
 
 - The owner asked whether short bursts of the motor at the right moment could keep the drone up cheaply when soaring is not enough; the planner got the thrust as a third control, with a cost on the electric energy, a thrust lag of prop.thrust_tau_s and the folded-propeller drag while it is off.
 - On a flat sea below the soaring minimum, with the middle energy weight, the baseline flew the whole run at 11 m/s on mpc.burst_baseline_u11_normal_w and at 9 m/s on mpc.burst_baseline_u9_normal_w, and the albatross-like glider at 9 m/s on mpc.burst_albatross_u9_normal_w and at 6 m/s on mpc.burst_albatross_u6_normal_w, against motor.baseline_flapglide_w and motor.albatross_flapglide_w for a steady flap-glide.
-- The thrust was not a short burst but a low, cycle-modulated trickle, on for mpc.burst_on_share_min to mpc.burst_on_share_max of the time, starting mostly on the climb just after the low point; with energy almost free the motor ran all the time at mpc.burst_free_min_w to mpc.burst_free_max_w.
-- A heavier energy weight did not save gradually: the planner stopped using the motor and the flight ended, because a horizon of a few seconds sees the contact too late.
-- The optimizer's best motor-assisted cycles need far less (see ground effect and the motor: motor.baseline_u9_w at 9 m/s), so the planner wastes energy by searching for the thrust timing on the fly from cycles without thrust.
+- The thrust was not a short burst but a low, cycle-modulated trickle of about 2% of the weight on average: above 1% of the weight it ran mpc.burst_on_share_min to mpc.burst_on_share_max of the time, and above 0.1% almost all the time; it was lowest at the low point and rose on the climb after it for the baseline, with no clear timing for the albatross-like glider; with energy almost free the motor ran all the time at mpc.burst_free_min_w to mpc.burst_free_max_w (K-013).
+- A heavier energy weight saved energy in two of five cases and still flew the whole run (the baseline at 11 m/s on mpc.burst_costly_baseline_u11_w, the albatross-like glider at 9 m/s on mpc.burst_costly_albatross_u9_w); in the others the planner stopped using the motor and the flight ended, although its plans saw the contact mpc.burst_contact_seen_min_s to mpc.burst_contact_seen_max_s ahead: the cost and the sampling (no thrust in the library's cycles, independent clipped noise per knot) kept the thrust off, while a steady tenth of the weight would have kept the aircraft up (K-013).
+- Like for like (the same margins, no ground effect, the same speed along the track) the optimizer's best motor-assisted cycle needs mpc.burst_like_for_like_opt_min_w to mpc.burst_like_for_like_opt_max_w at 9 m/s against the planner's mpc.burst_baseline_u9_normal_w, so the planner spends a quarter to a third more; most of the gap to the optimizer's motor.baseline_u9_w comes from the margins and ground effect (K-013).
 - Over waves the thrust did not prevent wingtip contact unless it ran almost continuously; the planner lacks cycles that follow the waves, not power.
-- What follows: cycles with the optimal thrust timing in the library as the planner's seed, a separate reflex that gives a short strong burst when contact or stall is predicted a second or two ahead, and wave-synchronized cycles for the waves (Q-060).
+- The true wind of these runs used the fixed Charnock constant while the library used COARE 3.5, which helps the planner slightly; and the smooth folded-propeller switch kept most of the folded drag during the spells with little thrust (K-013).
+- What follows: cycles with the optimal thrust timing in the library as the planner's seed, thrust samples that can propose sustained thrust, a separate reflex that gives a short strong burst when contact or stall is predicted a second or two ahead, and wave-synchronized cycles for the waves (Q-060).
 
 ## Candidate forms {#candidate-forms}
 
@@ -442,6 +443,43 @@ What it found:
 
 What it means: a large swell can carry the drone with no wind, if it follows the wave phase; a small swell cannot, and the wind must do it.
 This is the bird's light-wind behaviour (P42, P74, P80), and it makes the wave-aware closed loop the next thing to show (Q-060).
+
+## Wing sizing with measured airfoil data {#wing-sizing}
+
+Until this pass the candidate forms carried assumed drag polars and masses (Q-014); the owner asked whether the wing itself had been optimized, and it had not.
+`sim/wingopt.py` builds a design from its span, aspect ratio, taper and airfoil and ranks it (`python -m sim.wingopt`, `sim/out/wingopt.json`):
+
+- Profile drag from measured low-speed airfoil polars, fitted with a Reynolds-number scaling over 98k to 300k (P155); a design whose mean chord falls below a Reynolds number of wing.re_floor at 1.2 times its stall speed is left out, since the data end there and the drag rises steeply below.
+- Induced drag with the span efficiency of Nita and Scholz for the taper and the fuselage (P156), and a separate drag area for the fuselage and tail of wing.cda_par_base_m2 (S7, S8, P145), so a larger wing does not hide the body's drag.
+- Wing mass from an areal density of wing.rho_a_base_kg_m2, between thermal sailplanes and slope racers (M17), plus the spar caps for the ultimate load and a joiner; the rest from the component masses of the mass model.
+- The optimizer's soaring minimum with the control library's margins, COARE 3.5, the roll and lift-coefficient rates and the heights held between nodes; the upwind progress from the polar's courses.
+
+What it found:
+
+- The best design is wing.best_span_m in span with an aspect ratio of wing.best_ar and the AG35 airfoil, wing.best_mass_kg, with a maximum lift-to-drag ratio of wing.best_ld_max at the cycle's mean Reynolds number and wing.best_ld_glide at its own best-glide speed; it soars from wing.best_u10_min_ms with the margins and makes wing.best_upwind_vmg_u16_ms towards a target straight upwind at 16 m/s.
+- On the geometry of a 3 m thermal sailplane the polar is a few percent pessimistic against its designer's calculation, and measured 3 m sailplanes glide at about 18 to 25, so these ratios are plausible at the top end (K-014).
+- Rebuilt with the same polar and mass model, the old candidates need wing.rebuilt_albatross_u10_min_ms (the albatross-like glider), wing.rebuilt_baseline_u10_min_ms (the baseline) and wing.rebuilt_sealedhull_u10_min_ms (the sealed hull); the lower minimum winds of the form comparison came from assumed polars that were too clean and from flying without the control margins.
+- Slender wings rank lower here, but not because of their chord: brought to the same mass with ballast, an aspect ratio of 20 soars from wing.equal_mass_ar20_u10_ms and 25 from wing.equal_mass_ar25_u10_ms, better than the broad wing; they rank lower because their smaller area makes them lighter, and with the margins and the rate limits the minimum wind falls with mass up to the mass limit (K-014). Many of the most slender designs also fall below the Reynolds-number floor. The wing loading, with ballast or a heavier structure, is a variable for the next pass (Q-067).
+- A heavier skin helps: at the slope racers' areal density the minimum wind falls by wing.heavy_skin_gain_min_ms to wing.heavy_skin_gain_max_ms, half through the higher Reynolds number of the faster flight and half because the roll-rate and lift-coefficient-rate limits loosen at higher speed (K-014); a fat sensor pod (twice the drag area) costs wing.fat_pod_loss_min_ms to wing.fat_pod_loss_max_ms, and the base drag area may itself be low (the tail alone takes about that much), so the body must stay slim; the taper hardly matters.
+- Each design is a single run of a local optimizer from one start, and more starts move some results by up to a metre per second, so ranks closer than that are not reliable (K-014).
+- So on a flat sea in neutral air, with the margins a controller needs, the wind alone carries the drone only from about 13 m/s; the routes to R-02's design point are the swell (see the cycles synchronized with the waves), the extra shear under swell and in stable air (Q-061), and the motor (Q-055).
+
+## Navigation: the speed polar and the tactical layer {#navigation}
+
+The planner flies a cycle at the course it is given; which course to take towards a target is the navigation's job, and like a yacht the drone cannot sail straight into the wind (Q-066).
+Albatrosses keep headings about lit.albatross_preferred_heading_deg off the wind and route like yacht racers (P73), and can travel upwind (P43).
+
+The speed polar (`python -m sim.polar`, `sim/out/ds_polar.json`): the progress speed along each course relative to the wind, from the cycle optimizer with the control library's margins, COARE 3.5 and the roll and lift-coefficient rates, for the albatross-like glider, the baseline and the sealed hull at 9 to 20 m/s.
+
+- No form makes progress straight upwind at any wind; progress turns negative within about nav.no_progress_within_deg_min to nav.no_progress_within_deg_max of the wind's eye.
+- The best course for an upwind target is nav.best_upwind_course_off_wind_deg off the wind in every case; the progress towards a target straight upwind is then nav.albatross_upwind_vmg_u11_ms at 11 m/s to nav.albatross_upwind_vmg_u20_ms at 20 m/s for the albatross-like glider and nav.baseline_upwind_vmg_u13_ms to nav.baseline_upwind_vmg_u20_ms for the baseline.
+- Downwind the best course is straight or within 30 deg of it, so little gybing is needed.
+- With the margins the albatross-like glider soars from nav.albatross_polar_min_u10_ms and the baseline and the sealed hull from nav.baseline_polar_min_u10_ms; below that the planner's motor-assisted cycles take over.
+- The polar comes from single runs of a local optimizer on a 15 deg grid, and one row (the albatross-like glider at 11 m/s) is rough, so the angles are good to about the grid.
+
+The tactical layer (`sim/navigator.py`) chooses the course for the best progress towards the target from the polar, tacks or gybes when the other side gains more than a margin and the cost of a turn, tacks on headers when the wind direction swings, and reports when no course makes progress so that the strategic layer can wait on the water or use the motor.
+On a synthetic polar it reaches a target 10 km upwind at 94% of the ideal progress with a tack cost of 30 s, and with a wind swinging by 15 deg it arrives 27% sooner by tacking on headers than by tacking only at the laylines.
+Its connection to the planner and a closed-loop flight to a target 10 km upwind come next.
 
 ## Control modes {#control-modes}
 

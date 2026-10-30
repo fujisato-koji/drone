@@ -1158,7 +1158,7 @@ items:
     basis:
       - docs/02-form.md#receding-horizon
   - key: mpc.burst_on_share_max
-    v: 0.9
+    v: 0.92
     unit: 1
     status: calculated
     basis:
@@ -1205,6 +1205,216 @@ items:
     status: assumed
     basis:
       - Q-055
+  - key: mpc.burst_costly_baseline_u11_w
+    v: 6.42
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_costly_albatross_u9_w
+    v: 13.78
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_contact_seen_min_s
+    v: 5.8
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_contact_seen_max_s
+    v: 12.3
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_like_for_like_opt_min_w
+    v: 9.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_like_for_like_opt_max_w
+    v: 9.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: nav.best_upwind_course_off_wind_deg
+    v: 60
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_upwind_vmg_u11_ms
+    v: 3.75
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_upwind_vmg_u20_ms
+    v: 7.55
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.baseline_upwind_vmg_u13_ms
+    v: 3.0
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.baseline_upwind_vmg_u20_ms
+    v: 4.45
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.no_progress_within_deg_min
+    v: 15
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.no_progress_within_deg_max
+    v: 30
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_polar_min_u10_ms
+    v: 11
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.baseline_polar_min_u10_ms
+    v: 13
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: wing.best_span_m
+    v: 3.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.best_ar
+    v: 12
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.best_mass_kg
+    v: 1.87
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.best_ld_max
+    v: 27.5
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.best_u10_min_ms
+    v: 13.22
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.best_upwind_vmg_u16_ms
+    v: 2.34
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.rebuilt_albatross_u10_min_ms
+    v: 14.21
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.rebuilt_baseline_u10_min_ms
+    v: 14.24
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.rebuilt_sealedhull_u10_min_ms
+    v: 13.84
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.heavy_skin_gain_min_ms
+    v: 0.5
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.heavy_skin_gain_max_ms
+    v: 1.0
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.fat_pod_loss_min_ms
+    v: 0.7
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.fat_pod_loss_max_ms
+    v: 2.1
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.re_floor
+    v: 80000
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.rho_a_base_kg_m2
+    v: 1.5
+    unit: kg/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.cda_par_base_m2
+    v: 0.001
+    unit: m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.best_ld_glide
+    v: 25.1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.equal_mass_ar20_u10_ms
+    v: 12.99
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.equal_mass_ar25_u10_ms
+    v: 13.1
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.best_fat_pod_u10_ms
+    v: 14.95
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
   - key: env.charnock
     v: 0.0144
     unit: 1

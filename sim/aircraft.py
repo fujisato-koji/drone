@@ -24,6 +24,30 @@ class Aircraft:
     mu_max: float = 1.2
     n_max: float = 4.0
     rho: float = RHO_AIR
+    # Optional profile-drag terms: CD = cd0 + cdp1 CL + cdp2 CL^2 + cdp8 CL^8 + k CL^2, where cd0
+    # holds cdp0 + CDA_par / S. All zero (the default) is the parabolic polar cd0 + k CL^2.
+    cdp1: float = 0.0
+    cdp2: float = 0.0
+    cdp8: float = 0.0
+
+    @property
+    def has_polar(self):
+        return bool(self.cdp1 or self.cdp2 or self.cdp8)
+
+    def profile_extra(self, cl):
+        """cdp1 CL + cdp2 CL^2 + cdp8 CL^8 (complex-step safe)."""
+        return self.cdp1 * cl + self.cdp2 * cl * cl + self.cdp8 * cl ** 8
+
+    def cd(self, cl, k_factor=1.0):
+        """Drag coefficient at cl (k_factor multiplies the induced term)."""
+        cl = np.asarray(cl, dtype=float)
+        return self.cd0 + self.k_induced * k_factor * cl * cl + self.profile_extra(cl)
+
+    def _ld_max_cl(self):
+        from scipy.optimize import minimize_scalar
+        r = minimize_scalar(lambda c: self.cd(c) / c, bounds=(0.05, self.cl_max), method="bounded",
+                            options={"xatol": 1e-6})
+        return float(r.x)
 
     @property
     def aspect_ratio(self):
@@ -39,10 +63,15 @@ class Aircraft:
 
     @property
     def cl_best_ld(self):
+        if self.has_polar:
+            return self._ld_max_cl()
         return float(np.sqrt(self.cd0 / self.k_induced))
 
     @property
     def best_ld(self):
+        if self.has_polar:
+            c = self._ld_max_cl()
+            return float(c / self.cd(c))
         return float(1.0 / (2.0 * np.sqrt(self.cd0 * self.k_induced)))
 
     def v_level(self, cl):
@@ -58,7 +87,14 @@ class Aircraft:
 
     @property
     def min_sink(self):
-        """(speed, sink rate) at cl = sqrt(3 cd0 / k)."""
+        """(speed, sink rate) at cl = sqrt(3 cd0 / k); with the profile terms the minimum of cd/cl^1.5."""
+        if self.has_polar:
+            from scipy.optimize import minimize_scalar
+            r = minimize_scalar(lambda c: self.cd(c) / c ** 1.5, bounds=(0.05, self.cl_max),
+                                method="bounded", options={"xatol": 1e-6})
+            cl = float(r.x)
+            v = self.v_level(cl)
+            return v, float(v * self.cd(cl) / cl)
         cl = np.sqrt(3 * self.cd0 / self.k_induced)
         v = self.v_level(cl)
         cd = self.cd0 + self.k_induced * cl ** 2
@@ -259,6 +295,8 @@ def derivatives(t, s, ac, env, cl, mu, n_limit=False, thrust=0.0, ground_effect=
         D = q * (cd0 + ac.k_induced * K * cl * cl)
     else:
         D = q * (cd0 + ac.k_induced * cl * cl)
+    if ac.has_polar:
+        D = D + q * ac.profile_extra(cl)
     m = ac.mass
     dV = -D / m - G * np.sin(g) - aW @ eV
     if thrust:

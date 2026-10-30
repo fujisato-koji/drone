@@ -172,7 +172,7 @@ items:
     blocks: design_build
   - id: Q-014
     kind: question
-    text: "The wing geometry and design mass of the baseline (wing.span_m, wing.root_chord_m, wing.taper, wing.thickness_ratio, wing.design_mass_kg) and the parameters of the candidate forms (form.<candidate>.span_m, mass_kg, wing_area_m2, cd0, oswald, cl_max, taken from the aircraft registry in sim/aircraft_models.py) are assumed. They are settled by the form study: the comparison in docs/02-form.md#form-comparison and the owner's choice of a form (docs/02-form.md#candidate-forms), after which the chosen form's geometry is written as the wing keys and the others are dropped. The span and mass of the baseline candidate are wing.span_m and wing.design_mass_kg."
+    text: "The wing geometry and design mass of the baseline (wing.span_m, wing.root_chord_m, wing.taper, wing.thickness_ratio, wing.design_mass_kg) and the parameters of the candidate forms (form.<candidate>.span_m, mass_kg, wing_area_m2, cd0, oswald, cl_max, taken from the aircraft registry in sim/aircraft_models.py) are assumed. They are settled by the form study: the comparison in docs/02-form.md#form-comparison and the owner's choice of a form (docs/02-form.md#candidate-forms), after which the chosen form's geometry is written as the wing keys and the others are dropped. The span and mass of the baseline candidate are wing.span_m and wing.design_mass_kg. Update 2026-10-30: the polar and the mass now come from measured airfoil data and sailplane data in the wing-sizing study (docs/02-form.md#wing-sizing); the candidates' assumed polars were too clean."
     waits_for: assistant
     affects:
       - wing.span_m
@@ -330,7 +330,7 @@ items:
     phase: design
   - id: Q-024
     kind: finding
-    text: "The collocation optimizer (docs/02-form.md#form-comparison) found that no candidate form sustains a travelling cycle at ds.min_u10_ms. The lowest minimum wind is form.albatross_3m.u10_min_travel_log, which is also the candidate with the highest wing loading of the six, and the validation against P45 gave dsopt.validation_u10_ms where P45 gives lit.min_u10_albatross_ms. With the corrections of K-007 the gap narrowed, and under the roughness the soaring literature uses (z0 = 0.03 m) the baseline, the albatross-like glider, the sealed hull and the small demonstrator all come below ds.min_u10_ms (form.<candidate>.u10_min_travel_log_z003), so the answer first depended on which roughness the open sea has (Q-008); that roughness turned out to be a land value, and the open sea in neutral air has about half its shear (docs/02-form.md#sea-roughness), so on a flat sea in neutral air the gap stands, and the routes left are a higher lift-to-drag ratio, the waves (Q-058) and the extra shear under swell and in stable air (Q-061). K-009 found that the minimum wind scales about as the inverse of the lift-to-drag ratio and hardly with the wing loading, so the lever is the lift-to-drag ratio, which is assumed for every candidate (Q-014). After that, the owner decides which to change, with the current and the proposed design side by side: lower the wing loading (a lighter or larger wing, against ds.mass_max_kg and ds.span_max_m), change the form, or raise the design wind of R-02 (ds.min_u10_ms)."
+    text: "The collocation optimizer (docs/02-form.md#form-comparison) found that no candidate form sustains a travelling cycle at ds.min_u10_ms. The lowest minimum wind is form.albatross_3m.u10_min_travel_log, which is also the candidate with the highest wing loading of the six, and the validation against P45 gave dsopt.validation_u10_ms where P45 gives lit.min_u10_albatross_ms. With the corrections of K-007 the gap narrowed, and under the roughness the soaring literature uses (z0 = 0.03 m) the baseline, the albatross-like glider, the sealed hull and the small demonstrator all come below ds.min_u10_ms (form.<candidate>.u10_min_travel_log_z003), so the answer first depended on which roughness the open sea has (Q-008); that roughness turned out to be a land value, and the open sea in neutral air has about half its shear (docs/02-form.md#sea-roughness), so on a flat sea in neutral air the gap stands, and the routes left are a higher lift-to-drag ratio, the waves (Q-058) and the extra shear under swell and in stable air (Q-061). K-009 found that the minimum wind scales about as the inverse of the lift-to-drag ratio and hardly with the wing loading, so the lever is the lift-to-drag ratio, which is assumed for every candidate (Q-014). After that, the owner decides which to change, with the current and the proposed design side by side: lower the wing loading (a lighter or larger wing, against ds.mass_max_kg and ds.span_max_m), change the form, or raise the design wind of R-02 (ds.min_u10_ms). Update 2026-10-30: with measured airfoil data, a body drag area and the control margins, no wing soars below about wing.best_u10_min_ms on a flat sea in neutral air (docs/02-form.md#wing-sizing)."
     waits_for: "assistant, then owner"
     affects:
       - R-02
@@ -791,5 +791,16 @@ items:
       - R-02
       - Q-057
     raised_by: owner
+    phase: design
+    opened: 2026-10-30
+  - id: Q-067
+    kind: finding
+    text: "The wing-sizing study (docs/02-form.md#wing-sizing) fixed the mass by the wing's size, so the lighter slender wings ranked lower, while at equal mass they soar from less wind (K-014); and each design was solved from one start. Rerun with the wing loading as a variable (ballast or a heavier structure up to ds.mass_max_kg), several starts per design, the body drag area built up from pod, boom, tail and linkages, the taper offset of Nita and Scholz, and the objectives of the soaring minimum, the upwind progress, and the motor power below the minimum, since a heavier aircraft also costs more energy when the wind fails."
+    waits_for: assistant
+    affects:
+      - R-02
+      - ds.mass_max_kg
+      - Q-024
+    raised_by: checker
     phase: design
     opened: 2026-10-30
