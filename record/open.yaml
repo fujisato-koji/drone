@@ -774,7 +774,7 @@ items:
     opened: 2026-10-30
   - id: Q-065
     kind: question
-    text: "Can the receding-horizon planner run on board in real time? In the simulation the clock stops while it plans; on a PC in Python one replan took 0.15 s on average with a flat-sea world, 0.45 to 0.52 s with a fitted wave world and 2.4 s (7.5 s at most) with the true sea of 48 components (sim/out/mpc.json), against a replan interval of 0.5 s. Settled by a planner implementation sized for an on-board computer (compiled code, fewer samples, the cycle library as the seed), its measured time per replan, and the mass and power of that computer in the power budget (Q-012)."
+    text: "Can the receding-horizon planner run on board in real time? In the simulation the clock stops while it plans; on a PC in Python one replan took 0.15 s on average with a flat-sea world, 0.45 to 0.52 s with a fitted wave world and 2.4 s (7.5 s at most) with the true sea of 48 components (sim/out/mpc.json), against a replan interval of 0.5 s. Settled by a planner implementation sized for an on-board computer (compiled code, fewer samples, the cycle library as the seed), its measured time per replan, and the mass and power of that computer in the power budget (Q-012). Update 2026-10-30: the same planner ported to JavaScript plans in about mpc.js_plan_flat_ms (flat world) and mpc.js_plan_truth_ms (true sea of 48 components) in node (docs/02-form.md#viewer), which suggests compiled code on a small computer can meet the interval; the on-board time is still to be measured."
     waits_for: assistant
     affects:
       - Q-057

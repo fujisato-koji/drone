@@ -1115,6 +1115,18 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-cycles
+  - key: mpc.js_plan_flat_ms
+    v: 6.7
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_plan_truth_ms
+    v: 123
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
   - key: env.charnock
     v: 0.0144
     unit: 1

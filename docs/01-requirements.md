@@ -220,6 +220,8 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | dsopt.wave4_baseline_floor_period_min_s | 16.3 | s | calculated | docs/02-form.md#wave-cycles |
 | dsopt.wave4_baseline_floor_period_max_s | 37 | s | calculated | docs/02-form.md#wave-cycles |
 | dsopt.wave4_period_bound_s | 60 | s | calculated | docs/02-form.md#wave-cycles |
+| mpc.js_plan_flat_ms | 6.7 | ms | calculated | docs/02-form.md#viewer |
+| mpc.js_plan_truth_ms | 123 | ms | calculated | docs/02-form.md#viewer |
 | env.charnock | 0.0144 | 1 | assumed | Q-008 |
 | env.air_kinematic_viscosity | 1.46e-05 | m2/s | assumed | Q-008 |
 | env.jonswap_gamma | 3.3 | 1 | assumed | Q-008 |
