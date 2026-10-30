@@ -273,5 +273,25 @@ class TestMotorSolve(unittest.TestCase):
         self.assertGreater(res[4.0], 5.0)
 
 
+class TestReplayWithMotorAndGroundEffect(unittest.TestCase):
+    """The dense replay and the mesh resampling of the wave work carry the motor and ground effect."""
+
+    def test_replay_closes_and_resample_keeps_thrust(self):
+        from sim.dsopt import _resample, dense_replay, profile_for, solve
+        ac = by_name("baseline-2m")
+        info, x, col = solve(ac, profile_for(6.0, roughness="coare35"), "min_power", "travel", 24,
+                             u10=6.0, chi=0.349, motor=True, ground_effect=True,
+                             tip_model="geometric", midpoints=True, seeds=(0,), stop_after=1,
+                             maxiter=400, return_x=True)
+        rc = dense_replay(col, x)
+        self.assertLess(rc["rc_closure_h"], 0.05)
+        self.assertLess(rc["rc_closure_V_rel"], 0.01)
+        c2 = Collocation(ac, col.prof, "min_power", "travel", 48, 6.0, 0.349,
+                         tip_model="geometric", midpoints=True, motor=True, ground_effect=True)
+        x2 = _resample(col, x, c2)
+        self.assertEqual(len(x2), c2.nv)
+        self.assertAlmostEqual(float(c2.thrust(x2).mean()), float(col.thrust(x).mean()), delta=0.05)
+
+
 if __name__ == "__main__":
     unittest.main()

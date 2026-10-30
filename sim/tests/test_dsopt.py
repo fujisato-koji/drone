@@ -4,8 +4,9 @@ import numpy as np
 
 from sim.aircraft import BASELINE, derivatives
 from sim.aircraft_models import by_name
-from sim.dsopt import (Collocation, Profile, WaveParams, derivs, profile_for, sachs_albatross,
-                       solve, solve_min_wind, wave_wind_accel)
+from sim.dsopt import (Collocation, Profile, WaveParams, _apply_preset, _resample, dense_replay,
+                       derivs, profile_for, sachs_albatross, solve, solve_min_wind,
+                       wave_preset_params, wave_wind_accel)
 from sim.record import value
 from sim.seawind import Environment, Wind
 
@@ -324,6 +325,65 @@ class TestAgainstEnvironment(unittest.TestCase):
                     worst, where = err, (t, x, h, float(env.shelter_r(x, y, t)))
         self.assertLess(worst, 0.1, where)
         print("env comparison: max |dW| = %.4f m/s at (t, x, h, r) = %s" % (worst, where))
+
+class TestReplayRefinePreset(unittest.TestCase):
+    def test_presets(self):
+        self.assertIsNone(wave_preset_params("model"))
+        p63 = wave_preset_params("p63")
+        self.assertEqual(p63["w_scale"], value("lit.wave_induced_amp_w", 1.07))
+        self.assertEqual(p63["decay"], (value("lit.wave_induced_decay_u", 0.77),
+                                        value("lit.wave_induced_decay_w", 0.62)))
+        self.assertEqual(p63["u_scale"], 1.0)
+        low = wave_preset_params("p64_low")
+        self.assertEqual(low["w_scale"], 0.6)
+        self.assertEqual(low["decay"], p63["decay"])
+        w = _apply_preset({"a": 1.0, "wavelength": 60.0, "to_deg": 0.0, "w_scale": 0.3}, "p63")
+        self.assertEqual(w["w_scale"], 0.3)       # explicit values win
+        self.assertEqual(w["decay"], p63["decay"])
+        self.assertNotIn("w_scale", _apply_preset({"a": 1.0}, "model"))
+        with self.assertRaises(ValueError):
+            _apply_preset({"a": 1.0}, "nope")
+
+    def test_resample_roundtrip(self):
+        col = Collocation(by_name("baseline-2m"), profile_for(8.0), "min_wind", "travel", 30,
+                          wave={"a": 1.0, "wavelength": 60.0, "to_deg": 0.0})
+        x = col.guess(np.random.default_rng(0))
+        col2 = Collocation(by_name("baseline-2m"), profile_for(8.0), "min_wind", "travel", 59,
+                           wave={"a": 1.0, "wavelength": 60.0, "to_deg": 0.0})
+        x2 = _resample(col, x, col2)
+        self.assertEqual(x2.size, col2.nv)
+        S, C, T, u = col.unpack(x)
+        S2, C2, T2, u2 = col2.unpack(x2)
+        self.assertAlmostEqual(T, T2)
+        self.assertAlmostEqual(u, u2)
+        np.testing.assert_allclose(S2[::2], S, atol=1e-6)
+        self.assertAlmostEqual(col.phi0(x), col2.phi0(x2))
+
+    def test_dense_replay_flat_cycle_and_a_spoiled_one(self):
+        info, x, col = solve(by_name("baseline-2m"), profile_for(12.0), "min_wind", "travel", 30,
+                             h_min=1.0, tip_model="geometric", midpoints=True, seeds=(0, 1, 2),
+                             stop_after=1, replay_check=True, return_x=True)
+        self.assertTrue(info["success"], info["message"])
+        self.assertTrue(info["replay_pass"])
+        self.assertLess(info["rc_closure_h"], 0.05)
+        self.assertLess(info["rc_closure_V_rel"], 0.01)
+        self.assertGreater(info["rc_n_max"], 1.0)
+        # one node pushed 0.5 m: the interval before it no longer closes
+        bad = x.copy()
+        bad[col.N * 0 + 15 * 6 + 2] += 0.5 / col.sc[15 * 6 + 2]
+        rc = dense_replay(col, bad)
+        self.assertFalse(rc["replay_pass"])
+        self.assertGreater(rc["rc_closure_h"], 0.05)
+
+    def test_refine_adds_nodes_to_reach_dt_max(self):
+        info = solve(by_name("baseline-2m"), profile_for(12.0), "min_wind", "travel", 16,
+                     h_min=1.0, tip_model="geometric", midpoints=True, seeds=(0, 1, 2),
+                     stop_after=1, refine=True, dt_max=0.25)
+        if info["success"]:
+            self.assertGreaterEqual(info["n_nodes"], int(np.ceil(info["period"] / 0.25)) + 1)
+            self.assertTrue(info["refined"])
+            self.assertEqual(info["n_nodes_initial"], 16)
+            self.assertTrue(info["replay_pass"])
 
 
 if __name__ == "__main__":

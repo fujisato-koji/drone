@@ -1099,5 +1099,208 @@ def ground_motor_study(path=GROUND_MOTOR_PATH, workers=4, n_motor=24, seeds=(0, 
     return out
 
 
+WAVE4_PATH = os.path.join("sim", "out", "dsopt_wave4.json")
+WAVE4_MARGINS = {"margins": (2.0, 0.8, 0.9, 1.2), "none": (1.0, 1.0, 1.0, 1.1)}
+WAVE4_PRESETS = ("p63", "p64_low")
+WAVE4_TP = (8.0, 11.0)
+WAVE4_HS = (1.0, 3.0)
+WAVE4_KEYS = ("success", "converged", "violation", "u10", "period", "n_max", "z0", "z_min",
+              "mu_max_deg", "ground_speed", "runtime_s", "m", "phi0", "theta_at_h_min_deg",
+              "eta_over_a_at_h_min", "h_min_position", "u10_at_floor", "h_node_min", "h_mid_min",
+              "h_min_achieved", "n_nodes", "n_nodes_initial", "refined", "refine_steps",
+              "replay_pass_initial", "n_nodes_first", "replay_pass_first", "replay_pass", "rc_closure_h", "rc_closure_V",
+              "rc_closure_V_rel", "rc_closure_gamma", "rc_closure_psi", "rc_h_min", "rc_tip_min",
+              "rc_n_max", "rc_n_min", "bank_rate_over_limit_max", "cl_rate_max_per_s", "message")
+
+
+def _solve_wave4(ac, wave, preset, margins, n, seeds, starts):
+    """Best of the warm starts (x vectors of any mesh) and, if none succeeded, the cold seeds.
+    wave None: the flat-sea reference with the same settings. A warm start also sets the u10
+    at which the roughness iteration begins; tol_u10 is 0.05 m/s."""
+    from sim.dsopt import solve_min_wind
+    h_min, n_frac, mu_frac, v_factor = margins
+    kw = dict(cycle="travel", n=n, h_min=h_min, n_frac=n_frac, mu_frac=mu_frac,
+              v_factor=v_factor, tip_model="geometric", z0_mode="self_consistent",
+              roughness="coare35", wave=wave, wave_preset=preset, return_x=True,
+              midpoints=True, rate_limits=True, rate_model="pb2v", n_min=0.0,
+              phase_pin="theta", m_search=(-1, 0, 1), replay_check=True, refine=True,
+              tol_u10=0.05, maxiter=150)
+    best = None
+    for x0 in starts:
+        c = solve_min_wind(ac, x0=x0, seeds=seeds, stop_after=1, cold_fallback=False,
+                           u10_ref=max(float(x0[-2]) * 10.0, 0.5), **kw)
+        if _better(c[0], best[0] if best else None):
+            best = c
+    if best is None or not best[0]["success"]:
+        c = solve_min_wind(ac, seeds=seeds, stop_after=1, **kw)
+        if _better(c[0], best[0] if best else None):
+            best = c
+    return best
+
+
+def wave4_flat_task(job):
+    name, mlabel, n, seeds = job
+    t0 = time.time()
+    c = _solve_wave4(by_name(name), None, "model", WAVE4_MARGINS[mlabel], n, seeds, [])
+    info = c[0]
+    print("flat %s %s: ok=%s u10=%.2f T=%.2f n=%s (%.0f s)" % (
+        name, mlabel, info["success"], info["u10"], info["period"], info["n_nodes"],
+        time.time() - t0), flush=True)
+    return [dict({k: info.get(k) for k in WAVE4_KEYS}, aircraft=name, margin_set=mlabel,
+                 kind="flat", margins=list(WAVE4_MARGINS[mlabel]))], {}
+
+
+def wave4_chain_task(job):
+    """One (aircraft, Tp, margin set, preset): across chain over Hs, then along chain started from
+    the rotated across solutions (the third sweep of wave study 3 is left out); `earlier` holds
+    the solutions of another preset for the same cases, used as further starts. Cases not
+    started before the deadline (epoch seconds) are returned as not run. Returns (rows, xs)."""
+    from sim.dsopt import rotate_start
+    name, tp, mlabel, preset, n, seeds, hs_list, deadline, earlier = job
+    ac = by_name(name)
+    margins = WAVE4_MARGINS[mlabel]
+    lam = 9.81 * tp * tp / (2.0 * np.pi)
+    dirs = {"across": 90.0, "along": 0.0}
+    res = {d: {} for d in dirs}
+
+    def sweep(dlabel, other):
+        prev = None
+        for hs in hs_list:
+            if time.time() > deadline:
+                return
+            t0 = time.time()
+            wave = {"a": hs / 2.0, "wavelength": lam, "to_deg": dirs[dlabel]}
+            starts = []
+            if (dlabel, hs) in earlier:
+                starts.append(earlier[(dlabel, hs)])
+            if prev is not None:
+                starts.append(prev)
+            if other is not None and hs in res[other] and res[other][hs][0]["success"]:
+                _, xo, colo = res[other][hs]
+                starts.append(rotate_start(colo, xo, dirs[dlabel] - dirs[other]))
+            c = _solve_wave4(ac, wave, preset, margins, n, seeds, starts)
+            res[dlabel][hs] = c
+            if c[0]["success"]:
+                prev = c[1]
+            print("%s Tp=%g %s %s %s Hs=%g: ok=%s u10=%.2f T=%.2f m=%s n=%s %s (%.0f s)" % (
+                name, tp, mlabel, preset, dlabel, hs, c[0]["success"], c[0]["u10"],
+                c[0]["period"], c[0]["m"], c[0]["n_nodes"], c[0]["h_min_position"],
+                time.time() - t0), flush=True)
+
+    sweep("across", None)
+    sweep("along", "across")
+    rows, xs = [], {}
+    for dlabel in dirs:
+        for hs in hs_list:
+            base = dict(aircraft=name, hs=hs, tp=tp, direction=dlabel, to_deg=dirs[dlabel],
+                        a=hs / 2.0, wavelength=lam, preset=preset, margin_set=mlabel,
+                        margins=list(margins), kind="wave")
+            if hs not in res[dlabel]:
+                rows.append(dict(base, success=False, not_run=True))
+                continue
+            info = res[dlabel][hs][0]
+            rows.append(dict({k: info.get(k) for k in WAVE4_KEYS}, **base))
+            if info["success"]:
+                xs[(dlabel, hs)] = res[dlabel][hs][1]
+    return rows, xs
+
+
+def wave4_tables(rows):
+    flat = {(r["aircraft"], r["margin_set"]): r for r in rows if r["kind"] == "flat"}
+    waves = [r for r in rows if r["kind"] == "wave"]
+    out = []
+    for key, r in sorted(flat.items()):
+        out.append("flat %s %s: %s u10 %.2f T %.2f n %s" % (
+            key[0], key[1], "ok" if r["success"] else "FAILED", r["u10"], r["period"],
+            r["n_nodes"]))
+    head = ["aircraft", "margins", "preset", "Tp", "dir", "Hs", "u10 (flat)", "T", "m",
+            "low turn on", "n max", "n nodes (final/first)", "first mesh closed"]
+    body = []
+    for r in sorted(waves, key=lambda r: (r["aircraft"], r["margin_set"], r["preset"], r["tp"],
+                                          r["direction"], r["hs"])):
+        if r.get("not_run"):
+            body.append([r["aircraft"], r["margin_set"], r["preset"], "%g" % r["tp"], r["direction"],
+                         "%g" % r["hs"], "not run", "", "", "", "", ""])
+            continue
+        f = flat.get((r["aircraft"], r["margin_set"]))
+        fu = "%.2f" % f["u10"] if f and f["success"] else "-"
+        u = ("%.2f" % r["u10"]) + ("*" if r.get("u10_at_floor") and r["success"] else "")
+        if not r["success"]:
+            u = "fail"
+        body.append([r["aircraft"], r["margin_set"], r["preset"], "%g" % r["tp"], r["direction"],
+                     "%g" % r["hs"], "%s (%s)" % (u, fu), "%.1f" % (r["period"] or 0),
+                     str(r["m"]), str(r["h_min_position"]),
+                     "%.2f" % (r["rc_n_max"] or 0),
+                     "%s/%s" % (r["n_nodes"], r.get("n_nodes_first")),
+                     {True: "yes", False: "no"}.get(r.get("replay_pass_first"), "-")])
+    out.append(_md(head, body))
+    out.append("* = u10 at the floor (waves alone carry the cycle)")
+    return "\n".join(out)
+
+
+def wave_study4(path=WAVE4_PATH, n=30, seeds=(0,), workers=4, names=WAVE_AIRCRAFT,
+                hs_list=WAVE4_HS, tps=WAVE4_TP, presets=WAVE4_PRESETS,
+                margin_sets=("margins", "none"), budget_s=40 * 60, with_flat=True):
+    """Fourth wave pass (Q-058, Q-059, K-011): calibrated wave wind (P63 and the P64 low bound),
+    COARE 3.5 roughness, replay check and mesh refinement on, with and without the control
+    library's margins, next to the flat-sea value with the same settings. Writes path after every
+    finished job. The presets run as phases (the first preset for all (aircraft, Tp, margins),
+    then the next, started also from the first one's solutions); no case is started once the
+    budget (seconds) is used, and such cases are written as not run."""
+    from multiprocessing import Pool
+    from sim import record
+    t_start = time.time()
+    settings = {"n_nodes_start": n, "seeds": list(seeds), "roughness": "coare35",
+                "z0_mode": "self_consistent", "tol_u10": 0.05, "tip_model": "geometric",
+                "midpoints": True, "rate_model": "pb2v", "roll_pb2v": 0.08,
+                "cl_rate_max_per_s": 1.0, "n_min": 0.0, "phase_pin": "theta",
+                "m_search": [-1, 0, 1], "replay_check": True, "refine": True,
+                "dt_max_s": 0.25, "n_cap": 160, "refine_tries": 2, "refine_maxiter": 100,
+                "maxiter": 150,
+                "u10_floor": 0.1, "sweeps": "across over Hs, along over Hs from rotated across",
+                "margin_sets": {k: dict(zip(("h_min", "n_frac", "mu_frac", "v_factor"),
+                                            WAVE4_MARGINS[k])) for k in margin_sets},
+                "presets": list(presets), "hs": list(hs_list), "tp": list(tps),
+                "aircraft": list(names), "budget_s": budget_s}
+    meta = record.meta("python -m sim.dsopt --wave-study4", _record_files())
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    rows = []
+
+    def dump(done):
+        result = {"meta": meta, "settings": settings, "complete": done, "rows": rows,
+                  "runtime_s": time.time() - t_start}
+        with open(path, "w", newline=chr(10)) as fh:
+            json.dump(result, fh, indent=1)
+            fh.write(chr(10))
+        return result
+
+    deadline = t_start + budget_s
+    with Pool(workers) as pool:
+        if with_flat:
+            asyncs = [pool.apply_async(wave4_flat_task, ((nm, ml, n, tuple(seeds) + (3,)),))
+                      for nm in names for ml in margin_sets]
+            for a in asyncs:
+                rows += a.get()[0]
+            dump(False)
+        prev = {}   # (aircraft, tp, margin set) -> solutions of the previous preset
+        for preset in presets:
+            keys = [(nm, tp, ml) for nm in names for tp in tps for ml in margin_sets]
+            asyncs = [(k, pool.apply_async(wave4_chain_task, ((k[0], k[1], k[2], preset, n, seeds,
+                                                               hs_list, deadline,
+                                                               prev.get(k, {})),)))
+                      for k in keys]
+            new = {}
+            for k, a in asyncs:
+                r, xs = a.get()
+                rows += r
+                new[k] = xs
+                dump(False)
+            prev = new
+    result = dump(True)
+    print(wave4_tables(rows))
+    print("runtime %.0f s" % result["runtime_s"])
+    return result
+
+
 if __name__ == "__main__":
     run()
