@@ -104,7 +104,7 @@ items:
     blocks: design_build
   - id: Q-009
     kind: question
-    text: "Settle the assumed design points of the dynamic soaring drone from the albatross and demonstrator literature and from the simulation. ds.mass_max_kg and ds.span_max_m: settled by the form comparison in docs/02-form.md#form-comparison and by what one person can carry, which is the owner's decision. ds.avionics_power_w: settled by the power budget of Q-012. ds.n_limit and ds.safety_factor: settled by loads from the simulation, with lit.cs22_limit_load_factor and lit.atlantiksolar_load_factor as references. ds.survival_hs_m: settled by the sea statistics of P61 and P62 and the water tests of R-05. ds.altitude_band_max_m and ds.clearance_min_m: settled by the simulation of the shear layer and by the owner on safe height (Q-013). ds.photo_bytes waits for the owner's choice of what the image is for. The owner confirmed R-01 to R-12 with these numbers still assumed (D-011), so each change of a value that a design point cites is for the owner to decide."
+    text: "Settle the assumed design points of the dynamic soaring drone from the albatross and demonstrator literature and from the simulation. ds.mass_max_kg and ds.span_max_m: settled by the form comparison in docs/02-form.md#form-comparison and by what one person can carry, which is the owner's decision. ds.avionics_power_w: settled by the power budget of Q-012. ds.n_limit and ds.safety_factor: settled by loads from the simulation, with lit.cs22_limit_load_factor and lit.atlantiksolar_load_factor as references. ds.survival_hs_m: settled by the sea statistics of P61 and P62 and the water tests of R-05. ds.altitude_band_max_m and ds.clearance_min_m: settled by the simulation of the shear layer and by the owner on safe height (Q-013). ds.photo_bytes waits for the owner's choice of what the image is for. The owner confirmed R-01 to R-12 with these numbers still assumed (D-011), so each change of a value that a design point cites is for the owner to decide. Update 2026-10-31 (docs/02-form.md#wind-climate): in the Southern Ocean the significant wave height is at or above ds.survival_hs_m in climate.so_weak_dsmin_hs_survival_share of the hours below ds.min_u10_ms, when R-05 puts the drone on the water, and in climate.so_year_hs_survival_share of all hours; in the North Pacific climate.np_weak_dsmin_hs_survival_share and climate.np_year_hs_survival_share, in the home area climate.home_weak_dsmin_hs_survival_share and climate.home_year_hs_survival_share."
     waits_for: "assistant, then owner"
     affects:
       - R-02
@@ -151,7 +151,7 @@ items:
     opened: 2026-10-29
   - id: Q-012
     kind: finding
-    text: "The baseline's wing carries an average of patterns.solar_avg_baseline_w of solar power against ds.avionics_power_w of avionics, so R-08 cannot be met as the design point stands; a year aloft needs average avionics power cut to a fraction of a watt by sleeping between tasks, more solar area, or both, and the darkest design day (lit.insolation_50s_june_kwh_m2_day) makes it harder. Settle the power budget before the form is chosen."
+    text: "The baseline's wing carries an average of patterns.solar_avg_baseline_w of solar power against ds.avionics_power_w of avionics, so R-08 cannot be met as the design point stands; a year aloft needs average avionics power cut to a fraction of a watt by sleeping between tasks, more solar area, or both, and the darkest design day (lit.insolation_50s_june_kwh_m2_day) makes it harder. Settle the power budget before the form is chosen. Update 2026-10-31 (docs/02-form.md#wind-climate): on the darkest design day the best wing would yield climate.solar_day_best_so_wh in the Southern Ocean and climate.solar_day_best_home_wh in the home area against climate.avionics_day_wh for the avionics (with the pattern study's cell assumptions), and floating through the 99th percentile spell below wing.best_u10_min_ms takes climate.so_best_float_p99_wh and climate.home_best_float_p99_wh with no solar credited."
     waits_for: assistant
     affects:
       - R-08
@@ -162,7 +162,7 @@ items:
     blocks: design_build
   - id: Q-013
     kind: finding
-    text: "Wave-slope soaring is sustainable for most candidates only near the surface (the analysis put its floor at patterns.wave_slope_floor_m) and only over swell of about 8 s period, below the clearance of R-12 (ds.clearance_min_m); either R-12 gets a lower floor for wave-slope flight, which is the owner's decision, or wave-slope soaring is not a usable pattern for these sizes. Rerun the analysis with the floor at ds.clearance_min_m."
+    text: "Wave-slope soaring is sustainable for most candidates only near the surface (the analysis put its floor at patterns.wave_slope_floor_m) and only over swell of about 8 s period, below the clearance of R-12 (ds.clearance_min_m); either R-12 gets a lower floor for wave-slope flight, which is the owner's decision, or wave-slope soaring is not a usable pattern for these sizes. Rerun the analysis with the floor at ds.clearance_min_m. Update 2026-10-31 (docs/02-form.md#wind-climate): swell of 3 m or more is present in climate.so_weak_dsmin_swell3_share of the hours below ds.min_u10_ms in the Southern Ocean, climate.np_weak_dsmin_swell3_share in the North Pacific and climate.home_weak_dsmin_swell3_share in the home area, at a median peak period of climate.so_weak_dsmin_tp_s, climate.np_weak_dsmin_tp_s and climate.home_weak_dsmin_tp_s where it is 2 m or more."
     waits_for: assistant
     affects:
       - R-12
@@ -666,7 +666,7 @@ items:
     closed_by: K-009
   - id: Q-055
     kind: question
-    text: "Birds lighter than about 1.5 kg flap during the upwind climb and only the 9.6 kg wandering albatross gains energy by rolling alone (P84); the only funded competitor building a year-long soaring drone carries propellers (S2), and no real UAV has flown energy-positive soaring yet. Should R-02 (energy from the wind shear only) stay, or should the project stage it, with motor-assisted cycles first and wind-only cycles as the aim? Update 2026-10-30 (docs/02-form.md#ground-motor): with sourced propulsion values a calm day of motor flight costs about motor.baseline_calm_day_wh for the baseline and motor.albatross_calm_day_wh for the albatross-like glider, so motor assist can bridge hours, not calm days."
+    text: "Birds lighter than about 1.5 kg flap during the upwind climb and only the 9.6 kg wandering albatross gains energy by rolling alone (P84); the only funded competitor building a year-long soaring drone carries propellers (S2), and no real UAV has flown energy-positive soaring yet. Should R-02 (energy from the wind shear only) stay, or should the project stage it, with motor-assisted cycles first and wind-only cycles as the aim? Update 2026-10-30 (docs/02-form.md#ground-motor): with sourced propulsion values a calm day of motor flight costs about motor.baseline_calm_day_wh for the baseline and motor.albatross_calm_day_wh for the albatross-like glider, so motor assist can bridge hours, not calm days. Update 2026-10-31 (docs/02-form.md#wind-climate): in ERA5 from 2005 to 2024 the 90th percentile spell below ds.min_u10_ms costs the albatross-like glider climate.so_albatross_motor_p90_wh on the motor in the Southern Ocean and climate.home_albatross_motor_p90_wh in the home area, against climate.so_albatross_float_p90_wh and climate.home_albatross_float_p90_wh floating, so the motor bridges hours and the drone floats through the rest, as the birds do."
     waits_for: owner
     affects:
       - R-02
@@ -816,7 +816,7 @@ items:
     opened: 2026-10-30
   - id: Q-069
     kind: question
-    text: "Should the drone carry variable ballast, water taken from the sea and dumped to it, so that it soars heavy in strong wind (the soaring minimum falls with the wing loading up to ds.mass_max_kg, Q-067) and flies light on the motor in weak wind (the motor power rises with the mass)? It costs a pump, a tank and a dump valve, and a way to take water on at sea, and it works against a sealed hull."
+    text: "Should the drone carry variable ballast, water taken from the sea and dumped to it, so that it soars heavy in strong wind (the soaring minimum falls with the wing loading up to ds.mass_max_kg, Q-067) and flies light on the motor in weak wind (the motor power rises with the mass)? It costs a pump, a tank and a dump valve, and a way to take water on at sea, and it works against a sealed hull. Update 2026-10-31 (docs/02-form.md#wind-climate): the wind is below ds.min_u10_ms for climate.so_year_below_dsmin_share of the hours in the Southern Ocean and climate.home_year_below_dsmin_share in the home area, and below wing.best_u10_min_ms for climate.so_year_below_best_share and climate.home_year_below_best_share, which is how the time would split between heavy and light flight."
     waits_for: owner
     affects:
       - Q-067
@@ -824,3 +824,14 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-10-30
+  - id: Q-071
+    kind: finding
+    text: "The home operating area (private:loc-01) is a weak-wind sea beside the albatross regions (docs/02-form.md#wind-climate): its year mean 10 m wind is climate.home_year_u10_mean_ms against climate.so_year_u10_mean_ms in the Southern Ocean and climate.np_year_u10_mean_ms in the North Pacific, the wind is below ds.min_u10_ms for climate.home_year_below_dsmin_share of the hours and below wing.best_u10_min_ms for climate.home_year_below_best_share, and in the hours below ds.min_u10_ms swell of 3 m or more is present only climate.home_weak_dsmin_swell3_share of the time. A year aloft there would be spent mostly on the water or on the motor; floating through its 99th percentile spell below wing.best_u10_min_ms takes climate.home_best_float_p99_wh. Decide what the home area is for (tests of floating, take-off and motor legs, or the year-long flight) and where the year-long flight is meant to happen."
+    waits_for: owner
+    affects:
+      - R-02
+      - R-08
+      - Q-048
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-31

@@ -157,6 +157,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | mpc.margin_sea_survival_min_s | 4 | s | calculated | docs/02-form.md#receding-horizon |
 | mpc.margin_sea_survival_max_s | 82 | s | calculated | docs/02-form.md#receding-horizon |
 | lit.bird_experienced_wind_ms | 8.7 | m/s | sourced | P73 |
+| lit.bird_experienced_wind_sd_ms | 3.4 | m/s | sourced | P73 |
 | lit.bird_flapping_time_fraction | 0.046 | 1 | sourced | P81 |
 | lit.bird_flapping_energy_fraction | 0.133 | 1 | sourced | P81 |
 | dsopt.sachs_coare_dw_ms | 4.02 | m/s | calculated | docs/02-form.md#energy-sources |
@@ -845,6 +846,413 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | autonomy.waves_truth_crash_s | 73 | s | calculated | docs/02-form.md#autonomy-check |
 | autonomy.max_load_factor_waves | 7.34 | 1 | calculated | docs/02-form.md#autonomy-check |
 | autonomy.guard_floor_m | 0.5 | m | assumed | Q-051 |
+| climate.so_djf_u10_mean_ms | 10.06 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_u10_p10_ms | 5.33 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_u10_p50_ms | 10.14 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_u10_p90_ms | 14.56 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_below_u6_share | 0.133 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_below_dsmin_share | 0.281 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_below_skim11_share | 0.591 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_below_best_share | 0.779 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_u10_mean_ms | 10.94 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_u10_p10_ms | 5.89 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_u10_p50_ms | 11.04 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_u10_p90_ms | 15.76 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_below_u6_share | 0.105 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_below_dsmin_share | 0.22 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_below_skim11_share | 0.495 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_below_best_share | 0.683 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_u10_mean_ms | 11.38 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_u10_p10_ms | 6.01 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_u10_p50_ms | 11.59 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_u10_p90_ms | 16.35 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_below_u6_share | 0.099 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_below_dsmin_share | 0.203 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_below_skim11_share | 0.445 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_below_best_share | 0.623 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_u10_mean_ms | 11.15 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_u10_p10_ms | 6.15 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_u10_p50_ms | 11.28 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_u10_p90_ms | 15.9 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_below_u6_share | 0.093 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_below_dsmin_share | 0.204 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_below_skim11_share | 0.471 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_below_best_share | 0.661 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_u10_mean_ms | 10.88 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_u10_p10_ms | 5.82 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_u10_p50_ms | 10.99 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_u10_p90_ms | 15.72 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_below_u6_share | 0.107 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_below_dsmin_share | 0.227 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_below_skim11_share | 0.5 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_below_best_share | 0.686 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_u10_std_ms | 3.79 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_p50_h | 6 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_p90_h | 20 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_p99_h | 46 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_max_h | 93 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_ge24h_share | 0.271 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_p50_h | 7 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_p90_h | 28 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_p99_h | 71 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_max_h | 169 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_ge24h_share | 0.459 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim11_p50_h | 10 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim11_p90_h | 48 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim11_p99_h | 135 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim11_max_h | 362 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim11_ge24h_share | 0.702 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_p50_h | 13 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_p90_h | 72 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_p99_h | 215 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_max_h | 532 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_ge24h_share | 0.82 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_hs_survival_share | 0.424 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_hs2_share | 0.88 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_hs3_share | 0.374 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_swell2_share | 0.848 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_swell3_share | 0.351 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_hs_survival_share | 0.091 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_tp_s | 11.8 | s | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_hs2_share | 0.902 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_hs3_share | 0.413 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_swell2_share | 0.816 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_swell3_share | 0.344 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_hs_survival_share | 0.105 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_tp_s | 11.8 | s | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim11_hs2_share | 0.944 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim11_hs3_share | 0.537 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim11_swell2_share | 0.718 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim11_swell3_share | 0.315 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim11_hs_survival_share | 0.166 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim11_tp_s | 11.8 | s | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_hs2_share | 0.959 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_hs3_share | 0.627 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_swell2_share | 0.64 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_swell3_share | 0.288 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_hs_survival_share | 0.238 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_tp_s | 11.9 | s | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_motor_p50_wh | 144 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_motor_p90_wh | 575 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_motor_p99_wh | 1459 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_float_p50_wh | 21 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_float_p90_wh | 84 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_float_p99_wh | 213 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_motor_p99_cell_kg | 6.32 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_float_p99_cell_kg | 0.92 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_motor_p50_wh | 433 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_motor_p90_wh | 2398 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_motor_p99_wh | 7160 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_float_p50_wh | 39 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_float_p90_wh | 216 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_float_p99_wh | 645 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_motor_p99_cell_kg | 30.99 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_float_p99_cell_kg | 2.79 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_albatross_motor_p90_wh | 658 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_albatross_motor_p99_wh | 1603 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_albatross_float_p90_wh | 96 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_albatross_float_p99_wh | 234 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_best_motor_p90_wh | 3293 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_best_motor_p99_wh | 9257 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_best_float_p90_wh | 297 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_best_float_p99_wh | 834 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_albatross_motor_p90_wh | 575 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_albatross_motor_p99_wh | 1379 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_albatross_float_p90_wh | 84 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_albatross_float_p99_wh | 201 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_best_motor_p90_wh | 2364 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_best_motor_p99_wh | 7073 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_best_float_p90_wh | 213 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_best_float_p99_wh | 637 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_albatross_motor_p90_wh | 534 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_albatross_motor_p99_wh | 1496 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_albatross_float_p90_wh | 78 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_albatross_float_p99_wh | 218 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_best_motor_p90_wh | 1865 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_best_motor_p99_wh | 5461 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_best_float_p90_wh | 168 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_best_float_p99_wh | 492 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_albatross_motor_p90_wh | 555 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_albatross_motor_p99_wh | 1356 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_albatross_float_p90_wh | 81 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_albatross_float_p99_wh | 198 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_best_motor_p90_wh | 2198 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_best_motor_p99_wh | 6327 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_best_float_p90_wh | 198 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_best_float_p99_wh | 570 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_u10_mean_ms | 10.33 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_u10_p10_ms | 4.85 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_u10_p50_ms | 10.24 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_u10_p90_ms | 15.8 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_below_u6_share | 0.16 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_below_dsmin_share | 0.303 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_below_skim11_share | 0.566 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_below_best_share | 0.72 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_u10_mean_ms | 8.31 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_u10_p10_ms | 3.64 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_u10_p50_ms | 8.04 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_u10_p90_ms | 13.33 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_below_u6_share | 0.287 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_below_dsmin_share | 0.495 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_below_skim11_share | 0.769 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_below_best_share | 0.88 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_u10_mean_ms | 6.09 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_u10_p10_ms | 2.62 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_u10_p50_ms | 5.89 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_u10_p90_ms | 9.82 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_below_u6_share | 0.516 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_below_dsmin_share | 0.772 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_below_skim11_share | 0.948 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_below_best_share | 0.984 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_u10_mean_ms | 8.21 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_u10_p10_ms | 3.48 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_u10_p50_ms | 7.92 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_u10_p90_ms | 13.31 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_below_u6_share | 0.301 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_below_dsmin_share | 0.506 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_below_skim11_share | 0.774 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_below_best_share | 0.881 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_u10_mean_ms | 8.23 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_u10_p10_ms | 3.4 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_u10_p50_ms | 7.78 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_u10_p90_ms | 13.66 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_below_u6_share | 0.317 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_below_dsmin_share | 0.52 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_below_skim11_share | 0.765 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_below_best_share | 0.867 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_u10_std_ms | 3.94 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_p50_h | 7 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_p90_h | 39 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_p99_h | 131 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_max_h | 366 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_ge24h_share | 0.64 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_p50_h | 10 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_p90_h | 62 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_p99_h | 246 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_max_h | 1409 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_ge24h_share | 0.79 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim11_p50_h | 15 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim11_p90_h | 105 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim11_p99_h | 558 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim11_max_h | 3077 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim11_ge24h_share | 0.904 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_p50_h | 18 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_p90_h | 152 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_p99_h | 821 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_max_h | 4419 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_ge24h_share | 0.942 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_hs_survival_share | 0.175 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_hs2_share | 0.348 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_hs3_share | 0.11 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_swell2_share | 0.322 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_swell3_share | 0.103 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_hs_survival_share | 0.028 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_tp_s | 11.6 | s | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_hs2_share | 0.409 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_hs3_share | 0.135 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_swell2_share | 0.336 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_swell3_share | 0.114 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_hs_survival_share | 0.036 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_tp_s | 11.6 | s | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim11_hs2_share | 0.534 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim11_hs3_share | 0.207 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim11_swell2_share | 0.347 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim11_swell3_share | 0.128 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim11_hs_survival_share | 0.062 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim11_tp_s | 11.7 | s | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_hs2_share | 0.588 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_hs3_share | 0.263 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_swell2_share | 0.341 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_swell3_share | 0.131 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_hs_survival_share | 0.089 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_tp_s | 11.8 | s | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_motor_p50_wh | 206 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_motor_p90_wh | 1274 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_motor_p99_wh | 5055 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_float_p50_wh | 30 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_float_p90_wh | 186 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_float_p99_wh | 738 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_motor_p99_cell_kg | 21.88 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_float_p99_cell_kg | 3.19 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_motor_p50_wh | 599 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_motor_p90_wh | 5062 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_motor_p99_wh | 27326 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_float_p50_wh | 54 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_float_p90_wh | 456 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_float_p99_wh | 2462 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_motor_p99_cell_kg | 118.29 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_float_p99_cell_kg | 10.66 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_albatross_motor_p90_wh | 637 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_albatross_motor_p99_wh | 1837 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_albatross_float_p90_wh | 93 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_albatross_float_p99_wh | 268 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_best_motor_p90_wh | 2631 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_best_motor_p99_wh | 9893 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_best_float_p90_wh | 237 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_best_float_p99_wh | 891 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_albatross_motor_p90_wh | 1212 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_albatross_motor_p99_wh | 4155 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_albatross_float_p90_wh | 177 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_albatross_float_p99_wh | 607 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_best_motor_p90_wh | 6803 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_best_motor_p99_wh | 70919 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_best_float_p90_wh | 613 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_best_float_p99_wh | 6389 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_albatross_motor_p90_wh | 3120 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_albatross_motor_p99_wh | 8705 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_albatross_float_p90_wh | 455 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_albatross_float_p99_wh | 1271 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_best_motor_p90_wh | 27156 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_best_motor_p99_wh | 75784 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_best_float_p90_wh | 2446 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_best_float_p99_wh | 6827 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_albatross_motor_p90_wh | 1110 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_albatross_motor_p99_wh | 3504 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_albatross_float_p90_wh | 162 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_albatross_float_p99_wh | 512 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_best_motor_p90_wh | 5415 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_best_motor_p99_wh | 16500 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_best_float_p90_wh | 488 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_best_float_p99_wh | 1486 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.home_djf_u10_mean_ms | 7.62 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_u10_p10_ms | 3.11 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_u10_p50_ms | 7.45 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_u10_p90_ms | 12.31 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_below_u6_share | 0.345 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_below_dsmin_share | 0.56 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_below_skim11_share | 0.829 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_below_best_share | 0.923 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_u10_mean_ms | 6.82 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_u10_p10_ms | 2.77 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_u10_p50_ms | 6.58 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_u10_p90_ms | 11.11 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_below_u6_share | 0.433 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_below_dsmin_share | 0.657 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_below_skim11_share | 0.894 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_below_best_share | 0.959 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_u10_mean_ms | 5.2 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_u10_p10_ms | 1.99 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_u10_p50_ms | 4.82 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_u10_p90_ms | 8.92 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_below_u6_share | 0.652 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_below_dsmin_share | 0.839 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_below_skim11_share | 0.974 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_below_best_share | 0.992 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_u10_mean_ms | 6.9 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_u10_p10_ms | 2.77 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_u10_p50_ms | 6.62 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_u10_p90_ms | 11.34 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_below_u6_share | 0.43 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_below_dsmin_share | 0.649 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_below_skim11_share | 0.884 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_below_best_share | 0.951 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_u10_mean_ms | 6.63 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_u10_p10_ms | 2.55 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_u10_p50_ms | 6.3 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_u10_p90_ms | 11.1 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_below_u6_share | 0.466 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_below_dsmin_share | 0.677 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_below_skim11_share | 0.895 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_below_best_share | 0.956 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_u10_std_ms | 3.34 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_p50_h | 8 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_p90_h | 40 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_p99_h | 115 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_max_h | 334 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_ge24h_share | 0.624 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_p50_h | 11 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_p90_h | 69 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_p99_h | 212 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_max_h | 799 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_ge24h_share | 0.814 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim11_p50_h | 25 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim11_p90_h | 187 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim11_p99_h | 754 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim11_max_h | 2389 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim11_ge24h_share | 0.957 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_p50_h | 46 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_p90_h | 381 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_p99_h | 1432 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_max_h | 3910 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_ge24h_share | 0.985 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_hs_survival_share | 0.014 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_hs2_share | 0.063 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_hs3_share | 0.007 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_swell2_share | 0.054 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_swell3_share | 0.006 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_hs_survival_share | 0.001 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_tp_s | 11.1 | s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_hs2_share | 0.078 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_hs3_share | 0.009 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_swell2_share | 0.054 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_swell3_share | 0.007 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_hs_survival_share | 0.001 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_tp_s | 11.1 | s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim11_hs2_share | 0.128 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim11_hs3_share | 0.016 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim11_swell2_share | 0.05 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim11_swell3_share | 0.007 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim11_hs_survival_share | 0.002 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim11_tp_s | 11.1 | s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_hs2_share | 0.167 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_hs3_share | 0.025 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_swell2_share | 0.049 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_swell3_share | 0.007 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_hs_survival_share | 0.003 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_tp_s | 11.1 | s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_motor_p50_wh | 226 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_motor_p90_wh | 1418 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_motor_p99_wh | 4350 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_float_p50_wh | 33 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_float_p90_wh | 207 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_float_p99_wh | 635 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_motor_p99_cell_kg | 18.83 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_float_p99_cell_kg | 2.75 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_motor_p50_wh | 1548 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_motor_p90_wh | 12677 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_motor_p99_wh | 47686 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_float_p50_wh | 140 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_float_p90_wh | 1142 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_float_p99_wh | 4296 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_motor_p99_cell_kg | 206.43 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_float_p99_cell_kg | 18.6 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_albatross_motor_p90_wh | 966 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_albatross_motor_p99_wh | 2322 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_albatross_float_p90_wh | 141 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_albatross_float_p99_wh | 339 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_best_motor_p90_wh | 9078 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_best_motor_p99_wh | 22960 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_best_float_p90_wh | 818 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_best_float_p99_wh | 2068 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_albatross_motor_p90_wh | 1305 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_albatross_motor_p99_wh | 3459 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_albatross_float_p90_wh | 190 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_albatross_float_p99_wh | 505 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_best_motor_p90_wh | 17669 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_best_motor_p99_wh | 88768 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_best_float_p90_wh | 1592 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_best_float_p99_wh | 7997 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_albatross_motor_p90_wh | 3288 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_albatross_motor_p99_wh | 7585 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_albatross_float_p90_wh | 480 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_albatross_float_p99_wh | 1107 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_best_motor_p90_wh | 46001 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_best_motor_p99_wh | 68418 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_best_float_p90_wh | 4144 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_best_float_p99_wh | 6164 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_albatross_motor_p90_wh | 1274 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_albatross_motor_p99_wh | 3393 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_albatross_float_p90_wh | 186 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_albatross_float_p99_wh | 495 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_best_motor_p90_wh | 10226 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_best_motor_p99_wh | 20782 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_best_float_p90_wh | 921 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_best_float_p99_wh | 1872 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.solar_day_albatross_so_wh | 25.6 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.solar_day_best_so_wh | 31.9 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.solar_day_albatross_home_wh | 59.0 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.solar_day_best_home_wh | 73.8 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.avionics_day_wh | 72.0 | Wh | calculated | docs/02-form.md#wind-climate |
 <!-- tdr:end -->
 
 ## Requirements for the dynamic soaring drone {#ds-requirements}

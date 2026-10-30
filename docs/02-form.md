@@ -214,6 +214,190 @@ The motor:
 - Component masses placed in body axes give the total mass, the centre of gravity, and the inertia tensor that the flight model will use when it grows from a point mass to six degrees of freedom.
 - The carbon tube values are sourced (P54); the skin, core and component inputs are assumed (Q-015).
 
+## Wind and swell climate {#wind-climate}
+
+The battery, the time the drone spends floating, and the share of time the swell can carry it depend on how often and for how long the wind stays below what the drone can soar on.
+Albatrosses meet the same question by soaring when the wind serves, sitting on the water in calms, choosing routes by the wind, and using swell (P61, P62, P73, P80, P82); this section gives the drone the same numbers for the seas it may fly over.
+
+### Data and points
+
+- ERA5 (P165), hourly, from 2005 to 2024 in UTC: the 10 m wind speed through the Open-Meteo historical weather API (P166) at 0.25 deg, and the significant wave height with its mean and peak period through the Open-Meteo marine API with the ERA5 ocean model (P167) at 0.5 deg.
+- ERA5 through that service has no swell and wind-sea partition (P167), so the swell is estimated (see the method).
+- Three Southern Ocean points in the wandering albatross's range: open water north of the Crozet Islands where the birds breeding there forage; the latitude of the record's insolation point (P51) but upwind of the Kerguelen Islands in the westerlies, out of their wake; and the open South Pacific sector of the circumpolar range, far from land.
+- Three North Pacific points in the Laysan and black-footed albatross range: the subtropical gyre north-east of the Hawaiian colonies, where breeding birds forage; the transition zone, the main foraging belt of both species; and the Kuroshio-Oyashio extension east of the Kuril Islands, a winter foraging area.
+- Their coordinates are in `sim/climate.py` (`PUBLIC_POINTS`); all lie on the 0.5 deg grid, which both ERA5 grids share.
+- The home operating area (private:loc-01): open-sea points 30 to 100 km off the coast on its open-ocean side, at the same grid spacing, kept with their raw downloads in the owner's private store; only statistics derived from them enter the record and this document.
+- Each region pools its points: spells are found at each point and their lengths pooled, and the shares count the hours of all points.
+- Weather data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0); contains modified Copernicus Climate Change Service information (ERA5).
+
+### Method (`sim/climate.py`)
+
+- `python -m sim.climate fetch` downloads each series once into a cache (one request every few minutes, within the free API's limits), `python -m sim.climate` writes `sim/out/climate.json`, and `python -m sim.climate_keys` writes the keys below and the tables of this section.
+- Seasons are calendar months: DJF, MAM, JJA and SON, so DJF is the austral summer.
+- Four thresholds of the 10 m wind: 6 m/s; ds.min_u10_ms, the design point of R-02; 11 m/s, the best soaring minimum that the wingtip skim study found with a skid and dihedral (branch `design/skim-mass`, not yet in the record), used here as a plain number; and wing.best_u10_min_ms, the best soaring minimum on a flat sea.
+- A spell is a run of consecutive hours with the wind below the threshold; a spell belongs to the season of its first hour, and its percentiles count spells, not hours.
+- Swell during weak wind: the total height Hs, and a lower bound on the swell height, the part of Hs that the largest wind sea the hour's wind can hold does not explain (the fully developed sea of the environment model, with env.pm_hs_coefficient, removed in energy); in weak wind the two are close, since the fully developed sea is small; the period is the median peak period of the weak hours with at least 2 m of that swell.
+- Energy to ride out a spell on the motor: the motor's electric power plus ds.avionics_power_w over the spell; floating: ds.avionics_power_w alone over the same time; no solar yield is credited.
+- The motor power: for the albatross-like glider motor.albatross_calm_w, its calm-air level flight with ground effect, over spells below ds.min_u10_ms (the drone as R-02 would have it); for the best wing of the wing sizing wing.front1_c9_w, which is level flight at the speed floor (see the wing sizing) and so stands for any wind below its soaring minimum, over spells below wing.best_u10_min_ms (the drone as it stands); its calm-air figure is not in the record.
+- Cell mass at lit.cell_p45b_wh_per_kg, before any margin for ageing (ds.eol_capacity_fraction) or the storage charge.
+- Daily solar yield on the darkest design day, with the cell assumptions of the flight patterns study over the wing area (form.albatross_3m.wing_area_m2; the best wing's from wing.best_span_m and wing.best_ar), from lit.insolation_50s_june_kwh_m2_day for the Southern Ocean and lit.insolation_home_december_kwh_m2_day for the home area; the record has no insolation for the North Pacific points.
+
+### Results
+
+The wind by season, and the share of hours below each threshold:
+
+<!-- climate_keys wind begin -->
+| region | season | mean | 10th | median | 90th | below 6 m/s | below ds.min_u10_ms | below 11 m/s | below wing.best_u10_min_ms |
+|---|---|---|---|---|---|---|---|---|---|
+| Southern Ocean | DJF | climate.so_djf_u10_mean_ms | climate.so_djf_u10_p10_ms | climate.so_djf_u10_p50_ms | climate.so_djf_u10_p90_ms | climate.so_djf_below_u6_share | climate.so_djf_below_dsmin_share | climate.so_djf_below_skim11_share | climate.so_djf_below_best_share |
+| Southern Ocean | MAM | climate.so_mam_u10_mean_ms | climate.so_mam_u10_p10_ms | climate.so_mam_u10_p50_ms | climate.so_mam_u10_p90_ms | climate.so_mam_below_u6_share | climate.so_mam_below_dsmin_share | climate.so_mam_below_skim11_share | climate.so_mam_below_best_share |
+| Southern Ocean | JJA | climate.so_jja_u10_mean_ms | climate.so_jja_u10_p10_ms | climate.so_jja_u10_p50_ms | climate.so_jja_u10_p90_ms | climate.so_jja_below_u6_share | climate.so_jja_below_dsmin_share | climate.so_jja_below_skim11_share | climate.so_jja_below_best_share |
+| Southern Ocean | SON | climate.so_son_u10_mean_ms | climate.so_son_u10_p10_ms | climate.so_son_u10_p50_ms | climate.so_son_u10_p90_ms | climate.so_son_below_u6_share | climate.so_son_below_dsmin_share | climate.so_son_below_skim11_share | climate.so_son_below_best_share |
+| Southern Ocean | year | climate.so_year_u10_mean_ms | climate.so_year_u10_p10_ms | climate.so_year_u10_p50_ms | climate.so_year_u10_p90_ms | climate.so_year_below_u6_share | climate.so_year_below_dsmin_share | climate.so_year_below_skim11_share | climate.so_year_below_best_share |
+| North Pacific | DJF | climate.np_djf_u10_mean_ms | climate.np_djf_u10_p10_ms | climate.np_djf_u10_p50_ms | climate.np_djf_u10_p90_ms | climate.np_djf_below_u6_share | climate.np_djf_below_dsmin_share | climate.np_djf_below_skim11_share | climate.np_djf_below_best_share |
+| North Pacific | MAM | climate.np_mam_u10_mean_ms | climate.np_mam_u10_p10_ms | climate.np_mam_u10_p50_ms | climate.np_mam_u10_p90_ms | climate.np_mam_below_u6_share | climate.np_mam_below_dsmin_share | climate.np_mam_below_skim11_share | climate.np_mam_below_best_share |
+| North Pacific | JJA | climate.np_jja_u10_mean_ms | climate.np_jja_u10_p10_ms | climate.np_jja_u10_p50_ms | climate.np_jja_u10_p90_ms | climate.np_jja_below_u6_share | climate.np_jja_below_dsmin_share | climate.np_jja_below_skim11_share | climate.np_jja_below_best_share |
+| North Pacific | SON | climate.np_son_u10_mean_ms | climate.np_son_u10_p10_ms | climate.np_son_u10_p50_ms | climate.np_son_u10_p90_ms | climate.np_son_below_u6_share | climate.np_son_below_dsmin_share | climate.np_son_below_skim11_share | climate.np_son_below_best_share |
+| North Pacific | year | climate.np_year_u10_mean_ms | climate.np_year_u10_p10_ms | climate.np_year_u10_p50_ms | climate.np_year_u10_p90_ms | climate.np_year_below_u6_share | climate.np_year_below_dsmin_share | climate.np_year_below_skim11_share | climate.np_year_below_best_share |
+| home area | DJF | climate.home_djf_u10_mean_ms | climate.home_djf_u10_p10_ms | climate.home_djf_u10_p50_ms | climate.home_djf_u10_p90_ms | climate.home_djf_below_u6_share | climate.home_djf_below_dsmin_share | climate.home_djf_below_skim11_share | climate.home_djf_below_best_share |
+| home area | MAM | climate.home_mam_u10_mean_ms | climate.home_mam_u10_p10_ms | climate.home_mam_u10_p50_ms | climate.home_mam_u10_p90_ms | climate.home_mam_below_u6_share | climate.home_mam_below_dsmin_share | climate.home_mam_below_skim11_share | climate.home_mam_below_best_share |
+| home area | JJA | climate.home_jja_u10_mean_ms | climate.home_jja_u10_p10_ms | climate.home_jja_u10_p50_ms | climate.home_jja_u10_p90_ms | climate.home_jja_below_u6_share | climate.home_jja_below_dsmin_share | climate.home_jja_below_skim11_share | climate.home_jja_below_best_share |
+| home area | SON | climate.home_son_u10_mean_ms | climate.home_son_u10_p10_ms | climate.home_son_u10_p50_ms | climate.home_son_u10_p90_ms | climate.home_son_below_u6_share | climate.home_son_below_dsmin_share | climate.home_son_below_skim11_share | climate.home_son_below_best_share |
+| home area | year | climate.home_year_u10_mean_ms | climate.home_year_u10_p10_ms | climate.home_year_u10_p50_ms | climate.home_year_u10_p90_ms | climate.home_year_below_u6_share | climate.home_year_below_dsmin_share | climate.home_year_below_skim11_share | climate.home_year_below_best_share |
+<!-- climate_keys wind end -->
+
+The spells over the whole year, in hours:
+
+<!-- climate_keys spells begin -->
+| region | below | median | 90th | 99th | longest | share of the weak hours in spells of 24 h or more |
+|---|---|---|---|---|---|---|
+| Southern Ocean | 6 m/s | climate.so_spell_u6_p50_h | climate.so_spell_u6_p90_h | climate.so_spell_u6_p99_h | climate.so_spell_u6_max_h | climate.so_spell_u6_ge24h_share |
+| Southern Ocean | ds.min_u10_ms | climate.so_spell_dsmin_p50_h | climate.so_spell_dsmin_p90_h | climate.so_spell_dsmin_p99_h | climate.so_spell_dsmin_max_h | climate.so_spell_dsmin_ge24h_share |
+| Southern Ocean | 11 m/s | climate.so_spell_skim11_p50_h | climate.so_spell_skim11_p90_h | climate.so_spell_skim11_p99_h | climate.so_spell_skim11_max_h | climate.so_spell_skim11_ge24h_share |
+| Southern Ocean | wing.best_u10_min_ms | climate.so_spell_best_p50_h | climate.so_spell_best_p90_h | climate.so_spell_best_p99_h | climate.so_spell_best_max_h | climate.so_spell_best_ge24h_share |
+| North Pacific | 6 m/s | climate.np_spell_u6_p50_h | climate.np_spell_u6_p90_h | climate.np_spell_u6_p99_h | climate.np_spell_u6_max_h | climate.np_spell_u6_ge24h_share |
+| North Pacific | ds.min_u10_ms | climate.np_spell_dsmin_p50_h | climate.np_spell_dsmin_p90_h | climate.np_spell_dsmin_p99_h | climate.np_spell_dsmin_max_h | climate.np_spell_dsmin_ge24h_share |
+| North Pacific | 11 m/s | climate.np_spell_skim11_p50_h | climate.np_spell_skim11_p90_h | climate.np_spell_skim11_p99_h | climate.np_spell_skim11_max_h | climate.np_spell_skim11_ge24h_share |
+| North Pacific | wing.best_u10_min_ms | climate.np_spell_best_p50_h | climate.np_spell_best_p90_h | climate.np_spell_best_p99_h | climate.np_spell_best_max_h | climate.np_spell_best_ge24h_share |
+| home area | 6 m/s | climate.home_spell_u6_p50_h | climate.home_spell_u6_p90_h | climate.home_spell_u6_p99_h | climate.home_spell_u6_max_h | climate.home_spell_u6_ge24h_share |
+| home area | ds.min_u10_ms | climate.home_spell_dsmin_p50_h | climate.home_spell_dsmin_p90_h | climate.home_spell_dsmin_p99_h | climate.home_spell_dsmin_max_h | climate.home_spell_dsmin_ge24h_share |
+| home area | 11 m/s | climate.home_spell_skim11_p50_h | climate.home_spell_skim11_p90_h | climate.home_spell_skim11_p99_h | climate.home_spell_skim11_max_h | climate.home_spell_skim11_ge24h_share |
+| home area | wing.best_u10_min_ms | climate.home_spell_best_p50_h | climate.home_spell_best_p90_h | climate.home_spell_best_p99_h | climate.home_spell_best_max_h | climate.home_spell_best_ge24h_share |
+<!-- climate_keys spells end -->
+
+The waves during the hours below each threshold, over the whole year (shares of those hours):
+
+<!-- climate_keys swell begin -->
+| region | wind below | Hs 2 m or more | Hs 3 m or more | swell 2 m or more | swell 3 m or more | median peak period with swell 2 m or more | Hs at or above ds.survival_hs_m |
+|---|---|---|---|---|---|---|---|
+| Southern Ocean | 6 m/s | climate.so_weak_u6_hs2_share | climate.so_weak_u6_hs3_share | climate.so_weak_u6_swell2_share | climate.so_weak_u6_swell3_share | climate.so_weak_u6_tp_s | climate.so_weak_u6_hs_survival_share |
+| Southern Ocean | ds.min_u10_ms | climate.so_weak_dsmin_hs2_share | climate.so_weak_dsmin_hs3_share | climate.so_weak_dsmin_swell2_share | climate.so_weak_dsmin_swell3_share | climate.so_weak_dsmin_tp_s | climate.so_weak_dsmin_hs_survival_share |
+| Southern Ocean | 11 m/s | climate.so_weak_skim11_hs2_share | climate.so_weak_skim11_hs3_share | climate.so_weak_skim11_swell2_share | climate.so_weak_skim11_swell3_share | climate.so_weak_skim11_tp_s | climate.so_weak_skim11_hs_survival_share |
+| Southern Ocean | wing.best_u10_min_ms | climate.so_weak_best_hs2_share | climate.so_weak_best_hs3_share | climate.so_weak_best_swell2_share | climate.so_weak_best_swell3_share | climate.so_weak_best_tp_s | climate.so_weak_best_hs_survival_share |
+| Southern Ocean | all hours |  |  |  |  |  | climate.so_year_hs_survival_share |
+| North Pacific | 6 m/s | climate.np_weak_u6_hs2_share | climate.np_weak_u6_hs3_share | climate.np_weak_u6_swell2_share | climate.np_weak_u6_swell3_share | climate.np_weak_u6_tp_s | climate.np_weak_u6_hs_survival_share |
+| North Pacific | ds.min_u10_ms | climate.np_weak_dsmin_hs2_share | climate.np_weak_dsmin_hs3_share | climate.np_weak_dsmin_swell2_share | climate.np_weak_dsmin_swell3_share | climate.np_weak_dsmin_tp_s | climate.np_weak_dsmin_hs_survival_share |
+| North Pacific | 11 m/s | climate.np_weak_skim11_hs2_share | climate.np_weak_skim11_hs3_share | climate.np_weak_skim11_swell2_share | climate.np_weak_skim11_swell3_share | climate.np_weak_skim11_tp_s | climate.np_weak_skim11_hs_survival_share |
+| North Pacific | wing.best_u10_min_ms | climate.np_weak_best_hs2_share | climate.np_weak_best_hs3_share | climate.np_weak_best_swell2_share | climate.np_weak_best_swell3_share | climate.np_weak_best_tp_s | climate.np_weak_best_hs_survival_share |
+| North Pacific | all hours |  |  |  |  |  | climate.np_year_hs_survival_share |
+| home area | 6 m/s | climate.home_weak_u6_hs2_share | climate.home_weak_u6_hs3_share | climate.home_weak_u6_swell2_share | climate.home_weak_u6_swell3_share | climate.home_weak_u6_tp_s | climate.home_weak_u6_hs_survival_share |
+| home area | ds.min_u10_ms | climate.home_weak_dsmin_hs2_share | climate.home_weak_dsmin_hs3_share | climate.home_weak_dsmin_swell2_share | climate.home_weak_dsmin_swell3_share | climate.home_weak_dsmin_tp_s | climate.home_weak_dsmin_hs_survival_share |
+| home area | 11 m/s | climate.home_weak_skim11_hs2_share | climate.home_weak_skim11_hs3_share | climate.home_weak_skim11_swell2_share | climate.home_weak_skim11_swell3_share | climate.home_weak_skim11_tp_s | climate.home_weak_skim11_hs_survival_share |
+| home area | wing.best_u10_min_ms | climate.home_weak_best_hs2_share | climate.home_weak_best_hs3_share | climate.home_weak_best_swell2_share | climate.home_weak_best_swell3_share | climate.home_weak_best_tp_s | climate.home_weak_best_hs_survival_share |
+| home area | all hours |  |  |  |  |  | climate.home_year_hs_survival_share |
+<!-- climate_keys swell end -->
+
+The energy to ride out the spells of the whole year on the motor or floating, in Wh, and the cells for the 99th percentile spell, in kg:
+
+<!-- climate_keys energy begin -->
+| region | aircraft (spells below) | motor, median spell | motor, 90th | motor, 99th | floating, median spell | floating, 90th | floating, 99th | cells for the motor, 99th | cells for floating, 99th |
+|---|---|---|---|---|---|---|---|---|---|
+| Southern Ocean | albatross-like glider (ds.min_u10_ms) | climate.so_albatross_motor_p50_wh | climate.so_albatross_motor_p90_wh | climate.so_albatross_motor_p99_wh | climate.so_albatross_float_p50_wh | climate.so_albatross_float_p90_wh | climate.so_albatross_float_p99_wh | climate.so_albatross_motor_p99_cell_kg | climate.so_albatross_float_p99_cell_kg |
+| Southern Ocean | best wing (wing.best_u10_min_ms) | climate.so_best_motor_p50_wh | climate.so_best_motor_p90_wh | climate.so_best_motor_p99_wh | climate.so_best_float_p50_wh | climate.so_best_float_p90_wh | climate.so_best_float_p99_wh | climate.so_best_motor_p99_cell_kg | climate.so_best_float_p99_cell_kg |
+| North Pacific | albatross-like glider (ds.min_u10_ms) | climate.np_albatross_motor_p50_wh | climate.np_albatross_motor_p90_wh | climate.np_albatross_motor_p99_wh | climate.np_albatross_float_p50_wh | climate.np_albatross_float_p90_wh | climate.np_albatross_float_p99_wh | climate.np_albatross_motor_p99_cell_kg | climate.np_albatross_float_p99_cell_kg |
+| North Pacific | best wing (wing.best_u10_min_ms) | climate.np_best_motor_p50_wh | climate.np_best_motor_p90_wh | climate.np_best_motor_p99_wh | climate.np_best_float_p50_wh | climate.np_best_float_p90_wh | climate.np_best_float_p99_wh | climate.np_best_motor_p99_cell_kg | climate.np_best_float_p99_cell_kg |
+| home area | albatross-like glider (ds.min_u10_ms) | climate.home_albatross_motor_p50_wh | climate.home_albatross_motor_p90_wh | climate.home_albatross_motor_p99_wh | climate.home_albatross_float_p50_wh | climate.home_albatross_float_p90_wh | climate.home_albatross_float_p99_wh | climate.home_albatross_motor_p99_cell_kg | climate.home_albatross_float_p99_cell_kg |
+| home area | best wing (wing.best_u10_min_ms) | climate.home_best_motor_p50_wh | climate.home_best_motor_p90_wh | climate.home_best_motor_p99_wh | climate.home_best_float_p50_wh | climate.home_best_float_p90_wh | climate.home_best_float_p99_wh | climate.home_best_motor_p99_cell_kg | climate.home_best_float_p99_cell_kg |
+<!-- climate_keys energy end -->
+
+The battery that rides out the 90th and 99th percentile spells by season, in Wh (spells counted by the season of their first hour):
+
+<!-- climate_keys battery begin -->
+| region | season | albatross-like glider: motor, 90th | albatross-like glider: motor, 99th | albatross-like glider: floating, 90th | albatross-like glider: floating, 99th | best wing: motor, 90th | best wing: motor, 99th | best wing: floating, 90th | best wing: floating, 99th |
+|---|---|---|---|---|---|---|---|---|---|
+| Southern Ocean | DJF | climate.so_djf_albatross_motor_p90_wh | climate.so_djf_albatross_motor_p99_wh | climate.so_djf_albatross_float_p90_wh | climate.so_djf_albatross_float_p99_wh | climate.so_djf_best_motor_p90_wh | climate.so_djf_best_motor_p99_wh | climate.so_djf_best_float_p90_wh | climate.so_djf_best_float_p99_wh |
+| Southern Ocean | MAM | climate.so_mam_albatross_motor_p90_wh | climate.so_mam_albatross_motor_p99_wh | climate.so_mam_albatross_float_p90_wh | climate.so_mam_albatross_float_p99_wh | climate.so_mam_best_motor_p90_wh | climate.so_mam_best_motor_p99_wh | climate.so_mam_best_float_p90_wh | climate.so_mam_best_float_p99_wh |
+| Southern Ocean | JJA | climate.so_jja_albatross_motor_p90_wh | climate.so_jja_albatross_motor_p99_wh | climate.so_jja_albatross_float_p90_wh | climate.so_jja_albatross_float_p99_wh | climate.so_jja_best_motor_p90_wh | climate.so_jja_best_motor_p99_wh | climate.so_jja_best_float_p90_wh | climate.so_jja_best_float_p99_wh |
+| Southern Ocean | SON | climate.so_son_albatross_motor_p90_wh | climate.so_son_albatross_motor_p99_wh | climate.so_son_albatross_float_p90_wh | climate.so_son_albatross_float_p99_wh | climate.so_son_best_motor_p90_wh | climate.so_son_best_motor_p99_wh | climate.so_son_best_float_p90_wh | climate.so_son_best_float_p99_wh |
+| North Pacific | DJF | climate.np_djf_albatross_motor_p90_wh | climate.np_djf_albatross_motor_p99_wh | climate.np_djf_albatross_float_p90_wh | climate.np_djf_albatross_float_p99_wh | climate.np_djf_best_motor_p90_wh | climate.np_djf_best_motor_p99_wh | climate.np_djf_best_float_p90_wh | climate.np_djf_best_float_p99_wh |
+| North Pacific | MAM | climate.np_mam_albatross_motor_p90_wh | climate.np_mam_albatross_motor_p99_wh | climate.np_mam_albatross_float_p90_wh | climate.np_mam_albatross_float_p99_wh | climate.np_mam_best_motor_p90_wh | climate.np_mam_best_motor_p99_wh | climate.np_mam_best_float_p90_wh | climate.np_mam_best_float_p99_wh |
+| North Pacific | JJA | climate.np_jja_albatross_motor_p90_wh | climate.np_jja_albatross_motor_p99_wh | climate.np_jja_albatross_float_p90_wh | climate.np_jja_albatross_float_p99_wh | climate.np_jja_best_motor_p90_wh | climate.np_jja_best_motor_p99_wh | climate.np_jja_best_float_p90_wh | climate.np_jja_best_float_p99_wh |
+| North Pacific | SON | climate.np_son_albatross_motor_p90_wh | climate.np_son_albatross_motor_p99_wh | climate.np_son_albatross_float_p90_wh | climate.np_son_albatross_float_p99_wh | climate.np_son_best_motor_p90_wh | climate.np_son_best_motor_p99_wh | climate.np_son_best_float_p90_wh | climate.np_son_best_float_p99_wh |
+| home area | DJF | climate.home_djf_albatross_motor_p90_wh | climate.home_djf_albatross_motor_p99_wh | climate.home_djf_albatross_float_p90_wh | climate.home_djf_albatross_float_p99_wh | climate.home_djf_best_motor_p90_wh | climate.home_djf_best_motor_p99_wh | climate.home_djf_best_float_p90_wh | climate.home_djf_best_float_p99_wh |
+| home area | MAM | climate.home_mam_albatross_motor_p90_wh | climate.home_mam_albatross_motor_p99_wh | climate.home_mam_albatross_float_p90_wh | climate.home_mam_albatross_float_p99_wh | climate.home_mam_best_motor_p90_wh | climate.home_mam_best_motor_p99_wh | climate.home_mam_best_float_p90_wh | climate.home_mam_best_float_p99_wh |
+| home area | JJA | climate.home_jja_albatross_motor_p90_wh | climate.home_jja_albatross_motor_p99_wh | climate.home_jja_albatross_float_p90_wh | climate.home_jja_albatross_float_p99_wh | climate.home_jja_best_motor_p90_wh | climate.home_jja_best_motor_p99_wh | climate.home_jja_best_float_p90_wh | climate.home_jja_best_float_p99_wh |
+| home area | SON | climate.home_son_albatross_motor_p90_wh | climate.home_son_albatross_motor_p99_wh | climate.home_son_albatross_float_p90_wh | climate.home_son_albatross_float_p99_wh | climate.home_son_best_motor_p90_wh | climate.home_son_best_motor_p99_wh | climate.home_son_best_float_p90_wh | climate.home_son_best_float_p99_wh |
+<!-- climate_keys battery end -->
+
+The daily solar yield on the darkest design day is climate.solar_day_albatross_so_wh and climate.solar_day_best_so_wh in the Southern Ocean, and climate.solar_day_albatross_home_wh and climate.solar_day_best_home_wh in the home area, against climate.avionics_day_wh for the avionics.
+
+`sim/out/climate.json` also holds each public point on its own, the spells by season for every threshold, the spells with breaks shorter than 3 h joined, the 10th and 90th percentile of the swell period, and the floating energy net of the darkest-day solar yield.
+
+### What it means
+
+The motor:
+
+- On the motor even the median spell below ds.min_u10_ms costs the albatross-like glider climate.so_albatross_motor_p50_wh in the Southern Ocean, climate.np_albatross_motor_p50_wh in the North Pacific and climate.home_albatross_motor_p50_wh in the home area, and the 99th percentile spell needs climate.so_albatross_motor_p99_cell_kg, climate.np_albatross_motor_p99_cell_kg and climate.home_albatross_motor_p99_cell_kg of cells, against a whole aircraft of ds.mass_max_kg.
+- For the best wing as it stands the spells are longer and its motor power higher, so riding them out on the motor is further out of reach (climate.so_best_motor_p99_cell_kg of cells for the 99th percentile spell in the Southern Ocean).
+- So the motor bridges hours (a gap between soaring spells, a leg to wind seen nearby, a take-off) and not calms, which confirms the estimate of a calm day in the ground-effect section (Q-055).
+
+Floating:
+
+- Floating, the same spells cost only the avionics.
+- Below ds.min_u10_ms the 99th percentile spell takes climate.so_albatross_float_p99_wh in the Southern Ocean, climate.so_albatross_float_p99_cell_kg of cells and a fraction of ds.mass_max_kg, but climate.np_albatross_float_p99_wh in the North Pacific and climate.home_albatross_float_p99_wh in the home area, climate.np_albatross_float_p99_cell_kg and climate.home_albatross_float_p99_cell_kg of cells, close to the whole of ds.mass_max_kg, with no solar yield credited.
+- Below wing.best_u10_min_ms, the drone as it stands, the 99th percentile spell on the water takes climate.so_best_float_p99_wh in the Southern Ocean, climate.np_best_float_p99_wh in the North Pacific and climate.home_best_float_p99_wh in the home area, more than a drone of ds.mass_max_kg can carry as cells; there only the sun can carry the avionics.
+- So the drone's answer to a calm is the bird's, to sit on the water (P82), and the battery is sized by the floating time, the avionics draw and the sun, not by the motor (Q-012).
+- The share of hours below the soaring minimum is the share of time on the water, on the motor or on the swell: below ds.min_u10_ms it is climate.so_year_below_dsmin_share in the Southern Ocean, climate.np_year_below_dsmin_share in the North Pacific and climate.home_year_below_dsmin_share in the home area, and below wing.best_u10_min_ms it is climate.so_year_below_best_share, climate.np_year_below_best_share and climate.home_year_below_best_share.
+- The worst season is the local summer, DJF in the Southern Ocean and JJA in the North Pacific and the home area (the battery table); in the Southern Ocean the seasons differ little, while in the North Pacific and the home area the summer spells are several times the winter ones.
+
+The sun:
+
+- On the darkest design day the best wing's yield in the home area is about the avionics' daily draw, so floating there costs mainly the night; in the Southern Ocean in June it is well short of it, so each day on the water drains the battery by the difference (the floating energy net of that yield is in `sim/out/climate.json`).
+- The yields rest on the pattern study's cell efficiency and coverage, which the record does not hold, and assume a clean, dry, level panel on the water (Q-012).
+
+The swell:
+
+- Wave study 4 found that a 3 m swell carries both kept forms with no wind and a 1 m swell gives nothing (K-012); the heights between are not yet flown.
+- In the Southern Ocean swell of 3 m or more is present in climate.so_weak_dsmin_swell3_share of the hours below ds.min_u10_ms and of 2 m or more in climate.so_weak_dsmin_swell2_share, at a median peak period of climate.so_weak_dsmin_tp_s, at or above the longer of the two periods the wave study flew.
+- In the North Pacific the shares are climate.np_weak_dsmin_swell3_share and climate.np_weak_dsmin_swell2_share, and in the home area only climate.home_weak_dsmin_swell3_share and climate.home_weak_dsmin_swell2_share.
+- So in the Southern Ocean the swell could carry the drone through a good part of the weak wind if the wave-following loop works (Q-060), as it carries the birds; in the North Pacific through some of it; in the home area almost never.
+
+The sea on the water:
+
+- R-05 puts the drone on the water when the wind is too weak and asks it to survive ds.survival_hs_m; in the Southern Ocean the waves are at or above that in climate.so_weak_dsmin_hs_survival_share of the hours below ds.min_u10_ms and in climate.so_year_hs_survival_share of all hours, in the North Pacific in climate.np_weak_dsmin_hs_survival_share and climate.np_year_hs_survival_share, and in the home area in climate.home_weak_dsmin_hs_survival_share and climate.home_year_hs_survival_share (Q-009).
+- So the design point of R-05 is passed on the water in a sizeable share of the weak-wind hours in the Southern Ocean, and a landing in strong wind there meets higher waves still.
+
+The home area:
+
+- Beside the albatross regions the home operating area is a weak-wind sea with little swell: it suits tests of floating, take-off and motor legs, while a year aloft there would be spent mostly on the water or on the motor (Q-071).
+
+### Against the literature
+
+- P61 gives Southern Ocean monthly means of lit.so_u10_mean_winter_ms in winter and lit.so_u10_mean_summer_ms in summer from scatterometers; the Southern Ocean points give climate.so_jja_u10_mean_ms in JJA and climate.so_djf_u10_mean_ms in DJF, a little lower in both seasons; the point at 50S in the Indian sector matches P61 and the point north of the Crozet Islands is the calmest (`sim/out/climate.json`).
+- P73's albatrosses met winds of lit.bird_experienced_wind_ms on average with a spread of lit.bird_experienced_wind_sd_ms (ERA5 at the birds' positions); the Southern Ocean year mean here is climate.so_year_u10_mean_ms with a spread of climate.so_year_u10_std_ms, so the birds fly in less wind than the open belt's mean, about the summer wind of the northern point, as expected of birds tied to a colony in summer that choose their routes.
+- P80 found that the birds' flapping falls with the wind in the Southern Ocean and with the swell height in the North Pacific; the numbers here fit, with weak wind far more common in the North Pacific and swell present in part of it.
+- P62 found swell dominant most of the time in the Pacific; here the swell lower bound is close to the total height in weak wind in every region (the swell table).
+
+### Limits
+
+- ERA5 is a model at about 31 km whose 10 m wind is a grid-box mean: it smooths calms, gusts and small fronts, so real calms are patchier and real spells may be shorter in places and longer in others; the drone, unlike a fixed point, can also move towards wind as the birds do (P73).
+- Spells are hourly, and one hour above the threshold breaks a spell, so the counts are inflated by the wind flickering around the threshold and the percentiles by count are short; joining breaks under 3 h lengthens them (`sim/out/climate.json`), and the share of the weak hours in spells of 24 h or more shows how much of the weak time lies in long spells.
+- A spell belongs to the season of its first hour, so a long summer spell that starts in spring counts in spring.
+- The thresholds are the model's flat-sea soaring minima in neutral air; stability, the shear under swell (Q-061) and the waves (Q-060) move them, and 11 m/s comes from a study not yet in the record.
+- The swell is a lower bound from the total height, not ERA5's own partition, and the wave grid is 0.5 deg.
+- No solar yield is credited in the battery figures, the cell figures carry no margin for ageing or reserve, and the darkest-day insolation is known for two places only.
+- Two or three points stand for each region, and the run used commit ebbabcf with the working tree of this branch (the stamp is in `sim/out/climate.json`).
+
 ## Numbers from the literature for the form study {#literature-numbers}
 
 The yardsticks of the form study need the bird and the demonstrators as reference points; these are the numbers the record holds (keys `lit.*`), with their sources.

@@ -1415,3 +1415,27 @@ items:
     read: partial
     retrieved: 2026-10-30
     note: "Wing areal mass about 0.75 to 1.13 kg/m2 for thermal sailplanes of 2 to 4 m and about 2.0 to 2.5 kg/m2 for F3F and F3B slope racers; everything except the wing about 0.11 to 0.45 kg for thermal models and about 0.7 kg for F3F. The URL is the site of the Drela sheets; the other sites are listed in the title."
+  - id: P165
+    class: P
+    title: The ERA5 global reanalysis, H. Hersbach et al., Quarterly Journal of the Royal Meteorological Society 146(730), 1999-2049, 2020
+    url: https://doi.org/10.1002/qj.3803
+    license: CC BY 4.0 (the article)
+    read: abstract
+    retrieved: 2026-10-31
+    note: "ERA5 is ECMWF's reanalysis for the Copernicus Climate Change Service, run with IFS Cy41r2 at 31 km with hourly output and an ensemble for its uncertainty; the abstract reports a much improved fit to independent buoy wave heights over ERA-Interim. The series used in docs/02-form.md#wind-climate are ERA5 as served by Open-Meteo (P166, P167), not downloaded from the Climate Data Store."
+  - id: P166
+    class: P
+    title: Open-Meteo historical weather API, ERA5 hourly 10 m wind speed and direction (models=era5, 0.25 deg), 2005 to 2024
+    url: https://open-meteo.com/en/docs/historical-weather-api
+    license: "API data CC BY 4.0 (https://open-meteo.com/en/licence), free API for non-commercial use only (https://open-meteo.com/en/terms); ERA5 itself is under CC BY 4.0 in the Copernicus Climate Data Store since 2025-07-02 (https://forum.ecmwf.int/t/13464), under the Licence to use Copernicus Products before"
+    read: excerpt
+    retrieved: 2026-10-31
+    note: "Excerpt: hourly series from 2005-01-01 to 2024-12-31 (UTC) from https://archive-api.open-meteo.com/v1/archive for the six public points of sim/climate.py (PUBLIC_POINTS) and the points of the home operating area (private:loc-01, kept in the owner's private store); each public request URL, its retrieval time and the sha256 of the response are in sim/out/climate.json under sources. Wind speed comes rounded to 0.01 m/s. Attribution asked for: Weather data by Open-Meteo.com; generated using Copernicus Climate Change Service information."
+  - id: P167
+    class: P
+    title: Open-Meteo marine weather API, ERA5-Ocean hourly significant wave height, mean and peak period and direction (models=era5_ocean, 0.5 deg), 2005 to 2024
+    url: https://open-meteo.com/en/docs/marine-weather-api
+    license: "API data CC BY 4.0 (https://open-meteo.com/en/licence), free API for non-commercial use only (https://open-meteo.com/en/terms); ERA5 itself is under CC BY 4.0 in the Copernicus Climate Data Store since 2025-07-02 (https://forum.ecmwf.int/t/13464), under the Licence to use Copernicus Products before"
+    read: excerpt
+    retrieved: 2026-10-31
+    note: "Excerpt: hourly series from 2005-01-01 to 2024-12-31 (UTC) from https://marine-api.open-meteo.com/v1/marine for the same points as P166; the URLs, retrieval times and sha256 are in sim/out/climate.json under sources. For this model the API serves only the total wave height, the mean and peak period and the direction: the swell and wind-sea variables come back undefined (a probe on 2026-10-31), so there is no swell partition."
