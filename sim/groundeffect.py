@@ -10,9 +10,10 @@ circulation is
     K(hc/b, bank) = 1 + I_image / I_self,   I_self = pi Gamma0^2 / 4.
 
 K is tabulated on the grid x_t = (height of the lowest tip) / b = hc/b - sin|bank| / 2, from XT_MIN
-to XT_MAX (log spaced), and bank from 0 to 80 deg, so that every entry has the tip above the
-surface. Interpolation is a bicubic Catmull-Rom spline in (ln x_t, |bank|) that is complex-step
-safe. Below XT_MIN the tip height is clipped (the tip constraint of the optimizer keeps the cycle
+to XT_MAX (log spaced), and bank from 0 to 80 deg (nodes 0, 0.5, 1, 2, 3, 5, then every 5), so that every entry has the tip above the
+surface. Interpolation is a Catmull-Rom spline in ln x_t and a cubic Hermite spline in |bank| (nonuniform
+nodes, one-sided slopes at 0 and 80 deg, no reflection: at a fixed tip height K has a kink at
+bank 0), complex-step safe. Below XT_MIN the tip height is clipped (the tip constraint of the optimizer keeps the cycle
 out of there); above XT_MAX (K set to 1 at the last node) the factor is 1.
 
 The table is cached in sim/out/groundeffect_table.json (with a meta block) and rebuilt if absent.
@@ -23,7 +24,7 @@ import os
 import numpy as np
 
 XT_MIN, XT_MAX, N_XT = 0.02, 4.0, 48
-BANK_MAX_DEG, D_BANK_DEG = 80.0, 5.0
+BANK_DEG = (0.0, 0.5, 1.0, 2.0, 3.0, 5.0) + tuple(range(10, 81, 5))
 N_QUAD = 360
 TABLE_PATH = os.path.join(os.path.dirname(__file__), "out", "groundeffect_table.json")
 
@@ -57,7 +58,7 @@ def image_ratio(x_c, bank, n=N_QUAD):
 
 def build_table():
     xt = np.exp(np.linspace(np.log(XT_MIN), np.log(XT_MAX), N_XT))
-    banks = np.radians(np.arange(0.0, BANK_MAX_DEG + 0.5 * D_BANK_DEG, D_BANK_DEG))
+    banks = np.radians(np.array(BANK_DEG))
     K = np.empty((N_XT, len(banks)))
     for j, bk in enumerate(banks):
         for i, x in enumerate(xt):
@@ -94,6 +95,24 @@ def get_table():
     return _table
 
 
+_tang = None
+
+
+def _tangents():
+    """Bank slopes dK/d|bank| at the nodes (nonuniform three-point, one-sided at the ends)."""
+    global _tang
+    if _tang is None:
+        _, banks, K = get_table()
+        h = np.diff(banks)
+        d = np.diff(K, axis=1) / h
+        m = np.empty_like(K)
+        m[:, 1:-1] = (d[:, :-1] * h[1:] + d[:, 1:] * h[:-1]) / (h[1:] + h[:-1])
+        m[:, 0] = ((2 * h[0] + h[1]) * d[:, 0] - h[0] * d[:, 1]) / (h[0] + h[1])
+        m[:, -1] = ((2 * h[-1] + h[-2]) * d[:, -1] - h[-1] * d[:, -2]) / (h[-1] + h[-2])
+        _tang = m
+    return _tang
+
+
 def _cr(p0, p1, p2, p3, t):
     return 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t
                   + (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t)
@@ -115,20 +134,19 @@ def induced_drag_ratio(h_over_b, bank):
     u = np.log(np.where(done, xt[-1] * 0.999, x_t))
     du = (np.log(xt[-1]) - np.log(xt[0])) / (len(xt) - 1)
     fu = (u - np.log(xt[0])) / du
-    fb = ab / (banks[1] - banks[0])
+    M = _tangents()
     iu = np.clip(np.floor(np.real(fu)).astype(int), 0, len(xt) - 2)
-    ib = np.clip(np.floor(np.real(fb)).astype(int), 0, len(banks) - 2)
-    tu, tb = fu - iu, fb - ib
-    nb = len(banks)
+    ib = np.clip(np.searchsorted(banks, np.real(ab), side="right") - 1, 0, len(banks) - 2)
+    tu = fu - iu
+    hb = banks[ib + 1] - banks[ib]
+    tb = (ab - banks[ib]) / hb
+    h00, h10 = (1 + 2 * tb) * (1 - tb) ** 2, tb * (1 - tb) ** 2
+    h01, h11 = tb * tb * (3 - 2 * tb), tb * tb * (tb - 1)
 
-    def col(i, j):  # node values, reflected at bank 0 and clamped at the ends
-        i = np.clip(i, 0, len(xt) - 1)
-        j = np.abs(j)
-        j = np.where(j > nb - 1, 2 * (nb - 1) - j, j)
-        return K[i, j]
+    def row(di):
+        i = np.clip(iu + di, 0, len(xt) - 1)
+        return (h00 * K[i, ib] + h10 * hb * M[i, ib] + h01 * K[i, ib + 1]
+                + h11 * hb * M[i, ib + 1])
 
-    rows = []
-    for di in (-1, 0, 1, 2):
-        rows.append(_cr(*(col(iu + di, ib + dj) for dj in (-1, 0, 1, 2)), tb))
-    val = _cr(*rows, tu)
+    val = _cr(row(-1), row(0), row(1), row(2), tu)
     return np.where(done, 1.0, val)

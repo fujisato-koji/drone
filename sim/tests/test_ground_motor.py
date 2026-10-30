@@ -45,6 +45,15 @@ class TestGroundEffectFactor(unittest.TestCase):
             self.assertAlmostEqual(float(ground_effect_factor(xc, bk)), image_ratio(xc, bk),
                                    delta=2e-3)
 
+    def test_small_bank_matches_integral(self):
+        from sim.groundeffect import image_ratio
+        for deg in (0.5, 0.75, 1.0, 1.5, 2.5, 4.0, 5.0):
+            for xt in (0.02, 0.03, 0.05, 0.08, 0.15, 0.3):
+                bk = np.radians(deg)
+                xc = xt + 0.5 * np.sin(bk)
+                self.assertAlmostEqual(float(ground_effect_factor(xc, bk)) / image_ratio(xc, bk),
+                                       1.0, delta=0.01, msg=(deg, xt))
+
     def test_limits_and_symmetry(self):
         self.assertEqual(float(ground_effect_factor(10.0, 0.7)), 1.0)
         self.assertGreater(float(ground_effect_factor(2.0, 0.3)), 0.99)
