@@ -16,7 +16,8 @@ from sim.aircraft_models import by_name
 from sim.dsopt import folded_dcd, prop_efficiency, thrust_max
 from sim.record import value
 from sim.autonomy import make_env
-from sim.mpc import LIB_PKW, W_ENERGY_LEVELS, CycleGuide, CycleLibrary, MPPIPlanner, energy_weight, wrap
+from sim.mpc import (LIB_PKW, P_HOLD, THRUST_CAND_LEVELS, W_ENERGY_LEVELS, CycleGuide, CycleLibrary,
+                     MPPIPlanner, Reflex, energy_weight, wrap)
 from sim.seawind import Environment, Wind
 
 VIEWER = Path(__file__).resolve().parents[1] / "viewer"
@@ -53,6 +54,7 @@ if (inp.run === 'rollout') {
   out.cost = flat(r.cost); out.dead = flat(r.dead); out.paths = r.paths.map(flat);
   out.tau0 = guide.tau0; out.target = guide.target; out.dEc = guide.dEc;
   out.nominal = flat(guide.nominal(pl.knotsT)); out.mirror = cyc.mirror;
+  out.nominalThrust = flat(guide.nominalThrust(pl.knotsT));
 } else if (inp.run === 'update') {
   const pl = mkPlanner();
   const S = inp.Us.length;
@@ -92,6 +94,16 @@ if (inp.run === 'rollout') {
     });
   }
   out.worst = worst; out.nOrb = nOrb;
+} else if (inp.run === 'reflex') {
+  const world = MPC.makeWorld(inp.world);
+  const rf = new MPC.Reflex(ac, {foldSwitch: inp.foldSwitch});
+  const plan = {knotsT: inp.knotsT, cl: inp.cl, mu: inp.mu, th: inp.th};
+  out.hits = inp.states.map((st) => rf.predict(world, inp.t, st, plan, inp.tau));
+  out.override = inp.states.map((st) => rf.override(st));
+  out.tMax = rf.tMax; out.params = [rf.horizonS, rf.clearanceM, rf.vFrac, rf.dt, rf.nFrac, rf.vFactor];
+  const pl = new MPC.Planner(ac, {motor: true, thrustSampling: 'sustained'});
+  out.cands = pl.thrustCandidates(Float64Array.from(inp.U)).map(flat);
+  out.sustain = MPC.SUSTAIN;
 } else if (inp.run === 'defaults') {
   out.defaults = MPC.DEFAULTS; out.motor = MPC.MOTOR; out.energyK = MPC.ENERGY_K;
 } else if (inp.run === 'loop') {
@@ -182,7 +194,8 @@ def ac_params(ac):
 def js_settings(pkw):
     names = {"n_samples": "nSamples", "dt": "dt", "n_iter": "nIter", "n_ctrl": "nCtrl", "lam": "lam",
              "sigma_cl": "sigmaCl", "sigma_mu": "sigmaMu", "clearance": "clearance",
-             "h_clear": "hClear", "motor": "motor", "w_energy": "wEnergy"}
+             "h_clear": "hClear", "motor": "motor", "w_energy": "wEnergy",
+             "thrust_sampling": "thrustSampling", "fold_switch": "foldSwitch"}
     return {names[k]: v for k, v in pkw.items()}
 
 
@@ -233,20 +246,27 @@ class TestMpcJs(unittest.TestCase):
         zeros = [0.0] * len(cls.entries[0]["t"])
         cls.pylib = CycleLibrary([dict(e, aircraft=NAME, success=True, x=zeros, y=zeros)
                                   for e in cls.entries])
+        # the same cycles with a nonzero thrust schedule (a motor-assisted library entry)
+        cls.entries_th = [dict(e, thrust=[float(f"{1.5 + 1.2 * np.sin(2 * np.pi * t / e['period']):.4g}")
+                                          for t in e["t"]]) for e in cls.entries]
+        cls.pylib_th = CycleLibrary([dict(e, aircraft=NAME, success=True, x=zeros, y=zeros)
+                                     for e in cls.entries_th])
         cls.wind = Wind(U10, 270.0)
         cls.psi_w = float(np.arctan2(cls.wind.ey, cls.wind.ex))
         cls.chi = np.radians(CHI_DEG)
 
-    def setup_case(self, kind, height_frac=0.45, stokes=False, motor=False):
+    def setup_case(self, kind, height_frac=0.45, stokes=False, motor=False, extra=None):
         """Python planner, guide, state and the control sequences for one world. With motor the
         planner carries the thrust (w_energy of the normal level) and the plans a third row."""
         ac = self.ac
         world = python_world(kind, self.wind, stokes)
         self.pkw = dict(LIB_PKW, motor=True, w_energy=energy_weight(ac, "normal")) if motor else dict(LIB_PKW)
+        self.pkw.update(extra or {})
+        self.cur_entries = self.entries_th if motor else self.entries
         pl = MPPIPlanner(ac, **self.pkw)
         pl.n_limit = True
         pl.act = Actuators(ac, rate_model="pb2v")
-        cyc = self.pylib.pick(NAME, U10, self.chi)
+        cyc = (self.pylib_th if motor else self.pylib).pick(NAME, U10, self.chi)
         t = 3.7
         k = int(np.argmax(cyc.z))
         eta = float(world.surface(0.0, 0.0, t)[0])
@@ -263,7 +283,8 @@ class TestMpcJs(unittest.TestCase):
         dive = np.stack([np.full(nc, 0.05), np.full(nc, 0.3)])
         if motor:
             tm = pl.t_max
-            nominal, ramp = np.vstack([nominal, np.zeros(nc)]), np.vstack([ramp, np.linspace(0.0, 0.8 * tm, nc)])
+            nominal, ramp = (np.vstack([nominal, guide.nominal_thrust(pl.knots_t)]),
+                             np.vstack([ramp, np.linspace(0.0, 0.8 * tm, nc)]))
             harsh = np.vstack([harsh, np.where(np.arange(nc) % 3 == 0, 1.5 * tm, -0.3 * tm)])    # clipped to [0, tm]
             dive = np.vstack([dive, np.full(nc, 0.3 * tm)])
         Us = np.stack([nominal, ramp, harsh, dive])
@@ -272,14 +293,14 @@ class TestMpcJs(unittest.TestCase):
     def payload(self, kind, pl, world, s0, t, run, **kw):
         act = pl.act
         d = {"run": run, "ac": ac_params(self.ac), "settings": js_settings(self.pkw),
-             "actuators": self.lib["actuators"], "entries": self.entries, "u10": U10,
+             "actuators": self.lib["actuators"], "entries": self.cur_entries, "u10": U10,
              "chi": float(self.chi), "world": js_world(kind, self.wind, world), "s": [float(v) for v in s0],
              "t": t, "actState": list(pl.act_state)}
         d.update(kw)
         return d
 
-    def rollout_parity(self, kind, stokes=False, motor=False):
-        world, pl, guide, s0, t, Us = self.setup_case(kind, stokes=stokes, motor=motor)
+    def rollout_parity(self, kind, stokes=False, motor=False, extra=None):
+        world, pl, guide, s0, t, Us = self.setup_case(kind, stokes=stokes, motor=motor, extra=extra)
         cost, path, dead = pl.rollout(world, t, s0, Us, np.array([1.0, 0.0]))
         js = run_node(self.payload(kind, pl, world, s0, t, "rollout", Us=Us.tolist()))
         self.assertEqual(js["dead"], [int(v) for v in dead])
@@ -289,6 +310,10 @@ class TestMpcJs(unittest.TestCase):
         ok_p, rel_p = close(jsp, pyp, 1e-6, 1e-9)
         ok_t, _ = close(js["tau0"], guide.tau0, 1e-12, 1e-12)
         ok_n, _ = close(js["nominal"], guide.nominal(pl.knots_t).ravel(), 1e-9, 1e-12)
+        if motor:
+            okt, _ = close(js["nominalThrust"], guide.nominal_thrust(pl.knots_t), 1e-9, 1e-12)
+            self.assertTrue(okt, "nominal thrust differs")
+            self.assertGreater(float(np.max(js["nominalThrust"])), 0.5)
         print("\nrollout %s%s%s: dead %s, cost max rel diff %.2e, state max rel diff %.2e"
               % (kind, " with the second-order surface" if stokes else "", " with the motor" if motor else "",
                  [int(v) for v in dead], rel_c, rel_p))
@@ -311,6 +336,48 @@ class TestMpcJs(unittest.TestCase):
 
     def test_rollout_truth_world_motor(self):
         self.rollout_parity("truth", motor=True)
+
+    def test_rollout_truth_world_motor_state_fold(self):
+        self.rollout_parity("truth", motor=True, extra={"fold_switch": "state"})
+
+    def test_reflex_parity(self):
+        ac, wind = self.ac, self.wind
+        kt = np.linspace(0.0, 6.0, 24)
+        cl, mu = np.full(24, 0.05), np.full(24, 0.1)
+        th = np.linspace(0.0, 4.0, 24)
+        states = [[0.0, 0.0, 3.0, 12.0, -0.35, 0.0], [0.0, 0.0, 12.0, 11.0, -0.05, 0.0],
+                  [0.0, 0.0, 30.0, 1.02 * ac.v_stall, 0.0, 0.0], [3.0, 1.0, 1.4, 10.0, -0.05, 0.4]]
+        for kind in ("flat", "truth"):
+            for fold in ("smooth", "state"):
+                world = python_world(kind, wind)
+                rf = Reflex(ac, thrust_max(ac), folded_dcd(ac), True, fold)
+                py = [rf.predict(world, 2.0, np.array(st), kt, cl, mu, th, 0.3) for st in states]
+                js = run_node({"run": "reflex", "ac": ac_params(ac), "settings": {}, "actuators": self.lib["actuators"],
+                               "world": js_world(kind, wind, world), "t": 2.0, "tau": 0.3, "states": states,
+                               "knotsT": kt.tolist(), "cl": cl.tolist(), "mu": mu.tolist(), "th": th.tolist(),
+                               "foldSwitch": fold, "U": cl.tolist() + mu.tolist() + th.tolist()})
+                fired = [h is not None for h in py]
+                self.assertEqual(fired, [h is not None for h in js["hits"]], (kind, fold))
+                self.assertTrue(fired[0] and not fired[1] and fired[2], fired)
+                for a, b in zip(py, js["hits"]):
+                    if a is None:
+                        continue
+                    self.assertEqual(a[0], b["cause"])
+                    ok, rel = close([a[1], a[2], a[3], a[4]], [b["ahead"], b["h"], b["tip"], b["V"]], 1e-9, 1e-9)
+                    self.assertTrue(ok, "%s %s: %.2e" % (kind, fold, rel))
+                for st, o in zip(states, js["override"]):
+                    ok, _ = close(o, rf.override(np.array(st)), 1e-12, 1e-12)
+                    self.assertTrue(ok)
+        # the constants
+        rf = Reflex(ac, thrust_max(ac), folded_dcd(ac), True)
+        ok, _ = close(js["params"], [rf.horizon_s, rf.clearance_m, rf.v_frac, rf.dt, rf.n_frac, rf.v_factor], 1e-14, 1e-14)
+        self.assertTrue(ok)
+        self.assertEqual(js["sustain"]["pHold"], P_HOLD)
+        self.assertEqual(js["sustain"]["candLevels"], list(THRUST_CAND_LEVELS))
+        pl = MPPIPlanner(ac, motor=True, thrust_sampling="sustained", n_ctrl=24)
+        U = np.array([cl, mu, th])
+        ok, rel = close(np.array(js["cands"]).reshape(6, 3, 24), pl._thrust_candidates(U), 1e-12, 1e-12)
+        self.assertTrue(ok, "thrust candidates differ")
 
     def test_wind_derivs_one_pass(self):
         rng = np.random.default_rng(3)
@@ -401,8 +468,11 @@ class TestMpcJs(unittest.TestCase):
     def test_plan_with_injected_perturbations_motor(self):
         self.plan_parity(True)
 
-    def plan_parity(self, motor):
-        world, pl, guide, s0, t, Us0 = self.setup_case("truth", 1.0, motor=motor)
+    def test_plan_with_injected_perturbations_motor_sustained_state_fold(self):
+        self.plan_parity(True, {"thrust_sampling": "sustained", "fold_switch": "state"})
+
+    def plan_parity(self, motor, extra=None):
+        world, pl, guide, s0, t, Us0 = self.setup_case("truth", 1.0, motor=motor, extra=extra)
         pl.guide = None
         rng = np.random.default_rng(7)
         S, nc = pl.n_samples, pl.n_ctrl

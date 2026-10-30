@@ -84,6 +84,7 @@
       <div class="ctl step"><label for="flWorld" data-i="stWorld" data-t="flWorldTip"></label><select id="flWorld" data-t="flWorldTip"><option value="flat" data-i="worldFlat"></option><option value="truth" data-i="worldTruth"></option></select></div>
       <div class="ctl step"><label for="flMotor" data-i="stMotor" data-t="flMotorTip"></label><select id="flMotor" data-t="flMotorTip"><option value="off" data-i="motorOff"></option><option value="on" data-i="motorOn"></option></select></div>
       <div class="ctl step"><label for="flPw" data-i="stPw" data-t="flPwTip"></label><select id="flPw" data-t="flPwTip"><option value="free" data-i="pwFree"></option><option value="normal" data-i="pwNormal" selected></option><option value="costly" data-i="pwCostly"></option></select></div>
+      <div class="ctl"><label class="auto" data-t="flReflexTip"><input id="flReflex" type="checkbox" data-t="flReflexTip"> <span data-i="reflex"></span></label></div>
       <div class="ctl"><button id="flGo" type="button" data-i="go" data-t="goTip"></button><button id="flStop" type="button" data-i="stop" data-t="stopTip"></button></div>
       <div class="ctl"><label class="auto" data-t="chaseTip"><input id="flChase" type="checkbox" data-t="chaseTip"> <span data-i="chase"></span></label></div>
       <table id="flro"></table>
@@ -125,6 +126,7 @@
 <script src="flight.js"></script>
 <script src="refs.js"></script>
 <script src="library.js"></script>
+<script src="library_motor.js"></script>
 <script src="mpc.js"></script>
 <script type="module">
 import * as THREE from 'three';
@@ -164,6 +166,8 @@ const I18N = {
     motorOff: 'なし', motorOn: 'あり',
     stPw: '電力の重み', flPwTip: 'モータで使う電力量に付ける重みです。「惜しまない」はほとんど気にせず、「ふつう」は中間、「節約」は強く惜しみます。節約にしすぎると、MPC は必要な場面でもモータを使わず、着水することがあります。モータ補助が「あり」のときだけ有効です。',
     pwFree: '惜しまない', pwNormal: 'ふつう', pwCostly: '節約',
+    reflex: '危ないときの反射（モータ）', flReflexTip: '毎制御ステップ、計画どおりに飛んだ場合の 1.5 秒先を予測し、中心か翼端が水面上 0.3 m を割る、または失速速度の 1.05 倍を割ると予測されたら、全推力と引き起こし（揚力係数を余裕の限界へ、バンクは水平へ）に切り替えます。予測が解消されたら MPC に戻します。モータ補助が「あり」のときだけ有効です。',
+    f_rf: '反射', f_rf_tip: '反射が働いた回数と、そのあいだに使った電力量です。「危ないときの反射」がオンのときに表示します。',
     go: '発進', goTip: '選んだ条件で機体を発進させます。', stop: '止める', stopTip: '飛行を止めます。機体と軌跡はそのまま残ります。',
     chase: '機体を追いかけるカメラ', chaseTip: 'カメラの注目点を機体に合わせ続けます。',
     frozenTip: '飛行中は海の状態を固定しています。',
@@ -256,6 +260,8 @@ const I18N = {
     motorOff: 'Off', motorOn: 'On',
     stPw: 'Power weight', flPwTip: 'The weight on the electric energy the motor uses. "Spare no power" hardly cares, "Normal" is in between, "Save power" cares a lot. Too much saving and the MPC does not use the motor even when it is needed, and may splash. Active only when Motor assist is On.',
     pwFree: 'Spare no power', pwNormal: 'Normal', pwCostly: 'Save power',
+    reflex: 'Reflex when in danger (motor)', flReflexTip: 'At every control step, predicts the next 1.5 s of the plan as commanded; if the centre or a wingtip is predicted below 0.3 m above the surface, or the airspeed below 1.05 stall speeds, it switches to full thrust and a pull-up (lift coefficient to its margin limit, wings level) until the prediction clears, then hands back to the MPC. Active only when Motor assist is On.',
+    f_rf: 'Reflexes', f_rf_tip: 'Number of reflexes and the electric energy they used. Filled when the reflex is on.',
     go: 'Launch', goTip: 'Launches the aircraft with the chosen settings.', stop: 'Stop', stopTip: 'Stops the flight. The aircraft and trail stay.',
     chase: 'Chase camera', chaseTip: 'Keeps the camera target on the aircraft.',
     frozenTip: 'The sea state is fixed while the aircraft flies.',
@@ -677,11 +683,21 @@ const FL = { on: false, started: false, s: null, ac: null, tr: null, cl: 0, mu: 
 // The planner (mpc.js) runs in a worker made from a Blob URL of its own source text, which also
 // works from file://. The main thread flies the aircraft through the actuators as always; every
 // 0.5 s of flight time it posts the state and keeps flying the current plan from its time offset.
-const HAVE_MPC = !!(window.MPC && window.LIBRARY && window.LIBRARY.aircraft);
+const HAVE_MPC = !!(window.MPC && ((window.LIBRARY && window.LIBRARY.aircraft) || (window.LIBRARY_MOTOR && window.LIBRARY_MOTOR.aircraft)));
+// cycle table of an aircraft: the motor library when the motor is on, else the old table, else the
+// soaring cycles of the motor library (null or an empty list: none)
+function libFor(name, motorOn) {
+  const L = window.LIBRARY && window.LIBRARY.aircraft && window.LIBRARY.aircraft[name];
+  const LM = window.LIBRARY_MOTOR && window.LIBRARY_MOTOR.aircraft && window.LIBRARY_MOTOR.aircraft[name];
+  if (motorOn && LM) return LM;
+  if (L) return L;
+  return LM ? LM.filter((e) => e.kind === 'soaring') : null;
+}
+const libActuators = () => (window.LIBRARY || window.LIBRARY_MOTOR).actuators;
 const MPC_CHI = 20, MPC_MAXC = 48;   // travel 20 degrees off downwind; wave components the planner uses
 const MPC_EVERY = Math.round(((window.MPC && MPC.DEFAULTS.replanS) || 0.5) / FDT);
 const PLAN_PTS = window.MPC ? Math.round(MPC.DEFAULTS.horizonS / MPC.DEFAULTS.dt) + 1 : 2;
-const MP = { worker: null, busy: false, plan: null, flight: 0, last: 0, sum: 0, n: 0, late: 0, info: null };
+const MP = { rworld: null, worker: null, busy: false, plan: null, flight: 0, last: 0, sum: 0, n: 0, late: 0, info: null };
 const planPos = new Float32Array(PLAN_PTS * 3);
 const planGeo = new THREE.BufferGeometry();
 planGeo.setAttribute('position', new THREE.BufferAttribute(planPos, 3));
@@ -726,6 +742,7 @@ function mpcRequest(t) {
     req.world.comps = {};
     for (const key of ['a', 'k', 'omega', 'phase', 'dx', 'dy', 'urel']) req.world.comps[key] = CO[key].slice(0, N);
   }
+  if (FL.reflex) MP.rworld = MPC.makeWorld(req.world);   // the reflex predicts in the world of the plan
   MP.busy = true;
   MP.worker.postMessage({ type: 'plan', id: MP.flight, req: req });
 }
@@ -781,8 +798,8 @@ const ptMark = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THRE
   new THREE.LineBasicMaterial({ color: 0xf2c200 }));
 ptMark.visible = false; ptMark.frustumCulled = false; scene.add(ptMark);
 
-const flRows = ['el', 'v', 'h', 'dist', 'e', 'n', 'ph', 'gd', 'de', 'u', 'ref', 'ms', 'late', 'sel', 'end', 'pw', 'on', 'wh'];
-const flTipped = ['ms', 'late', 'sel', 'end', 'pw', 'on', 'wh'];   // rows with a tooltip on the label
+const flRows = ['el', 'v', 'h', 'dist', 'e', 'n', 'ph', 'gd', 'de', 'u', 'ref', 'ms', 'late', 'sel', 'end', 'pw', 'on', 'wh', 'rf'];
+const flTipped = ['ms', 'late', 'sel', 'end', 'pw', 'on', 'wh', 'rf'];   // rows with a tooltip on the label
 $('flro').innerHTML = flRows.map((r) => '<tr><td data-i="f_' + r + '"' + (flTipped.includes(r) ? ' data-t="f_' + r + '_tip"' : '') + '></td><td id="fl_' + r + '"></td></tr>').join('');
 const setFl = (k, s) => { $('fl_' + k).textContent = s; };
 for (const r of flRows) setFl(r, '-');
@@ -797,12 +814,12 @@ if (!REFS || !Object.keys(REFS).length) {
   flNoteFn = () => tx('refsMissing');
   for (const id of ['flAc', 'flCyc', 'flPos', 'flHead', 'flCtl', 'flWorld', 'flMotor', 'flPw', 'flGo', 'flStop', 'flChase']) $(id).disabled = true;
 } else {
-  $('flAc').innerHTML = Object.keys(REFS).map((n) => '<option>' + n + '</option>').join('');
+  $('flAc').innerHTML = Object.keys(REFS).filter((n) => n !== 'flyingwing-2m').map((n) => '<option>' + n + '</option>').join('');
   const showRefs = () => {
     if ($('flCtl').value === 'mpc') {
-      const es = HAVE_MPC ? window.LIBRARY.aircraft[$('flAc').value] : null;
+      const es = HAVE_MPC ? libFor($('flAc').value, $('flMotor').value === 'on') : null;
       const ks = es ? [...new Set(es.map((x) => x.u10))].sort((a, b) => a - b) : [];
-      flNoteFn = () => !HAVE_MPC ? tx('libMissing') : es ? tx('mpcLibAt', ks.join(', ')) : tx('mpcNoLib'); renderFl();
+      flNoteFn = () => !HAVE_MPC ? tx('libMissing') : es && es.length ? tx('mpcLibAt', ks.join(', ')) : tx('mpcNoLib'); renderFl();
       return;
     }
     const e = REFS[$('flAc').value][$('flCyc').value] || {};
@@ -810,6 +827,7 @@ if (!REFS || !Object.keys(REFS).length) {
     flNoteFn = () => ks.length ? tx('refsAt', ks.join(', ')) : tx('refsNone'); renderFl();
   };
   $('flAc').addEventListener('change', showRefs); $('flCyc').addEventListener('change', showRefs);
+  $('flMotor').addEventListener('change', showRefs);
   $('flCtl').addEventListener('change', () => { syncCtl(); showRefs(); });
   showRefs();
 }
@@ -818,6 +836,7 @@ function syncCtl() {
   const mpc = $('flCtl').value === 'mpc';
   $('flWorld').disabled = !mpc; $('flCyc').disabled = mpc;
   $('flMotor').disabled = !mpc; $('flPw').disabled = !mpc || $('flMotor').value !== 'on';
+  $('flReflex').disabled = !mpc || $('flMotor').value !== 'on';
 }
 $('flMotor').addEventListener('change', syncCtl);
 syncCtl();
@@ -834,8 +853,8 @@ function launch() {
   let lib = null;
   if (mpcMode) {
     if (!HAVE_MPC) { flNoteFn = () => tx('libMissing'); renderFl(); return; }
-    lib = window.LIBRARY.aircraft[$('flAc').value];
-    if (!lib) { flNoteFn = () => tx('mpcNoLib'); renderFl(); return; }
+    lib = libFor($('flAc').value, $('flMotor').value === 'on');
+    if (!lib || !lib.length) { flNoteFn = () => tx('mpcNoLib'); renderFl(); return; }
     if (!mpcEnsureWorker()) return;
   }
   const table = entry[cyc] || {};
@@ -869,17 +888,21 @@ function launch() {
   FL.ac = ac; FL.tr = mpcMode ? null : new Flight.Tracker(ref, ac);
   FL.mpc = mpcMode; FL.end = null; FL.act = null;
   FL.motor = mpcMode && $('flMotor').value === 'on';
+  FL.reflex = FL.motor && $('flReflex').checked;
+  FL.rx = { on: false, n: 0, eJ: 0 };
   FL.T = 0; FL.eJ = 0; FL.nOn = 0; FL.nStep = 0;
+  MP.rworld = null;
+  FL.rf = FL.reflex ? new MPC.Reflex(ac, { foldSwitch: 'state' }) : null;
   if (FL.motor) {
     FL.tMax = MPC.MOTOR.thrustMaxPerWeight * ac.mass * Flight.G; FL.eta = MPC.MOTOR.propEff * MPC.MOTOR.motorEff;
     FL.foldDcd = MPC.MOTOR.foldedCdaM2 / ac.wing_area;
   }
   MP.flight++; MP.busy = false; MP.plan = null; MP.last = 0; MP.sum = 0; MP.n = 0; MP.late = 0; MP.info = null;
   if (mpcMode) {
-    const A = window.LIBRARY.actuators;
+    const A = libActuators();
     FL.act = new MPC.Actuators(ac, { rateModel: A.rate_model, tau: A.tau_s, clRate: A.cl_rate_per_s, kPb2v: A.k_pb2v, delay: A.delay_s });
     MP.worker.postMessage({ type: 'init', ac: ac, entries: lib,
-      settings: FL.motor ? { motor: true, energyLevel: $('flPw').value } : {}, actuators: A });
+      settings: FL.motor ? { motor: true, energyLevel: $('flPw').value, thrustSampling: 'sustained', foldSwitch: 'state' } : {}, actuators: A });
   }
   FL.s = [p.x, p.y, fSurface(p.x, p.y, T) + zr, V, gam, psi];
   FL.cl = 0; FL.mu = 0; FL.acc = 0; FL.el = 0; FL.trail = []; FL.splash = null; FL.started = true; FL.on = true;
@@ -923,17 +946,24 @@ function flightAdvance(dtWanted, t0) {
     if (FL.mpc) {
       if (Math.round(FL.el / FDT) % MPC_EVERY === 0) mpcRequest(t);
       const ac = FL.ac, V = FL.s[3];
-      const pc = mpcControls(t);
+      let pc = mpcControls(t);
+      let rxOn = false;   // the reflex: full thrust and a pull-up while the plan is predicted to fail
+      if (FL.reflex && MP.plan && MP.rworld && FL.rf.predict(MP.rworld, t, FL.s, MP.plan, t - MP.plan.t0)) {
+        rxOn = true; pc = FL.rf.override(FL.s);
+        if (!FL.rx.on) FL.rx.n++;
+      }
+      FL.rx.on = rxOn;
       const cmd = MPC.nLimitedCl(ac, V, Math.min(Math.max(pc[0], ac.cl_min), ac.cl_max));   // the command is held to the limit
       let a;
       if (FL.motor) {   // the thrust command of the plan, then the motor lag; the propeller folds when it is off
-        const tc = MP.plan ? Math.min(Math.max(MPC.planThrust(MP.plan, t - MP.plan.t0), 0), FL.tMax) : 0;
+        const tc = rxOn ? FL.tMax : MP.plan ? Math.min(Math.max(MPC.planThrust(MP.plan, t - MP.plan.t0), 0), FL.tMax) : 0;
         a = FL.act.step(cmd, Math.min(Math.max(pc[1], -ac.mu_max), ac.mu_max), FDT, V, tc);
         FL.T = FL.act.T;
         FL.eJ += FL.T * V * FDT / FL.eta; FL.nStep++;
+        if (rxOn) FL.rx.eJ += FL.T * V * FDT / FL.eta;
         if (FL.T > 0.01 * ac.mass * Flight.G) FL.nOn++;
         FL.cl = MPC.nLimitedCl(ac, V, a[0]); FL.mu = a[1];
-        FL.s = Flight.rk4(FL.s, a[0], a[1], ac, fWind, t, FDT, true, FL.T, FL.foldDcd);
+        FL.s = Flight.rk4(FL.s, a[0], a[1], ac, fWind, t, FDT, true, FL.T, MPC.foldEffective(ac, FL.foldDcd, FL.T, tc));   // folded on the commanded state
       } else {
         a = FL.act.step(cmd, Math.min(Math.max(pc[1], -ac.mu_max), ac.mu_max), FDT, V);
         FL.cl = MPC.nLimitedCl(ac, V, a[0]); FL.mu = a[1];
@@ -1013,6 +1043,7 @@ function updateFlightView() {
   setFl('pw', FL.motor && FL.el > 0 ? (FL.eJ / FL.el).toFixed(1) + ' W' : '-');
   setFl('on', FL.motor && FL.nStep ? (100 * FL.nOn / FL.nStep).toFixed(0) + ' %' : '-');
   setFl('wh', FL.motor ? (FL.eJ / 3600).toFixed(3) + ' Wh' : '-');
+  setFl('rf', FL.reflex ? FL.rx.n + ' / ' + FL.rx.eJ.toFixed(1) + ' J' : '-');
   if (exhaust) {   // exhaust mark: length follows the thrust (full at 10 % of the weight)
     const fr = FL.motor ? FL.T / (0.1 * FL.ac.mass * Flight.G) : 0;
     exhaust.visible = FL.motor && FL.T > 0.01 * FL.ac.mass * Flight.G;

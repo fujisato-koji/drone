@@ -232,6 +232,9 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | mpc.burst_free_max_w | 40 | W | calculated | docs/02-form.md#receding-horizon |
 | ctrl.thrust_sigma_frac | 0.15 | 1 | assumed | Q-055 |
 | prop.thrust_tau_s | 0.1 | s | assumed | Q-055 |
+| ctrl.reflex_horizon_s | 1.5 | s | assumed | Q-055 |
+| ctrl.reflex_clearance_m | 0.3 | m | assumed | Q-055 |
+| ctrl.reflex_v_frac | 1.05 | 1 | assumed | Q-055 |
 | env.charnock | 0.0144 | 1 | assumed | Q-008 |
 | env.air_kinematic_viscosity | 1.46e-05 | m2/s | assumed | Q-008 |
 | env.jonswap_gamma | 3.3 | 1 | assumed | Q-008 |

@@ -34,6 +34,23 @@ Motor as a third control (MPPIPlanner motor=True, fly_mpc motor=True; choices th
   which a joule of electricity costs as much as the specific energy it can buy is worth.
 - A burst is a run of the actual thrust above 1 % of the weight (the half point of the drag switch).
 
+Motor library, sustained thrust sampling, state fold, reflex (choices the spec left open):
+- LIB_MOTOR_PATH (build_motor_library) holds soaring cycles (max_speed, as the margin library, kind
+  "soaring", zero thrust) and, for every (wind, chi) of the grid MOTOR_U10 that has no soaring cycle,
+  a motor cycle of dsopt mode min_power (kind "motor", thrust per node, average electric power, speed
+  along chi at least 0.5 v_best_ld) for the kept aircraft. Entries that leave their margins on a dense
+  replay are dropped (filter_motor_library). Cycle.thrust / CycleGuide.nominal_thrust give the thrust
+  schedule, phase-matched like the controls; the planner's nominal thrust is that schedule and the
+  perturbation is around it.
+- thrust_sampling "sustained" (default "basic" = the earlier draws): half of the samples hold one
+  half-normal thrust level (scale HOLD_SIGMA_FRAC T_max) over a random run of knots, and 6 candidates
+  with constant thrust (THRUST_CAND_LEVELS of the weight, with the nominal controls and wings level)
+  join the constant-control candidates.
+- fold_switch "state" (default "smooth"): in the rollouts and (fly_mpc) in the true dynamics the
+  propeller is folded (full folded drag) when the commanded thrust is below FOLD_CMD_FRAC of the weight
+  and not folded otherwise, instead of the smooth function of the thrust (see fold_effective).
+- Reflex (reflex=True in fly_mpc): see the Reflex class.
+
 Estimates in the loop (state_source / wind_source = "estimate"; choices the spec left open):
 - A SensorSuite (default "standard") and the Estimator run at the integration step on the true
   state; the actual bank (after the actuators) feeds the sensor truth.
@@ -87,6 +104,18 @@ def wind_derivs_vec(world, x, y, z, t):
     return w[0], grad, (w[7] - w[8]) / (2 * _DT)
 
 
+FOLD_CMD_FRAC = 0.005       # fold_switch "state": a commanded thrust below this share of the weight = motor off
+
+
+def fold_effective(ac, dcd, t_act, t_cmd):
+    """Folded-propeller drag coefficient to hand to the smooth-switch formulas so that they give the
+    state switch: dcd (propeller folded) where the commanded thrust is below FOLD_CMD_FRAC of the
+    weight, 0 (running) elsewhere, whatever the actual thrust t_act (lagging the command) is."""
+    t_act = np.asarray(t_act, float)
+    f = 1.0 - t_act / (t_act + 0.01 * ac.mass * G)
+    return np.where(np.asarray(t_cmd) < FOLD_CMD_FRAC * ac.mass * G, dcd / f, 0.0)
+
+
 def derivatives_vec(t, s, ac, world, cl, mu, n_limit=False, thrust=0.0, ground_effect=False,
                     fold_dcd=None):
     """s: (6, S) states; cl, mu: (S,). Returns (6, S) derivatives. With n_limit cl is first
@@ -129,6 +158,10 @@ def derivatives_vec(t, s, ac, world, cl, mu, n_limit=False, thrust=0.0, ground_e
 # planner
 # ---------------------------------------------------------------------------------------------
 
+P_HOLD = 0.5               # thrust_sampling "sustained": share of the samples with a held thrust perturbation
+HOLD_SIGMA_FRAC = 0.3      # scale of that perturbation, in T_max (half-normal level)
+THRUST_CAND_LEVELS = (0.05, 0.10, 0.20)      # constant-thrust candidates, shares of the weight
+
 
 @dataclass
 class Plan:
@@ -163,7 +196,8 @@ class MPPIPlanner:
                  sigma_cl=0.15, sigma_mu=0.25, replan_s=0.5, seed=1, n_iter=2, n_iter_cold=4,
                  w_e=1.0, w_p=0.5, h_clear=1.0, clearance="height", w_clear=200.0,
                  w_n=50.0, w_stall=300.0, w_smooth=2.0, c_contact=1e4, smooth_modes=0,
-                 smooth_gain=3.0, w_d=10.0, n_limit=False, motor=False, w_energy=None):
+                 smooth_gain=3.0, w_d=10.0, n_limit=False, motor=False, w_energy=None,
+                 thrust_sampling="basic", fold_switch="smooth"):
         self.ac = aircraft
         self.horizon_s, self.dt, self.n_samples, self.n_ctrl = horizon_s, dt, n_samples, n_ctrl
         self.lam, self.sigma_cl, self.sigma_mu, self.replan_s = lam, sigma_cl, sigma_mu, replan_s
@@ -174,6 +208,9 @@ class MPPIPlanner:
         self.smooth_modes, self.smooth_gain = smooth_modes, smooth_gain
         self.w_d = w_d
         self.motor = bool(motor)
+        if thrust_sampling not in ("basic", "sustained") or fold_switch not in ("smooth", "state"):
+            raise ValueError((thrust_sampling, fold_switch))
+        self.thrust_sampling, self.fold_switch = thrust_sampling, fold_switch
         self.nu = 3 if self.motor else 2         # controls per knot: cl, mu (and the thrust T)
         if self.motor:
             from sim.dsopt import folded_dcd, prop_efficiency, thrust_max
@@ -183,6 +220,7 @@ class MPPIPlanner:
             self.w_energy = float(energy_weight(aircraft, "normal") if w_energy is None else w_energy)
             self.fold_dcd = folded_dcd(aircraft)
             self.sigma_t = float(value("ctrl.thrust_sigma_frac", 0.15)) * self.t_max
+            self.sigma_hold = HOLD_SIGMA_FRAC * self.t_max
         self.act = None             # an sim.aircraft.Actuators: rollouts fly through its model
         self.act_state = None       # (actual cl, actual mu, last cl command, last mu command)
         self.n_limit = n_limit      # rollouts fly the load-limited cl (the cost still sees the commanded n)
@@ -225,6 +263,34 @@ class MPPIPlanner:
                 out.append(np.stack(u))
         return np.array(out)
 
+    def _thrust_candidates(self, U):
+        """Constant-thrust candidates (thrust_sampling "sustained"): each of THRUST_CAND_LEVELS of the
+        weight, held over the whole horizon, once with the controls of the nominal U (the cycle) and
+        once wings level at the best L/D."""
+        ac = self.ac
+        out = []
+        for lv in THRUST_CAND_LEVELS:
+            th = np.full(self.n_ctrl, min(lv * ac.mass * G, self.t_max))
+            out.append(np.stack([U[0], U[1], th]))
+            out.append(np.stack([np.full(self.n_ctrl, ac.cl_best_ld), np.zeros(self.n_ctrl), th]))
+        return np.array(out)
+
+    def _thrust_noise(self, S):
+        """Thrust perturbations (S, 1, n_ctrl): independent Gaussian per knot; with thrust_sampling
+        "sustained" a share P_HOLD of the samples instead hold one half-normal level (scale
+        HOLD_SIGMA_FRAC T_max) over a random run of knots."""
+        n = self.n_ctrl
+        eT = self.sigma_t * self.rng.standard_normal((S, 1, n))
+        if self.thrust_sampling == "sustained":
+            hold = self.rng.random(S) < P_HOLD
+            lvl = np.abs(self.rng.standard_normal(S)) * self.sigma_hold
+            a, b = self.rng.integers(0, n, S), self.rng.integers(0, n, S)
+            lo, hi = np.minimum(a, b), np.maximum(a, b)
+            k = np.arange(n)[None, :]
+            win = (k >= lo[:, None]) & (k <= hi[:, None])
+            eT = np.where(hold[:, None, None], (lvl[:, None] * win)[:, None, :], eT)
+        return eT
+
     def _clip(self, U):
         ac = self.ac
         U[..., 0, :] = np.clip(U[..., 0, :], ac.cl_min, ac.cl_max)
@@ -258,6 +324,7 @@ class MPPIPlanner:
         if motor:
             T_all = np.clip(Us[:, 2, i0] * (1 - fr) + Us[:, 2, i0 + 1] * fr, 0.0, self.t_max)
             fd = self.fold_dcd
+            state_fold = self.fold_switch == "state"
         act = self.act
         if act is not None:
             # delayed commands on the half-step grid (before the delay: the last command sent)
@@ -293,6 +360,7 @@ class MPPIPlanner:
             c3_cmd = c3
             if motor:
                 T1, T2, T3 = T_all[:, 2 * i], T_all[:, 2 * i + 1], T_all[:, 2 * i + 2]
+                Tc1, Tc2, Tc3 = T1, T2, T3          # the commands (before the motor lag)
             if act is not None:
                 lim_mu = act.mu_rate_at(s[3]) * hd
                 lim_cl = act.cl_rate * hd
@@ -309,13 +377,19 @@ class MPPIPlanner:
                     T3 = x_T
             if motor:
                 V0 = s[3]
-                k1 = derivatives_vec(t, s, ac, world, c1, m1, self.n_limit, thrust=T1, fold_dcd=fd)
+                if state_fold:
+                    fd1, fd2, fd3 = (fold_effective(ac, self.fold_dcd, T1, Tc1),
+                                     fold_effective(ac, self.fold_dcd, T2, Tc2),
+                                     fold_effective(ac, self.fold_dcd, T3, Tc3))
+                else:
+                    fd1 = fd2 = fd3 = fd
+                k1 = derivatives_vec(t, s, ac, world, c1, m1, self.n_limit, thrust=T1, fold_dcd=fd1)
                 k2 = derivatives_vec(t + dt / 2, s + dt / 2 * k1, ac, world, c2, m2, self.n_limit,
-                                     thrust=T2, fold_dcd=fd)
+                                     thrust=T2, fold_dcd=fd2)
                 k3 = derivatives_vec(t + dt / 2, s + dt / 2 * k2, ac, world, c2, m2, self.n_limit,
-                                     thrust=T2, fold_dcd=fd)
+                                     thrust=T2, fold_dcd=fd2)
                 k4 = derivatives_vec(t + dt, s + dt * k3, ac, world, c3, m3, self.n_limit,
-                                     thrust=T3, fold_dcd=fd)
+                                     thrust=T3, fold_dcd=fd3)
             else:
                 k1 = derivatives_vec(t, s, ac, world, c1, m1, self.n_limit)
                 k2 = derivatives_vec(t + dt / 2, s + dt / 2 * k1, ac, world, c2, m2, self.n_limit)
@@ -380,8 +454,9 @@ class MPPIPlanner:
         prev = None if cold else self._shift(self.U)
         if guide is not None:
             U = guide.nominal(self.knots_t)
-            if self.motor:
-                U = np.concatenate([U, np.zeros((1, self.n_ctrl))])    # library cycles carry no thrust
+            if self.motor:    # the thrust schedule of the cycle (zero for a soaring cycle)
+                U = np.concatenate([U, guide.nominal_thrust(self.knots_t)[None]])
+                U[2] = np.clip(U[2], 0.0, self.t_max)
             n_it = self.n_iter
         else:
             U = self._initial_plan() if cold else prev
@@ -399,12 +474,13 @@ class MPPIPlanner:
                     z = self.rng.standard_normal((self.n_samples, 2, self.smooth_modes))
                     eps += (self.smooth_gain * sig[None, :, :] / np.sqrt(self.smooth_modes)
                             * (z @ self._basis))
-                if self.motor:   # thrust: Gaussian per knot; _clip makes U_T + eps non-negative
-                    eps = np.concatenate([eps, self.sigma_t * self.rng.standard_normal(
-                        (self.n_samples, 1, self.n_ctrl))], axis=1)
+                if self.motor:   # thrust: see _thrust_noise; _clip makes U_T + eps non-negative
+                    eps = np.concatenate([eps, self._thrust_noise(self.n_samples)], axis=1)
             eps[0] = 0.0
             Us = self._clip(U[None] + eps)
             cand = self._candidates()
+            if self.motor and self.thrust_sampling == "sustained":
+                cand = np.concatenate([cand, self._thrust_candidates(U)])
             Us[1:1 + len(cand)] = cand
             if guide is not None and prev is not None:
                 Us[1 + len(cand)] = self._clip(prev.copy())
@@ -563,6 +639,241 @@ def build_margin_library(names=("baseline-2m", "albatross-3m"), u10s=MARGIN_U10,
     return entries
 
 
+LIB_MOTOR_PATH = os.path.join(os.path.dirname(__file__), "out", "mpc_library_motor.json")
+KEPT_AIRCRAFT = ("albatross-3m", "baseline-2m", "sealedhull-2p5m", "easyglider-1p8m", "demo-1p5m")
+MOTOR_U10 = (0.0, 3.0, 6.0, 9.0, 11.0, 13.0, 16.0, 20.0, 24.0)
+MOTOR_SEEDS = ((0, 1, 2), (3, 4, 5))      # tried in this order for a motor cycle
+MOTOR_MAXITER = 400
+
+
+def _solve_motor_entry(job):
+    try:
+        return _solve_motor_entry_raw(job)
+    except Exception as exc:
+        name, u10, chi_deg, n = job
+        return {"aircraft": name, "u10": float(u10), "u10_requested": float(u10),
+                "chi_deg": float(chi_deg), "success": False, "missing": True, "kind": "motor",
+                "error": repr(exc)}
+
+
+def _solve_motor_entry_raw(job):
+    """One motor-assisted library cycle: dsopt mode min_power with the motor (thrust a third
+    control per node, mean speed along chi at least 0.5 v_best_ld as in the ground-motor study),
+    flat mode, COARE 3.5 roughness at max(u10, 1), geometric wingtip, midpoints, pb2v rates, n >=
+    0, no ground effect, the margin sets of the margin library (standard first, then light). The
+    entry has the node thrust (N), the average electric power and the replay figures of
+    dsopt.control_stats and dsopt.motor_stats."""
+    from sim.aircraft_models import by_name
+    from sim.dsopt import control_stats, motor_stats, profile_for, solve
+    name, u10, chi_deg, n = job
+    ac = by_name(name)
+    prof = profile_for(max(u10, 1.0), "log", roughness="coare35")
+    tried = []
+    for label, (h_min, n_frac, mu_frac, v_factor) in MARGIN_SETS:
+        for seeds in MOTOR_SEEDS:
+            t0 = time.time()
+            info, x, col = solve(ac, prof, mode="min_power", cycle="travel", n=n, u10=u10,
+                                 chi=np.radians(chi_deg), tip_model="geometric", midpoints=True,
+                                 rate_limits=True, rate_model="pb2v", n_min=0.0, h_min=h_min,
+                                 n_frac=n_frac, mu_frac=mu_frac, v_factor=v_factor, motor=True,
+                                 v_travel_min=0.5 * ac.v_best_ld, seeds=seeds,
+                                 maxiter=MOTOR_MAXITER, return_x=True, stop_after=1)
+            tried.append({"margins": label, "seeds": list(seeds), "success": bool(info["success"]),
+                          "violation": float(info["violation"]), "runtime_s": time.time() - t0})
+            if info["success"]:
+                S, C, T, _ = col.unpack(x)
+                t = np.linspace(0.0, T, n)
+                r = lambda a: [float(f"{v:.6g}") for v in np.asarray(a)]
+                ms = motor_stats(col, x)
+                return {"aircraft": name, "u10": float(u10), "u10_requested": float(u10),
+                        "chi_deg": float(chi_deg), "success": True, "kind": "motor",
+                        "period": float(T), "margin_set": label,
+                        "margins": {"h_min": h_min, "n_frac": n_frac, "mu_frac": mu_frac,
+                                    "v_factor": v_factor, "n_min": 0.0, "h_tip_min": col.h_tip,
+                                    "k_roll": col.k_roll, "cl_rate_max_per_s": col.r_max},
+                        "speed_along_chi": float(info["speed_along_chi"]),
+                        "z_min": float(info["z_min"]), "z_min_mid": float(info["z_min_mid"]),
+                        "n_max": float(info["n_max"]), "power_avg_w": ms["power_avg_w"],
+                        "power_avg_dense_w": ms["power_avg_dense_w"],
+                        "power_peak_w": ms["power_peak_w"],
+                        "thrust_on_share": ms["thrust_on_share"],
+                        "thrust_max_n": ms["thrust_max_n"],
+                        "replay": control_stats(col, x), "tried": tried,
+                        "t": r(t), "x": r(S[:, 0]), "y": r(S[:, 1]), "z": r(S[:, 2]),
+                        "V": r(S[:, 3]), "gamma": r(S[:, 4]), "psi": r(S[:, 5]),
+                        "cl": r(C[:, 0]), "mu": r(C[:, 1]), "thrust": r(col.thrust(x))}
+    return {"aircraft": name, "u10": float(u10), "u10_requested": float(u10),
+            "chi_deg": float(chi_deg), "success": False, "missing": True, "kind": "motor",
+            "tried": tried}
+
+
+def _solve_soaring_entry(job):
+    """A soaring cycle of the motor library: the margin-library solve (mode max_speed), with the
+    kind and a zero thrust schedule added."""
+    name, u10, chi_deg, n = job
+    if u10 < 1.0:      # no log profile at a calm: no soaring cycle
+        return {"aircraft": name, "u10": float(u10), "u10_requested": float(u10),
+                "chi_deg": float(chi_deg), "success": False, "missing": True, "kind": "soaring",
+                "tried": []}
+    try:
+        e = _solve_margin_entry(job)
+    except Exception as exc:       # a failed solve is a missing entry, not a lost build
+        e = {"aircraft": name, "u10": float(u10), "u10_requested": float(u10),
+             "chi_deg": float(chi_deg), "success": False, "missing": True, "error": repr(exc)}
+    e["kind"] = "soaring"
+    if e["success"]:
+        e["thrust"] = [0.0] * len(e["t"])
+        e["power_avg_w"] = 0.0
+    return e
+
+
+def build_motor_library(names=KEPT_AIRCRAFT, u10s=MOTOR_U10, chis=LIB_CHI_DEG, n=40, workers=6,
+                        path=LIB_MOTOR_PATH):
+    """The margin library extended with motor-assisted cycles and to the kept aircraft.
+
+    Soaring cycles (max_speed, travel) first: chi = 20 deg at every wind of the grid; at the winds
+    where that converged the other chi values; winds where chi = 20 failed are below the soaring
+    minimum of the aircraft and are not tried for the other chi. Then a motor cycle (min_power,
+    travel, motor) for every (aircraft, wind, chi) of the grid that has no soaring cycle, so every
+    wind of the grid has all the chi values of one kind. Winds with no cycle of either kind stay
+    missing (the list is in the meta block)."""
+    from concurrent.futures import ProcessPoolExecutor
+
+    from sim import record
+    t0 = time.time()
+    chi20 = min(chis, key=lambda c: abs(c - 20.0))
+    with ProcessPoolExecutor(workers) as ex:
+        first = list(ex.map(_solve_soaring_entry, [(a, u, chi20, n) for a in names for u in u10s],
+                            chunksize=1))
+        ok20 = {(e["aircraft"], e["u10"]) for e in first if e["success"]}
+        rest = [(a, u, c, n) for a in names for u in u10s if (a, u) in ok20 for c in chis
+                if c != chi20]
+        soaring = first + list(ex.map(_solve_soaring_entry, rest, chunksize=1))
+        have = {(e["aircraft"], e["u10"], e["chi_deg"]) for e in soaring if e["success"]}
+        mjobs = [(a, u, c, n) for a in names for u in u10s for c in chis if (a, u, c) not in have]
+        mjobs.sort(key=lambda j: (j[1], j[0]))
+        motor = list(ex.map(_solve_motor_entry, mjobs, chunksize=1))
+    entries = [e for e in soaring if e["success"]] + motor
+    entries.sort(key=lambda e: (e["aircraft"], e["u10"], e["chi_deg"]))
+    meta = record.meta("python -m sim.mpc --build-motor-library",
+                       [__file__, os.path.join(os.path.dirname(__file__), "dsopt.py")])
+    meta.update({"runtime_s": time.time() - t0, "n_nodes": n, "u10_grid": list(u10s),
+                 "chi_deg": list(chis),
+                 "dsopt_soaring": "as the margin library: solve(mode=max_speed, cycle=travel, flat "
+                                  "mode, tip_model=geometric, midpoints=True, rate_limits=True, "
+                                  "rate_model=pb2v, n_min=0, profile_for(u10, log, "
+                                  "roughness=coare35)), chi 20 deg first, the other chi only where "
+                                  "that converged",
+                 "dsopt_motor": "solve(mode=min_power, cycle=travel, motor=True, v_travel_min = "
+                                "0.5 v_best_ld, same flat mode settings, profile_for(max(u10, 1)), "
+                                "ground effect off, seeds 0-2 then 3-5, maxiter %d) for every "
+                                "(aircraft, wind, chi) without a soaring cycle" % MOTOR_MAXITER,
+                 "margin_sets": {k: dict(zip(("h_min", "n_frac", "mu_frac", "v_factor"), v))
+                                 for k, v in MARGIN_SETS},
+                 "margin_order": "standard first; light only where standard did not converge",
+                 "kept_aircraft": list(names),
+                 "frame": "wind toward +x, angles ccw from +x; z is the height above the surface; "
+                          "thrust in N per node (0 for soaring cycles)",
+                 "missing": [{"aircraft": e["aircraft"], "u10": e["u10"], "chi_deg": e["chi_deg"]}
+                             for e in entries if not e["success"]],
+                 "counts": {a: {"soaring": sum(1 for e in entries if e["aircraft"] == a
+                                               and e["success"] and e["kind"] == "soaring"),
+                                "motor": sum(1 for e in entries if e["aircraft"] == a
+                                             and e["success"] and e["kind"] == "motor")}
+                            for a in names}})
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", newline="\n") as fh:
+        json.dump({"meta": meta, "entries": entries}, fh, indent=1)
+        fh.write("\n")
+    filter_motor_library(path)
+    return entries
+
+
+def entry_replay(e, ac, sub=20):
+    """Dense replay of a library entry (RK4 from each node with the piecewise-linear controls and
+    thrust, dsopt dynamics): (lowest height, lowest geometric wingtip height, node states (N, 6),
+    node controls (N, 2), node time step)."""
+    from sim.dsopt import dyn, profile_for
+    a = lambda k: np.asarray(e[k], float)
+    S = np.stack([a("x"), a("y"), a("z"), a("V"), a("gamma"), a("psi")], axis=1)
+    C = np.stack([a("cl"), a("mu")], axis=1)
+    Th = a("thrust") if "thrust" in e else np.zeros(len(S))
+    prof = profile_for(max(e["u10"], 1.0), "log", roughness="coare35")
+    dt = e["period"] / (len(S) - 1)
+    f = lambda s, c, th: dyn(s, c, ac, prof, e["u10"], False, th)
+    s = S[:-1].copy()
+    hmin, tipmin = np.inf, np.inf
+    for j in range(sub + 1):
+        fr = j / sub
+        c = C[:-1] + (C[1:] - C[:-1]) * fr
+        hmin = min(hmin, s[:, 2].min())
+        tipmin = min(tipmin, (s[:, 2] - 0.5 * ac.span * np.sin(np.abs(c[:, 1])) * np.cos(s[:, 4])).min())
+        if j == sub:
+            break
+        h = dt / sub
+        cm = C[:-1] + (C[1:] - C[:-1]) * (fr + 0.5 / sub)
+        cn = C[:-1] + (C[1:] - C[:-1]) * (fr + 1.0 / sub)
+        t0, tm, tn = (Th[:-1] + (Th[1:] - Th[:-1]) * q for q in (fr, fr + 0.5 / sub, fr + 1.0 / sub))
+        k1 = f(s, c, t0)
+        k2 = f(s + 0.5 * h * k1, cm, tm)
+        k3 = f(s + 0.5 * h * k2, cm, tm)
+        k4 = f(s + h * k3, cn, tn)
+        s = s + h / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4)
+    return hmin, tipmin, S, C, dt
+
+
+def replay_failures(e, ac):
+    """Reasons (list of str, empty if none) why the dense replay of entry e leaves its margins: lowest
+    height and wingtip 0.05 m under h_min and h_tip_min, load factor 1 % over n_frac n_max or 0.02
+    under n_min, bank 1 % over mu_frac mu_max, airspeed 1 % under v_factor v_stall, rates 2 % over."""
+    m = e["margins"]
+    hmin, tipmin, S, C, dt = entry_replay(e, ac)
+    n = 0.5 * ac.rho * ac.wing_area / (ac.mass * G) * S[:, 3] ** 2 * C[:, 0]
+    Vm = np.minimum(S[1:, 3], S[:-1, 3])
+    lim = 2.0 * m["k_roll"] * Vm / ac.span
+    bad = []
+    for ok, why in ((hmin >= m["h_min"] - 0.05, "h %.3f < %g" % (hmin, m["h_min"])),
+                    (tipmin >= m["h_tip_min"] - 0.05, "tip %.3f" % tipmin),
+                    (n.max() <= m["n_frac"] * ac.n_max * 1.01, "n max %.2f" % n.max()),
+                    (n.min() >= m["n_min"] - 0.02, "n min %.2f" % n.min()),
+                    (np.abs(C[:, 1]).max() <= m["mu_frac"] * ac.mu_max * 1.01, "bank"),
+                    (S[:, 3].min() >= m["v_factor"] * ac.v_stall * 0.99, "airspeed"),
+                    ((np.abs(np.diff(C[:, 1])) / dt / lim).max() <= 1.02, "bank rate"),
+                    (np.abs(np.diff(C[:, 0])).max() / dt <= m["cl_rate_max_per_s"] * 1.02, "cl rate")):
+        if not ok:
+            bad.append(why)
+    return bad
+
+
+def filter_motor_library(path=LIB_MOTOR_PATH):
+    """Dense-replay every entry of the motor library file and mark those that leave their margins as
+    missing (success False, replay_failed with the reasons); rewrites the file. Returns the list."""
+    from sim.aircraft_models import by_name
+    with open(path) as fh:
+        d = json.load(fh)
+    dropped = []
+    for e in d["entries"]:
+        if not e["success"]:
+            continue
+        bad = replay_failures(e, by_name(e["aircraft"]))
+        if bad:
+            for k in ("t", "x", "y", "z", "V", "gamma", "psi", "cl", "mu", "thrust"):
+                e.pop(k, None)
+            e.update({"success": False, "missing": True, "replay_failed": bad})
+            dropped.append((e["aircraft"], e["u10"], e["chi_deg"], bad))
+    d["meta"]["replay_filter"] = ("every entry replayed densely (mpc.replay_failures) against its own "
+                                 "margins; failures marked missing: %d" % len(dropped))
+    d["meta"]["missing"] = [{"aircraft": e["aircraft"], "u10": e["u10"], "chi_deg": e["chi_deg"]}
+                            for e in d["entries"] if not e["success"]]
+    d["meta"]["counts"] = {a: {k: sum(1 for e in d["entries"] if e["aircraft"] == a and e["success"]
+                                      and e["kind"] == k) for k in ("soaring", "motor")}
+                           for a in d["meta"]["kept_aircraft"]}
+    with open(path, "w", newline=chr(10)) as fh:
+        json.dump(d, fh, indent=1)
+        fh.write(chr(10))
+    return dropped
+
+
 class Cycle:
     """One periodic library cycle in the wind frame (wind toward +x), optionally mirrored."""
 
@@ -576,6 +887,9 @@ class Cycle:
         self.z, self.V, self.g = a("z"), a("V"), a("gamma")
         self.psi = np.unwrap(sg * a("psi"))
         self.cl, self.mu = a("cl"), sg * a("mu")
+        # node thrust (N) of a motor-assisted cycle; zeros for a soaring one or an old library entry
+        self.thrust = a("thrust") if "thrust" in d else np.zeros_like(self.t)
+        self.has_thrust = bool(np.any(self.thrust > 0.0))
         self.disp = np.array([self.x[-1] - self.x[0], self.y[-1] - self.y[0]])
         self.v_mean = float(np.mean(self.V))
         self.i_low = int(np.argmin(self.z))
@@ -591,6 +905,10 @@ class Cycle:
 
     def controls(self, tau):
         return self._p(tau, self.cl), self._p(tau, self.mu)
+
+    def thrust_at(self, tau):
+        """Nominal thrust (N) at phase tau (zero for a soaring cycle)."""
+        return self._p(tau, self.thrust)
 
     def pos(self, tau):
         k = np.floor(np.asarray(tau) / self.T)
@@ -613,10 +931,12 @@ class CycleLibrary:
 
     @classmethod
     def from_keyword(cls, library_path=None):
-        """"margin" picks LIB_MARGIN_PATH, None the default file, else a file path."""
+        """"margin" picks LIB_MARGIN_PATH, "motor" LIB_MOTOR_PATH, None the default file, else a
+        file path."""
         if library_path is None:
             return cls.load()
-        return cls.load(LIB_MARGIN_PATH if library_path == "margin" else library_path)
+        return cls.load({"margin": LIB_MARGIN_PATH, "motor": LIB_MOTOR_PATH}.get(library_path,
+                                                                                    library_path))
 
     def pick(self, name, u10_est, chi_rad):
         """Cycle for the aircraft nearest to u10_est and |chi| (mirrored for negative chi)."""
@@ -701,6 +1021,10 @@ class CycleGuide:
         cl, mu = self.cycle.controls(self.tau_s + np.asarray(knots_t))
         return np.stack([cl, mu])
 
+    def nominal_thrust(self, knots_t):
+        """Thrust (N) of the cycle from the matched phase on, phase-matched like the controls."""
+        return self.cycle.thrust_at(self.tau_s + np.asarray(knots_t))
+
     def terminal_cost(self, world, t_end, s, planner):
         x, y, z, V, g, psi = s
         h = z - np.asarray(world.surface(x, y, np.full(np.shape(x), float(t_end)))[0])
@@ -709,6 +1033,88 @@ class CycleGuide:
               + ((g - gt) / self.sig[2]) ** 2 + (wrap(psi - self.psi_w - pt) / self.sig[3]) ** 2)
         deficit = np.maximum(0.0, self.dE_c - (G * h + 0.5 * V * V - self.E0))
         return self.w_d * d2 + planner.w_e * deficit
+
+
+# ---------------------------------------------------------------------------------------------
+# reflex layer (a supervisor over the planner's commands, every control step)
+# ---------------------------------------------------------------------------------------------
+
+REFLEX_DT = 0.1        # step of the reflex prediction (midpoint rule); the supervisor itself runs every control step
+
+
+class Reflex:
+    """Predicts the next ctrl.reflex_horizon_s (1.5 s) of flight with the controls the planner has
+    commanded and reports the first time the centre or a wingtip is predicted below
+    ctrl.reflex_clearance_m (0.3 m) above the surface of the planner's world, or the airspeed below
+    ctrl.reflex_v_frac (1.05) times the stall speed.
+
+    Choices the spec left open (simplest thing taken):
+    - "the current commanded controls" are the plan's own schedule from now on (cl, mu and thrust
+      interpolated in the plan's knots, held after its end), not the present values held constant: a
+      held pull-up of the cycle's low point would predict a stall at every cycle.
+    - The prediction flies the point mass without the actuator lags, from the state given, with the
+      midpoint rule (REFLEX_DT 0.1 s), with the load-factor limit and the folded-propeller drag of
+      the planner.
+    - The state tested includes the present one (step 0). Centre, then tip, then stall win a tie.
+    - The override, while the prediction fails: full thrust (t_max), the lift coefficient at its
+      margin limit (the lower of cl_max / v_factor^2 and the load factor n_frac n_max at the present
+      airspeed, with the standard margin set), bank 0 (the actuators move to them at their rates).
+      Control returns to the planner at the first step the prediction of the plan clears.
+    """
+
+    def __init__(self, aircraft, t_max, fold_dcd, n_limit=True, fold_switch="smooth"):
+        from sim.record import value
+        self.ac, self.t_max, self.fold_dcd, self.n_limit = aircraft, float(t_max), fold_dcd, n_limit
+        self.fold_switch = fold_switch
+        self.horizon_s = float(value("ctrl.reflex_horizon_s", 1.5))
+        self.clearance_m = float(value("ctrl.reflex_clearance_m", 0.3))
+        self.v_frac = float(value("ctrl.reflex_v_frac", 1.05))
+        self.dt = REFLEX_DT
+        self.n = int(round(self.horizon_s / self.dt))
+        _, self.n_frac, _, self.v_factor = MARGIN_SETS[0][1]
+
+    def predict(self, world, t, s, knots_t, cl_k, mu_k, th_k, tau):
+        """First violation of the prediction from state s at time t, the plan's knots (arrays) being
+        read from tau seconds after the plan time: (cause, seconds ahead, height of the centre, tip
+        height, airspeed) with cause "centre", "tip" or "stall", or None when it clears."""
+        ac, dt, n = self.ac, self.dt, self.n
+        taus = tau + np.arange(2 * n + 1) * dt / 2.0
+        cl = np.clip(np.interp(taus, knots_t, cl_k), ac.cl_min, ac.cl_max)
+        mu = np.clip(np.interp(taus, knots_t, mu_k), -ac.mu_max, ac.mu_max)
+        T = (np.clip(np.interp(taus, knots_t, th_k), 0.0, self.t_max) if th_k is not None
+             else np.zeros_like(taus))
+        st = np.asarray(s, float)[:, None]
+        v_lim = self.v_frac * ac.v_stall
+        kw = dict(n_limit=self.n_limit)
+        fd = [self.fold_dcd if self.fold_switch == "smooth"
+              else float(fold_effective(ac, self.fold_dcd, T[j], T[j])) for j in range(2 * n + 1)]
+        for i in range(n + 1):
+            tt = t + i * dt
+            x, y, z, V, g, _ = st[:, 0]
+            h = z - float(world.surface(x, y, tt)[0])
+            tip = h - 0.5 * ac.span * np.sin(abs(mu[2 * i])) * np.cos(g)
+            cause = ("centre" if h < self.clearance_m else "tip" if tip < self.clearance_m
+                     else "stall" if V < v_lim else None)
+            if cause is not None:
+                return (cause, i * dt, float(h), float(tip), float(V))
+            if i == n:
+                break
+            k1 = derivatives_vec(tt, st, ac, world, cl[2 * i:2 * i + 1], mu[2 * i:2 * i + 1],
+                                 thrust=T[2 * i], fold_dcd=fd[2 * i], **kw)
+            km = derivatives_vec(tt + dt / 2, st + dt / 2 * k1, ac, world,
+                                 cl[2 * i + 1:2 * i + 2], mu[2 * i + 1:2 * i + 2],
+                                 thrust=T[2 * i + 1], fold_dcd=fd[2 * i + 1], **kw)
+            st = st + dt * km
+            if not np.all(np.isfinite(st)):
+                return ("stall", (i + 1) * dt, float("nan"), float("nan"), float("nan"))
+        return None
+
+    def override(self, s):
+        """(cl, mu, thrust) of the reflex at state s."""
+        ac = self.ac
+        q = 0.5 * ac.rho * s[3] ** 2 * ac.wing_area
+        cl = min(ac.cl_max / self.v_factor ** 2, self.n_frac * ac.n_max * ac.mass * G / q)
+        return float(np.clip(cl, ac.cl_min, ac.cl_max)), 0.0, self.t_max
 
 
 # ---------------------------------------------------------------------------------------------
@@ -733,7 +1139,10 @@ class _Limited:
 
 
 def _flat_world(env_true, u10_est):
-    return Environment.flat(Wind(u10_est, env_true.wind.from_deg))
+    # the roughness model of the true wind (Charnock for make_env, so as before; COARE 3.5 where the
+    # experiment gives the true wind that)
+    return Environment.flat(Wind(u10_est, env_true.wind.from_deg,
+                                 roughness=getattr(env_true.wind, "roughness", "charnock")))
 
 
 def _flat_world_uf(u10, from_deg):
@@ -764,7 +1173,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             seed=1, planner_kw=None, dt=0.01, max_components=None, estimator=None, keep=False,
             library=None, wave_aware=True, state_source="truth", wind_source="truth",
             suite="standard", profile_fit="two_param", actuators=None, n_limit=False,
-            log_every_s=5.0, stop_on_tip=False, library_path=None, motor=False, w_energy=None):
+            log_every_s=5.0, stop_on_tip=False, library_path=None, motor=False, w_energy=None, reflex=False,
+            true_fold_switch=None):
     """Closed loop: true dynamics (rk4, dt), planner every replan_s in the chosen world model.
 
     world_model: "truth" | "flat" | "estimated". sensors: list of SurfaceSensor (used only for
@@ -784,8 +1194,16 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     and the folded-propeller drag. The metrics then also hold out["motor"]: electric energy and
     average power, the share of time with thrust, the number and length of bursts and where in the
     cycle they start (see burst_stats).
+
+    reflex (default False; nothing changes then; needs motor=True): the Reflex supervisor runs at
+    every control step on the true state, in the world of the latest plan, and overrides the
+    commands with full thrust and a pull-up while the plan is predicted to leave 0.3 m of clearance
+    or 1.05 stall speeds within 1.5 s. The metrics then also hold out["reflex"]: the number of
+    reflexes, their causes, durations and electric energy (also counted in out["motor"]).
     """
     from sim.seasense import LocalWaveEstimator
+    if reflex and not motor:
+        raise ValueError("reflex needs motor=True (it commands the thrust)")
     ac = aircraft
     if library is None and library_path is not None:
         library = CycleLibrary.from_keyword(library_path)   # a library file picked by keyword
@@ -852,6 +1270,9 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     TH, VA, HH, PHA, PHL = [], [], [], [], []       # motor logs per step
     ph_ref = None                                   # (tau_s, period, low-point fraction, plan time)
     T_a = 0.0
+    fold_state = (pl.fold_switch if true_fold_switch is None else true_fold_switch) == "state" if motor else False
+    rf = Reflex(ac, pl.t_max, pl.fold_dcd, n_limit, pl.fold_switch) if reflex else None
+    rf_events, rf_cur, world = [], None, None
     for i in range(nsteps + 1):
         t = i * dt
         eta_t = float(env_true.surface(s[0], s[1], t)[0])
@@ -954,15 +1375,31 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         else:
             n_prelude += 1
             cl, mu = ac.cl_best_ld, np.radians(20.0) * (1.0 if int(t // 10.0) % 2 == 0 else -1.0)
+        rx_on = False
+        if reflex and ready:
+            hit = rf.predict(world, t, s, plan.knots_t, plan.cl_knots, plan.mu_knots,
+                             plan.thrust_knots, t - t_plan)
+            if hit is not None:
+                rx_on = True
+                cl, mu, _ = rf.override(s)
+                if rf_cur is None:
+                    rf_cur = {"t_s": t, "cause": hit[0], "ahead_s": hit[1], "h_m": hit[2],
+                              "tip_m": hit[3], "v_ms": hit[4], "duration_s": 0.0, "energy_j": 0.0}
         q = 0.5 * ac.rho * s[3] ** 2 * ac.wing_area
         if n_limit:
             cl = n_limited_cl(ac, s[3], cl)       # commanded cl is held to the limit
         if motor:
-            T_cmd = (float(np.clip(plan.thrust(t - t_plan), 0.0, pl.t_max)) if ready else 0.0)
+            T_cmd = (pl.t_max if rx_on else
+                     float(np.clip(plan.thrust(t - t_plan), 0.0, pl.t_max)) if ready else 0.0)
             cl_a, mu_a = ((cl, mu) if actuators is None
                           else actuators.step(cl, mu, dt, s[3], thrust=T_cmd))
             T_a = T_cmd if actuators is None else actuators.T
             TH.append(T_a); VA.append(s[3]); HH.append(s[2] - eta_t)
+            if rx_on:
+                rf_cur["duration_s"] += dt
+                rf_cur["energy_j"] += float(T_a * s[3] * dt / pl.eta)
+            elif rf_cur is not None:
+                rf_events.append(rf_cur); rf_cur = None
             if ph_ref is None:
                 PHA.append(np.nan); PHL.append(np.nan)
             else:
@@ -986,8 +1423,9 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         if use_est:
             prev_truth = (s.copy(), t, mu_a)
         if motor:
+            fdc = float(fold_effective(ac, pl.fold_dcd, T_a, T_cmd)) if fold_state else pl.fold_dcd
             s = rk4_step(lambda tt, ss: derivatives(tt, ss, ac, env_true, cl_a, mu_a, n_limit,
-                                                    thrust=T_a, fold_dcd=pl.fold_dcd)[0], t, s, dt)
+                                                    thrust=T_a, fold_dcd=fdc)[0], t, s, dt)
         else:
             s = rk4_step(lambda tt, ss: derivatives(tt, ss, ac, env_true, cl_a, mu_a, n_limit)[0],
                          t, s, dt)
@@ -1025,6 +1463,17 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         out["actuator_bind"] = actuators.bind_fractions()
     if motor:
         out["motor"] = burst_stats(ac, pl, dt, TH, VA, HH, PHA, PHL)
+    if reflex:
+        if rf_cur is not None:
+            rf_events.append(rf_cur)
+        ej = float(sum(e["energy_j"] for e in rf_events))
+        out["reflex"] = {
+            "n": len(rf_events), "total_s": float(sum(e["duration_s"] for e in rf_events)),
+            "energy_j": ej, "avg_power_w": ej / max(len(T) * dt, dt),
+            "causes": {c: sum(1 for e in rf_events if e["cause"] == c)
+                       for c in ("centre", "tip", "stall")},
+            "horizon_s": rf.horizon_s, "clearance_m": rf.clearance_m, "v_frac": rf.v_frac,
+            "events": rf_events[:60]}
     if use_est:
         out["t_ready_s"] = t_ready
         out["prelude_s"] = n_prelude * dt
@@ -1578,6 +2027,175 @@ def burst_main(a):
         fh.write(chr(10))
 
 
+MOTOR_EXP_PKW = dict(LIB_PKW, thrust_sampling="sustained", fold_switch="state")
+MOTOR_EXP_EXTRA_AIRCRAFT = ("sealedhull-2p5m", "easyglider-1p8m")
+
+
+def _make_env_coare(sea, u10):
+    """make_env with the COARE 3.5 roughness of the library and the optimizer for the true wind
+    (make_env uses the fixed Charnock constant): flat sea, or the fully developed sea of seed 1."""
+    from sim.seawind import WaveTrain
+    wind = Wind(u10, 270.0, roughness="coare35")
+    if sea == "flat":
+        return Environment.flat(wind)
+    return Environment(wind, [WaveTrain.fully_developed(wind)], seed=1)
+
+
+def motor_exp_cases(lib=None):
+    """(aircraft, u10, sea, planner world) of the experiment: the burst experiment's cases (flat sea
+    below the soaring minimum, then the waves at 13 and 16 with the flat and the truth world) and,
+    for sealedhull-2p5m and easyglider-1p8m, the two highest winds of the library grid (3 m/s or
+    more) that have motor cycles and lie below the lowest wind with a soaring cycle."""
+    lib = lib or CycleLibrary.load(LIB_MOTOR_PATH)
+    cases = [(n, u, "flat", "flat") for n, u in BURST_CASES_A]
+    cases += [(n, u, "waves", wm) for n in ("baseline-2m", "albatross-3m") for u in (13.0, 16.0)
+              for wm in ("flat", "truth")]
+    for n in MOTOR_EXP_EXTRA_AIRCRAFT:
+        es = [e for e in lib.entries if e["aircraft"] == n]
+        soar = [e["u10"] for e in es if e["kind"] == "soaring"]
+        lo = min(soar) if soar else float("inf")
+        ws = sorted({e["u10"] for e in es if e["kind"] == "motor" and e["u10"] < lo and e["u10"] >= 3.0})
+        cases += [(n, u, "flat", "flat") for u in ws[-2:]]
+    return cases
+
+
+def run_motor_job(job):
+    """One run of the motor-library experiment: motor library, middle energy weight, sustained thrust
+    sampling and constant-thrust candidates, folded drag switched on the commanded motor state,
+    COARE 3.5 true wind, actuators pb2v, n_limit, stop_on_tip, truth state and wind, seed 1."""
+    from sim.aircraft import Actuators
+    from sim.aircraft_models import by_name
+    name, u10, sea, wm, reflex, t_end = job
+    ac = by_name(name)
+    env = _make_env_coare(sea, u10)
+    t0 = time.time()
+    r = fly_mpc(ac, env, wm, [], t_end, env.wind.to_deg - 20.0, u10, seed=1,
+                planner_kw=dict(MOTOR_EXP_PKW), library=CycleLibrary.from_keyword("motor"),
+                state_source="truth", wind_source="truth",
+                max_components=BURST_MAX_COMPONENTS if wm == "truth" else None,
+                actuators=Actuators(ac, rate_model="pb2v"), n_limit=True, stop_on_tip=True,
+                wave_aware=False, motor=True, w_energy=energy_weight(ac, "normal"), reflex=reflex)
+    r["wall_s"] = time.time() - t0
+    r = _no_nan(r)
+    r["motor"]["bursts"] = r["motor"].get("bursts", [])[:60]
+    log = r.pop("reflex", None)
+    return {"aircraft": name, "u10": u10, "sea": sea, "planner_world": wm,
+            "reflex": "on" if reflex else "off", "reflex_log": log, **r}
+
+
+def _optimizer_row(lib, name, u10):
+    """The library entry (chi 20 deg) the planner flies at this wind: min-power motor cycle or
+    soaring cycle, with the figures of the optimizer."""
+    es = [e for e in lib.entries if e["aircraft"] == name and abs(e["chi_deg"] - 20.0) < 1e-9]
+    if not es:
+        return None
+    u = min({e["u10"] for e in es}, key=lambda v: abs(v - u10))
+    e = [e for e in es if e["u10"] == u][0]
+    return {"u10": e["u10"], "kind": e["kind"], "margin_set": e["margin_set"],
+            "power_avg_w": e.get("power_avg_w", 0.0), "power_avg_dense_w": e.get("power_avg_dense_w"),
+            "thrust_on_share": e.get("thrust_on_share", 0.0),
+            "speed_along_chi": e["speed_along_chi"], "period": e["period"]}
+
+
+def _burst_row(name, u10, sea, wm):
+    """The middle-weight row of burst_exp for the same case, or None (the flat-sea cases of
+    burst_exp are the same ones; its true wind was Charnock)."""
+    path = os.path.join(os.path.dirname(__file__), "out", "mpc.json")
+    for r in json.load(open(path)).get("burst_exp", {}).get("results", []):
+        if (r["aircraft"], r["u10"], r["sea"], r["planner_world"], r["level"]) == (
+                name, u10, sea, wm, "normal"):
+            m = r.get("motor") or {}
+            return {"ended": r["ended"], "survival_s": r["survival_s"],
+                    "avg_power_w": m.get("avg_power_w"), "thrust_on_share": m.get("thrust_on_share"),
+                    "n_bursts": m.get("n_bursts"), "v_toward_target": r.get("v_toward_target")}
+    return None
+
+
+def motor_exp_table(rows):
+    lines = ["| aircraft | u10 | sea / world | reflex | end (s) | avg power (W) | thrust on | bursts | "
+             "reflexes (n, J) | v toward (m/s), Wh/km | burst_exp normal: end, W | optimizer: W, speed (m/s), Wh/km |",
+             "|" + "---|" * 12]
+    for r in rows:
+        m, rf, b, o = r.get("motor") or {}, r.get("reflex_log") or {}, r.get("burst_exp"), r.get("optimizer")
+        lines.append("| %s | %g | %s / %s | %s | %s %.0f | %s | %s | %s | %s | %s | %s | %s |" % (
+            r["aircraft"], r["u10"], r["sea"], r["planner_world"], r["reflex"], r["ended"],
+            r["survival_s"], _fmt(m.get("avg_power_w"), "%.1f"), _fmt(m.get("thrust_on_share"), "%.2f"),
+            m.get("n_bursts", "n/a"),
+            "n/a" if not rf else "%d, %.0f" % (rf["n"], rf["energy_j"]),
+            "%s, %s" % (_fmt(r.get("v_toward_target"), "%.1f"), _fmt(r.get("wh_per_km"), "%.2f")),
+            "n/a" if not b else "%s %.0f, %s" % (b["ended"], b["survival_s"], _fmt(b["avg_power_w"], "%.1f")),
+            "n/a" if not o else "%s, %s, %s" % (_fmt(o["power_avg_w"], "%.1f"), _fmt(o["speed_along_chi"], "%.1f"),
+                            _fmt(o.get("wh_per_km"), "%.2f"))))
+    return chr(10).join(lines)
+
+
+def motor_exp_main(a):
+    from concurrent.futures import ProcessPoolExecutor
+
+    from sim import record
+    from sim.record import value
+    lib = CycleLibrary.load(LIB_MOTOR_PATH)
+    cases = motor_exp_cases(lib)
+    jobs = [(n, u, sea, wm, rx, a.t_end) for n, u, sea, wm in cases for rx in (False, True)]
+    jobs.sort(key=lambda j: -(j[3] == "truth") * 2 - (j[2] == "waves"))      # slow ones first
+    t0 = time.time()
+    with ProcessPoolExecutor(a.workers) as ex:
+        rows = list(ex.map(run_motor_job, jobs, chunksize=1))
+    rows.sort(key=lambda r: (r["sea"] == "waves", r["aircraft"], r["u10"], r["planner_world"],
+                             r["reflex"]))
+    for r in rows:
+        r["burst_exp"] = _burst_row(r["aircraft"], r["u10"], r["sea"], r["planner_world"])
+        r["optimizer"] = _optimizer_row(lib, r["aircraft"], r["u10"])
+        v = r.get("v_toward_target")
+        r["wh_per_km"] = (r["motor"]["avg_power_w"] / (3.6 * v)) if v and v > 0.05 else None
+        o = r["optimizer"]
+        if o is not None:
+            o["wh_per_km"] = o["power_avg_w"] / (3.6 * o["speed_along_chi"]) if o["speed_along_chi"] > 0.05 else None
+    print(motor_exp_table(rows))
+    runtime = time.time() - t0
+    print("runtime %.0f s" % runtime)
+    d = json.load(open(a.out)) if os.path.exists(a.out) else {}
+    d["motor_library_exp"] = {
+        "meta": {**record.meta("python -m sim.mpc --motor-lib-exp --t-end %g --workers %d"
+                               % (a.t_end, a.workers),
+                               [__file__, LIB_MOTOR_PATH,
+                                os.path.join(os.path.dirname(__file__), "aircraft.py"),
+                                os.path.join(os.path.dirname(__file__), "dsopt.py")]),
+                 "planner_kw": MOTOR_EXP_PKW, "runtime_s": runtime, "t_end": a.t_end, "seed": 1,
+                 "workers": a.workers, "library": "motor (sim/out/mpc_library_motor.json)",
+                 "energy_level": "normal (k = %g)" % W_ENERGY_LEVELS["normal"],
+                 "true_wind": "Wind(u10, 270, roughness='coare35') (flat sea) and the fully "
+                              "developed sea of seed 1 on that wind (waves): COARE 3.5 as the library "
+                              "and the optimizer; burst_exp used make_env with the Charnock constant. "
+                              "The planner's flat world takes the roughness of the true wind.",
+                 "thrust_sampling": "sustained: half of the samples hold one half-normal level "
+                                    "(scale %g T_max) over a random run of knots, the rest "
+                                    "independent Gaussian (ctrl.thrust_sigma_frac); candidates with "
+                                    "constant thrust %s of the weight, with the nominal controls and "
+                                    "wings level at best L/D" % (HOLD_SIGMA_FRAC, list(THRUST_CAND_LEVELS)),
+                 "fold_switch": "state: in the planner's rollouts and the true dynamics the "
+                                "propeller is folded (full folded drag) when the commanded thrust is "
+                                "below %g of the weight and not folded (zero) otherwise, instead of "
+                                "the smooth switch; the optimizer keeps the smooth one" % FOLD_CMD_FRAC,
+                 "reflex": {"horizon_s": value("ctrl.reflex_horizon_s", 1.5),
+                            "clearance_m": value("ctrl.reflex_clearance_m", 0.3),
+                            "v_frac": value("ctrl.reflex_v_frac", 1.05), "rollout_dt_s": REFLEX_DT,
+                            "prediction": "the plan's own controls, flat or truth world of the planner"},
+                 "state_source": "truth", "wind_source": "truth", "wave_aware": False,
+                 "actuators": "rate_model pb2v, thrust lag prop.thrust_tau_s", "n_limit": True,
+                 "stop_on_tip": True, "planner_world_truth": "%d strongest wave components"
+                 % BURST_MAX_COMPONENTS,
+                 "comparison": "burst_exp: the normal-level row of the same aircraft, wind, sea and "
+                               "world (Charnock true wind, margin library, no sustained sampling); "
+                               "optimizer: the library entry at chi 20 deg of the nearest library "
+                               "wind (same margins, no ground effect, smooth fold, speed along chi "
+                               "from the optimizer; power in W is the average electric power)"},
+        "results": rows}
+    with open(a.out, "w", newline=chr(10)) as fh:
+        json.dump(_no_nan(d), fh, indent=1)
+        fh.write(chr(10))
+
+
 def _fmt(v, f):
     return "n/a" if v is None else f % v
 
@@ -1615,18 +2233,26 @@ def main():
     ap.add_argument("--est-exp", action="store_true")
     ap.add_argument("--est-exp2", action="store_true")
     ap.add_argument("--build-margin-library", action="store_true")
+    ap.add_argument("--build-motor-library", action="store_true")
     ap.add_argument("--margin-exp", action="store_true")
     ap.add_argument("--burst-exp", action="store_true")
+    ap.add_argument("--motor-lib-exp", action="store_true")
     ap.add_argument("--burst-part", default="ab", help="a, b or ab")
     a = ap.parse_args()
     if a.build_margin_library:
         build_margin_library(workers=a.workers)
+        return
+    if a.build_motor_library:
+        build_motor_library(workers=a.workers)
         return
     if a.margin_exp:
         margin_main(a)
         return
     if a.burst_exp:
         burst_main(a)
+        return
+    if a.motor_lib_exp:
+        motor_exp_main(a)
         return
     if a.build_library:
         build_library(workers=a.workers)

@@ -3,8 +3,10 @@ import unittest
 import numpy as np
 
 from sim.aircraft import BASELINE, G, Actuators, derivatives
-from sim.mpc import (Cycle, CycleGuide, CycleLibrary, MPPIPlanner, burst_stats, derivatives_vec,
-                     energy_weight, fly_mpc, wrap)
+from sim.aircraft import clip_controls, n_limited_cl, rk4_step
+from sim.dsopt import folded_dcd, thrust_max
+from sim.mpc import (Cycle, CycleGuide, CycleLibrary, MPPIPlanner, Reflex, burst_stats,
+                     derivatives_vec, energy_weight, fold_effective, fly_mpc, wrap)
 from sim.seawind import Environment, WaveTrain, Wind
 
 
@@ -206,6 +208,107 @@ class TestLibrary(unittest.TestCase):
         nom = gd.nominal(pl.knots_t)
         self.assertLess(np.max(np.abs(plan.cl_knots - nom[0])), 0.5)
         self.assertEqual(plan.cl.shape, plan.t.shape)
+
+
+class TestReflexAndSampling(unittest.TestCase):
+    def setUp(self):
+        self.world = Environment.flat(Wind(9.0, 270.0))
+        self.ac = BASELINE
+        self.rf = Reflex(self.ac, thrust_max(self.ac), folded_dcd(self.ac), True)
+
+    def dive_plan(self, cl=0.05):
+        kt = np.linspace(0.0, 6.0, 24)
+        return kt, np.full(24, cl), np.full(24, 0.0), np.zeros(24)
+
+    def test_fires_on_a_dive_and_clears_when_overridden(self):
+        ac, rf, world = self.ac, self.rf, self.world
+        kt, cl, mu, th = self.dive_plan()
+        s = np.array([0.0, 0.0, 3.0, 12.0, -0.35, 0.0])
+        hit = rf.predict(world, 0.0, s, kt, cl, mu, th, 0.0)
+        self.assertIsNotNone(hit)
+        self.assertEqual(hit[0], "centre")
+        self.assertLess(hit[1], rf.horizon_s)
+        # fly the override until the prediction (of the same dive plan) clears
+        t, cleared, hmin, n_on = 0.0, False, 1e9, 0
+        for _ in range(400):
+            hit = rf.predict(world, t, s, kt, cl, mu, th, 0.0)
+            if hit is None:
+                cleared = True
+                break
+            n_on += 1
+            c, m, tt = rf.override(s)
+            c = n_limited_cl(ac, s[3], c)
+            s = rk4_step(lambda a, b: derivatives(a, b, ac, world, c, m, True, thrust=tt,
+                                                  fold_dcd=folded_dcd(ac))[0], t, s, 0.01)
+            t += 0.01
+            hmin = min(hmin, s[2])
+        self.assertTrue(cleared, "the override never cleared the prediction")
+        self.assertGreater(hmin, 0.0)
+        self.assertGreater(n_on, 0)
+
+    def test_stays_quiet_in_level_flight_and_fires_on_stall(self):
+        rf, world = self.rf, self.world
+        kt, cl, mu, th = self.dive_plan(cl=self.ac.cl_best_ld)
+        self.assertIsNone(rf.predict(world, 0.0, np.array([0.0, 0.0, 12.0, 11.0, -0.05, 0.0]),
+                                     kt, cl, mu, th, 0.0))
+        hit = rf.predict(world, 0.0, np.array([0.0, 0.0, 30.0, 1.02 * self.ac.v_stall, 0.0, 0.0]),
+                         kt, cl, mu, th, 0.0)
+        self.assertEqual(hit[0], "stall")
+
+    def test_fold_effective_gives_the_state_switch(self):
+        ac, dcd = self.ac, folded_dcd(self.ac)
+        mg = ac.mass * G
+        f = lambda T: 1.0 - T / (T + 0.01 * mg)
+        # off (command below 0.5 % of the weight): the full folded drag whatever the lagging thrust is
+        for t_act in (0.0, 0.002 * mg):
+            self.assertAlmostEqual(float(fold_effective(ac, dcd, t_act, 0.001 * mg)) * f(t_act), dcd, places=15)
+        self.assertEqual(float(fold_effective(ac, dcd, 0.1 * mg, 0.1 * mg)), 0.0)
+
+    def test_sustained_sampling_and_candidates(self):
+        kw = dict(n_samples=64, dt=0.1, horizon_s=3.0, n_ctrl=6, motor=True)
+        pl = MPPIPlanner(BASELINE, thrust_sampling="sustained", **kw)
+        eT = pl._thrust_noise(4000)
+        self.assertEqual(eT.shape, (4000, 1, 6))
+        const = [(np.ptp(e[0][e[0] != 0]) == 0 and (e[0] != 0).any()) for e in eT[:400]]
+        self.assertGreater(np.mean(const), 0.3)       # about half hold one level
+        U = pl._initial_plan()
+        c = pl._thrust_candidates(U)
+        self.assertEqual(c.shape, (6, 3, 6))
+        mg = BASELINE.mass * G
+        np.testing.assert_allclose(c[:, 2, 0], np.repeat([0.05, 0.10, 0.20], 2) * mg)
+        # basic sampling leaves the earlier draw sequence alone
+        a = MPPIPlanner(BASELINE, seed=3, **kw)._thrust_noise(8)
+        b = 0.15 * thrust_max(BASELINE) * np.random.default_rng(3).standard_normal((8, 1, 6))
+        np.testing.assert_allclose(a, b)
+
+    def test_fly_mpc_reflex_logs_and_off_has_no_key(self):
+        env = Environment.flat(Wind(9.0, 270.0))
+        kw = {"n_samples": 32, "dt": 0.1, "n_iter": 1}
+        args = (BASELINE, env, "flat", [], 6.0, env.wind.to_deg - 20.0, 9.0)
+        r = fly_mpc(*args, seed=1, planner_kw=kw, actuators=Actuators(BASELINE, rate_model="pb2v"),
+                    n_limit=True, motor=True, w_energy=0.01, reflex=True)
+        self.assertIn("reflex", r)
+        for k in ("n", "total_s", "energy_j", "causes", "events"):
+            self.assertIn(k, r["reflex"])
+        r0 = fly_mpc(*args, seed=1, planner_kw=kw, motor=True, w_energy=0.01)
+        self.assertNotIn("reflex", r0)
+        with self.assertRaises(ValueError):
+            fly_mpc(*args, seed=1, planner_kw=kw, reflex=True)
+
+    def test_motor_library_cycle_carries_its_thrust(self):
+        d = synthetic_cycle().d
+        d = dict(d, thrust=3.0 + 2.0 * np.sin(2 * np.pi * np.asarray(d["t"]) / d["period"]))
+        cyc = Cycle(d)
+        self.assertTrue(cyc.has_thrust)
+        self.assertFalse(synthetic_cycle().has_thrust)
+        pl = MPPIPlanner(BASELINE, n_samples=16, dt=0.1, horizon_s=3.0, n_ctrl=6, motor=True)
+        world = Environment.flat(Wind(9.0, 270.0))
+        s0 = np.array([0.0, 0.0, 8.0, 12.0, 0.0, 0.0])
+        g = CycleGuide(cyc, world, 0.0, s0, 0.0, 3.0, wave_aware=False)
+        plan = pl.plan(world, 0.0, s0, np.array([1.0, 0.0]), guide=g)
+        self.assertEqual(plan.thrust_knots.shape, (6,))
+        np.testing.assert_allclose(g.nominal_thrust(pl.knots_t),
+                                   np.interp((g.tau_s + pl.knots_t) % cyc.T, cyc.t, d["thrust"]))
 
 
 if __name__ == "__main__":

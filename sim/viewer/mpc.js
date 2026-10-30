@@ -77,6 +77,7 @@ function mpcFactory() {
   }
   function Gauss(seed) {
     var u = mulberry32(seed), spare = null;
+    this.uniform = function () { return u(); };
     this.next = function () {
       if (spare !== null) { var r = spare; spare = null; return r; }
       var a;
@@ -307,6 +308,10 @@ function mpcFactory() {
     this.z = Float64Array.from(d.z); this.V = Float64Array.from(d.V); this.g = Float64Array.from(d.gamma);
     this.psi = unwrap(Float64Array.from(d.psi, function (v) { return sg * v; }));
     this.cl = Float64Array.from(d.cl); this.mu = Float64Array.from(d.mu, function (v) { return sg * v; });
+    // node thrust (N) of a motor-assisted cycle; zeros for a soaring cycle or an old library entry
+    this.thrust = d.thrust ? Float64Array.from(d.thrust) : new Float64Array(this.t.length);
+    this.hasThrust = false;
+    for (i = 0; i < this.thrust.length; i++) if (this.thrust[i] > 0) this.hasThrust = true;
     var s = 0;
     for (i = 0; i < this.V.length; i++) s += this.V[i];
     this.vMean = s / this.V.length;
@@ -320,6 +325,7 @@ function mpcFactory() {
     return [this._p(tau, this.z), this._p(tau, this.V), this._p(tau, this.g), wrap(this._p(tau, this.psi))];
   };
   Cycle.prototype.controls = function (tau) { return [this._p(tau, this.cl), this._p(tau, this.mu)]; };
+  Cycle.prototype.thrustAt = function (tau) { return this._p(tau, this.thrust); };
   Cycle.prototype.energy = function (tau) {
     var h = this._p(tau, this.z), V = this._p(tau, this.V);
     return G * h + 0.5 * V * V;
@@ -376,6 +382,12 @@ function mpcFactory() {
     }
     return out;
   };
+  // thrust (N) of the cycle at the knot times, phase-matched like the controls (zeros for a soaring cycle)
+  Guide.prototype.nominalThrust = function (knotsT) {
+    var n = knotsT.length, out = new Float64Array(n);
+    for (var j = 0; j < n; j++) out[j] = this.cycle.thrustAt(this.tauS + knotsT[j]);
+    return out;
+  };
   Guide.prototype.terminalCost = function (world, tEnd, s, planner) {
     var h = s[2] - world.eta(s[0], s[1], tEnd), tg = this.target, sg = this.sig;
     var d2 = Math.pow((h - tg[0]) / sg[0], 2) + Math.pow((s[3] - tg[1]) / sg[1], 2) +
@@ -387,7 +399,16 @@ function mpcFactory() {
   // ---------------------------------------------------------------------------- planner
   var DEFAULTS = { horizonS: 6.0, dt: 0.1, nSamples: 96, nCtrl: 24, lam: 0.2, sigmaCl: 0.08,
     sigmaMu: 0.12, replanS: 0.5, nIter: 1, wE: 1.0, hClear: 0.3, clearance: 'wingtip',
-    wClear: 200.0, wN: 50.0, wStall: 300.0, cContact: 1e4, wD: 10.0, nLimit: true, seed: 1 };
+    wClear: 200.0, wN: 50.0, wStall: 300.0, cContact: 1e4, wD: 10.0, nLimit: true, seed: 1,
+    thrustSampling: 'basic', foldSwitch: 'smooth' };
+  // thrustSampling 'sustained' and foldSwitch 'state': see sim.mpc (P_HOLD, HOLD_SIGMA_FRAC,
+  // THRUST_CAND_LEVELS, FOLD_CMD_FRAC)
+  var SUSTAIN = { pHold: 0.5, holdSigmaFrac: 0.3, candLevels: [0.05, 0.10, 0.20], foldCmdFrac: 0.005 };
+  // folded-propeller drag to hand to the smooth-switch formula so that it gives the state switch
+  function foldEffective(ac, dcd, tAct, tCmd) {
+    var f = 1.0 - tAct / (tAct + 0.01 * ac.mass * G);
+    return tCmd < SUSTAIN.foldCmdFrac * ac.mass * G ? dcd / f : 0.0;
+  }
 
   function Planner(ac, opt) {
     opt = opt || {};
@@ -395,6 +416,8 @@ function mpcFactory() {
     for (k in DEFAULTS) this[k] = opt[k] !== undefined ? opt[k] : DEFAULTS[k];
     this.ac = ac;
     this.motor = !!opt.motor;
+    if ((this.thrustSampling !== 'basic' && this.thrustSampling !== 'sustained') ||
+        (this.foldSwitch !== 'smooth' && this.foldSwitch !== 'state')) throw new Error('thrustSampling / foldSwitch');
     this.nu = this.motor ? 3 : 2;      // controls per knot: cl, mu (and the thrust T, N)
     if (this.motor) {
       var mv = Object.assign({}, MOTOR, opt.motorValues || {});
@@ -402,6 +425,7 @@ function mpcFactory() {
       this.eta = mv.propEff * mv.motorEff;
       this.foldDcd = mv.foldedCdaM2 / ac.wing_area;
       this.sigmaT = mv.sigmaFrac * this.tMax;
+      this.sigmaHold = SUSTAIN.holdSigmaFrac * this.tMax;
       this.wEnergy = opt.wEnergy !== undefined ? opt.wEnergy
         : ENERGY_K[opt.energyLevel || 'normal'] * this.wE * this.eta / ac.mass;
     }
@@ -429,7 +453,7 @@ function mpcFactory() {
 
   // derivatives of the point mass (sim.mpc.derivatives_vec for one state); out: Float64Array(6)
   // thrust (N, optional): with the motor, adds thrust / m and the folded-propeller drag switch
-  Planner.prototype._deriv = function (world, t, s, cl, mu, out, thrust) {
+  Planner.prototype._deriv = function (world, t, s, cl, mu, out, thrust, fold) {
     var ac = this.ac, P = this._sc.P, o = this._sc.o;
     var x = s[0], y = s[1], z = s[2], V = s[3], g = s[4], p = s[5];
     if (this.nLimit) cl = Math.min(cl, ac.n_max * ac.mass * G / (0.5 * ac.rho * V * V * ac.wing_area));
@@ -454,7 +478,7 @@ function mpcFactory() {
     var a2 = (P[23] - P[26]) / (2 * DT) + (P[5] - P[8]) / (2 * H) * vg0 + (P[11] - P[14]) / (2 * H) * vg1 + (P[17] - P[20]) / dz * vg2;
     var q = 0.5 * ac.rho * V * V * ac.wing_area, L = q * cl, m = ac.mass;
     var cd0 = ac.cd0;
-    if (thrust !== undefined) cd0 = cd0 + this.foldDcd * (1.0 - thrust / (thrust + 0.01 * ac.mass * G));
+    if (thrust !== undefined) cd0 = cd0 + (fold !== undefined ? fold : this.foldDcd) * (1.0 - thrust / (thrust + 0.01 * ac.mass * G));
     var D = q * (cd0 + ac.k_induced * cl * cl);
     var aV = a0 * cg * cp + a1 * cg * sp + a2 * sg;
     var aG = -a0 * sg * cp - a1 * sg * sp + a2 * cg;
@@ -508,9 +532,10 @@ function mpcFactory() {
         var t = t0 + i * dt;
         var c1 = clAll[2 * i], c2 = clAll[2 * i + 1], c3 = clAll[2 * i + 2];
         var m1 = muAll[2 * i], m2 = muAll[2 * i + 1], m3 = muAll[2 * i + 2];
-        var c3cmd = c3, t1 = 0, t2 = 0, t3 = 0, v0 = s[3];
+        var c3cmd = c3, t1 = 0, t2 = 0, t3 = 0, v0 = s[3], f1, f2, f3, tc1 = 0, tc2 = 0, tc3 = 0;
         if (motor) {
           t1 = tAll[2 * i]; t2 = tAll[2 * i + 1]; t3 = tAll[2 * i + 2];
+          tc1 = t1; tc2 = t2; tc3 = t3;   // the commands (before the motor lag)
           if (act) {   // the motor lags its command (no delay)
             t1 = xT;
             xT = xT + aTLag * (t2 - xT); t2 = xT;
@@ -527,13 +552,17 @@ function mpcFactory() {
           xmu = xmu + clamp(aLag * (m3 - xmu), -limMu, limMu);
           c3 = xcl; m3 = xmu;
         }
-        this._deriv(world, t, s, c1, m1, k1, motor ? t1 : undefined);
+        if (motor && this.foldSwitch === 'state') {
+          f1 = foldEffective(ac, this.foldDcd, t1, tc1); f2 = foldEffective(ac, this.foldDcd, t2, tc2);
+          f3 = foldEffective(ac, this.foldDcd, t3, tc3);
+        }
+        this._deriv(world, t, s, c1, m1, k1, motor ? t1 : undefined, f1);
         for (d = 0; d < 6; d++) tmp[d] = s[d] + dt / 2 * k1[d];
-        this._deriv(world, t + dt / 2, tmp, c2, m2, k2, motor ? t2 : undefined);
+        this._deriv(world, t + dt / 2, tmp, c2, m2, k2, motor ? t2 : undefined, f2);
         for (d = 0; d < 6; d++) tmp[d] = s[d] + dt / 2 * k2[d];
-        this._deriv(world, t + dt / 2, tmp, c2, m2, k3, motor ? t2 : undefined);
+        this._deriv(world, t + dt / 2, tmp, c2, m2, k3, motor ? t2 : undefined, f2);
         for (d = 0; d < 6; d++) tmp[d] = s[d] + dt * k3[d];
-        this._deriv(world, t + dt, tmp, c3, m3, k4, motor ? t3 : undefined);
+        this._deriv(world, t + dt, tmp, c3, m3, k4, motor ? t3 : undefined, f3);
         if (isDead) {   // frozen once dead
           for (d = 0; d < 6; d++) tmp[d] = s[d];
         } else {
@@ -641,14 +670,47 @@ function mpcFactory() {
     return out;
   };
 
+  // constant-thrust candidates (thrust_sampling 'sustained'): each level of SUSTAIN.candLevels of the
+  // weight over the whole horizon, with the controls of the nominal U and wings level at the best L/D
+  Planner.prototype.thrustCandidates = function (U) {
+    var ac = this.ac, nc = this.nCtrl, out = [];
+    SUSTAIN.candLevels.forEach(function (lv) {
+      var th = Math.min(lv * ac.mass * G, this.tMax), a = new Float64Array(3 * nc), b = new Float64Array(3 * nc);
+      a.set(U.subarray(0, 2 * nc)); a.fill(th, 2 * nc, 3 * nc);
+      b.fill(ac.cl_best_ld, 0, nc); b.fill(th, 2 * nc, 3 * nc);
+      out.push(a); out.push(b);
+    }, this);
+    return out;
+  };
+  // thrust perturbations of one sample into eps[o .. o + nc): independent Gaussian per knot; with
+  // 'sustained' a share pHold of the samples hold one half-normal level over a random run of knots
+  Planner.prototype.thrustNoise = function (eps, o) {
+    var nc = this.nCtrl, j;
+    if (this.thrustSampling === 'sustained' && this.rng.uniform() < SUSTAIN.pHold) {
+      var lvl = Math.abs(this.rng.next()) * this.sigmaHold;
+      var a = Math.floor(this.rng.uniform() * nc), b = Math.floor(this.rng.uniform() * nc);
+      var lo = Math.min(a, b), hi = Math.max(a, b);
+      for (j = 0; j < nc; j++) eps[o + j] = (j >= lo && j <= hi) ? lvl : 0.0;
+    } else {
+      for (j = 0; j < nc; j++) eps[o + j] = this.rng.next() * this.sigmaT;
+    }
+  };
+
   // One planning call from state s at time t in `world`, centred on the guide's cycle
   // (MPPIPlanner.plan with a guide). Returns a plan.
   Planner.prototype.plan = function (world, t, s, guide) {
     var nc = this.nCtrl, nu = this.nu, S = this.nSamples, i, j, it;
     var prev = this.U === null ? null : this.shift(this.U);
     var U = guide.nominal(this.knotsT);
-    if (this.motor) { var U3 = new Float64Array(3 * nc); U3.set(U); U = U3; }   // library cycles carry no thrust
-    var cand = this.candidates(), nCand = cand.length;
+    if (this.motor) {   // the thrust schedule of the cycle (zero for a soaring cycle)
+      var U3 = new Float64Array(3 * nc), nt = guide.nominalThrust(this.knotsT);
+      U3.set(U);
+      for (j = 0; j < nc; j++) U3[2 * nc + j] = clamp(nt[j], 0.0, this.tMax);
+      U = U3;
+    }
+    var cand = this.candidates();
+    if (this.motor && this.thrustSampling === 'sustained') cand = cand.concat(this.thrustCandidates(U));
+    var nCand = cand.length;
     var Us = new Float64Array(S * nu * nc), ess = 1, nDead = 0;
     for (it = 0; it < this.nIter; it++) {
       var eps;
@@ -658,7 +720,7 @@ function mpcFactory() {
         for (i = 0; i < S; i++) {
           for (j = 0; j < nc; j++) eps[i * nu * nc + j] = this.rng.next() * this.sigmaCl;
           for (j = 0; j < nc; j++) eps[i * nu * nc + nc + j] = this.rng.next() * this.sigmaMu;
-          if (this.motor) for (j = 0; j < nc; j++) eps[i * nu * nc + 2 * nc + j] = this.rng.next() * this.sigmaT;
+          if (this.motor) this.thrustNoise(eps, i * nu * nc + 2 * nc);
         }
       }
       for (i = 0; i < S; i++) {
@@ -693,6 +755,62 @@ function mpcFactory() {
   // commanded thrust (N) at tau seconds from the plan time (0 without the motor)
   function planThrust(plan, tau) { return plan.th ? interp(tau, plan.knotsT, plan.th) : 0.0; }
 
+  // ---------------------------------------------------------------------------- reflex
+  // Mirror of sim.mpc.Reflex: predicts REFLEX.horizonS of flight with the plan's own controls and
+  // reports the first time the centre or a wingtip is predicted below REFLEX.clearanceM above the
+  // surface of the world, or the airspeed below REFLEX.vFrac stall speeds. Runs on the main thread
+  // at every control step (the viewer builds the world with makeWorld from the request it sends).
+  // The values are those of the record (ctrl.reflex_*); test_mpc_js checks them against Python.
+  var REFLEX = { horizonS: 1.5, clearanceM: 0.3, vFrac: 1.05, dt: 0.1, nFrac: 0.8, vFactor: 1.2 };
+  function Reflex(ac, opt) {
+    opt = opt || {};
+    var mv = Object.assign({}, MOTOR, opt.motorValues || {}), k;
+    this.ac = ac;
+    for (k in REFLEX) this[k] = opt[k] !== undefined ? opt[k] : REFLEX[k];
+    this.tMax = mv.thrustMaxPerWeight * ac.mass * G;
+    this.foldSwitch = opt.foldSwitch || 'smooth';
+    this.n = Math.round(this.horizonS / this.dt);
+    this.pl = new Planner(ac, { motor: true, nLimit: opt.nLimit !== false, motorValues: opt.motorValues });
+    this._o = new Float64Array(6);
+  }
+  // plan: {knotsT, cl, mu, th (or null)}; tau: seconds after the plan time. Returns null when the
+  // prediction clears, else {cause: 'centre' | 'tip' | 'stall', ahead, h, tip, V}.
+  Reflex.prototype.predict = function (world, t, s, plan, tau) {
+    var ac = this.ac, dt = this.dt, n = this.n, pl = this.pl, kt = plan.knotsT, i, d;
+    var nh = 2 * n + 1, cl = new Float64Array(nh), mu = new Float64Array(nh), T = new Float64Array(nh);
+    for (i = 0; i < nh; i++) {
+      var ta = tau + i * dt / 2.0;
+      cl[i] = clamp(interp(ta, kt, plan.cl), ac.cl_min, ac.cl_max);
+      mu[i] = clamp(interp(ta, kt, plan.mu), -ac.mu_max, ac.mu_max);
+      T[i] = plan.th ? clamp(interp(ta, kt, plan.th), 0.0, this.tMax) : 0.0;
+    }
+    var st = [s[0], s[1], s[2], s[3], s[4], s[5]], tmp = [0, 0, 0, 0, 0, 0], k1 = this._o, km = [0, 0, 0, 0, 0, 0];
+    var vLim = this.vFrac * ac.v_stall;
+    for (i = 0; i <= n; i++) {
+      var tt = t + i * dt;
+      var h = st[2] - world.eta(st[0], st[1], tt);
+      var tip = h - 0.5 * ac.span * Math.sin(Math.abs(mu[2 * i])) * Math.cos(st[4]);
+      var cause = h < this.clearanceM ? 'centre' : tip < this.clearanceM ? 'tip' : st[3] < vLim ? 'stall' : null;
+      if (cause !== null) return { cause: cause, ahead: i * dt, h: h, tip: tip, V: st[3] };
+      if (i === n) break;
+      var fa = this.foldSwitch === 'state' ? foldEffective(ac, pl.foldDcd, T[2 * i], T[2 * i]) : undefined;
+      var fb = this.foldSwitch === 'state' ? foldEffective(ac, pl.foldDcd, T[2 * i + 1], T[2 * i + 1]) : undefined;
+      pl._deriv(world, tt, st, cl[2 * i], mu[2 * i], k1, T[2 * i], fa);
+      for (d = 0; d < 6; d++) tmp[d] = st[d] + dt / 2 * k1[d];
+      pl._deriv(world, tt + dt / 2, tmp, cl[2 * i + 1], mu[2 * i + 1], km, T[2 * i + 1], fb);
+      var fin = true;
+      for (d = 0; d < 6; d++) { st[d] = st[d] + dt * km[d]; if (!isFinite(st[d])) fin = false; }
+      if (!fin) return { cause: 'stall', ahead: (i + 1) * dt, h: NaN, tip: NaN, V: NaN };
+    }
+    return null;
+  };
+  // [cl, mu, thrust] of the override at state s: full thrust, cl at its margin limit, wings level
+  Reflex.prototype.override = function (s) {
+    var ac = this.ac, q = 0.5 * ac.rho * s[3] * s[3] * ac.wing_area;
+    var cl = Math.min(ac.cl_max / (this.vFactor * this.vFactor), this.nFrac * ac.n_max * ac.mass * G / q);
+    return [clamp(cl, ac.cl_min, ac.cl_max), 0.0, this.tMax];
+  };
+
   // ---------------------------------------------------------------------------- controller
   // The library mode of fly_mpc: pick the cycle, match its phase to the state, plan.
   // entries: the library entries of the aircraft; opt: planner settings, actuators (library
@@ -722,7 +840,8 @@ function mpcFactory() {
     var plan = pl.plan(world, req.t, req.s, guide);
     plan.t0 = req.t;
     plan.info = { tau0: guide.tau0, period: cyc.T, u10: cyc.d.u10, chiDeg: cyc.d.chi_deg,
-      mirror: cyc.mirror, marginSet: cyc.d.margin_set, matchDist: guide.matchDist };
+      mirror: cyc.mirror, marginSet: cyc.d.margin_set, matchDist: guide.matchDist,
+      kind: cyc.d.kind || 'soaring', powerW: cyc.d.power_avg_w || 0 };
     return plan;
   };
 
@@ -755,7 +874,7 @@ function mpcFactory() {
     SeaWorld: SeaWorld, flatWorld: flatWorld, makeWorld: makeWorld, limitComponents: limitComponents,
     Actuators: Actuators, actuatorParams: actuatorParams, nLimitedCl: nLimitedCl,
     Cycle: Cycle, pickCycle: pickCycle, Guide: Guide, Planner: Planner, Controller: Controller,
-    planControls: planControls, planThrust: planThrust, MOTOR: MOTOR, ENERGY_K: ENERGY_K, workerMain: workerMain, Gauss: Gauss };
+    planControls: planControls, planThrust: planThrust, Reflex: Reflex, REFLEX: REFLEX, SUSTAIN: SUSTAIN, foldEffective: foldEffective, MOTOR: MOTOR, ENERGY_K: ENERGY_K, workerMain: workerMain, Gauss: Gauss };
 }
 
 (function () {

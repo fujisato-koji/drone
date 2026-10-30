@@ -1187,6 +1187,24 @@ items:
     status: assumed
     basis:
       - Q-055
+  - key: ctrl.reflex_horizon_s
+    v: 1.5
+    unit: s
+    status: assumed
+    basis:
+      - Q-055
+  - key: ctrl.reflex_clearance_m
+    v: 0.3
+    unit: m
+    status: assumed
+    basis:
+      - Q-055
+  - key: ctrl.reflex_v_frac
+    v: 1.05
+    unit: 1
+    status: assumed
+    basis:
+      - Q-055
   - key: env.charnock
     v: 0.0144
     unit: 1
