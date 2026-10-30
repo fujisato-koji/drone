@@ -260,7 +260,7 @@ What the model says about the first one: the gap is the wingtip, not the height.
 - With the wingtip held clear, lowering the floor to 0.3 m and the clearance to 0.05 m takes the Sachs model only from dsopt.sachs_coare_floor15_u10_ms to dsopt.sachs_coare_floor03_u10_ms, and its centre never goes below dsopt.sachs_coare_floor03_zmin_m, because the low turn wants a steep bank and a 3.3 m wing then reaches the water.
 - Without the wingtip constraint the same model needs dsopt.sachs_coare_notip_floor15_u10_ms at a 1.5 m floor, dsopt.sachs_coare_notip_floor05_u10_ms at 0.5 m and dsopt.sachs_coare_notip_floor01_u10_ms at 0.1 m, and with the land value of z0 only dsopt.sachs_z003_notip_floor05_u10_ms and dsopt.sachs_z003_notip_floor01_u10_ms; the albatross-like glider needs dsopt.albatross_coare_notip_floor01_u10_ms at 0.1 m (`formstudy.clearance_study()`).
 - So the bird gains by making its low turn in the slowest air with its lower wingtip almost on the water, which a point mass with a wingtip margin cannot do; how the bird turns low without a steep bank, and how much a wave trough slows the air there, are what the model does not yet capture, and no study has measured the wind at the bird's height (P116).
-- The drone cannot copy that: R-12 and the waves keep its wingtip well clear, so its low turn stays higher than the bird's.
+- R-12 keeps the drone's wingtip well clear, so its low turn stays higher than the bird's; the owner has decided to let the low turn bring a wingtip close to the water with a skid and a tip sensor (D-018), and what that gains and needs is in [the wingtip skim section](#wingtip-skim).
 
 The wind difference a cycle needs, from its lowest to its highest point (`formstudy.wind_difference_study()`, `sim/out/dsopt_wind_difference.json`):
 
@@ -278,6 +278,141 @@ What the model must include, in this order:
 3. Turbulence as a cost on the margins of the cycle rather than as a source.
 4. The profile shapes under swell and in stable air (Q-061).
 5. Separation behind crests stays a crude option and is not developed further.
+
+## Letting a wingtip skim the water {#wingtip-skim}
+
+The owner decided to let the low turn bring a wingtip close to the water, with a skid on each tip that sheds water and survives a touch and a sensor that detects water at the tip so that the aircraft corrects its attitude at once; R-12 is to be revised once this study gives the clearance and the reaction it needs (D-018).
+This section asks how much the low tip gains, what a touch does to the aircraft, and what the tip sensor and the reflex must do.
+
+### What the low tip gains
+
+`formstudy.skim_study()` (`sim/out/skim_study.json`) solves the minimum wind at 10 m on a flat sea with COARE 3.5 and the control library's margins other than the heights (a load factor of 0.8 of the limit, 0.9 of the bank limit, 1.2 times the stall speed, the roll and lift-coefficient rates of Q-062, the heights and the tip held between nodes), with the wingtip constraint kept and its clearance varied.
+The clearances are ds.clearance_min_m (the design point of R-12), the library's 0.3 m, 0.1 m and zero, where the skid touches; the body floor runs from 2 m down to 0.3 m.
+The aircraft are the albatross-like glider, the wing pass's best design (aspect ratio 20, SD7037, 3.0 m, ballast to ds.mass_max_kg, its Reynolds number iterated as in the wing pass) and the same wing without ballast.
+Each cell is the best of up to six cold starts (the first three that converge) and of warm starts from its tighter neighbours, whose solutions are feasible in it; a cell that failed was tried again from its looser neighbours with six more starts, and cells where the floor lies below the clearance are the same problem as the first such floor and carry its key.
+
+| Aircraft | Body floor | Tip clearance ds.clearance_min_m | 0.3 m | 0.1 m | 0 (the skid touches) |
+|---|---|---|---|---|---|
+| albatross-like glider | 2 m | skim.alb_h20_c100_u10_ms | skim.alb_h20_c030_u10_ms | skim.alb_h20_c010_u10_ms | skim.alb_h20_c000_u10_ms |
+| albatross-like glider | 1 m | skim.alb_h10_c100_u10_ms | skim.alb_h10_c030_u10_ms | skim.alb_h10_c010_u10_ms | skim.alb_h10_c000_u10_ms |
+| albatross-like glider | 0.5 m | skim.alb_h10_c100_u10_ms | skim.alb_h05_c030_u10_ms | skim.alb_h05_c010_u10_ms | skim.alb_h05_c000_u10_ms |
+| albatross-like glider | 0.3 m | skim.alb_h10_c100_u10_ms | skim.alb_h03_c030_u10_ms | skim.alb_h03_c010_u10_ms | skim.alb_h03_c000_u10_ms |
+| AR 20 SD7037, ballast to the limit | 2 m | skim.ar20l_h20_c100_u10_ms | skim.ar20l_h20_c030_u10_ms | skim.ar20l_h20_c010_u10_ms | skim.ar20l_h20_c000_u10_ms |
+| AR 20 SD7037, ballast to the limit | 1 m | skim.ar20l_h10_c100_u10_ms | skim.ar20l_h10_c030_u10_ms | skim.ar20l_h10_c010_u10_ms | skim.ar20l_h10_c000_u10_ms |
+| AR 20 SD7037, ballast to the limit | 0.5 m | skim.ar20l_h10_c100_u10_ms | skim.ar20l_h05_c030_u10_ms | skim.ar20l_h05_c010_u10_ms | skim.ar20l_h05_c000_u10_ms |
+| AR 20 SD7037, ballast to the limit | 0.3 m | skim.ar20l_h10_c100_u10_ms | skim.ar20l_h03_c030_u10_ms | skim.ar20l_h03_c010_u10_ms | skim.ar20l_h03_c000_u10_ms |
+| AR 20 SD7037, no ballast | 2 m | skim.ar20n_h20_c100_u10_ms | skim.ar20n_h20_c030_u10_ms | skim.ar20n_h20_c010_u10_ms | skim.ar20n_h20_c000_u10_ms |
+| AR 20 SD7037, no ballast | 1 m | skim.ar20n_h10_c100_u10_ms | skim.ar20n_h10_c030_u10_ms | skim.ar20n_h10_c010_u10_ms | skim.ar20n_h10_c000_u10_ms |
+| AR 20 SD7037, no ballast | 0.5 m | skim.ar20n_h10_c100_u10_ms | skim.ar20n_h05_c030_u10_ms | skim.ar20n_h05_c010_u10_ms | skim.ar20n_h05_c000_u10_ms |
+| AR 20 SD7037, no ballast | 0.3 m | skim.ar20n_h10_c100_u10_ms | skim.ar20n_h03_c030_u10_ms | skim.ar20n_h03_c010_u10_ms | skim.ar20n_h03_c000_u10_ms |
+
+- With the floor at 2 m the clearance does not matter: the bank limit of the margins keeps the low tip well above every clearance below ds.clearance_min_m.
+- Lowering the floor to 1 m gives most of the gain, and below 1 m nothing changes, because the wingtip constraint stays active at a steep bank: the lowest tip comes at a steep bank, at the bank limit for the two heavy aircraft (skid.alb_bank_deg, skid.ar20l_bank_deg) and at skid.ar20n_bank_deg for the light wing, which holds the centre about the half span times the sine of the bank above the water (skim.alb_h03_c000_zmin_m and skim.ar20l_h03_c000_zmin_m at the lowest floor with the skid touching).
+- The skid alone gains little: taking the clearance from the library's 0.3 m to zero at the lowest floor moves the minimum from skim.alb_h03_c030_u10_ms to skim.alb_h03_c000_u10_ms for the albatross-like glider, from skim.ar20l_h03_c030_u10_ms to skim.ar20l_h03_c000_u10_ms for the best wing and from skim.ar20n_h03_c030_u10_ms to skim.ar20n_h03_c000_u10_ms without ballast.
+- Against the library's standard (floor 2 m, clearance 0.3 m, skim.ar20l_h20_c030_u10_ms for the best wing) the skid with a floor of 1 m or less gains more than twice that, the larger part from the lower floor; against R-12's clearance (skim.ar20l_h10_c100_u10_ms) still more.
+- The optimizer then runs the low tip along the water for skid.alb_skim_arc_s (albatross-like glider) and skid.ar20l_skim_arc_s (best wing) of each cycle within 0.1 m of its lowest point, a skim along an arc rather than a touch; the light wing banks less and touches only for skid.ar20n_skim_arc_s.
+
+### Dihedral and a bent-up outer panel
+
+The point mass carries the wing's shape only through the height of its lowest point and the lift the shape loses (`dsopt.WingShape`); with the bank mu, the flight-path angle gamma and the half span s = b/2 measured along the panels:
+
+- dihedral Gamma puts the low tip s cos(gamma) sin(|mu| - Gamma) below the centre and leaves cos(Gamma) of the panels' lift vertical, so at a given lift the panels fly at CL / cos(Gamma), the induced drag rises by 1 / cos^2(Gamma) and the stall speed by 1 / sqrt(cos(Gamma));
+- an outer panel bent up by Gamma_o from the fraction eta of the half span puts the tip s cos(gamma) (eta sin|mu| + (1 - eta) sin(|mu| - Gamma_o)) and the break s cos(gamma) eta sin|mu| below the centre, both held clear, and leaves kappa = (1 - f_o) + f_o cos(Gamma_o) of the lift vertical, with f_o = 1 - (2/pi)(eta sqrt(1 - eta^2) + asin(eta)) the share of an elliptic loading outboard of the break; the drag follows as for dihedral with kappa in place of cos(Gamma).
+
+The levers were solved at the lowest floor, which solved for every aircraft, with eta at half the span so that 10 and 20 deg on the outer panel lift the tip at a small bank as much as 5 and 10 deg of dihedral.
+
+| Aircraft | Wing | Tip clearance 0.3 m | 0 (the skid touches) |
+|---|---|---|---|
+| albatross-like glider | flat wing | skim.alb_h03_c030_u10_ms | skim.alb_h03_c000_u10_ms |
+| albatross-like glider | dihedral 5 deg | skim.alb_dih5_h03_c030_u10_ms | skim.alb_dih5_h03_c000_u10_ms |
+| albatross-like glider | dihedral 10 deg | skim.alb_dih10_h03_c030_u10_ms | skim.alb_dih10_h03_c000_u10_ms |
+| albatross-like glider | outer panel bent up 10 deg from half span | skim.alb_out10_h03_c030_u10_ms | skim.alb_out10_h03_c000_u10_ms |
+| albatross-like glider | outer panel bent up 20 deg from half span | skim.alb_out20_h03_c030_u10_ms | skim.alb_out20_h03_c000_u10_ms |
+| AR 20 SD7037, ballast to the limit | flat wing | skim.ar20l_h03_c030_u10_ms | skim.ar20l_h03_c000_u10_ms |
+| AR 20 SD7037, ballast to the limit | dihedral 5 deg | skim.ar20l_dih5_h03_c030_u10_ms | skim.ar20l_dih5_h03_c000_u10_ms |
+| AR 20 SD7037, ballast to the limit | dihedral 10 deg | skim.ar20l_dih10_h03_c030_u10_ms | skim.ar20l_dih10_h03_c000_u10_ms |
+| AR 20 SD7037, ballast to the limit | outer panel bent up 10 deg from half span | skim.ar20l_out10_h03_c030_u10_ms | skim.ar20l_out10_h03_c000_u10_ms |
+| AR 20 SD7037, ballast to the limit | outer panel bent up 20 deg from half span | skim.ar20l_out20_h03_c030_u10_ms | skim.ar20l_out20_h03_c000_u10_ms |
+| AR 20 SD7037, no ballast | flat wing | skim.ar20n_h03_c030_u10_ms | skim.ar20n_h03_c000_u10_ms |
+| AR 20 SD7037, no ballast | dihedral 5 deg | skim.ar20n_dih5_h03_c030_u10_ms | skim.ar20n_dih5_h03_c000_u10_ms |
+| AR 20 SD7037, no ballast | dihedral 10 deg | skim.ar20n_dih10_h03_c030_u10_ms | skim.ar20n_dih10_h03_c000_u10_ms |
+| AR 20 SD7037, no ballast | outer panel bent up 10 deg from half span | skim.ar20n_out10_h03_c030_u10_ms | skim.ar20n_out10_h03_c000_u10_ms |
+| AR 20 SD7037, no ballast | outer panel bent up 20 deg from half span | skim.ar20n_out20_h03_c030_u10_ms | skim.ar20n_out20_h03_c000_u10_ms |
+
+- Both levers move the minimum wind, by about the same for the same lift of the tip: 10 deg of dihedral lowers it by a few tenths of a metre per second at a clearance of 0.3 m and by more with the skid touching, and the outer panel bent 20 deg does the same within a few hundredths; half the angle gives half or less.
+- They work because they lift the low tip at the steep bank, so the centre comes lower (skim.alb_dih10_h03_c000_zmin_m and skim.ar20l_dih10_h03_c000_zmin_m against the flat wing's above); the lift they lose costs little.
+- So the skid, a body floor of 1 m or less and 10 deg of dihedral together take the best wing from the library's skim.ar20l_h20_c030_u10_ms to skim.ar20l_dih10_h03_c000_u10_ms and the albatross-like glider from skim.alb_h20_c030_u10_ms to skim.alb_dih10_h03_c000_u10_ms on a flat sea; the gain from the skid alone is the smallest part.
+
+### Upwind and across the wind with the low tip
+
+`formstudy.skim_upwind_study()` (`sim/out/skim_upwind.json`) solves the support values h(90), h(135) and h(180) of the achievable mean ground velocities (the largest mean progress along a course measured from downwind, with the drift across it left free, see [the navigation section](#navigation)) at u10 13 and 16 m/s for the best wing and the albatross-like glider, in three configurations: the standard (floor 2 m, clearance 0.3 m), the skid (floor 1 m, clearance zero) and the skid with 10 deg of dihedral, with the margins, starts and Reynolds iteration above; each course is also started from the previous course and from the same course of the previous configuration, and a course that failed is tried again from the others with six more starts.
+h(180) is the best speed made good straight upwind; when it is negative every soaring cycle drifts downwind at least that fast, so no line across the wind can be held on soaring alone, whatever h(90) and h(135) say.
+
+| Aircraft | Configuration | h(90) at 13 m/s | h(135) | h(180) | h(90) at 16 m/s | h(135) | h(180) |
+|---|---|---|---|---|---|---|---|
+| AR 20 SD7037, ballast to the limit | standard | skim.ar20l_std_u13_h90_ms | skim.ar20l_std_u13_h135_ms | skim.ar20l_std_u13_h180_ms | skim.ar20l_std_u16_h90_ms | skim.ar20l_std_u16_h135_ms | skim.ar20l_std_u16_h180_ms |
+| AR 20 SD7037, ballast to the limit | skid | skim.ar20l_skid_u13_h90_ms | skim.ar20l_skid_u13_h135_ms | skim.ar20l_skid_u13_h180_ms | skim.ar20l_skid_u16_h90_ms | skim.ar20l_skid_u16_h135_ms | skim.ar20l_skid_u16_h180_ms |
+| AR 20 SD7037, ballast to the limit | skid and 10 deg dihedral | skim.ar20l_skiddih10_u13_h90_ms | skim.ar20l_skiddih10_u13_h135_ms | skim.ar20l_skiddih10_u13_h180_ms | skim.ar20l_skiddih10_u16_h90_ms | skim.ar20l_skiddih10_u16_h135_ms | skim.ar20l_skiddih10_u16_h180_ms |
+| albatross-like glider | standard | skim.alb_std_u13_h90_ms | skim.alb_std_u13_h135_ms | skim.alb_std_u13_h180_ms | skim.alb_std_u16_h90_ms | skim.alb_std_u16_h135_ms | skim.alb_std_u16_h180_ms |
+| albatross-like glider | skid | skim.alb_skid_u13_h90_ms | skim.alb_skid_u13_h135_ms | skim.alb_skid_u13_h180_ms | skim.alb_skid_u16_h90_ms | skim.alb_skid_u16_h135_ms | skim.alb_skid_u16_h180_ms |
+| albatross-like glider | skid and 10 deg dihedral | skim.alb_skiddih10_u13_h90_ms | skim.alb_skiddih10_u13_h135_ms | skim.alb_skiddih10_u13_h180_ms | skim.alb_skiddih10_u16_h90_ms | skim.alb_skiddih10_u16_h135_ms | skim.alb_skiddih10_u16_h180_ms |
+
+- Reaching the slower air near the water halves the best wing's downwind drift or better: straight upwind at 16 m/s from skim.ar20l_std_u16_h180_ms in the standard configuration to skim.ar20l_skid_u16_h180_ms with the skid and skim.ar20l_skiddih10_u16_h180_ms with the skid and dihedral, and at 13 m/s from skim.ar20l_std_u13_h180_ms to skim.ar20l_skid_u13_h180_ms and skim.ar20l_skiddih10_u13_h180_ms.
+- The best wing still drifts downwind in every case, so on soaring alone it can neither make progress upwind nor hold a line across the wind; upwind legs and holding a line stay with the motor or the swell.
+- The albatross-like glider comes to the edge: at 16 m/s from skim.alb_std_u16_h180_ms to skim.alb_skid_u16_h180_ms with the skid and skim.alb_skiddih10_u16_h180_ms with the skid and dihedral, and at 13 m/s from skim.alb_std_u13_h180_ms to skim.alb_skid_u13_h180_ms and skim.alb_skiddih10_u13_h180_ms; with the skid and dihedral it just holds a line across the wind at 16 m/s and nearly does at 13 m/s.
+  Its starts agree within a few hundredths of a metre per second, but the margin is smaller than what the model leaves out (the waves, stable air, turbulence) and rests on its assumed polar (Q-014).
+- The soaring sector widens: the progress along a course 45 deg off the wind, h(135), grows for the best wing from skim.ar20l_std_u13_h135_ms to skim.ar20l_skiddih10_u13_h135_ms at 13 m/s and from skim.ar20l_std_u16_h135_ms to skim.ar20l_skiddih10_u16_h135_ms at 16 m/s, and across the wind h(90) grows by a fifth to two fifths; these are support values, so the drift across those courses is left free.
+- So the low tip is worth more for making way against the wind than for the soaring minimum, and it is the only lever so far that brings soaring alone close to holding a line across the wind.
+
+### What a touch does
+
+`python -m sim.skid` (`sim/out/skid.json`) takes the skid-touch cycles at the lowest floor and computes the water forces on a skid at the tip against its immersion, their moments about the centre of mass, and the time budget of the reflex; it is a hand calculation made repeatable, with sizes that no source gives (Q-070).
+
+- The tip meets the water at a speed over the water of skid.ar20l_water_speed_ms for the best wing (airspeed skid.ar20l_airspeed_ms), skid.alb_water_speed_ms for the albatross-like glider and skid.ar20n_water_speed_ms for the light wing, about twice the black skimmer's skimming speed of lit.skimmer_skim_speed_ms (P121).
+- The skimmer cuts the water with a lower mandible at most lit.skimmer_lower_beak_thickness_max_mm thick (P159) while flying about lit.skimmer_skim_height_m above it (P158); P121 estimated the drag of the bill at only lit.skimmer_bill_drag_wt_n, but a bill towed with lit.skimmer_bill_immersion_m immersed measured about lit.skimmer_bill_drag_10ms_n at 10 m/s, about lit.skimmer_hydro_drag_share of the cost of skimming flight (P157).
+- The blade model (friction on both sides by the ITTC 1957 line, spray drag of skid.spray_cd_t2 on the thickness squared, P157, P160, and the sea water of skid.rho_seawater_kg_m3 and skid.nu_seawater_m2_s, S10) gives skid.blade_skimmer_check_10ms_n for that bill at 10 m/s, inside the spread of the towed bill.
+- The candidates: a thin blade below the tip, skid.blade_thickness_m thick, its leading edge raked back by skid.blade_rake_deg so that the wetted area grows with the square of the immersion and the water runs off aft, skid.blade_depth_m deep, aligned with the flow; a planing ski skid.ski_beam_m by skid.ski_length_m at skid.ski_trim_deg (Savitsky's planing lift, S9); a tip float of skid.float_beam_m by skid.float_length_m, planing like the ski; and the bare wingtip at the wing's angle of attack.
+- The best wing's ailerons hold skid.ar20l_roll_moment_max_nm (the moment that holds ctrl.roll_pb2v against the strip-theory roll damping) and its rudder gives skid.ar20l_yaw_moment_max_nm (skid.rudder_cl_max on the fin of the wing pass's tail volume, assumed); its roll inertia is skid.ar20l_ixx_kgm2 and its yaw inertia skid.ar20l_izz_kgm2; the roll damping settles in skid.ar20l_roll_tau_s, so a roll moment below the ailerons' is held and a larger one rolls the wing up at the excess.
+
+| Skid | Immersion | Drag | Normal or side force | Yaw moment over the rudder's | Roll moment over the ailerons' | Steady sideslip | Yaw after 0.2 s |
+|---|---|---|---|---|---|---|---|
+| thin raked blade | 5 mm | skid.ar20l_blade_d05_drag_n | skid.ar20l_blade_d05_side_n | skid.ar20l_blade_d05_yaw_over_rudder | skid.ar20l_blade_d05_roll_over_aileron | skid.ar20l_blade_d05_sideslip_deg | skid.ar20l_blade_d05_yaw_0p2s_deg |
+| thin raked blade | 10 mm | skid.ar20l_blade_d10_drag_n | skid.ar20l_blade_d10_side_n | skid.ar20l_blade_d10_yaw_over_rudder | skid.ar20l_blade_d10_roll_over_aileron | skid.ar20l_blade_d10_sideslip_deg | skid.ar20l_blade_d10_yaw_0p2s_deg |
+| thin raked blade | 20 mm | skid.ar20l_blade_d20_drag_n | skid.ar20l_blade_d20_side_n | skid.ar20l_blade_d20_yaw_over_rudder | skid.ar20l_blade_d20_roll_over_aileron | skid.ar20l_blade_d20_sideslip_deg | skid.ar20l_blade_d20_yaw_0p2s_deg |
+| thin raked blade | 30 mm | skid.ar20l_blade_d30_drag_n | skid.ar20l_blade_d30_side_n | skid.ar20l_blade_d30_yaw_over_rudder | skid.ar20l_blade_d30_roll_over_aileron | skid.ar20l_blade_d30_sideslip_deg | skid.ar20l_blade_d30_yaw_0p2s_deg |
+| planing ski | 10 mm | skid.ar20l_ski_d10_drag_n | skid.ar20l_ski_d10_normal_n | skid.ar20l_ski_d10_yaw_over_rudder | skid.ar20l_ski_d10_roll_over_aileron | skid.ar20l_ski_d10_sideslip_deg | skid.ar20l_ski_d10_yaw_0p2s_deg |
+| planing ski | 20 mm | skid.ar20l_ski_d20_drag_n | skid.ar20l_ski_d20_normal_n | skid.ar20l_ski_d20_yaw_over_rudder | skid.ar20l_ski_d20_roll_over_aileron | skid.ar20l_ski_d20_sideslip_deg | skid.ar20l_ski_d20_yaw_0p2s_deg |
+| tip float | 10 mm | skid.ar20l_float_d10_drag_n | skid.ar20l_float_d10_normal_n | skid.ar20l_float_d10_yaw_over_rudder | skid.ar20l_float_d10_roll_over_aileron | skid.ar20l_float_d10_sideslip_deg | skid.ar20l_float_d10_yaw_0p2s_deg |
+| tip float | 20 mm | skid.ar20l_float_d20_drag_n | skid.ar20l_float_d20_normal_n | skid.ar20l_float_d20_yaw_over_rudder | skid.ar20l_float_d20_roll_over_aileron | skid.ar20l_float_d20_sideslip_deg | skid.ar20l_float_d20_yaw_0p2s_deg |
+| bare wingtip | 10 mm | skid.ar20l_tip_d10_drag_n | skid.ar20l_tip_d10_normal_n | skid.ar20l_tip_d10_yaw_over_rudder | skid.ar20l_tip_d10_roll_over_aileron | skid.ar20l_tip_d10_sideslip_deg | skid.ar20l_tip_d10_yaw_0p2s_deg |
+| bare wingtip | 20 mm | skid.ar20l_tip_d20_drag_n | skid.ar20l_tip_d20_normal_n | skid.ar20l_tip_d20_yaw_over_rudder | skid.ar20l_tip_d20_roll_over_aileron | skid.ar20l_tip_d20_sideslip_deg | skid.ar20l_tip_d20_yaw_0p2s_deg |
+
+- The side force of the blade is for skid.misalignment_deg of misalignment with the flow and is an upper bound, since a surface-piercing foil ventilates only above about lit.ventilation_inception_deg (P161, P162).
+- The bare wingtip must never touch: at 1 cm its drag yaws the aircraft with several times the rudder's moment and would hold a sideslip far beyond any flight (skid.ar20l_tip_d10_sideslip_deg).
+- A ski or a float planes at any immersion with a lift of a third of the weight or more (skid.ar20l_weight_n), which rolls the wing up near or past the ailerons' authority and yaws it near or past the rudder's; seaplane rules size tip floats for landing and floating loads up to lit.tipfloat_load_cap_displaced times their displaced water (P163), not for a touch at speed; both are rejected.
+- The aligned blade stays within the rudder's and the ailerons' authority up to about 2 cm and passes the ailerons' near 3 cm; the speed it takes is negligible (skid.ar20l_blade_d20_impulse_0p2s of the momentum in 0.2 s at 2 cm, against skid.ar20l_tip_d20_impulse_0p2s for the bare tip): the moments, not the momentum, limit a touch.
+- So the skid is a thin, raked, hydrophobic blade canted to stand upright at the skim bank and deeper than the worst immersion, with a mass of skid.blade_mass_kg and an air drag area of skid.blade_cda_m2 each; the pair adds skid.blade_pair_over_body_cda of the best wing's body drag area (wing.best_body_cda_m2), against skid.ski_pair_over_body_cda for skis and skid.float_pair_over_body_cda for floats.
+- The sources stop at depth Froude numbers of a few, while the blade runs at several tens, so every force here is an extrapolation until a towing test settles it (Q-070).
+
+### What the tip sensor and the reflex must do
+
+On the skim arc the tip runs along the water, so the danger is the sea rising under it above the plan: the water speed times the slope of the sea plus the wave's own rise, about 0.5 to 2 m/s for slopes of 2 to 10 percent.
+The reflex rolls towards wings level at the rate of ctrl.roll_pb2v through the lag ctrl.actuator_tau_s with the load factor held, after a latency of skid.wet_latency_s (skid.sense_process_s for sensing and processing plus ctrl.actuator_delay_s); rolling lifts the low tip at no more than skid.ar20l_roll_rise_ms (skid.alb_roll_rise_ms and skid.ar20n_roll_rise_ms); a pull is left out, since the lift-coefficient rate ctrl.cl_rate_max_per_s makes it slow.
+The table gives, for the best wing and a sea rising 0.1 m above the plan, the immersion with a wet sensor alone and the gap at which a range sensor at the tip must trigger to keep the immersion within 1 or 2 cm; the albatross-like glider and the light wing need the same within about a centimetre.
+
+| Sea rising under the tip at | Immersion with the wet sensor alone | Range trigger gap for 1 cm | for 2 cm | for 1 cm when the sea rises 0.3 m |
+|---|---|---|---|---|
+| 0.5 m/s | skid.ar20l_w05_wet_depth_m | skid.ar20l_w05_dl10_trigger_1cm_m | skid.ar20l_w05_dl10_trigger_2cm_m | skid.ar20l_w05_dl30_trigger_1cm_m |
+| 1 m/s | skid.ar20l_w10_wet_depth_m | skid.ar20l_w10_dl10_trigger_1cm_m | skid.ar20l_w10_dl10_trigger_2cm_m | skid.ar20l_w10_dl30_trigger_1cm_m |
+| 2 m/s | skid.ar20l_w20_wet_depth_m | skid.ar20l_w20_dl10_trigger_1cm_m | skid.ar20l_w20_dl10_trigger_2cm_m | skid.ar20l_w20_dl30_trigger_1cm_m |
+
+- A wet sensor alone keeps the blade within its depth only when the sea rises slower than the roll lifts the tip; at 1 m/s and above the wing itself would touch, so the reflex must start before contact, from a range reading at the tip.
+- The tip sensor must therefore read the gap from the blade's bottom to the water over skid.req_range_span_m (the largest trigger gap above), to skid.req_range_accuracy_m (the immersion it guards), at skid.req_range_rate_hz or faster (each sample interval adds the rise rate times that interval to the immersion) and within skid.req_range_latency_s of the reading, looking at the water below the skid at the skim bank (a lidar loses its returns over water off nadir, P85, so it must point at nadir at that bank, or a radar with a wide beam must be used, M16); an ultrasonic sensor at lit.ultrasonic_rate_hz with a minimum range of lit.ultrasonic_min_range_m (M18) is too slow.
+- The wet sensor stays as the last resort and the measure of the immersion: electrodes at skid.req_wet_levels heights from the blade's bottom up to its depth, so that spray or a film is not taken for immersion, reading conductivity (sea water skid.seawater_conductivity_s_m, P164) or capacitance (converters sample at up to lit.cdc_rate_max_sps, M19) at skid.req_wet_rate_hz within skid.req_wet_latency_s.
+- The actuator delay is most of the latency; every hundredth of a second saved shortens the trigger gap by the rise rate times that time.
+- The planner's fitted sea is off by mpc.fit_surface_error_min_m to mpc.fit_surface_error_max_m ahead in a wind sea (see the receding horizon), far more than these gaps, so a skim is possible only where the sea under the arc is smoother than the trigger gap: calm water or long, predictable swell; over a wind sea the low tip keeps a clearance of the order of the prediction error.
+
+How this feeds the reflex redesign (Q-068): the tip test becomes the measured gap at the tip against a trigger gap that grows with the closing rate, with the wet signal as the last resort; the response to a tip event is a roll towards wings level at the full roll rate with the load factor held, not full thrust and a fixed lift coefficient; and the planner keeps the trigger gap above the predicted sea along the skim arc.
 
 ## Flight patterns {#flight-patterns}
 
@@ -517,6 +652,36 @@ Caveats:
 - The motor powers are upper bounds: the optimizer finds a cycle above the steady level flight, so a cycle that mixes soaring and thrust could use less; the main run's cut solver settings failed on most designs, and the power in the front comes from the full settings and the steady start; the top four's 6 and 13 m/s and straight-upwind figures in the follow-up are the optimizer's results alone.
 - The tail's Reynolds number is below the data of the airfoil fit, so the tail's drag is an extrapolation, and the tail's arm and aspect ratios are assumed; the tails are a large share of the body drag.
 - Everything rests on single airfoil fits (P155), a structure heavier or lighter than the areal density of wing.rho_a_base_kg_m2 changes the minimum (K-014), and the three best designs cannot be ranked against each other.
+
+### Heavier than the limit
+
+The owner asked whether the drone could simply be heavier than ds.mass_max_kg (Q-067, Q-069).
+The limit is not changed (it stays assumed under Q-009); `python -m sim.wingopt --heavy` (`sim/out/wingopt_heavy.json`) waives it for the 3.0 m SD7037 wings of aspect ratio 16 and 20, with ballast at the fuselage up to 10 kg, the spar caps of the mass model sized for ds.n_limit times ds.safety_factor at each mass, and the standard margins.
+The motor power is the optimizer's at 9 m/s, started from the steady flight, with the polar at the motor flight's own Reynolds number; the steady level flight at its own Reynolds number is shown beside it, and the two use the same power model.
+
+| Design | Mass | Wing loading | Over the albatross's | Soaring minimum | Motor power at 9 m/s, 20 deg | Steady flight, 20 deg | Energy per km, 20 deg | Motor power at 9 m/s, upwind | Steady flight, upwind | Energy per km, upwind |
+|---|---|---|---|---|---|---|---|---|---|---|
+| AR 16, SD7037 | 3 kg | heavy.ar16_m03_wing_loading_npm2 | heavy.ar16_m03_over_albatross | heavy.ar16_m03_u10_ms | heavy.ar16_m03_p20_w | heavy.ar16_m03_p20_steady_w | heavy.ar16_m03_e20_wh_per_km | heavy.ar16_m03_p180_w | heavy.ar16_m03_p180_steady_w | heavy.ar16_m03_e180_wh_per_km |
+| AR 16, SD7037 | 4 kg | heavy.ar16_m04_wing_loading_npm2 | heavy.ar16_m04_over_albatross | heavy.ar16_m04_u10_ms | heavy.ar16_m04_p20_w | heavy.ar16_m04_p20_steady_w | heavy.ar16_m04_e20_wh_per_km | heavy.ar16_m04_p180_w | heavy.ar16_m04_p180_steady_w | heavy.ar16_m04_e180_wh_per_km |
+| AR 16, SD7037 | 6 kg | heavy.ar16_m06_wing_loading_npm2 | heavy.ar16_m06_over_albatross | heavy.ar16_m06_u10_ms | heavy.ar16_m06_p20_w | heavy.ar16_m06_p20_steady_w | heavy.ar16_m06_e20_wh_per_km | heavy.ar16_m06_p180_w | heavy.ar16_m06_p180_steady_w | heavy.ar16_m06_e180_wh_per_km |
+| AR 16, SD7037 | 8 kg | heavy.ar16_m08_wing_loading_npm2 | heavy.ar16_m08_over_albatross | heavy.ar16_m08_u10_ms | heavy.ar16_m08_p20_w | heavy.ar16_m08_p20_steady_w | heavy.ar16_m08_e20_wh_per_km | heavy.ar16_m08_p180_w | heavy.ar16_m08_p180_steady_w | heavy.ar16_m08_e180_wh_per_km |
+| AR 16, SD7037 | 10 kg | heavy.ar16_m10_wing_loading_npm2 | heavy.ar16_m10_over_albatross | heavy.ar16_m10_u10_ms | heavy.ar16_m10_p20_w | heavy.ar16_m10_p20_steady_w | heavy.ar16_m10_e20_wh_per_km | heavy.ar16_m10_p180_w | heavy.ar16_m10_p180_steady_w | heavy.ar16_m10_e180_wh_per_km |
+| AR 20, SD7037 | 3 kg | heavy.ar20_m03_wing_loading_npm2 | heavy.ar20_m03_over_albatross | heavy.ar20_m03_u10_ms | heavy.ar20_m03_p20_w | heavy.ar20_m03_p20_steady_w | heavy.ar20_m03_e20_wh_per_km | heavy.ar20_m03_p180_w | heavy.ar20_m03_p180_steady_w | heavy.ar20_m03_e180_wh_per_km |
+| AR 20, SD7037 | 4 kg | heavy.ar20_m04_wing_loading_npm2 | heavy.ar20_m04_over_albatross | heavy.ar20_m04_u10_ms | heavy.ar20_m04_p20_w | heavy.ar20_m04_p20_steady_w | heavy.ar20_m04_e20_wh_per_km | heavy.ar20_m04_p180_w | heavy.ar20_m04_p180_steady_w | heavy.ar20_m04_e180_wh_per_km |
+| AR 20, SD7037 | 6 kg | heavy.ar20_m06_wing_loading_npm2 | heavy.ar20_m06_over_albatross | heavy.ar20_m06_u10_ms | heavy.ar20_m06_p20_w | heavy.ar20_m06_p20_steady_w | heavy.ar20_m06_e20_wh_per_km | heavy.ar20_m06_p180_w | heavy.ar20_m06_p180_steady_w | heavy.ar20_m06_e180_wh_per_km |
+| AR 20, SD7037 | 8 kg | heavy.ar20_m08_wing_loading_npm2 | heavy.ar20_m08_over_albatross | heavy.ar20_m08_u10_ms | heavy.ar20_m08_p20_w | heavy.ar20_m08_p20_steady_w | heavy.ar20_m08_e20_wh_per_km | heavy.ar20_m08_p180_w | heavy.ar20_m08_p180_steady_w | heavy.ar20_m08_e180_wh_per_km |
+| AR 20, SD7037 | 10 kg | heavy.ar20_m10_wing_loading_npm2 | heavy.ar20_m10_over_albatross | heavy.ar20_m10_u10_ms | heavy.ar20_m10_p20_w | heavy.ar20_m10_p20_steady_w | heavy.ar20_m10_e20_wh_per_km | heavy.ar20_m10_p180_w | heavy.ar20_m10_p180_steady_w | heavy.ar20_m10_e180_wh_per_km |
+
+- The soaring minimum falls from heavy.ar20_m03_u10_ms at 3 kg to heavy.ar20_m06_u10_ms at 6 kg and then hardly moves (heavy.ar20_m10_u10_ms at 10 kg); with aspect ratio 16 from heavy.ar16_m03_u10_ms to heavy.ar16_m06_u10_ms and heavy.ar16_m10_u10_ms; beyond about 6 kg the gain is within the optimizer's scatter (wing.start_scatter_ms).
+- The wandering albatross's wing loading (heavy.albatross_wing_loading_npm2, from lit.albatross_mass_kg and lit.albatross_wing_area_m2) is reached near 8 kg with aspect ratio 16 and between 6 and 8 kg with aspect ratio 20.
+- The motor power grows faster than the mass, since the cycle at 20 deg is level flight at the speed floor, whose power goes with the weight times the stall speed: for aspect ratio 20 from heavy.ar20_m03_p20_w at 3 kg to heavy.ar20_m10_p20_w at 10 kg, and straight upwind from heavy.ar20_m03_p180_w to heavy.ar20_m10_p180_w.
+- At 20 deg the optimizer's cycle is that steady flight at 1.2 times the stall speed and needs the same power to four digits when both use the motor flight's Reynolds number; straight upwind the optimizer is at most a few percent below the steady flight.
+  The steady figures of the front table above were evaluated with the polar at the soaring cycle's higher Reynolds number and are therefore low, by about a tenth at 20 deg; they are being corrected separately.
+- The mass model sizes its spar caps for stress only, and fully stressed caps bend to heavy.ar16_stress_caps_deflection (aspect ratio 16) and heavy.ar20_stress_caps_deflection (aspect ratio 20) of the half span at limit load whatever the mass, so spar.deflection_limit (D-014) needs heavy.ar16_stiff_caps_factor and heavy.ar20_stiff_caps_factor times the cap mass.
+  At a fixed total mass the stiffer caps come out of the ballast and leave the flight results unchanged, but the same holds at the mass limit, where the wing pass's best design carries too light a spar (Q-010, Q-053).
+- The round carbon tube of the structural model (P54) fits inside the root of the aspect ratio 20 wing at no mass of the grid, and inside the aspect ratio 16 wing at 3 and 4 kg but not from 6 kg.
+- No design breaks the Reynolds floor (wing.re_floor), since heavier wings fly faster; but the aspect ratio 16 wing at 8 and 10 kg soars at heavy.ar16_m08_re_cycle and heavy.ar16_m10_re_cycle, above the upper end of the airfoil data (P155), so those rows extrapolate the polar.
+- Left open: launching and recovering an aircraft of 4 to 10 kg at sea (Q-048); the structure (the stiff spar above, landing on the water, and a skid touch with more momentum); the energy of a calm day, which grows with the mass (Q-055) and is what variable ballast would address (Q-069); and the mass thresholds of Japan's rules for unmanned aircraft, not researched here (Q-001, Q-007).
 
 First pass, kept as history: with the mass fixed by the wing's size, a broad wing of aspect ratio 12 with the AG35 airfoil came first and the lighter slender wings ranked lower; rebuilt with the same polar and mass model the old candidates needed wing.rebuilt_albatross_u10_min_ms (the albatross-like glider), wing.rebuilt_baseline_u10_min_ms (the baseline) and wing.rebuilt_sealedhull_u10_min_ms (the sealed hull), higher than the form comparison's because its polars were too clean and it flew without the control margins; at equal mass an aspect ratio of 20 soared from wing.equal_mass_ar20_u10_ms and 25 from wing.equal_mass_ar25_u10_ms (K-014); a heavier skin lowered the minimum by wing.heavy_skin_gain_min_ms to wing.heavy_skin_gain_max_ms, half through the Reynolds number and half through the rate limits that loosen at higher speed (K-014); a fat sensor pod (twice the drag area) cost wing.fat_pod_loss_min_ms to wing.fat_pod_loss_max_ms (wing.best_fat_pod_u10_ms for the best design then); the taper hardly mattered.
 

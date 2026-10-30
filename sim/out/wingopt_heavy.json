@@ -1,0 +1,2003 @@
+{
+ "meta": {
+  "tdr_run": "python -m sim.wingopt --heavy",
+  "commit": "855b082",
+  "stamp": "sha-6d44ad46bc2e",
+  "runtime_s": 800.059656381607,
+  "masses_kg": [
+   3.0,
+   4.0,
+   6.0,
+   8.0,
+   10.0
+  ],
+  "ars": [
+   16.0,
+   20.0
+  ],
+  "mass_max_kg": 3.0,
+  "margins": {
+   "h_min": 2.0,
+   "n_frac": 0.8,
+   "mu_frac": 0.9,
+   "v_factor": 1.2
+  },
+  "motor_seeds": [
+   [
+    0,
+    1,
+    2
+   ],
+   [
+    3,
+    4,
+    5
+   ]
+  ],
+  "motor_maxiter": 400,
+  "albatross_wing_loading_npm2": 143.37692307692308,
+  "re_data_max": 300000.0
+ },
+ "rows": [
+  {
+   "key": "b3-ar16|SD7037|t0.45|base|cdabu|bal1.390|heavy",
+   "design": {
+    "span": 3.0,
+    "ar": 16.0,
+    "taper": 0.45,
+    "airfoil": "SD7037",
+    "rho_a": "base",
+    "cda": null,
+    "ballast": 1.3896765685597015,
+    "name": "",
+    "waive_re": false,
+    "waive_mass": true
+   },
+   "mass": 3.0,
+   "ballast": 1.3896765685597015,
+   "m_spar_caps": 0.036573431440298516,
+   "area": 0.5625,
+   "wing_loading": 52.32,
+   "wing_loading_over_albatross": 0.3649122807017544,
+   "v_stall": 8.58127513248274,
+   "re_1p2vs": 132208.71762943294,
+   "feasible": true,
+   "reason": "",
+   "spar": {
+    "fits": true,
+    "od_mm": 20.00000000000001,
+    "wall_mm": 1.0,
+    "tube_kg": 0.2757690031321125,
+    "margin": 0.4416228990548068,
+    "deflection_ratio": 0.13547495003338353,
+    "limiting": "stress",
+    "cap_model_kg": 0.036573431440298516
+   },
+   "caps": {
+    "deflection_ratio_stress_sized": 0.5461589065253037,
+    "stiffness_factor": 3.6410593768353583,
+    "caps_stiff_kg": 0.133166035488744,
+    "caps_stress_kg": 0.036573431440298516
+   },
+   "ld_glide": 24.583600152071256,
+   "v_glide": 10.89181106067601,
+   "re_glide": 139838.61718417483,
+   "A": {
+    "success": true,
+    "u10": 13.008486948704212,
+    "re_used": 192401.2117704578,
+    "re_cycle": 194585.2212605052,
+    "v_mean": 15.155938430913471,
+    "period": 7.125623098409863,
+    "n_max": 3.200000000000001,
+    "history": [
+     {
+      "re": 143226.11076521903,
+      "u10": 14.078135955704802,
+      "v_mean": 14.985829348891384,
+      "re_cycle": 192401.2117704578
+     },
+     {
+      "re": 192401.2117704578,
+      "u10": 13.008486948704212,
+      "v_mean": 15.155938430913471,
+      "re_cycle": 194585.2212605052
+     }
+    ],
+    "replay_pass": true,
+    "outer_converged": true,
+    "re_converged": true,
+    "later_pass_failed": false,
+    "mass": 3.0,
+    "m_wing": 0.9303234314402986,
+    "m_spar": 0.036573431440298516,
+    "area": 0.5625,
+    "wing_loading": 52.32,
+    "oswald": 0.9702351233996945,
+    "ld_max": 27.37744544436606,
+    "cl_ld": 0.6860835615056649,
+    "v_stall": 8.58127513248274,
+    "cl_max": 1.16,
+    "chord": 0.1875,
+    "cd0_eff": 0.01510499020874939,
+    "cdp1": -0.006926498785082751,
+    "cdp2": 0.010599487062549083,
+    "cdp8": 0.00135
+   },
+   "re_cycle_over_data_max": 0.648617404201684,
+   "chi20": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 28.234212112872477,
+     "power_peak_w": 28.398333789259027,
+     "thrust_on_share": 1.0,
+     "progress": 17.728565558290367,
+     "wh_per_km": 0.4423841665155253,
+     "chi_deg": 20.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 10.297530158979287,
+       "V_min_power": 10.297530158979287,
+       "V_floor": 10.297530158979287,
+       "V_progress": -1.8518177980453636,
+       "z": 2.5,
+       "cl": 0.8055555555555554,
+       "thrust_n": 1.0982614410351021,
+       "thrust_max_n": 14.715,
+       "thrust_ok": true,
+       "power_w": 25.131956247784483,
+       "cl_ok": true,
+       "progress": 17.72842448403687,
+       "v_travel_min": 5.57907652701222
+      },
+      "start": "steady"
+     },
+     "re_used": 132208.71762943288,
+     "v_mean": 10.297530158979283,
+     "period": 7.9967120351920755
+    },
+    "steady": {
+     "V": 10.297530158979287,
+     "V_min_power": 10.297530158979287,
+     "V_floor": 10.297530158979287,
+     "V_progress": -2.0071022840180115,
+     "z": 2.5,
+     "cl": 0.8055555555555554,
+     "thrust_n": 1.2338293936712543,
+     "thrust_max_n": 14.715,
+     "thrust_ok": true,
+     "power_w": 28.234211983033045,
+     "cl_ok": true,
+     "progress": 17.72842448403687,
+     "v_travel_min": 5.423792041039572,
+     "re": 132208.71762943294,
+     "wh_per_km": 0.44238768476101836
+    },
+    "steady_at_solver_re": {
+     "re": 132208.71762943288,
+     "power_w": 28.234211983033045,
+     "V": 10.297530158979287
+    }
+   },
+   "chi180": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 35.91895640797285,
+     "power_peak_w": 38.283792601584096,
+     "thrust_on_share": 1.0,
+     "progress": 5.528133888165626,
+     "wh_per_km": 1.8048564113946146,
+     "chi_deg": 180.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 13.486869097355896,
+       "V_min_power": 10.297530158979287,
+       "V_floor": 10.297530158979287,
+       "V_progress": 13.486869097355896,
+       "z": 2.5,
+       "cl": 0.4696121857532068,
+       "thrust_n": 1.1795190354884206,
+       "thrust_max_n": 14.715,
+       "thrust_ok": true,
+       "power_w": 35.35115295438181,
+       "cl_ok": true,
+       "progress": 5.57907652701222,
+       "v_travel_min": 5.57907652701222
+      },
+      "start": "seeds"
+     },
+     "re_used": 170899.01132573013,
+     "v_mean": 13.260114505849165,
+     "period": 2.1224530893797096
+    },
+    "steady": {
+     "V": 13.440051231158062,
+     "V_min_power": 10.297530158979287,
+     "V_floor": 10.297530158979287,
+     "V_progress": 13.440051231158062,
+     "z": 2.5,
+     "cl": 0.4728896337601072,
+     "thrust_n": 1.228663820553183,
+     "thrust_max_n": 14.715,
+     "thrust_ok": true,
+     "power_w": 36.696232653567066,
+     "cl_ok": true,
+     "progress": 5.532258660814386,
+     "v_travel_min": 5.532258660814385,
+     "re": 172573.50242377666,
+     "wh_per_km": 1.842538208042436
+    },
+    "steady_at_solver_re": {
+     "re": 170899.01132573013,
+     "power_w": 36.820715880693434,
+     "V": 13.435926458509302
+    }
+   },
+   "runtime_s": 159.68409967422485
+  },
+  {
+   "key": "b3-ar16|SD7037|t0.45|base|cdabu|bal2.377|heavy",
+   "design": {
+    "span": 3.0,
+    "ar": 16.0,
+    "taper": 0.45,
+    "airfoil": "SD7037",
+    "rho_a": "base",
+    "cda": null,
+    "ballast": 2.3774854247462684,
+    "name": "",
+    "waive_re": false,
+    "waive_mass": true
+   },
+   "mass": 3.9999999999999996,
+   "ballast": 2.3774854247462684,
+   "m_spar_caps": 0.048764575253731346,
+   "area": 0.5625,
+   "wing_loading": 69.75999999999999,
+   "wing_loading_over_albatross": 0.4865497076023391,
+   "v_stall": 9.9088030154583,
+   "re_1p2vs": 152661.4774251366,
+   "feasible": true,
+   "reason": "",
+   "spar": {
+    "fits": true,
+    "od_mm": 20.00000000000001,
+    "wall_mm": 1.5,
+    "tube_kg": 0.40276788615347964,
+    "margin": 0.5028061986153194,
+    "deflection_ratio": 0.12995939888748395,
+    "limiting": "stiffness",
+    "cap_model_kg": 0.048764575253731346
+   },
+   "caps": {
+    "deflection_ratio_stress_sized": 0.5461589065253037,
+    "stiffness_factor": 3.6410593768353583,
+    "caps_stiff_kg": 0.17755471398499198,
+    "caps_stress_kg": 0.048764575253731346
+   },
+   "ld_glide": 25.923022321604932,
+   "v_glide": 12.722885583471905,
+   "re_glide": 163347.5566650184,
+   "A": {
+    "success": true,
+    "u10": 12.600514701245222,
+    "re_used": 217792.50921364702,
+    "re_cycle": 219878.7016685707,
+    "v_mean": 17.1260080450644,
+    "period": 7.501890256746082,
+    "n_max": 3.1999999999963844,
+    "history": [
+     {
+      "re": 165383.2672105647,
+      "u10": 13.50435730121446,
+      "v_mean": 16.96351777886104,
+      "re_cycle": 217792.50921364702
+     },
+     {
+      "re": 217792.50921364702,
+      "u10": 12.600514701245222,
+      "v_mean": 17.1260080450644,
+      "re_cycle": 219878.7016685707
+     }
+    ],
+    "replay_pass": true,
+    "outer_converged": true,
+    "re_converged": true,
+    "later_pass_failed": false,
+    "mass": 3.9999999999999996,
+    "m_wing": 0.9425145752537314,
+    "m_spar": 0.048764575253731346,
+    "area": 0.5625,
+    "wing_loading": 69.75999999999999,
+    "oswald": 0.9702351233996945,
+    "ld_max": 28.508054404924376,
+    "cl_ld": 0.6727110170062769,
+    "v_stall": 9.9088030154583,
+    "cl_max": 1.16,
+    "chord": 0.1875,
+    "cd0_eff": 0.01413392637527563,
+    "cdp1": -0.0064380008904464745,
+    "cdp2": 0.009851948186857529,
+    "cdp8": 0.00135
+   },
+   "re_cycle_over_data_max": 0.7329290055619023,
+   "chi20": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 41.51487277658133,
+     "power_peak_w": 41.72000625778761,
+     "thrust_on_share": 1.0,
+     "progress": 19.3215868630984,
+     "wh_per_km": 0.5968406832375813,
+     "chi_deg": 20.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 11.89056361854996,
+       "V_min_power": 11.89056361854996,
+       "V_floor": 11.89056361854996,
+       "V_progress": -0.9250161951813851,
+       "z": 2.5,
+       "cl": 0.8055555555555557,
+       "thrust_n": 1.4127423116866182,
+       "thrust_max_n": 19.619999999999997,
+       "thrust_ok": true,
+       "power_w": 37.32956074161572,
+       "cl_ok": true,
+       "progress": 19.321457943607545,
+       "v_travel_min": 6.505878129876199
+      },
+      "start": "steady"
+     },
+     "re_used": 152661.47742513657,
+     "v_mean": 11.890563618549958,
+     "period": 7.997229129636656
+    },
+    "steady": {
+     "V": 11.89056361854996,
+     "V_min_power": 11.89056361854996,
+     "V_floor": 11.89056361854996,
+     "V_progress": -1.1016831630597235,
+     "z": 2.5,
+     "cl": 0.8055555555555557,
+     "thrust_n": 1.5711360158434053,
+     "thrust_max_n": 19.619999999999997,
+     "thrust_ok": true,
+     "power_w": 41.5148727772914,
+     "cl_ok": true,
+     "progress": 19.321457943607545,
+     "v_travel_min": 6.32921116199786,
+     "re": 152661.4774251366,
+     "wh_per_km": 0.5968446655765162
+    },
+    "steady_at_solver_re": {
+     "re": 152661.47742513657,
+     "power_w": 41.514872777291416,
+     "V": 11.89056361854996
+    }
+   },
+   "chi180": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 47.19459536618423,
+     "power_peak_w": 55.48188195915338,
+     "thrust_on_share": 1.0,
+     "progress": 6.4164984285817575,
+     "wh_per_km": 2.0431096445912615,
+     "chi_deg": 180.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 14.413670700219875,
+       "V_min_power": 11.89056361854996,
+       "V_floor": 11.89056361854996,
+       "V_progress": 14.413670700219875,
+       "z": 2.5,
+       "cl": 0.5482153445810841,
+       "thrust_n": 1.4211263768843396,
+       "thrust_max_n": 19.619999999999997,
+       "thrust_ok": true,
+       "power_w": 45.51921693290541,
+       "cl_ok": true,
+       "progress": 6.505878129876199,
+       "v_travel_min": 6.505878129876199
+      },
+      "start": "seeds"
+     },
+     "re_used": 182797.96557301006,
+     "v_mean": 14.148465827207687,
+     "period": 3.6724362133391004
+    },
+    "steady": {
+     "V": 14.327517986410871,
+     "V_min_power": 11.89056361854996,
+     "V_floor": 11.89056361854996,
+     "V_progress": 14.327517986410871,
+     "z": 2.5,
+     "cl": 0.5548281074713529,
+     "thrust_n": 1.5072369412794882,
+     "thrust_max_n": 19.619999999999997,
+     "thrust_ok": true,
+     "power_w": 47.98880974658839,
+     "cl_ok": true,
+     "progress": 6.4197254160671955,
+     "v_travel_min": 6.419725416067196,
+     "re": 183986.34074479682,
+     "wh_per_km": 2.07644783314956
+    },
+    "steady_at_solver_re": {
+     "re": 182797.96557301006,
+     "power_w": 48.088169697557674,
+     "V": 14.324290998925434
+    }
+   },
+   "runtime_s": 157.3829996585846
+  },
+  {
+   "key": "b3-ar16|SD7037|t0.45|base|cdabu|bal4.353|heavy",
+   "design": {
+    "span": 3.0,
+    "ar": 16.0,
+    "taper": 0.45,
+    "airfoil": "SD7037",
+    "rho_a": "base",
+    "cda": null,
+    "ballast": 4.353103137119403,
+    "name": "",
+    "waive_re": false,
+    "waive_mass": true
+   },
+   "mass": 6.0,
+   "ballast": 4.353103137119403,
+   "m_spar_caps": 0.07314686288059703,
+   "area": 0.5625,
+   "wing_loading": 104.64,
+   "wing_loading_over_albatross": 0.7298245614035088,
+   "v_stall": 12.135755674812067,
+   "re_1p2vs": 186971.36153549893,
+   "feasible": true,
+   "reason": "",
+   "spar": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 112.41 N m, max od 20.9 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.07314686288059703
+   },
+   "caps": {
+    "deflection_ratio_stress_sized": 0.5461589065253037,
+    "stiffness_factor": 3.6410593768353583,
+    "caps_stiff_kg": 0.266332070977488,
+    "caps_stress_kg": 0.07314686288059703
+   },
+   "ld_glide": 27.88563549050407,
+   "v_glide": 15.849911602522635,
+   "re_glide": 203495.0568661429,
+   "A": {
+    "success": true,
+    "u10": 12.34199518031431,
+    "re_used": 262009.96219611145,
+    "re_cycle": 264807.40037504246,
+    "v_mean": 20.62543409070807,
+    "period": 8.778564296703848,
+    "n_max": 3.199999999982394,
+    "history": [
+     {
+      "re": 202552.30833012387,
+      "u10": 13.112110251854654,
+      "v_mean": 20.40754600789522,
+      "re_cycle": 262009.96219611145
+     },
+     {
+      "re": 262009.96219611145,
+      "u10": 12.34199518031431,
+      "v_mean": 20.62543409070807,
+      "re_cycle": 264807.40037504246
+     }
+    ],
+    "replay_pass": true,
+    "outer_converged": true,
+    "re_converged": true,
+    "later_pass_failed": false,
+    "mass": 6.0,
+    "m_wing": 0.9668968628805972,
+    "m_spar": 0.07314686288059703,
+    "area": 0.5625,
+    "wing_loading": 104.64,
+    "oswald": 0.9702351233996945,
+    "ld_max": 30.24029046293684,
+    "cl_ld": 0.6526607626489408,
+    "v_stall": 12.135755674812067,
+    "cl_max": 1.16,
+    "chord": 0.1875,
+    "cd0_eff": 0.01280843667910227,
+    "cdp1": -0.005772831236681005,
+    "cdp2": 0.008834051936782158,
+    "cdp8": 0.00135
+   },
+   "re_cycle_over_data_max": 0.8826913345834748,
+   "chi20": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 71.68837712982669,
+     "power_peak_w": 71.99588201976822,
+     "thrust_on_share": 1.0,
+     "progress": 21.993917266503665,
+     "wh_per_km": 0.9054066108517344,
+     "chi_deg": 20.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 14.56290680977448,
+       "V_min_power": 14.56290680977448,
+       "V_floor": 14.56290680977448,
+       "V_progress": 0.6586129749868759,
+       "z": 2.5,
+       "cl": 0.8055555555555556,
+       "thrust_n": 2.0134953100356228,
+       "thrust_max_n": 29.43,
+       "thrust_ok": true,
+       "power_w": 65.16076569325945,
+       "cl_ok": true,
+       "progress": 21.993801134832065,
+       "v_travel_min": 8.08950730004446
+      },
+      "start": "steady"
+     },
+     "re_used": 186971.361535499,
+     "v_mean": 14.562906979279578,
+     "period": 7.997796465238486
+    },
+    "steady": {
+     "V": 14.56290680977448,
+     "V_min_power": 14.56290680977448,
+     "V_floor": 14.56290680977448,
+     "V_progress": 0.44147968333205867,
+     "z": 2.5,
+     "cl": 0.8055555555555556,
+     "thrust_n": 2.215201270086717,
+     "thrust_max_n": 29.43,
+     "thrust_ok": true,
+     "power_w": 71.6883770248154,
+     "cl_ok": true,
+     "progress": 21.993801134832065,
+     "v_travel_min": 7.8723740083896425,
+     "re": 186971.36153549893,
+     "wh_per_km": 0.9054113902535642
+    },
+    "steady_at_solver_re": {
+     "re": 186971.361535499,
+     "power_w": 71.6883770248154,
+     "V": 14.56290680977448
+    }
+   },
+   "chi180": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 73.84696782505972,
+     "power_peak_w": 79.78120920004591,
+     "thrust_on_share": 1.0,
+     "progress": 7.923825959844362,
+     "wh_per_km": 2.58878056156537,
+     "chi_deg": 180.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 15.831618530188038,
+       "V_min_power": 14.56290680977448,
+       "V_floor": 14.56290680977448,
+       "V_progress": 15.831618530188038,
+       "z": 2.5,
+       "cl": 0.6816179272957308,
+       "thrust_n": 2.122011251396856,
+       "thrust_max_n": 29.43,
+       "thrust_ok": true,
+       "power_w": 74.65527255307104,
+       "cl_ok": true,
+       "progress": 7.923825959844362,
+       "v_travel_min": 7.923825959844362
+      },
+      "start": "steady"
+     },
+     "re_used": 203129.44874937908,
+     "v_mean": 15.655807677417284,
+     "period": 2.0092824824413382
+    },
+    "steady": {
+     "V": 15.83229867715503,
+     "V_min_power": 14.56290680977448,
+     "V_floor": 14.56290680977448,
+     "V_progress": 15.83229867715503,
+     "z": 2.5,
+     "cl": 0.6815593646804919,
+     "thrust_n": 2.121268249558906,
+     "thrust_max_n": 29.43,
+     "thrust_ok": true,
+     "power_w": 74.63233889196098,
+     "cl_ok": true,
+     "progress": 7.9245061068113545,
+     "v_travel_min": 7.9245061068113545,
+     "re": 203349.4827807458,
+     "wh_per_km": 2.616087989376125
+    },
+    "steady_at_solver_re": {
+     "re": 203129.44874937908,
+     "power_w": 74.65527255307104,
+     "V": 15.831618530188038
+    }
+   },
+   "runtime_s": 214.92029070854187
+  },
+  {
+   "key": "b3-ar16|SD7037|t0.45|base|cdabu|bal6.329|heavy",
+   "design": {
+    "span": 3.0,
+    "ar": 16.0,
+    "taper": 0.45,
+    "airfoil": "SD7037",
+    "rho_a": "base",
+    "cda": null,
+    "ballast": 6.328720849492537,
+    "name": "",
+    "waive_re": false,
+    "waive_mass": true
+   },
+   "mass": 8.0,
+   "ballast": 6.328720849492537,
+   "m_spar_caps": 0.0975291505074627,
+   "area": 0.5625,
+   "wing_loading": 139.52,
+   "wing_loading_over_albatross": 0.9730994152046785,
+   "v_stall": 14.01316361134455,
+   "re_1p2vs": 215895.93182654228,
+   "feasible": true,
+   "reason": "",
+   "spar": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 149.89 N m, max od 20.9 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.0975291505074627
+   },
+   "caps": {
+    "deflection_ratio_stress_sized": 0.5461589065253037,
+    "stiffness_factor": 3.6410593768353583,
+    "caps_stiff_kg": 0.355109427969984,
+    "caps_stress_kg": 0.0975291505074627
+   },
+   "ld_glide": 29.33094381089847,
+   "v_glide": 18.5340121566403,
+   "re_glide": 237955.89139610407,
+   "A": {
+    "success": true,
+    "u10": 12.27098090684377,
+    "re_used": 300672.3490634869,
+    "re_cycle": 304228.28103504435,
+    "v_mean": 23.695864806386687,
+    "period": 10.118745112980589,
+    "n_max": 3.1410579489745274,
+    "history": [
+     {
+      "re": 233887.25947875422,
+      "u10": 12.987810120357196,
+      "v_mean": 23.418898828825164,
+      "re_cycle": 300672.3490634869
+     },
+     {
+      "re": 300672.3490634869,
+      "u10": 12.27098090684377,
+      "v_mean": 23.695864806386687,
+      "re_cycle": 304228.28103504435
+     }
+    ],
+    "replay_pass": true,
+    "outer_converged": true,
+    "re_converged": true,
+    "later_pass_failed": false,
+    "mass": 8.0,
+    "m_wing": 0.9912791505074628,
+    "m_spar": 0.0975291505074627,
+    "area": 0.5625,
+    "wing_loading": 139.52,
+    "oswald": 0.9702351233996945,
+    "ld_max": 31.56587525937046,
+    "cl_ld": 0.6376892518769913,
+    "v_stall": 14.01316361134455,
+    "cl_max": 1.16,
+    "chord": 0.1875,
+    "cd0_eff": 0.011908749253847674,
+    "cdp1": -0.005322567853702804,
+    "cdp2": 0.008145022594440332,
+    "cdp8": 0.00135
+   },
+   "re_cycle_over_data_max": 1.0140942701168145,
+   "chi20": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 105.84711862651986,
+     "power_peak_w": 106.2469069103078,
+     "thrust_on_share": 1.0,
+     "progress": 24.246799743391858,
+     "wh_per_km": 1.2126127038381067,
+     "chi_deg": 20.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 16.81579633361346,
+       "V_min_power": 16.81579633361346,
+       "V_floor": 16.81579633361346,
+       "V_progress": 2.019080315470469,
+       "z": 2.5,
+       "cl": 0.8055555555555557,
+       "thrust_n": 2.5891188232184286,
+       "thrust_max_n": 39.24,
+       "thrust_ok": true,
+       "power_w": 96.75132181059122,
+       "cl_ok": true,
+       "progress": 24.246690658671042,
+       "v_travel_min": 9.449974640528053
+      },
+      "start": "steady"
+     },
+     "re_used": 215895.93182654225,
+     "v_mean": 16.815796333613456,
+     "period": 7.998112164965736
+    },
+    "steady": {
+     "V": 16.81579633361346,
+     "V_min_power": 16.81579633361346,
+     "V_floor": 16.81579633361346,
+     "V_progress": 1.7633450082910676,
+     "z": 2.5,
+     "cl": 0.8055555555555557,
+     "thrust_n": 2.832527393765258,
+     "thrust_max_n": 39.24,
+     "thrust_ok": true,
+     "power_w": 105.84711947319448,
+     "cl_ok": true,
+     "progress": 24.246690658671042,
+     "v_travel_min": 9.194239333348651,
+     "re": 215895.93182654228,
+     "wh_per_km": 1.2126181690253983
+    },
+    "steady_at_solver_re": {
+     "re": 215895.93182654225,
+     "power_w": 105.84711947319448,
+     "V": 16.81579633361346
+    }
+   },
+   "chi180": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 105.61777932469741,
+     "power_peak_w": 117.56674747617932,
+     "thrust_on_share": 1.0,
+     "progress": 9.210182017309737,
+     "wh_per_km": 3.185417180626771,
+     "chi_deg": 180.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 17.357767210871728,
+       "V_min_power": 16.81579633361346,
+       "V_floor": 16.81579633361346,
+       "V_progress": 17.357767210871728,
+       "z": 2.5,
+       "cl": 0.7560363125926084,
+       "thrust_n": 2.546362872487617,
+       "thrust_max_n": 39.24,
+       "thrust_ok": true,
+       "power_w": 98.2203866112149,
+       "cl_ok": true,
+       "progress": 9.449974640528051,
+       "v_travel_min": 9.449974640528053
+      },
+      "start": "seeds"
+     },
+     "re_used": 220596.93607392826,
+     "v_mean": 16.942164661370978,
+     "period": 3.40484568551875
+    },
+    "steady": {
+     "V": 17.115534623868484,
+     "V_min_power": 16.81579633361346,
+     "V_floor": 16.81579633361346,
+     "V_progress": 17.115534623868484,
+     "z": 2.5,
+     "cl": 0.7775877958705122,
+     "thrust_n": 2.7960043957929517,
+     "thrust_max_n": 39.24,
+     "thrust_ok": true,
+     "power_w": 106.34468898818389,
+     "cl_ok": true,
+     "progress": 9.207742053524807,
+     "v_travel_min": 9.20774205352481,
+     "re": 219872.7290229787,
+     "wh_per_km": 3.208190587213331
+    },
+    "steady_at_solver_re": {
+     "re": 220596.93607392826,
+     "power_w": 106.25243250293666,
+     "V": 17.117974587653414
+    }
+   },
+   "runtime_s": 135.27173399925232
+  },
+  {
+   "key": "b3-ar16|SD7037|t0.45|base|cdabu|bal8.304|heavy",
+   "design": {
+    "span": 3.0,
+    "ar": 16.0,
+    "taper": 0.45,
+    "airfoil": "SD7037",
+    "rho_a": "base",
+    "cda": null,
+    "ballast": 8.30433856186567,
+    "name": "",
+    "waive_re": false,
+    "waive_mass": true
+   },
+   "mass": 9.999999999999998,
+   "ballast": 8.30433856186567,
+   "m_spar_caps": 0.12191143813432836,
+   "area": 0.5625,
+   "wing_loading": 174.39999999999998,
+   "wing_loading_over_albatross": 1.2163742690058479,
+   "v_stall": 15.667193207396428,
+   "re_1p2vs": 241378.9898149045,
+   "feasible": true,
+   "reason": "",
+   "spar": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 187.36 N m, max od 20.9 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.12191143813432836
+   },
+   "caps": {
+    "deflection_ratio_stress_sized": 0.5461589065253037,
+    "stiffness_factor": 3.6410593768353583,
+    "caps_stiff_kg": 0.44388678496247996,
+    "caps_stress_kg": 0.12191143813432836
+   },
+   "ld_glide": 30.482040064555076,
+   "v_glide": 20.931238967463308,
+   "re_glide": 268733.5891116422,
+   "A": {
+    "success": true,
+    "u10": 12.260849209351402,
+    "re_used": 335100.9108037788,
+    "re_cycle": 338842.88928741246,
+    "v_mean": 26.39194248425277,
+    "period": 11.26173480993376,
+    "n_max": 3.100992987480467,
+    "history": [
+     {
+      "re": 261493.90563281317,
+      "u10": 12.946733545719283,
+      "v_mean": 26.10048563495881,
+      "re_cycle": 335100.9108037788
+     },
+     {
+      "re": 335100.9108037788,
+      "u10": 12.260849209351402,
+      "v_mean": 26.39194248425277,
+      "re_cycle": 338842.88928741246
+     }
+    ],
+    "replay_pass": true,
+    "outer_converged": true,
+    "re_converged": true,
+    "later_pass_failed": false,
+    "mass": 9.999999999999998,
+    "m_wing": 1.0156614381343285,
+    "m_spar": 0.12191143813432836,
+    "area": 0.5625,
+    "wing_loading": 174.39999999999998,
+    "oswald": 0.9702351233996945,
+    "ld_max": 32.63122910279669,
+    "cl_ld": 0.6258981600331879,
+    "v_stall": 15.667193207396428,
+    "cl_max": 1.16,
+    "chord": 0.1875,
+    "cd0_eff": 0.011248354127500042,
+    "cdp1": -0.004992783763590575,
+    "cdp2": 0.0076403603826880875,
+    "cdp8": 0.00135
+   },
+   "re_cycle_over_data_max": 1.1294762976247081,
+   "chi20": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 143.37032875397847,
+     "power_peak_w": 143.8802230006942,
+     "thrust_on_share": 1.0,
+     "progress": 26.231630477073107,
+     "wh_per_km": 1.5182087653818312,
+     "chi_deg": 20.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 18.800631848875714,
+       "V_min_power": 18.800631848875714,
+       "V_floor": 18.800631848875714,
+       "V_progress": 3.233553177416728,
+       "z": 2.5,
+       "cl": 0.8055555555555555,
+       "thrust_n": 3.148767528286985,
+       "thrust_max_n": 49.05,
+       "thrust_ok": true,
+       "power_w": 131.55293128226214,
+       "cl_ok": true,
+       "progress": 26.231526173933297,
+       "v_travel_min": 10.664447502474312
+      },
+      "start": "steady"
+     },
+     "re_used": 241378.98981490443,
+     "v_mean": 18.800631856790357,
+     "period": 7.9983269102400545
+    },
+    "steady": {
+     "V": 18.800631848875714,
+     "V_min_power": 18.800631848875714,
+     "V_floor": 18.800631848875714,
+     "V_progress": 2.9420613596184433,
+     "z": 2.5,
+     "cl": 0.8055555555555555,
+     "thrust_n": 3.431621293500727,
+     "thrust_max_n": 49.05,
+     "thrust_ok": true,
+     "power_w": 143.37033018637743,
+     "cl_ok": true,
+     "progress": 26.231526173933297,
+     "v_travel_min": 10.372955684676027,
+     "re": 241378.9898149045,
+     "wh_per_km": 1.51821481732973
+    },
+    "steady_at_solver_re": {
+     "re": 241378.98981490443,
+     "power_w": 143.37033018637746,
+     "V": 18.800631848875714
+    }
+   },
+   "chi180": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 143.37032900547615,
+     "power_peak_w": 143.58663495456872,
+     "thrust_on_share": 1.0,
+     "progress": 10.893106900196642,
+     "wh_per_km": 3.655990137184013,
+     "chi_deg": 180.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 18.800631848875714,
+       "V_min_power": 18.800631848875714,
+       "V_floor": 18.800631848875714,
+       "V_progress": 18.572240072817987,
+       "z": 2.5,
+       "cl": 0.8055555555555555,
+       "thrust_n": 3.148767528286985,
+       "thrust_max_n": 49.05,
+       "thrust_ok": true,
+       "power_w": 131.55293128226214,
+       "cl_ok": true,
+       "progress": 10.892839278532037,
+       "v_travel_min": 10.664447502474312
+      },
+      "start": "steady"
+     },
+     "re_used": 241378.98981490443,
+     "v_mean": 18.80063193163789,
+     "period": 7.990695997765631
+    },
+    "steady": {
+     "V": 18.800631848875714,
+     "V_min_power": 18.800631848875714,
+     "V_floor": 18.800631848875714,
+     "V_progress": 18.280748255019702,
+     "z": 2.5,
+     "cl": 0.8055555555555555,
+     "thrust_n": 3.431621293500727,
+     "thrust_max_n": 49.05,
+     "thrust_ok": true,
+     "power_w": 143.37033018637743,
+     "cl_ok": true,
+     "progress": 10.892839278532037,
+     "v_travel_min": 10.372955684676027,
+     "re": 241378.9898149045,
+     "wh_per_km": 3.6560799898082372
+    },
+    "steady_at_solver_re": {
+     "re": 241378.98981490443,
+     "power_w": 143.37033018637746,
+     "V": 18.800631848875714
+    }
+   },
+   "runtime_s": 104.59732413291931
+  },
+  {
+   "key": "b3-ar20|SD7037|t0.45|base|cdabu|bal1.549|heavy",
+   "design": {
+    "span": 3.0,
+    "ar": 20.0,
+    "taper": 0.45,
+    "airfoil": "SD7037",
+    "rho_a": "base",
+    "cda": null,
+    "ballast": 1.5492832106996273,
+    "name": "",
+    "waive_re": false,
+    "waive_mass": true
+   },
+   "mass": 3.0000000000000004,
+   "ballast": 1.5492832106996273,
+   "m_spar_caps": 0.04571678930037315,
+   "area": 0.45,
+   "wing_loading": 65.40000000000002,
+   "wing_loading_over_albatross": 0.4561403508771931,
+   "v_stall": 9.59415726492996,
+   "re_1p2vs": 118251.07193499475,
+   "feasible": true,
+   "reason": "",
+   "spar": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 56.21 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.04571678930037315
+   },
+   "caps": {
+    "deflection_ratio_stress_sized": 0.6826986331566302,
+    "stiffness_factor": 4.551324221044201,
+    "caps_stiff_kg": 0.20807193045116268,
+    "caps_stress_kg": 0.04571678930037315
+   },
+   "ld_glide": 25.133965990086566,
+   "v_glide": 11.752312567713686,
+   "re_glide": 120709.1917186723,
+   "A": {
+    "success": true,
+    "u10": 12.867433762987302,
+    "re_used": 166904.2098186428,
+    "re_cycle": 168129.77220544746,
+    "v_mean": 16.369206121118122,
+    "period": 7.240865643469288,
+    "n_max": 3.1999999999973205,
+    "history": [
+     {
+      "re": 128105.32792957766,
+      "u10": 13.83468819960665,
+      "v_mean": 16.249884700166092,
+      "re_cycle": 166904.2098186428
+     },
+     {
+      "re": 166904.2098186428,
+      "u10": 12.867433762987302,
+      "v_mean": 16.369206121118122,
+      "re_cycle": 168129.77220544746
+     }
+    ],
+    "replay_pass": true,
+    "outer_converged": true,
+    "re_converged": true,
+    "later_pass_failed": false,
+    "mass": 3.0000000000000004,
+    "m_wing": 0.7707167893003732,
+    "m_spar": 0.04571678930037315,
+    "area": 0.45,
+    "wing_loading": 65.40000000000002,
+    "oswald": 0.9632544025965746,
+    "ld_max": 28.19549701382035,
+    "cl_ld": 0.7425287231300829,
+    "v_stall": 9.59415726492996,
+    "cl_max": 1.16,
+    "chord": 0.15,
+    "cd0_eff": 0.01633831312003037,
+    "cdp1": -0.00753252643411673,
+    "cdp2": 0.011526879447186014,
+    "cdp8": 0.00135
+   },
+   "re_cycle_over_data_max": 0.5604325740181582,
+   "chi20": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 30.341234131742812,
+     "power_peak_w": 30.489893256969182,
+     "thrust_on_share": 1.0,
+     "progress": 18.9440250665249,
+     "wh_per_km": 0.444895979737892,
+     "chi_deg": 20.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 11.51298871791595,
+       "V_min_power": 11.51298871791595,
+       "V_floor": 11.51298871791595,
+       "V_progress": -1.4350658138143482,
+       "z": 2.5,
+       "cl": 0.8055555555555558,
+       "thrust_n": 1.0542628941515921,
+       "thrust_max_n": 14.715000000000003,
+       "thrust_ok": true,
+       "power_w": 26.972704013521554,
+       "cl_ok": true,
+       "progress": 18.943883042973535,
+       "v_travel_min": 5.995828511243236
+      },
+      "start": "steady"
+     },
+     "re_used": 118251.07193499478,
+     "v_mean": 11.512988717915952,
+     "period": 7.996886152979546
+    },
+    "steady": {
+     "V": 11.51298871791595,
+     "V_min_power": 11.51298871791595,
+     "V_floor": 11.51298871791595,
+     "V_progress": -1.5619362440593916,
+     "z": 2.5,
+     "cl": 0.8055555555555558,
+     "thrust_n": 1.185926223781318,
+     "thrust_max_n": 14.715000000000003,
+     "thrust_ok": true,
+     "power_w": 30.341233854833295,
+     "cl_ok": true,
+     "progress": 18.943883042973535,
+     "v_travel_min": 5.868958080998192,
+     "re": 118251.07193499475,
+     "wh_per_km": 0.44489931109227054
+    },
+    "steady_at_solver_re": {
+     "re": 118251.07193499478,
+     "power_w": 30.341233854833295,
+     "V": 11.51298871791595
+    }
+   },
+   "chi180": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 35.67390138535533,
+     "power_peak_w": 38.32498887076185,
+     "thrust_on_share": 1.0,
+     "progress": 5.932042161721801,
+     "wh_per_km": 1.6704899900123669,
+     "chi_deg": 180.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 13.903621081586913,
+       "V_min_power": 11.51298871791595,
+       "V_floor": 11.51298871791595,
+       "V_progress": 13.903621081586913,
+       "z": 2.5,
+       "cl": 0.5523518444858708,
+       "thrust_n": 1.112860586247842,
+       "thrust_max_n": 14.715000000000003,
+       "thrust_ok": true,
+       "power_w": 34.38398201738371,
+       "cl_ok": true,
+       "progress": 5.995828511243237,
+       "v_travel_min": 5.995828511243236
+      },
+      "start": "seeds"
+     },
+     "re_used": 140999.70214948786,
+     "v_mean": 13.664021389174394,
+     "period": 2.5931607283231
+    },
+    "steady": {
+     "V": 13.842958577891748,
+     "V_min_power": 11.51298871791595,
+     "V_floor": 11.51298871791595,
+     "V_progress": 13.842958577891748,
+     "z": 2.5,
+     "cl": 0.5572034754105591,
+     "thrust_n": 1.1823909827447219,
+     "thrust_max_n": 14.715000000000003,
+     "thrust_ok": true,
+     "power_w": 36.37286532668423,
+     "cl_ok": true,
+     "progress": 5.935166007548072,
+     "v_travel_min": 5.935166007548072,
+     "re": 142198.5990133515,
+     "wh_per_km": 1.7023236905265104
+    },
+    "steady_at_solver_re": {
+     "re": 140999.70214948786,
+     "power_w": 36.48292870875653,
+     "V": 13.839834732065476
+    }
+   },
+   "runtime_s": 187.52978539466858
+  },
+  {
+   "key": "b3-ar20|SD7037|t0.45|base|cdabu|bal2.534|heavy",
+   "design": {
+    "span": 3.0,
+    "ar": 20.0,
+    "taper": 0.45,
+    "airfoil": "SD7037",
+    "rho_a": "base",
+    "cda": null,
+    "ballast": 2.534044280932836,
+    "name": "",
+    "waive_re": false,
+    "waive_mass": true
+   },
+   "mass": 4.0,
+   "ballast": 2.534044280932836,
+   "m_spar_caps": 0.06095571906716419,
+   "area": 0.45,
+   "wing_loading": 87.2,
+   "wing_loading_over_albatross": 0.6081871345029239,
+   "v_stall": 11.078378559109831,
+   "re_1p2vs": 136544.57642726204,
+   "feasible": true,
+   "reason": "",
+   "spar": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 74.94 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.06095571906716419
+   },
+   "caps": {
+    "deflection_ratio_stress_sized": 0.6826986331566302,
+    "stiffness_factor": 4.551324221044201,
+    "caps_stiff_kg": 0.2774292406015502,
+    "caps_stress_kg": 0.06095571906716419
+   },
+   "ld_glide": 26.556530148314746,
+   "v_glide": 13.697590056388778,
+   "re_glide": 140689.3336881425,
+   "A": {
+    "success": true,
+    "u10": 12.543205538012872,
+    "re_used": 188720.51170370006,
+    "re_cycle": 190132.00332391183,
+    "v_mean": 18.51135531681514,
+    "period": 7.84392904111848,
+    "n_max": 3.1999999999978366,
+    "history": [
+     {
+      "re": 147923.29112953387,
+      "u10": 13.364361277549499,
+      "v_mean": 18.37393172451262,
+      "re_cycle": 188720.51170370006
+     },
+     {
+      "re": 188720.51170370006,
+      "u10": 12.543205538012872,
+      "v_mean": 18.51135531681514,
+      "re_cycle": 190132.00332391183
+     }
+    ],
+    "replay_pass": true,
+    "outer_converged": true,
+    "re_converged": true,
+    "later_pass_failed": false,
+    "mass": 4.0,
+    "m_wing": 0.7859557190671642,
+    "m_spar": 0.06095571906716419,
+    "area": 0.45,
+    "wing_loading": 87.2,
+    "oswald": 0.9632544025965746,
+    "ld_max": 29.406988963671957,
+    "cl_ld": 0.7306463289625703,
+    "v_stall": 11.078378559109831,
+    "cl_max": 1.16,
+    "chord": 0.15,
+    "cd0_eff": 0.015311354812802287,
+    "cdp1": -0.007005886447348683,
+    "cdp2": 0.010720972465957511,
+    "cdp8": 0.00135
+   },
+   "re_cycle_over_data_max": 0.6337733444130395,
+   "chi20": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 44.422656446840996,
+     "power_peak_w": 44.602636563080324,
+     "thrust_on_share": 1.0,
+     "progress": 20.725077020884687,
+     "wh_per_km": 0.5953959436847693,
+     "chi_deg": 20.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 13.294054270931797,
+       "V_min_power": 13.294054270931797,
+       "V_floor": 13.294054270931797,
+       "V_progress": -0.45143795085932226,
+       "z": 2.5,
+       "cl": 0.8055555555555555,
+       "thrust_n": 1.3510715742284307,
+       "thrust_max_n": 19.62,
+       "thrust_ok": true,
+       "power_w": 39.91381962601337,
+       "cl_ok": true,
+       "progress": 20.72494859598938,
+       "v_travel_min": 6.979456374198262
+      },
+      "start": "steady"
+     },
+     "re_used": 136544.576427262,
+     "v_mean": 13.294054270931793,
+     "period": 7.9974132861483955
+    },
+    "steady": {
+     "V": 13.294054270931797,
+     "V_min_power": 13.294054270931797,
+     "V_floor": 13.294054270931797,
+     "V_progress": -0.5947545675777306,
+     "z": 2.5,
+     "cl": 0.8055555555555555,
+     "thrust_n": 1.5036944243379324,
+     "thrust_max_n": 19.62,
+     "thrust_ok": true,
+     "power_w": 44.42265618676894,
+     "cl_ok": true,
+     "progress": 20.72494859598938,
+     "v_travel_min": 6.836139757479853,
+     "re": 136544.57642726204,
+     "wh_per_km": 0.5953996296490138
+    },
+    "steady_at_solver_re": {
+     "re": 136544.576427262,
+     "power_w": 44.42265618676894,
+     "V": 13.294054270931797
+    }
+   },
+   "chi180": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 47.52678005712536,
+     "power_peak_w": 49.70297911577531,
+     "thrust_on_share": 1.0,
+     "progress": 6.879492338262734,
+     "wh_per_km": 1.9190199945095565,
+     "chi_deg": 180.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 14.887248944541938,
+       "V_min_power": 13.294054270931797,
+       "V_floor": 13.294054270931797,
+       "V_progress": 14.887248944541938,
+       "z": 2.5,
+       "cl": 0.6423644388528589,
+       "thrust_n": 1.3586404619303456,
+       "thrust_max_n": 19.62,
+       "thrust_ok": true,
+       "power_w": 44.94759729529891,
+       "cl_ok": true,
+       "progress": 6.979456374198262,
+       "v_travel_min": 6.979456374198262
+      },
+      "start": "seeds"
+     },
+     "re_used": 151102.6893676659,
+     "v_mean": 14.611476346164633,
+     "period": 1.7742034763936316
+    },
+    "steady": {
+     "V": 14.789674006070346,
+     "V_min_power": 13.294054270931797,
+     "V_floor": 13.294054270931797,
+     "V_progress": 14.789674006070346,
+     "z": 2.5,
+     "cl": 0.6508684034395431,
+     "thrust_n": 1.4672484938662649,
+     "thrust_max_n": 19.62,
+     "thrust_ok": true,
+     "power_w": 48.22250424484392,
+     "cl_ok": true,
+     "progress": 6.88188143572667,
+     "v_travel_min": 6.88188143572667,
+     "re": 151934.8304433447,
+     "wh_per_km": 1.9464357520710154
+    },
+    "steady_at_solver_re": {
+     "re": 151102.6893676659,
+     "power_w": 48.31058085070358,
+     "V": 14.78728490860641
+    }
+   },
+   "runtime_s": 182.15736842155457
+  },
+  {
+   "key": "b3-ar20|SD7037|t0.45|base|cdabu|bal4.504|heavy",
+   "design": {
+    "span": 3.0,
+    "ar": 20.0,
+    "taper": 0.45,
+    "airfoil": "SD7037",
+    "rho_a": "base",
+    "cda": null,
+    "ballast": 4.503566421399254,
+    "name": "",
+    "waive_re": false,
+    "waive_mass": true
+   },
+   "mass": 6.000000000000001,
+   "ballast": 4.503566421399254,
+   "m_spar_caps": 0.0914335786007463,
+   "area": 0.45,
+   "wing_loading": 130.80000000000004,
+   "wing_loading_over_albatross": 0.9122807017543862,
+   "v_stall": 13.56818732360431,
+   "re_1p2vs": 167232.26969562608,
+   "feasible": true,
+   "reason": "",
+   "spar": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 112.41 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.0914335786007463
+   },
+   "caps": {
+    "deflection_ratio_stress_sized": 0.6826986331566302,
+    "stiffness_factor": 4.551324221044201,
+    "caps_stiff_kg": 0.41614386090232536,
+    "caps_stress_kg": 0.0914335786007463
+   },
+   "ld_glide": 28.64269240694684,
+   "v_glide": 17.00923283955052,
+   "re_glide": 174703.5518515239,
+   "A": {
+    "success": true,
+    "u10": 12.309841056826716,
+    "re_used": 227715.31833167325,
+    "re_cycle": 229483.13137781926,
+    "v_mean": 22.34260255972346,
+    "period": 9.251971928741193,
+    "n_max": 3.1999999998927895,
+    "history": [
+     {
+      "re": 181168.29217026156,
+      "u10": 13.021051200079638,
+      "v_mean": 22.170487319475562,
+      "re_cycle": 227715.31833167325
+     },
+     {
+      "re": 227715.31833167325,
+      "u10": 12.309841056826716,
+      "v_mean": 22.34260255972346,
+      "re_cycle": 229483.13137781926
+     }
+    ],
+    "replay_pass": true,
+    "outer_converged": true,
+    "re_converged": true,
+    "later_pass_failed": false,
+    "mass": 6.000000000000001,
+    "m_wing": 0.8164335786007465,
+    "m_spar": 0.0914335786007463,
+    "area": 0.45,
+    "wing_loading": 130.80000000000004,
+    "oswald": 0.9632544025965746,
+    "ld_max": 31.311445609024982,
+    "cl_ld": 0.7122086215698804,
+    "v_stall": 13.56818732360431,
+    "cl_max": 1.16,
+    "chord": 0.15,
+    "cd0_eff": 0.013874203454159763,
+    "cdp1": -0.0062709731418792315,
+    "cdp2": 0.009596348855224349,
+    "cdp8": 0.00135
+   },
+   "re_cycle_over_data_max": 0.7649437712593975,
+   "chi20": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 76.2412828880813,
+     "power_peak_w": 76.48643233102023,
+     "thrust_on_share": 1.0,
+     "progress": 23.71283464968913,
+     "wh_per_km": 0.8931084979271249,
+     "chi_deg": 20.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 16.28182478832517,
+       "V_min_power": 16.28182478832517,
+       "V_floor": 16.28182478832517,
+       "V_progress": 1.2270983982972945,
+       "z": 2.5,
+       "cl": 0.8055555555555555,
+       "thrust_n": 1.9120334724176054,
+       "thrust_max_n": 29.430000000000007,
+       "thrust_ok": true,
+       "power_w": 69.18087552736982,
+       "cl_ok": true,
+       "progress": 23.712719113382754,
+       "v_travel_min": 8.657992723354878
+      },
+      "start": "steady"
+     },
+     "re_used": 167232.269695626,
+     "v_mean": 16.281824788325164,
+     "period": 7.99795264210497
+    },
+    "steady": {
+     "V": 16.28182478832517,
+     "V_min_power": 16.28182478832517,
+     "V_floor": 16.28182478832517,
+     "V_progress": 1.0495654922031834,
+     "z": 2.5,
+     "cl": 0.8055555555555555,
+     "thrust_n": 2.107170274864838,
+     "thrust_max_n": 29.430000000000007,
+     "thrust_ok": true,
+     "power_w": 76.24128269892508,
+     "cl_ok": true,
+     "progress": 23.712719113382754,
+     "v_travel_min": 8.480459817260767,
+     "re": 167232.26969562608,
+     "wh_per_km": 0.8931128472349017
+    },
+    "steady_at_solver_re": {
+     "re": 167232.269695626,
+     "power_w": 76.24128269892508,
+     "V": 16.28182478832517
+    }
+   },
+   "chi180": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 76.0763559115715,
+     "power_peak_w": 76.349274336578,
+     "thrust_on_share": 1.0,
+     "progress": 8.549686479240737,
+     "wh_per_km": 2.471707136613542,
+     "chi_deg": 180.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 16.565785293698553,
+       "V_min_power": 16.28182478832517,
+       "V_floor": 16.28182478832517,
+       "V_progress": 16.565785293698553,
+       "z": 2.5,
+       "cl": 0.7781755735840452,
+       "thrust_n": 1.90229862633731,
+       "thrust_max_n": 29.430000000000007,
+       "thrust_ok": true,
+       "power_w": 70.02904579644795,
+       "cl_ok": true,
+       "progress": 8.657992723354877,
+       "v_travel_min": 8.657992723354878
+      },
+      "start": "seeds"
+     },
+     "re_used": 168343.04363048324,
+     "v_mean": 16.281826015557456,
+     "period": 3.2318590097593964
+    },
+    "steady": {
+     "V": 16.392152629878595,
+     "V_min_power": 16.28182478832517,
+     "V_floor": 16.28182478832517,
+     "V_progress": 16.392152629878595,
+     "z": 2.5,
+     "cl": 0.7947484188521005,
+     "thrust_n": 2.0992162745047387,
+     "thrust_max_n": 29.430000000000007,
+     "thrust_ok": true,
+     "power_w": 76.46816349957068,
+     "cl_ok": true,
+     "progress": 8.484360059534918,
+     "v_travel_min": 8.484360059534918,
+     "re": 168423.15894756714,
+     "wh_per_km": 2.5035661356435743
+    },
+    "steady_at_solver_re": {
+     "re": 168343.04363048324,
+     "power_w": 76.47916326416679,
+     "V": 16.391890851357083
+    }
+   },
+   "runtime_s": 174.85212445259094
+  },
+  {
+   "key": "b3-ar20|SD7037|t0.45|base|cdabu|bal6.473|heavy",
+   "design": {
+    "span": 3.0,
+    "ar": 20.0,
+    "taper": 0.45,
+    "airfoil": "SD7037",
+    "rho_a": "base",
+    "cda": null,
+    "ballast": 6.473088561865672,
+    "name": "",
+    "waive_re": false,
+    "waive_mass": true
+   },
+   "mass": 8.0,
+   "ballast": 6.473088561865672,
+   "m_spar_caps": 0.12191143813432838,
+   "area": 0.45,
+   "wing_loading": 174.4,
+   "wing_loading_over_albatross": 1.2163742690058479,
+   "v_stall": 15.66719320739643,
+   "re_1p2vs": 193103.1918519236,
+   "feasible": true,
+   "reason": "",
+   "spar": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 149.89 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.12191143813432838
+   },
+   "caps": {
+    "deflection_ratio_stress_sized": 0.6826986331566302,
+    "stiffness_factor": 4.551324221044201,
+    "caps_stiff_kg": 0.5548584812031004,
+    "caps_stress_kg": 0.12191143813432838
+   },
+   "ld_glide": 30.179453279332726,
+   "v_glide": 19.84318851019004,
+   "re_glide": 203811.39728165945,
+   "A": {
+    "success": true,
+    "u10": 12.238224992080278,
+    "re_used": 261508.40796512415,
+    "re_cycle": 263574.6896368551,
+    "v_mean": 25.66177522505218,
+    "period": 10.677937421268895,
+    "n_max": 3.0761679553645727,
+    "history": [
+     {
+      "re": 209195.12450625058,
+      "u10": 12.903888100979383,
+      "v_mean": 25.46060091698542,
+      "re_cycle": 261508.40796512415
+     },
+     {
+      "re": 261508.40796512415,
+      "u10": 12.238224992080278,
+      "v_mean": 25.66177522505218,
+      "re_cycle": 263574.6896368551
+     }
+    ],
+    "replay_pass": true,
+    "outer_converged": true,
+    "re_converged": true,
+    "later_pass_failed": false,
+    "mass": 8.0,
+    "m_wing": 0.8469114381343286,
+    "m_spar": 0.12191143813432838,
+    "area": 0.45,
+    "wing_loading": 174.4,
+    "oswald": 0.9632544025965746,
+    "ld_max": 32.75366678754806,
+    "cl_ld": 0.6984476122405558,
+    "v_stall": 15.66719320739643,
+    "cl_max": 1.16,
+    "chord": 0.15,
+    "cd0_eff": 0.012909783100285217,
+    "cdp1": -0.005779361075796961,
+    "cdp2": 0.008844044423228437,
+    "cdp8": 0.00135
+   },
+   "re_cycle_over_data_max": 0.878582298789517,
+   "chi20": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 112.07575523001557,
+     "power_peak_w": 112.38682869189986,
+     "thrust_on_share": 1.0,
+     "progress": 26.231634607822443,
+     "wh_per_km": 1.1868171654570117,
+     "chi_deg": 20.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 18.800631848875714,
+       "V_min_power": 18.800631848875714,
+       "V_floor": 18.800631848875714,
+       "V_progress": 2.6644998260519275,
+       "z": 2.5,
+       "cl": 0.8055555555555556,
+       "thrust_n": 2.4469264831493316,
+       "thrust_max_n": 39.24,
+       "thrust_ok": true,
+       "power_w": 102.2305866021217,
+       "cl_ok": true,
+       "progress": 26.231526173933297,
+       "v_travel_min": 10.095394151109511
+      },
+      "start": "steady"
+     },
+     "re_used": 193103.19185192353,
+     "v_mean": 18.80063184887571,
+     "period": 7.998255781850671
+    },
+    "steady": {
+     "V": 18.800631848875714,
+     "V_min_power": 18.800631848875714,
+     "V_floor": 18.800631848875714,
+     "V_progress": 2.4546914663845962,
+     "z": 2.5,
+     "cl": 0.8055555555555556,
+     "thrust_n": 2.6825741937411176,
+     "thrust_max_n": 39.24,
+     "thrust_ok": true,
+     "power_w": 112.07575516404745,
+     "cl_ok": true,
+     "progress": 26.231526173933297,
+     "v_travel_min": 9.88558579144218,
+     "re": 193103.1918519236,
+     "wh_per_km": 1.1868220707330381
+    },
+    "steady_at_solver_re": {
+     "re": 193103.19185192353,
+     "power_w": 112.07575516404748,
+     "V": 18.800631848875714
+    }
+   },
+   "chi180": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 112.0757557316902,
+     "power_peak_w": 112.17284047212017,
+     "thrust_on_share": 1.0,
+     "progress": 10.893118101436084,
+     "wh_per_km": 2.8579653759385626,
+     "chi_deg": 180.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 18.800631848875714,
+       "V_min_power": 18.800631848875714,
+       "V_floor": 18.800631848875714,
+       "V_progress": 18.003186721453186,
+       "z": 2.5,
+       "cl": 0.8055555555555556,
+       "thrust_n": 2.4469264831493316,
+       "thrust_max_n": 39.24,
+       "thrust_ok": true,
+       "power_w": 102.2305866021217,
+       "cl_ok": true,
+       "progress": 10.892839278532037,
+       "v_travel_min": 10.095394151109511
+      },
+      "start": "steady"
+     },
+     "re_used": 193103.19185192353,
+     "v_mean": 18.80063203260769,
+     "period": 7.990300482162517
+    },
+    "steady": {
+     "V": 18.800631848875714,
+     "V_min_power": 18.800631848875714,
+     "V_floor": 18.800631848875714,
+     "V_progress": 17.793378361785855,
+     "z": 2.5,
+     "cl": 0.8055555555555556,
+     "thrust_n": 2.6825741937411176,
+     "thrust_max_n": 39.24,
+     "thrust_ok": true,
+     "power_w": 112.07575516404745,
+     "cl_ok": true,
+     "progress": 10.892839278532037,
+     "v_travel_min": 9.88558579144218,
+     "re": 193103.1918519236,
+     "wh_per_km": 2.858038516513474
+    },
+    "steady_at_solver_re": {
+     "re": 193103.19185192353,
+     "power_w": 112.07575516404748,
+     "V": 18.800631848875714
+    }
+   },
+   "runtime_s": 104.44287252426147
+  },
+  {
+   "key": "b3-ar20|SD7037|t0.45|base|cdabu|bal8.443|heavy",
+   "design": {
+    "span": 3.0,
+    "ar": 20.0,
+    "taper": 0.45,
+    "airfoil": "SD7037",
+    "rho_a": "base",
+    "cda": null,
+    "ballast": 8.442610702332088,
+    "name": "",
+    "waive_re": false,
+    "waive_mass": true
+   },
+   "mass": 9.999999999999998,
+   "ballast": 8.442610702332088,
+   "m_spar_caps": 0.15238929766791046,
+   "area": 0.45,
+   "wing_loading": 217.99999999999997,
+   "wing_loading_over_albatross": 1.5204678362573096,
+   "v_stall": 17.51645451418069,
+   "re_1p2vs": 215895.93182654234,
+   "feasible": true,
+   "reason": "",
+   "spar": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 187.36 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.15238929766791046
+   },
+   "caps": {
+    "deflection_ratio_stress_sized": 0.6826986331566302,
+    "stiffness_factor": 4.551324221044201,
+    "caps_stiff_kg": 0.6935731015038754,
+    "caps_stress_kg": 0.15238929766791046
+   },
+   "ld_glide": 31.403216949454187,
+   "v_glide": 22.368678957282953,
+   "re_glide": 229750.96512984816,
+   "A": {
+    "success": true,
+    "u10": 12.236003074388407,
+    "re_used": 291023.9282958257,
+    "re_cycle": 293338.4557268074,
+    "v_mean": 28.55959168953787,
+    "period": 11.867116860909906,
+    "n_max": 3.0412078478028852,
+    "history": [
+     {
+      "re": 233887.25947875422,
+      "u10": 12.868696421105067,
+      "v_mean": 28.33424803925073,
+      "re_cycle": 291023.9282958257
+     },
+     {
+      "re": 291023.9282958257,
+      "u10": 12.236003074388407,
+      "v_mean": 28.55959168953787,
+      "re_cycle": 293338.4557268074
+     }
+    ],
+    "replay_pass": true,
+    "outer_converged": true,
+    "re_converged": true,
+    "later_pass_failed": false,
+    "mass": 9.999999999999998,
+    "m_wing": 0.8773892976679106,
+    "m_spar": 0.15238929766791046,
+    "area": 0.45,
+    "wing_loading": 217.99999999999997,
+    "oswald": 0.9632544025965746,
+    "ld_max": 33.89048179617473,
+    "cl_ld": 0.6877280308448482,
+    "v_stall": 17.51645451418069,
+    "cl_max": 1.16,
+    "chord": 0.15,
+    "cd0_eff": 0.012214799828148338,
+    "cdp1": -0.005425983064937262,
+    "cdp2": 0.008303276891100447,
+    "cdp8": 0.00135
+   },
+   "re_cycle_over_data_max": 0.9777948524226914,
+   "chi20": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 151.28756933253115,
+     "power_peak_w": 151.66330363104382,
+     "thrust_on_share": 1.0,
+     "progress": 28.45074262699489,
+     "wh_per_km": 1.4770906111504478,
+     "chi_deg": 20.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 21.01974541701683,
+       "V_min_power": 21.01974541701683,
+       "V_floor": 21.01974541701683,
+       "V_progress": 3.9437242307517257,
+       "z": 2.5,
+       "cl": 0.8055555555555552,
+       "thrust_n": 2.9664164517121145,
+       "thrust_max_n": 49.05,
+       "thrust_ok": true,
+       "power_w": 138.5629302574201,
+       "cl_ok": true,
+       "progress": 28.45063974207441,
+       "v_travel_min": 11.37461855580931
+      },
+      "start": "steady"
+     },
+     "re_used": 215895.93182654225,
+     "v_mean": 21.01974541701682,
+     "period": 7.998469782673034
+    },
+    "steady": {
+     "V": 21.01974541701683,
+     "V_min_power": 21.01974541701683,
+     "V_floor": 21.01974541701683,
+     "V_progress": 3.705460542474813,
+     "z": 2.5,
+     "cl": 0.8055555555555552,
+     "thrust_n": 3.238831151085673,
+     "thrust_max_n": 49.05,
+     "thrust_ok": true,
+     "power_w": 151.2875694322765,
+     "cl_ok": true,
+     "progress": 28.45063974207441,
+     "v_travel_min": 11.136354867532397,
+     "re": 215895.93182654234,
+     "wh_per_km": 1.4770959536685246
+    },
+    "steady_at_solver_re": {
+     "re": 215895.93182654225,
+     "power_w": 151.2875694322765,
+     "V": 21.01974541701683
+    }
+   },
+   "chi180": {
+    "solver": {
+     "success": true,
+     "u10": 9.0,
+     "power_w": 151.2875697689042,
+     "power_peak_w": 151.40269303696172,
+     "thrust_on_share": 1.0,
+     "progress": 13.11219569020769,
+     "wh_per_km": 3.2049799994360124,
+     "chi_deg": 180.0,
+     "margin_set": "standard",
+     "steady": {
+      "standard": {
+       "V": 21.01974541701683,
+       "V_min_power": 21.01974541701683,
+       "V_floor": 21.01974541701683,
+       "V_progress": 19.282411126152986,
+       "z": 2.5,
+       "cl": 0.8055555555555552,
+       "thrust_n": 2.9664164517121145,
+       "thrust_max_n": 49.05,
+       "thrust_ok": true,
+       "power_w": 138.5629302574201,
+       "cl_ok": true,
+       "progress": 13.111952846673152,
+       "v_travel_min": 11.37461855580931
+      },
+      "start": "steady"
+     },
+     "re_used": 215895.93182654225,
+     "v_mean": 21.019745564024404,
+     "period": 7.992982852957017
+    },
+    "steady": {
+     "V": 21.01974541701683,
+     "V_min_power": 21.01974541701683,
+     "V_floor": 21.01974541701683,
+     "V_progress": 19.044147437876074,
+     "z": 2.5,
+     "cl": 0.8055555555555552,
+     "thrust_n": 3.238831151085673,
+     "thrust_max_n": 49.05,
+     "thrust_ok": true,
+     "power_w": 151.2875694322765,
+     "cl_ok": true,
+     "progress": 13.111952846673152,
+     "v_travel_min": 11.136354867532397,
+     "re": 215895.93182654234,
+     "wh_per_km": 3.2050393510194564
+    },
+    "steady_at_solver_re": {
+     "re": 215895.93182654225,
+     "power_w": 151.2875694322765,
+     "V": 21.01974541701683
+    }
+   },
+   "runtime_s": 132.00323581695557
+  }
+ ]
+}

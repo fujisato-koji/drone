@@ -1054,7 +1054,7 @@ items:
     license: unknown
     read: full
     retrieved: 2026-10-30
-    note: "Minimum aerodynamic power falls from 4.4 W to 3.7 W at a height of 7 cm (about 16%)."
+    note: "Minimum aerodynamic power falls from 4.4 W to 3.7 W at a height of 7 cm (about 16%). The abstract also gives a skimming speed of 10.3 m/s and the drag of the lower mandible in the water estimated at 1e-4 N against an aerodynamic drag of 0.4 N; a second reading on 2026-10-30 reached only the abstract; P157 measured about three orders of magnitude more."
   - id: P122
     class: P
     title: "Induced drag savings from ground effect and formation flight in brown pelicans, F. R. Hainsworth, Journal of Experimental Biology 135, 431, 1988"
@@ -1415,3 +1415,99 @@ items:
     read: partial
     retrieved: 2026-10-30
     note: "Wing areal mass about 0.75 to 1.13 kg/m2 for thermal sailplanes of 2 to 4 m and about 2.0 to 2.5 kg/m2 for F3F and F3B slope racers; everything except the wing about 0.11 to 0.45 kg for thermal models and about 0.7 kg for F3F. The URL is the site of the Drela sheets; the other sites are listed in the title."
+  - id: P157
+    class: P
+    title: "Did pterosaurs feed by skimming?, S. Humphries, R. H. C. Bonser, M. P. Witton and D. M. Martill, PLoS Biology 5, e204, 2007"
+    url: "https://doi.org/10.1371/journal.pbio.0050204"
+    license: CC BY
+    read: partial
+    retrieved: 2026-10-30
+    note: "A resin cast of a black skimmer's bill towed in a flume with 0.04 m of the lower mandible immersed at 1.8 to 6.8 m/s: drag 0.05 to 0.72 N; the conservative fit 0.019 V^1.26 gives about 0.35 N at 10 m/s; the printed central fit 0.286 V^1.52 does not match the measured range (likely 0.0286); spray drag coefficient of the order 0.24 on the thickness squared for Fr of 3 or more; hydrodynamic drag about 20% of the cost of skimming flight; observed foraging speed about 10 m/s. Equations and tables are images and were not read."
+  - id: P158
+    class: P
+    title: "Wind gradient exploitation during foraging flights by black skimmers, J. Mendez and T. L. Hedrick, Journal of Experimental Biology 227, jeb246855, 2024"
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11418178/"
+    license: CC BY 4.0
+    read: partial
+    retrieved: 2026-10-30
+    note: "Skimming defined as 0.20 m or lower, mean skimming height 0.1 m; skimming tracks of 10.7 s (sd 6.0) over 57 m; airspeed 6.7 m/s (sd 1.9) over all tracks; the wind gradient pays less than 2.5% of the flight cost; nothing on bill drag or strikes. Table 3 not read."
+  - id: P159
+    class: P
+    title: "Discovery of riblets in a bird beak (Rynchops) for low fluid drag, S. Martin and B. Bhushan, Philosophical Transactions of the Royal Society A 374, 20160134, 2016"
+    url: "https://doi.org/10.1098/rsta.2016.0134"
+    license: All rights reserved
+    read: full
+    retrieved: 2026-10-30
+    note: "Lower beak 80 to 100 mm long, 5 to 15 mm wide, 0.5 to 3.3 mm thick (Table 1); riblets about 2 mm apart and 0.15 mm high cut the pressure drop by 5 to 9% in channel tests at 2 to 5 m/s."
+  - id: P160
+    class: P
+    title: "Spray drag of surface-piercing struts, R. B. Chapman, NUC TP 251, Naval Undersea Research and Development Center, 1971"
+    url: "https://apps.dtic.mil/sti/pdfs/AD0730710.pdf"
+    license: unknown
+    read: excerpt
+    retrieved: 2026-10-30
+    note: "Abstract and a search excerpt of the report: spray drag is mainly the friction of the spray sheet on the strut above the waterline; Hoerner's relation D = 0.24 q t^2 for a sharp forebody and 0.12 q t^2 for blunter ones; spray rails reduce it. The PDF could not be opened."
+  - id: P161
+    class: P
+    title: "Wave effects on the hydroelastic response of a surface-piercing hydrofoil, part 1, Y. L. Young et al., Journal of Fluid Mechanics 963, A37, 2023"
+    url: "https://doi.org/10.1017/jfm.2023.127"
+    license: CC BY 4.0
+    read: partial
+    retrieved: 2026-10-30
+    note: "Surface-piercing foil, chord 0.279 m: lift coefficients rise with the immersed aspect ratio, the loss at ventilation is more severe at higher Froude number, and ventilation sets in near 15 deg at an immersed aspect ratio of 1 and a depth Froude number of 1.5. Numeric lift values are in figures not read."
+  - id: P162
+    class: P
+    title: "Ventilation of surface-piercing hydrofoils, Aguiar Ferreira et al., Journal of Fluid Mechanics 1028, A25, 2026 (arXiv 2503.18015); the title is a description, the paper's own title was not recorded"
+    url: "https://doi.org/10.1017/jfm.2026.11126"
+    license: CC BY 4.0
+    read: partial
+    retrieved: 2026-10-30
+    note: "Froude numbers 0.5 to 2.5, aspect ratios 1.0 and 1.5: the inception angle is mostly above 15 deg, peaking above 25 deg near Fr 1.25."
+  - id: P163
+    class: P
+    title: "14 CFR 25.535 Auxiliary float loads, eCFR"
+    url: "https://www.law.cornell.edu/cfr/text/14/25.535"
+    license: Not subject to copyright (US federal regulation)
+    read: partial
+    retrieved: 2026-10-30
+    note: "Text read, formulas are images: auxiliary floats are designed for step, bow, unsymmetrical (0.75 of the load with a side component) and immersed loads, with C5 = 0.0053, the stall speed and the weight; the load need not exceed three times the weight of the water displaced by the fully submerged float; immersed float drag and side coefficients 0.133 and 0.106."
+  - id: P164
+    class: P
+    title: "gsw_C3515, conductivity of standard seawater at practical salinity 35, 15 deg C and zero pressure, TEOS-10"
+    url: "https://teos-10.org/pubs/gsw/html/gsw_C3515.html"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "42.9140 mS/cm (4.2914 S/m), after Culkin and Smith 1980 and UNESCO 1983."
+  - id: S9
+    class: S
+    title: "OpenPlaning, a Python implementation of Savitsky's planing hull method (openplaning.py)"
+    url: "https://github.com/elcf/python-openplaning/blob/main/openplaning/openplaning.py"
+    license: MIT (PyPI)
+    read: excerpt
+    retrieved: 2026-10-30
+    note: "Savitsky 1964 lift C_L0 = tau^1.1 (0.012 lambda^0.5 + 0.0055 lambda^2.5 / C_V^2) with tau in deg, deadrise correction C_L0 - 0.0065 beta C_L0^0.6, friction by the ITTC 1957 line 0.075/(log10 Rn - 2)^2; validity 0.6 <= C_V <= 13, lambda <= 4, 2 <= tau <= 15 deg. Savitsky's paper itself was not read."
+  - id: S10
+    class: S
+    title: "Sea water properties, The Engineering ToolBox"
+    url: "https://www.engineeringtoolbox.com/sea-water-properties-d_840.html"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "At 35 g/kg: density 1027, 1026 and 1025 kg/m3 and dynamic viscosity 0.00141, 0.00122 and 0.00109 Pa s at 10, 15 and 20 deg C; conductivity 3.81, 4.29 and 4.79 S/m."
+  - id: M18
+    class: M
+    title: "MB1240 XL-MaxSonar-EZ4 and MB7389 HRXL-MaxSonar-WRMT product pages, MaxBotix"
+    url: "https://maxbotix.com/products/mb1240"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "MB1240 20 to 765 cm at 10 Hz; MB7389 300 to 5000 mm at 6.66 Hz, closer objects read as 30 cm."
+  - id: M19
+    class: M
+    title: "FDC1004 and FDC2214 capacitance-to-digital converter product pages, Texas Instruments"
+    url: "https://www.ti.com/product/FDC2214"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "FDC1004 100 to 400 samples/s, 0.5 fF resolution, shield drivers; FDC2214 up to 4.08 k samples/s on one channel, 0.3 fF at 100 samples/s, use with conductive liquids noted."

@@ -4049,3 +4049,2358 @@ items:
     status: assumed
     basis:
       - Q-051
+  - key: skid.blade_thickness_m
+    v: 0.001
+    unit: m
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.blade_rake_deg
+    v: 60
+    unit: deg
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.blade_depth_m
+    v: 0.04
+    unit: m
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.ski_beam_m
+    v: 0.02
+    unit: m
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.ski_length_m
+    v: 0.06
+    unit: m
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.ski_trim_deg
+    v: 4
+    unit: deg
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.float_beam_m
+    v: 0.04
+    unit: m
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.float_length_m
+    v: 0.12
+    unit: m
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.blade_mass_kg
+    v: 0.006
+    unit: kg
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.ski_mass_kg
+    v: 0.01
+    unit: kg
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.float_mass_kg
+    v: 0.03
+    unit: kg
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.misalignment_deg
+    v: 5
+    unit: deg
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.sense_process_s
+    v: 0.01
+    unit: s
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.rudder_cl_max
+    v: 0.5
+    unit: 1
+    status: assumed
+    basis:
+      - Q-070
+  - key: skid.rho_seawater_kg_m3
+    v: 1026
+    unit: kg/m3
+    status: sourced
+    basis:
+      - S10
+  - key: skid.nu_seawater_m2_s
+    v: 1.19e-6
+    unit: m2/s
+    status: sourced
+    basis:
+      - S10
+  - key: skid.spray_cd_t2
+    v: 0.24
+    unit: 1
+    status: sourced
+    basis:
+      - P157
+      - P160
+  - key: skid.seawater_conductivity_s_m
+    v: 4.29
+    unit: S/m
+    status: sourced
+    basis:
+      - P164
+      - S10
+  - key: lit.skimmer_skim_speed_ms
+    v: 10.3
+    unit: m/s
+    status: sourced
+    basis:
+      - P121
+  - key: lit.skimmer_bill_drag_wt_n
+    v: 0.0001
+    unit: N
+    status: sourced
+    basis:
+      - P121
+  - key: lit.skimmer_bill_drag_10ms_n
+    v: 0.35
+    unit: N
+    status: sourced
+    basis:
+      - P157
+  - key: lit.skimmer_bill_immersion_m
+    v: 0.04
+    unit: m
+    status: sourced
+    basis:
+      - P157
+  - key: lit.skimmer_hydro_drag_share
+    v: 0.2
+    unit: 1
+    status: sourced
+    basis:
+      - P157
+  - key: lit.skimmer_skim_height_m
+    v: 0.1
+    unit: m
+    status: sourced
+    basis:
+      - P158
+  - key: lit.skimmer_lower_beak_thickness_max_mm
+    v: 3.3
+    unit: mm
+    status: sourced
+    basis:
+      - P159
+  - key: lit.ventilation_inception_deg
+    v: 15
+    unit: deg
+    status: sourced
+    basis:
+      - P161
+      - P162
+  - key: lit.tipfloat_load_cap_displaced
+    v: 3
+    unit: 1
+    status: sourced
+    basis:
+      - P163
+  - key: lit.ultrasonic_min_range_m
+    v: 0.2
+    unit: m
+    status: sourced
+    basis:
+      - M18
+  - key: lit.ultrasonic_rate_hz
+    v: 10
+    unit: Hz
+    status: sourced
+    basis:
+      - M18
+  - key: lit.cdc_rate_max_sps
+    v: 4080
+    unit: 1/s
+    status: sourced
+    basis:
+      - M19
+  - key: skid.blade_cda_m2
+    v: 4.759e-05
+    unit: m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.blade_pair_over_body_cda
+    v: 0.041
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ski_cda_m2
+    v: 7.543e-05
+    unit: m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ski_pair_over_body_cda
+    v: 0.065
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.float_cda_m2
+    v: 8.517e-05
+    unit: m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.float_pair_over_body_cda
+    v: 0.074
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_water_speed_ms
+    v: 22.2
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_airspeed_ms
+    v: 19.6
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_bank_deg
+    v: 61.9
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_skim_arc_s
+    v: 1.38
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_roll_rise_ms
+    v: 0.74
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w05_wet_depth_m
+    v: 0.041
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w10_wet_depth_m
+    v: 0.09
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w20_wet_depth_m
+    v: 0.1
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w05_dl10_trigger_1cm_m
+    v: 0.03
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w05_dl10_trigger_2cm_m
+    v: 0.021
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w05_dl30_trigger_1cm_m
+    v: 0.03
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w05_dl30_trigger_2cm_m
+    v: 0.021
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w10_dl10_trigger_1cm_m
+    v: 0.107
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w10_dl10_trigger_2cm_m
+    v: 0.097
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w10_dl30_trigger_1cm_m
+    v: 0.107
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w10_dl30_trigger_2cm_m
+    v: 0.097
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w20_dl10_trigger_1cm_m
+    v: 0.314
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w20_dl10_trigger_2cm_m
+    v: 0.294
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w20_dl30_trigger_1cm_m
+    v: 0.397
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_w20_dl30_trigger_2cm_m
+    v: 0.386
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.wet_latency_s
+    v: 0.06
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ixx_kgm2
+    v: 0.468
+    unit: kg m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_izz_kgm2
+    v: 0.552
+    unit: kg m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_roll_moment_max_nm
+    v: 19.6
+    unit: N m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_yaw_moment_max_nm
+    v: 3.19
+    unit: N m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_roll_tau_s
+    v: 0.025
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_weight_n
+    v: 29.4
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d05_drag_n
+    v: 0.14
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d05_side_n
+    v: 0.86
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d05_yaw_over_rudder
+    v: 0.07
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d05_roll_over_aileron
+    v: 0.06
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d05_sideslip_deg
+    v: 0.9
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d05_yaw_0p2s_deg
+    v: 0.44
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d10_drag_n
+    v: 0.33
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d10_side_n
+    v: 3.46
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d10_yaw_over_rudder
+    v: 0.15
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d10_roll_over_aileron
+    v: 0.23
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d10_sideslip_deg
+    v: 2.1
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d10_yaw_0p2s_deg
+    v: 1.02
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d10_drag_n
+    v: 2.06
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d10_normal_n
+    v: 9.65
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d10_yaw_over_rudder
+    v: 0.97
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d10_roll_over_aileron
+    v: 0.74
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d10_sideslip_deg
+    v: 13.3
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d10_yaw_0p2s_deg
+    v: 6.43
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d10_drag_n
+    v: 9.61
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d10_normal_n
+    v: 20.17
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d10_yaw_over_rudder
+    v: 4.52
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d10_roll_over_aileron
+    v: 1.54
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d10_sideslip_deg
+    v: 61.8
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d10_yaw_0p2s_deg
+    v: 29.94
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d10_drag_n
+    v: 7.52
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d10_normal_n
+    v: 38.68
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d10_yaw_over_rudder
+    v: 3.54
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d10_roll_over_aileron
+    v: 2.96
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d10_sideslip_deg
+    v: 48.4
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d10_yaw_0p2s_deg
+    v: 23.42
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d20_drag_n
+    v: 0.96
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d20_side_n
+    v: 13.83
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d20_yaw_over_rudder
+    v: 0.45
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d20_roll_over_aileron
+    v: 0.93
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d20_sideslip_deg
+    v: 6.2
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d20_yaw_0p2s_deg
+    v: 3.0
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d20_impulse_0p2s
+    v: 0.0033
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d20_drag_n
+    v: 2.06
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d20_normal_n
+    v: 9.65
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d20_yaw_over_rudder
+    v: 0.97
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d20_roll_over_aileron
+    v: 0.74
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d20_sideslip_deg
+    v: 13.3
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_ski_d20_yaw_0p2s_deg
+    v: 6.43
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d20_drag_n
+    v: 17.38
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d20_normal_n
+    v: 55.87
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d20_yaw_over_rudder
+    v: 8.17
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d20_roll_over_aileron
+    v: 4.28
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d20_sideslip_deg
+    v: 111.8
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d20_yaw_0p2s_deg
+    v: 54.15
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_tip_d20_impulse_0p2s
+    v: 0.059
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d20_drag_n
+    v: 7.52
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d20_normal_n
+    v: 38.68
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d20_yaw_over_rudder
+    v: 3.54
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d20_roll_over_aileron
+    v: 2.96
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d20_sideslip_deg
+    v: 48.4
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_float_d20_yaw_0p2s_deg
+    v: 23.42
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d30_drag_n
+    v: 1.92
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d30_side_n
+    v: 31.13
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d30_yaw_over_rudder
+    v: 0.9
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d30_roll_over_aileron
+    v: 2.1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d30_sideslip_deg
+    v: 12.3
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20l_blade_d30_yaw_0p2s_deg
+    v: 5.97
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_water_speed_ms
+    v: 19.2
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_airspeed_ms
+    v: 15.6
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_bank_deg
+    v: 48.4
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_skim_arc_s
+    v: 0.39
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_roll_rise_ms
+    v: 0.83
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w05_wet_depth_m
+    v: 0.039
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w10_wet_depth_m
+    v: 0.089
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w20_wet_depth_m
+    v: 0.1
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w05_dl10_trigger_1cm_m
+    v: 0.029
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w05_dl10_trigger_2cm_m
+    v: 0.019
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w05_dl30_trigger_1cm_m
+    v: 0.029
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w05_dl30_trigger_2cm_m
+    v: 0.019
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w10_dl10_trigger_1cm_m
+    v: 0.104
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w10_dl10_trigger_2cm_m
+    v: 0.093
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w10_dl30_trigger_1cm_m
+    v: 0.104
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w10_dl30_trigger_2cm_m
+    v: 0.094
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w20_dl10_trigger_1cm_m
+    v: 0.307
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w20_dl10_trigger_2cm_m
+    v: 0.286
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w20_dl30_trigger_1cm_m
+    v: 0.423
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.ar20n_w20_dl30_trigger_2cm_m
+    v: 0.41
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_water_speed_ms
+    v: 21.0
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_airspeed_ms
+    v: 20.1
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_bank_deg
+    v: 61.9
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_skim_arc_s
+    v: 1.39
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_roll_rise_ms
+    v: 0.76
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w05_wet_depth_m
+    v: 0.04
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w10_wet_depth_m
+    v: 0.09
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w20_wet_depth_m
+    v: 0.1
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w05_dl10_trigger_1cm_m
+    v: 0.03
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w05_dl10_trigger_2cm_m
+    v: 0.02
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w05_dl30_trigger_1cm_m
+    v: 0.03
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w05_dl30_trigger_2cm_m
+    v: 0.02
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w10_dl10_trigger_1cm_m
+    v: 0.105
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w10_dl10_trigger_2cm_m
+    v: 0.095
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w10_dl30_trigger_1cm_m
+    v: 0.105
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w10_dl30_trigger_2cm_m
+    v: 0.095
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w20_dl10_trigger_1cm_m
+    v: 0.309
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w20_dl10_trigger_2cm_m
+    v: 0.29
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w20_dl30_trigger_1cm_m
+    v: 0.388
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.alb_w20_dl30_trigger_2cm_m
+    v: 0.377
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h10_c100_u10_ms
+    v: 13.45
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h20_c030_u10_ms
+    v: 12.85
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h10_c030_u10_ms
+    v: 12.07
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h05_c030_u10_ms
+    v: 12.07
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h03_c030_u10_ms
+    v: 12.07
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h03_c030_zmin_m
+    v: 1.61
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h20_c010_u10_ms
+    v: 12.85
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h10_c010_u10_ms
+    v: 11.62
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h05_c010_u10_ms
+    v: 11.62
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h03_c010_u10_ms
+    v: 11.62
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h20_c000_u10_ms
+    v: 12.85
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h10_c000_u10_ms
+    v: 11.39
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h05_c000_u10_ms
+    v: 11.38
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h03_c000_u10_ms
+    v: 11.38
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h03_c000_zmin_m
+    v: 1.16
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_h20_c100_u10_ms
+    v: 13.46
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_dih5_h03_c030_u10_ms
+    v: 11.96
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_dih10_h03_c030_u10_ms
+    v: 11.85
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_dih10_h03_c030_zmin_m
+    v: 1.13
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_out10_h03_c030_u10_ms
+    v: 11.96
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_out20_h03_c030_u10_ms
+    v: 11.88
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_dih5_h03_c000_u10_ms
+    v: 11.2
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_dih10_h03_c000_u10_ms
+    v: 10.98
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_dih10_h03_c000_zmin_m
+    v: 0.62
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_out10_h03_c000_u10_ms
+    v: 11.21
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_out20_h03_c000_u10_ms
+    v: 11.01
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h20_c100_u10_ms
+    v: 16.13
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h10_c100_u10_ms
+    v: 16.13
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h20_c030_u10_ms
+    v: 15.43
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h10_c030_u10_ms
+    v: 14.35
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h05_c030_u10_ms
+    v: 14.35
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h03_c030_u10_ms
+    v: 14.35
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h03_c030_zmin_m
+    v: 1.46
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h20_c010_u10_ms
+    v: 15.43
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h10_c010_u10_ms
+    v: 13.79
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h05_c010_u10_ms
+    v: 13.79
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h03_c010_u10_ms
+    v: 13.79
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h20_c000_u10_ms
+    v: 15.43
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h10_c000_u10_ms
+    v: 13.49
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h05_c000_u10_ms
+    v: 13.49
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h03_c000_u10_ms
+    v: 13.49
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_h03_c000_zmin_m
+    v: 1.13
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_dih5_h03_c030_u10_ms
+    v: 14.15
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_dih10_h03_c030_u10_ms
+    v: 13.97
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_dih10_h03_c030_zmin_m
+    v: 1.19
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_out10_h03_c030_u10_ms
+    v: 14.16
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_out20_h03_c030_u10_ms
+    v: 14.01
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_dih5_h03_c000_u10_ms
+    v: 13.25
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_dih10_h03_c000_u10_ms
+    v: 12.79
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_dih10_h03_c000_zmin_m
+    v: 0.4
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_out10_h03_c000_u10_ms
+    v: 13.26
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20n_out20_h03_c000_u10_ms
+    v: 12.77
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h20_c100_u10_ms
+    v: 10.81
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h10_c100_u10_ms
+    v: 10.81
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h20_c030_u10_ms
+    v: 10.32
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h10_c030_u10_ms
+    v: 9.67
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h05_c030_u10_ms
+    v: 9.67
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h03_c030_u10_ms
+    v: 9.67
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h03_c030_zmin_m
+    v: 1.61
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h20_c010_u10_ms
+    v: 10.32
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h10_c010_u10_ms
+    v: 9.31
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h05_c010_u10_ms
+    v: 9.31
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h03_c010_u10_ms
+    v: 9.31
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h20_c000_u10_ms
+    v: 10.32
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h10_c000_u10_ms
+    v: 9.11
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h05_c000_u10_ms
+    v: 9.11
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h03_c000_u10_ms
+    v: 9.11
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_h03_c000_zmin_m
+    v: 1.18
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_dih5_h03_c030_u10_ms
+    v: 9.58
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_dih10_h03_c030_u10_ms
+    v: 9.48
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_dih10_h03_c030_zmin_m
+    v: 1.13
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_out10_h03_c030_u10_ms
+    v: 9.58
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_out20_h03_c030_u10_ms
+    v: 9.51
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_dih5_h03_c000_u10_ms
+    v: 8.96
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_dih10_h03_c000_u10_ms
+    v: 8.79
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_dih10_h03_c000_zmin_m
+    v: 0.63
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_out10_h03_c000_u10_ms
+    v: 8.96
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_out20_h03_c000_u10_ms
+    v: 8.82
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.blade_skimmer_check_10ms_n
+    v: 0.54
+    unit: N
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.req_wet_latency_s
+    v: 0.005
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.req_wet_rate_hz
+    v: 1000
+    unit: Hz
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.req_wet_levels
+    v: 3
+    unit: count
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.req_range_span_m
+    v: 0.45
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.req_range_accuracy_m
+    v: 0.01
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.req_range_rate_hz
+    v: 200
+    unit: Hz
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skid.req_range_latency_s
+    v: 0.005
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: heavy.albatross_wing_loading_npm2
+    v: 143.4
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m03_wing_loading_npm2
+    v: 52.3
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m03_over_albatross
+    v: 0.36
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_stiff_caps_factor
+    v: 3.64
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_stress_caps_deflection
+    v: 0.55
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m03_u10_ms
+    v: 13.01
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m03_re_cycle
+    v: 195000
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m03_p20_w
+    v: 28.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m03_e20_wh_per_km
+    v: 0.44
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m03_p20_steady_w
+    v: 28.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m03_p180_w
+    v: 35.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m03_e180_wh_per_km
+    v: 1.8
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m03_p180_steady_w
+    v: 36.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m04_wing_loading_npm2
+    v: 69.8
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m04_over_albatross
+    v: 0.49
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m04_u10_ms
+    v: 12.6
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m04_re_cycle
+    v: 220000
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m04_p20_w
+    v: 41.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m04_e20_wh_per_km
+    v: 0.6
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m04_p20_steady_w
+    v: 41.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m04_p180_w
+    v: 47.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m04_e180_wh_per_km
+    v: 2.04
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m04_p180_steady_w
+    v: 48.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m06_wing_loading_npm2
+    v: 104.6
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m06_over_albatross
+    v: 0.73
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m06_u10_ms
+    v: 12.34
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m06_re_cycle
+    v: 265000
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m06_p20_w
+    v: 71.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m06_e20_wh_per_km
+    v: 0.91
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m06_p20_steady_w
+    v: 71.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m06_p180_w
+    v: 73.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m06_e180_wh_per_km
+    v: 2.59
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m06_p180_steady_w
+    v: 74.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m08_wing_loading_npm2
+    v: 139.5
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m08_over_albatross
+    v: 0.97
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m08_u10_ms
+    v: 12.27
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m08_re_cycle
+    v: 304000
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m08_p20_w
+    v: 105.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m08_e20_wh_per_km
+    v: 1.21
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m08_p20_steady_w
+    v: 105.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m08_p180_w
+    v: 105.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m08_e180_wh_per_km
+    v: 3.19
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m08_p180_steady_w
+    v: 106.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m10_wing_loading_npm2
+    v: 174.4
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m10_over_albatross
+    v: 1.22
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m10_u10_ms
+    v: 12.26
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m10_re_cycle
+    v: 339000
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m10_p20_w
+    v: 143.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m10_e20_wh_per_km
+    v: 1.52
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m10_p20_steady_w
+    v: 143.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m10_p180_w
+    v: 143.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m10_e180_wh_per_km
+    v: 3.66
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar16_m10_p180_steady_w
+    v: 143.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m03_wing_loading_npm2
+    v: 65.4
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m03_over_albatross
+    v: 0.46
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_stiff_caps_factor
+    v: 4.55
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_stress_caps_deflection
+    v: 0.68
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m03_u10_ms
+    v: 12.87
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m03_re_cycle
+    v: 168000
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m03_p20_w
+    v: 30.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m03_e20_wh_per_km
+    v: 0.44
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m03_p20_steady_w
+    v: 30.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m03_p180_w
+    v: 35.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m03_e180_wh_per_km
+    v: 1.67
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m03_p180_steady_w
+    v: 36.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m04_wing_loading_npm2
+    v: 87.2
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m04_over_albatross
+    v: 0.61
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m04_u10_ms
+    v: 12.54
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m04_re_cycle
+    v: 190000
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m04_p20_w
+    v: 44.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m04_e20_wh_per_km
+    v: 0.6
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m04_p20_steady_w
+    v: 44.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m04_p180_w
+    v: 47.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m04_e180_wh_per_km
+    v: 1.92
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m04_p180_steady_w
+    v: 48.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m06_wing_loading_npm2
+    v: 130.8
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m06_over_albatross
+    v: 0.91
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m06_u10_ms
+    v: 12.31
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m06_re_cycle
+    v: 229000
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m06_p20_w
+    v: 76.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m06_e20_wh_per_km
+    v: 0.89
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m06_p20_steady_w
+    v: 76.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m06_p180_w
+    v: 76.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m06_e180_wh_per_km
+    v: 2.47
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m06_p180_steady_w
+    v: 76.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m08_wing_loading_npm2
+    v: 174.4
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m08_over_albatross
+    v: 1.22
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m08_u10_ms
+    v: 12.24
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m08_re_cycle
+    v: 264000
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m08_p20_w
+    v: 112.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m08_e20_wh_per_km
+    v: 1.19
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m08_p20_steady_w
+    v: 112.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m08_p180_w
+    v: 112.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m08_e180_wh_per_km
+    v: 2.86
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m08_p180_steady_w
+    v: 112.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m10_wing_loading_npm2
+    v: 218.0
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m10_over_albatross
+    v: 1.52
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m10_u10_ms
+    v: 12.24
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m10_re_cycle
+    v: 293000
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m10_p20_w
+    v: 151.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m10_e20_wh_per_km
+    v: 1.48
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m10_p20_steady_w
+    v: 151.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m10_p180_w
+    v: 151.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m10_e180_wh_per_km
+    v: 3.2
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: heavy.ar20_m10_p180_steady_w
+    v: 151.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: skim.ar20l_std_u13_h90_ms
+    v: 11.88
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_std_u13_h135_ms
+    v: 0.45
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_std_u13_h180_ms
+    v: -10.27
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skid_u13_h90_ms
+    v: 15.63
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skid_u13_h135_ms
+    v: 5.07
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skid_u13_h180_ms
+    v: -4.1
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skiddih10_u13_h90_ms
+    v: 16.38
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skiddih10_u13_h135_ms
+    v: 5.79
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skiddih10_u13_h180_ms
+    v: -3.28
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_std_u16_h90_ms
+    v: 17.79
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_std_u16_h135_ms
+    v: 4.71
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_std_u16_h180_ms
+    v: -5.23
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skid_u16_h90_ms
+    v: 20.27
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skid_u16_h135_ms
+    v: 7.62
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skid_u16_h180_ms
+    v: -2.56
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skiddih10_u16_h90_ms
+    v: 21.0
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skiddih10_u16_h135_ms
+    v: 8.32
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.ar20l_skiddih10_u16_h180_ms
+    v: -2.01
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_std_u13_h90_ms
+    v: 17.45
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_std_u13_h135_ms
+    v: 6.28
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_std_u13_h180_ms
+    v: -2.98
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skid_u13_h90_ms
+    v: 19.76
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skid_u13_h135_ms
+    v: 8.91
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skid_u13_h180_ms
+    v: -0.66
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skiddih10_u13_h90_ms
+    v: 20.35
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skiddih10_u13_h135_ms
+    v: 9.45
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skiddih10_u13_h180_ms
+    v: -0.2
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_std_u16_h90_ms
+    v: 21.53
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_std_u16_h135_ms
+    v: 8.16
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_std_u16_h180_ms
+    v: -2.49
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skid_u16_h90_ms
+    v: 23.62
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skid_u16_h135_ms
+    v: 10.6
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skid_u16_h180_ms
+    v: -0.3
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skiddih10_u16_h90_ms
+    v: 24.24
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skiddih10_u16_h135_ms
+    v: 11.24
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim
+  - key: skim.alb_skiddih10_u16_h180_ms
+    v: 0.16
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wingtip-skim

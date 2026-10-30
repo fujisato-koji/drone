@@ -153,3 +153,12 @@ items:
     touches:
       - Q-024
       - Q-057
+  - id: D-018
+    date: 2026-10-30
+    by: owner
+    what: "Let the low turn bring a wingtip close to the water, as the albatross does: fit the wingtips with a skid that sheds water and survives a touch, and a sensor that detects water at the tip so the aircraft corrects its attitude at once. R-12 is to be revised once the study gives the clearance and the reaction it needs."
+    touches:
+      - R-12
+      - Q-063
+      - Q-064
+      - Q-068

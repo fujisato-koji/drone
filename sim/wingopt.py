@@ -95,13 +95,14 @@ class Design:
     ballast: float = 0.0       # kg added at the fuselage (counted in the spar's load)
     name: str = ""
     waive_re: bool = False     # candidates only: skip the Re 80k floor (reported, not hidden)
+    waive_mass: bool = False   # heavy study only: skip ds.mass_max_kg (the limit is not changed)
 
     @property
     def key(self):
         cda = "bu" if self.cda is None else f"{self.cda * 1e4:g}"
         return (self.name or f"b{self.span:g}-ar{self.ar:g}") + \
             f"|{self.airfoil}|t{self.taper:g}|{self.rho_a}|cda{cda}|bal{self.ballast:.3f}" + \
-            ("|waive" if self.waive_re else "")
+            ("|waive" if self.waive_re else "") + ("|heavy" if self.waive_mass else "")
 
 
 def airfoil_cd(name, cl, re):
@@ -221,7 +222,7 @@ def feasibility(d: Design):
     smax, mmax = value("ds.span_max_m", None), value("ds.mass_max_kg", None)
     if smax is not None and d.span > smax + 1e-9:
         return False, f"span {d.span:g} > ds.span_max_m {smax:g}"
-    if mmax is not None and mm["mass"] > mmax + 1e-9:
+    if mmax is not None and mm["mass"] > mmax + 1e-9 and not d.waive_mass:
         return False, f"mass {mm['mass']:.2f} > ds.mass_max_kg {mmax:g}"
     re12 = re_of(1.2 * vs, chord)
     if re12 < RE_MIN and not d.waive_re:
@@ -771,6 +772,151 @@ def tables(p):
     return "\n".join(L)
 
 
+# ---- heavier than ds.mass_max_kg (Q-067, Q-069; docs/02-form.md#wing-sizing)
+HEAVY_PATH = os.path.join(os.path.dirname(__file__), "out", "wingopt_heavy.json")
+HEAVY_MASSES = (3.0, 4.0, 6.0, 8.0, 10.0)   # kg, total
+HEAVY_ARS = (16.0, 20.0)
+RE_DATA_MAX = 3.0e5                         # upper end of the airfoil fits (P155)
+
+
+def heavy_design(ar, mass, span=3.0, airfoil="SD7037"):
+    """Design of the given total mass by ballast at the fuselage; the spar caps of mass_model are
+    sized for the ultimate load of that mass (ds.n_limit times ds.safety_factor)."""
+    bal = ballast_to_mass(span, ar, RHO_A["base"], mass)
+    return Design(span, ar, airfoil=airfoil, ballast=bal, waive_mass=True)
+
+
+def steady_flight(d, u10, chi_deg, re_start, mg=None, iters=10):
+    """steady_guess with the polar at the Reynolds number of its own airspeed (iterated); the
+    wing-sizing pass took the polar at the soaring cycle's Reynolds number instead."""
+    from sim.dsopt import profile_for
+    mg = MARGINS if mg is None else mg
+    prof = profile_for(max(u10, 1.0), "log", roughness="coare35")
+    chord = basics(d)[2]
+    re = re_start
+    for _ in range(iters):
+        _, info, _ = steady_guess(build_aircraft(d, re), prof, u10, chi_deg, mg)
+        re_new = re_of(info["V"], chord)
+        if abs(re_new / re - 1.0) < 1e-3:
+            break
+        re = re_new
+    _, info, _ = steady_guess(build_aircraft(d, re), prof, u10, chi_deg, mg)
+    return dict(info, re=re, wh_per_km=float(info["power_w"] / (3.6 * info["progress"])))
+
+
+def spar_tube_check(d):
+    """The round carbon tube of sim.structure for the design's mass (stress at ultimate load and
+    the tip deflection limit at limit load, the tube inside the root thickness at SPAR["tc"]);
+    returns its numbers or the reason no tube fits, beside the cap model's spar mass."""
+    from sim.structure import MATERIALS, WingGeometry, size_tube_spar
+    mm = basics(d)[0]
+    cr = 2.0 * mm["area"] / (d.span * (1.0 + d.taper))
+    g = WingGeometry(span=d.span, root_chord=cr, taper=d.taper, thickness_ratio=SPAR["tc"])
+    try:
+        r = size_tube_spar(g, mm["mass"], value("ds.n_limit", 4.0), value("ds.safety_factor", 1.5),
+                           MATERIALS["carbon_tube"])
+    except ValueError as exc:
+        return {"fits": False, "reason": str(exc), "cap_model_kg": mm["m_spar"]}
+    return {"fits": True, "od_mm": r["od"] * 1e3, "wall_mm": r["wall"] * 1e3, "tube_kg": r["mass"],
+            "margin": r["margin"], "deflection_ratio": r["deflection_ratio"], "limiting": r["limiting"],
+            "cap_model_kg": mm["m_spar"]}
+
+
+def cap_stiffness(d, n=2001):
+    """The spar caps of mass_model (fully stressed at ultimate load, at the depth
+    SPAR["k"] SPAR["tc"] c(y) of the tapered chord) checked for the tip deflection at limit load
+    with spar.carbon_modulus. Fully stressed caps bend with the curvature 2 sigma / (SF E h(y))
+    whatever the load, so the factor on the cap area that meets spar.deflection_limit does not
+    depend on the mass; the stiff caps weigh that factor times the cap model's spar."""
+    mm = basics(d)[0]
+    half = 0.5 * d.span
+    y = np.linspace(0.0, half, n)
+    cr = 2.0 * mm["area"] / (d.span * (1.0 + d.taper))
+    h = SPAR["k"] * SPAR["tc"] * cr * (1.0 - (1.0 - d.taper) * y / half)
+    kappa = 2.0 * SPAR["sigma"] / (value("ds.safety_factor", 1.5) * value("spar.carbon_modulus", 35e9) * h)
+    dy = np.diff(y)
+    theta = np.concatenate(([0.0], np.cumsum(0.5 * (kappa[:-1] + kappa[1:]) * dy)))
+    w = np.concatenate(([0.0], np.cumsum(0.5 * (theta[:-1] + theta[1:]) * dy)))
+    ratio = float(w[-1] / half)
+    f = max(1.0, ratio / value("spar.deflection_limit", 0.15))
+    return {"deflection_ratio_stress_sized": ratio, "stiffness_factor": f,
+            "caps_stiff_kg": f * mm["m_spar"], "caps_stress_kg": mm["m_spar"]}
+
+
+def evaluate_heavy(d):
+    """Worker: one heavy design. A (solve_a, standard margins), the motor power at 9 m/s at chi 20
+    and 180 by the optimizer (solve_c, standard margins, full settings, steady start then seeds)
+    and, separately, the steady level flight at its own Reynolds number and at the optimizer's
+    final one."""
+    from sim.dsopt import profile_for
+    t0 = time.time()
+    mm, cl_max, chord, vs = basics(d)
+    alb = value("lit.albatross_mass_kg") * G / value("lit.albatross_wing_area_m2")
+    ok, why = feasibility(d)
+    out = {"key": d.key, "design": d.__dict__, "mass": mm["mass"], "ballast": d.ballast,
+           "m_spar_caps": mm["m_spar"], "area": mm["area"], "wing_loading": mm["mass"] * G / mm["area"],
+           "wing_loading_over_albatross": mm["mass"] * G / mm["area"] / alb, "v_stall": vs,
+           "re_1p2vs": re_of(1.2 * vs, chord), "feasible": ok, "reason": why,
+           "spar": spar_tube_check(d), "caps": cap_stiffness(d)}
+    out.update(glide_point(d))
+    if not ok:
+        out["runtime_s"] = time.time() - t0
+        return out
+    try:
+        a = solve_a(d)
+        out["A"] = a
+        re0 = a["re_used"] if a["success"] else re_of(1.3 * vs, chord)
+        out["re_cycle_over_data_max"] = (a["re_cycle"] / RE_DATA_MAX) if a["success"] else None
+        prof = profile_for(9.0, "log", roughness="coare35")
+        for chi in (20.0, 180.0):
+            c = solve_c(d, 9.0, re0, chi_deg=chi, seed_sets=MOTOR_SEEDS_FULL, maxiter=MOTOR_MAXITER_FULL,
+                        margin_labels=("standard",))
+            st = steady_flight(d, 9.0, chi, re0)
+            same = None
+            if c.get("success"):
+                _, si, _ = steady_guess(build_aircraft(d, c["re_used"]), prof, 9.0, chi, MARGINS)
+                same = {"re": c["re_used"], "power_w": si["power_w"], "V": si["V"]}
+            out[f"chi{chi:g}"] = {"solver": c, "steady": st, "steady_at_solver_re": same}
+    except Exception as exc:
+        out["error"] = f"{type(exc).__name__}: {exc}"
+    out["runtime_s"] = time.time() - t0
+    print(f"heavy {d.key} A={out.get('A', {}).get('u10')} {out['runtime_s']:.0f} s", file=sys.stderr, flush=True)
+    return out
+
+
+def heavy_study(path=HEAVY_PATH, workers=2, masses=HEAVY_MASSES, ars=HEAVY_ARS, progress=None):
+    """Q-067 and Q-069: the 3.0 m SD7037 wings of aspect ratio 16 and 20 at total masses up to
+    10 kg (ballast; spar caps for each mass), without changing ds.mass_max_kg. Writes path."""
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    from sim import record
+    t0 = time.time()
+    designs = [heavy_design(ar, m) for ar in ars for m in masses]
+    order = sorted(designs, key=lambda d: -d.ballast)   # the heaviest first (the slowest)
+    rows = {}
+    with ProcessPoolExecutor(workers) as ex:
+        futs = [ex.submit(evaluate_heavy, d) for d in order]
+        for f in as_completed(futs):
+            r = f.result()
+            rows[r["key"]] = r
+            if progress:
+                with open(progress, "a", newline="\n") as fh:
+                    fh.write(json.dumps(r) + "\n")
+    here = os.path.dirname(__file__)
+    meta = record.meta("python -m sim.wingopt --heavy", [__file__, os.path.join(here, "dsopt.py"),
+                                                          os.path.join(here, "aircraft.py"),
+                                                          os.path.join(here, "structure.py")])
+    meta.update({"runtime_s": time.time() - t0, "masses_kg": list(masses), "ars": list(ars),
+                 "mass_max_kg": value("ds.mass_max_kg", None), "margins": MARGINS,
+                 "motor_seeds": [list(x) for x in MOTOR_SEEDS_FULL], "motor_maxiter": MOTOR_MAXITER_FULL,
+                 "albatross_wing_loading_npm2": value("lit.albatross_mass_kg") * G / value("lit.albatross_wing_area_m2"),
+                 "re_data_max": RE_DATA_MAX})
+    payload = {"meta": meta, "rows": [rows[d.key] for d in designs]}
+    with open(path, "w", newline="\n") as fh:
+        json.dump(payload, fh, indent=1)
+        fh.write("\n")
+    return payload
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--workers", type=int, default=4)
@@ -783,7 +929,11 @@ def main(argv=None):
     ap.add_argument("--c9-standard", action="store_true", help="re-solve the light-margin 9 m/s rows at the standard margins and exit")
     ap.add_argument("--c9-all", action="store_true", help="add the full-settings 9 m/s motor power for all designs to --out and exit")
     ap.add_argument("--followup", type=int, default=0, help="add the follow-up for the top N designs to --out and exit")
+    ap.add_argument("--heavy", action="store_true", help="the heavier-than-limit study (AR 16 and 20, 3 to 10 kg) to sim/out/wingopt_heavy.json; exits")
     a = ap.parse_args(argv)
+    if a.heavy:
+        heavy_study(workers=a.workers)
+        return
     if a.c9_steady:
         c9_steady(a.out, a.workers)
         return

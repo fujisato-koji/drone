@@ -753,7 +753,7 @@ items:
     opened: 2026-10-29
   - id: Q-063
     kind: question
-    text: "Should the drone ever make its low turn with a wingtip close to the water, as the albatross does? The model says the low point of the cycle is the largest lever on the wind needed (docs/02-form.md#energy-sources: the Sachs albatross model needs dsopt.sachs_coare_floor03_u10_ms with its wingtip held clear and the bound dsopt.sachs_coare_notip_floor01_u10_ms without the constraint), but R-12 keeps a clearance, and skimming needs the height of the wingtip above the moving water to a few centimetres about half a second ahead, a path accurate to tens of centimetres in gusts, and a wing that survives a touch. Study first, without changing R-12: the gain of ground effect near the water, a wingtip skid or float, dihedral or a gull wing that lifts the low tip, and low turns only in the troughs of long, predictable swell; then the owner decides whether R-12 changes."
+    text: "Should the drone ever make its low turn with a wingtip close to the water, as the albatross does? The model says the low point of the cycle is the largest lever on the wind needed (docs/02-form.md#energy-sources: the Sachs albatross model needs dsopt.sachs_coare_floor03_u10_ms with its wingtip held clear and the bound dsopt.sachs_coare_notip_floor01_u10_ms without the constraint), but R-12 keeps a clearance, and skimming needs the height of the wingtip above the moving water to a few centimetres about half a second ahead, a path accurate to tens of centimetres in gusts, and a wing that survives a touch. Study first, without changing R-12: the gain of ground effect near the water, a wingtip skid or float, dihedral or a gull wing that lifts the low tip, and low turns only in the troughs of long, predictable swell; then the owner decides whether R-12 changes. Update 2026-10-30: the owner decided the direction (D-018): the low turn may bring a wingtip close to the water, with a skid on each wingtip that sheds water and survives a touch and a sensor that detects water at the tip, and R-12 is to be revised once the study gives the clearance and the reaction it needs. The skim study (docs/02-form.md#wingtip-skim) answers how much the low tip gains in the wind needed, and with which wing geometry."
     waits_for: "assistant, then owner"
     affects:
       - R-12
@@ -763,7 +763,7 @@ items:
     opened: 2026-10-30
   - id: Q-064
     kind: finding
-    text: "The sea and wind model can compare soaring strategies but cannot yet verify a low turn within about a metre of the water (docs/02-form.md#simulator-fitness): the contact check uses a linear surface without sharp or breaking crests, the wave-coherent wind below 1 m is an extrapolation of P63 and the trough shelter is only the crude separation option, near-surface turbulence keeps a fixed length scale, stability and the swell profile are missing (Q-061), and no sensor measures the height under the low wingtip. Add crest geometry with second-order terms and breaking crests, the near-surface wave wind and trough shelter from published large-eddy simulations, height-scaled turbulence, and a wingtip height sensor model; then plan a low-turn flight test with RTK and a laser altimeter. Update 2026-10-30: second-order and breaking crests, the near-surface wave wind, height-scaled turbulence, stability and the swell jet are in sim/seawind.py, and wingtip sensors in sim/seasense.py; what remains is to fly the closed loop in that sea with those sensors, and the flight test."
+    text: "The sea and wind model can compare soaring strategies but cannot yet verify a low turn within about a metre of the water (docs/02-form.md#simulator-fitness): the contact check uses a linear surface without sharp or breaking crests, the wave-coherent wind below 1 m is an extrapolation of P63 and the trough shelter is only the crude separation option, near-surface turbulence keeps a fixed length scale, stability and the swell profile are missing (Q-061), and no sensor measures the height under the low wingtip. Add crest geometry with second-order terms and breaking crests, the near-surface wave wind and trough shelter from published large-eddy simulations, height-scaled turbulence, and a wingtip height sensor model; then plan a low-turn flight test with RTK and a laser altimeter. Update 2026-10-30: second-order and breaking crests, the near-surface wave wind, height-scaled turbulence, stability and the swell jet are in sim/seawind.py, and wingtip sensors in sim/seasense.py; what remains is to fly the closed loop in that sea with those sensors, and the flight test. Update 2026-10-30 (D-018): the wingtip may now come close to the water with a skid; the forces of a touch, the tip sensor it needs and the time budget of the reaction are in docs/02-form.md#wingtip-skim, and a closed-loop check of a skimming low turn in the second-order sea is the next step."
     waits_for: assistant
     affects:
       - R-12
@@ -806,7 +806,7 @@ items:
     opened: 2026-10-30
   - id: Q-068
     kind: finding
-    text: "The reflex layer of the planner (docs/02-form.md#receding-horizon) fires falsely on its stall test at the end of its prediction and, over waves, made flights end sooner (K-015). Redesign it: a stall threshold below the planner's own speed floor (0.95 stall speeds removed the false firings and kept four constructed rescues), a stall test that accounts for the load factor, an override that scales thrust and lift with the attitude instead of full thrust, a fixed lift coefficient and wings level (which zooms the aircraft and fails past the vertical), and a prediction in a world that sees the waves; also check that steady library cycles fly along their course."
+    text: "The reflex layer of the planner (docs/02-form.md#receding-horizon) fires falsely on its stall test at the end of its prediction and, over waves, made flights end sooner (K-015). Redesign it: a stall threshold below the planner's own speed floor (0.95 stall speeds removed the false firings and kept four constructed rescues), a stall test that accounts for the load factor, an override that scales thrust and lift with the attitude instead of full thrust, a fixed lift coefficient and wings level (which zooms the aircraft and fails past the vertical), and a prediction in a world that sees the waves; also check that steady library cycles fly along their course. Update 2026-10-30 (D-018): the redesign also takes the wingtip skid and the tip sensor; the time budget from a wet or range signal at the tip to a roll-out that keeps the skid's immersion within its depth, and the numbers it sets for the sensor, are in docs/02-form.md#wingtip-skim."
     waits_for: assistant
     affects:
       - Q-060
@@ -821,6 +821,17 @@ items:
     affects:
       - Q-067
       - ds.mass_max_kg
+    raised_by: assistant
+    phase: design
+    opened: 2026-10-30
+  - id: Q-070
+    kind: question
+    text: "The wingtip skid and the tip sensor of D-018 rest on sizes and coefficients that no source gives (skid.blade_thickness_m, skid.blade_rake_deg, skid.blade_depth_m, skid.ski_beam_m, skid.ski_length_m, skid.ski_trim_deg, skid.float_beam_m, skid.float_length_m, skid.blade_mass_kg, skid.ski_mass_kg, skid.float_mass_kg, skid.misalignment_deg, skid.sense_process_s) and on a rudder lift coefficient (skid.rudder_cl_max), and the water forces are extrapolated far beyond the Froude numbers of the sources (docs/02-form.md#wingtip-skim). Settle them by towing candidate skids in sea water at 10 to 25 m/s with 0.5 to 3 cm of immersion (drag, side force, ventilation, and the wet and range signals of the tip sensor), and by sizing the tail for the yaw authority."
+    waits_for: assistant
+    affects:
+      - R-12
+      - Q-063
+      - Q-068
     raised_by: assistant
     phase: design
     opened: 2026-10-30

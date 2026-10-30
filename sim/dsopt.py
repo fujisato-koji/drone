@@ -169,6 +169,81 @@ def _sigmoid(y):
     return 1.0 / (1.0 + np.exp(-np.where(np.abs(yr) > 60.0, 60.0 * np.sign(yr), y)))
 
 
+class WingShape:
+    """A bent wing for the wingtip-height constraint (skim study, D-018, docs/02-form.md#wingtip-skim).
+
+    Each half wing is two straight panels of the flat span b: the inner panel from the root to the
+    break at the fraction eta of the half span s = b/2, at inner_deg to the wing's reference plane
+    (positive tip up), and the outer panel from the break to the tip at outer_deg. Plain dihedral
+    is inner = outer; the bent-up outer panel only (polyhedral, or a reversed gull) is inner 0.
+    At a bank |mu| and a flight-path angle gamma the depths below the centre are
+        break  d_b = s cos(gamma) eta sin(|mu| - G_i)
+        tip    d_t = s cos(gamma) (eta sin(|mu| - G_i) + (1 - eta) sin(|mu| - G_o))
+    (body axes taken as wind axes, the angle of attack neglected). The vertical share of the panel
+    lift is kappa = (1 - f_o) cos G_i + f_o cos G_o with f_o the share of an elliptic loading
+    outboard of the break, 1 - (2/pi)(eta sqrt(1 - eta^2) + asin eta); the panels then fly at
+    CL / kappa, so the induced and profile drag at a given lift follow (shaped_aircraft)."""
+
+    def __init__(self, inner_deg=0.0, outer_deg=0.0, eta=1.0):
+        self.gi, self.go = np.radians(float(inner_deg)), np.radians(float(outer_deg))
+        self.eta = float(eta) if inner_deg != outer_deg else 1.0
+        if not 0.0 < self.eta <= 1.0:
+            raise ValueError(eta)
+
+    @classmethod
+    def dihedral(cls, deg):
+        return cls(deg, deg, 1.0)
+
+    @classmethod
+    def outer_panel(cls, deg, eta):
+        return cls(0.0, deg, eta)
+
+    @property
+    def outer_share(self):
+        e = self.eta
+        return 1.0 - 2.0 / np.pi * (e * np.sqrt(max(1.0 - e * e, 0.0)) + np.arcsin(e))
+
+    @property
+    def kappa(self):
+        f = self.outer_share
+        return float((1.0 - f) * np.cos(self.gi) + f * np.cos(self.go))
+
+    def low_points(self, s, absmu, gam):
+        """[(depth, d depth / d|mu|, d depth / d gamma)] of the tip and, for a bent wing, the break."""
+        cg, sg = np.cos(gam), np.sin(gam)
+        e = self.eta
+        a_i, a_o = absmu - self.gi, absmu - self.go
+        dep_t = e * np.sin(a_i) + (1.0 - e) * np.sin(a_o)
+        der_t = e * np.cos(a_i) + (1.0 - e) * np.cos(a_o)
+        out = [(s * cg * dep_t, s * cg * der_t, -s * sg * dep_t)]
+        if e < 1.0:
+            out.append((s * cg * e * np.sin(a_i), s * cg * e * np.cos(a_i), -s * sg * e * np.sin(a_i)))
+        return out
+
+    def describe(self):
+        return {"inner_deg": float(np.degrees(self.gi)), "outer_deg": float(np.degrees(self.go)),
+                "eta": self.eta, "kappa": self.kappa, "outer_share": float(self.outer_share)}
+
+
+def shaped_aircraft(ac, shape):
+    """Copy of ac whose lift coefficient is the vertical (effective) one, CL_e = kappa CL_panel:
+    cl_max and cl_min times kappa, the induced factor over kappa^2 (oswald times kappa^2) and the
+    profile terms at CL_e / kappa (cdp1 / kappa, cdp2 / kappa^2, cdp8 / kappa^8)."""
+    from dataclasses import replace
+    k = shape.kappa
+    return replace(ac, oswald=ac.oswald * k * k, cl_max=ac.cl_max * k, cl_min=ac.cl_min * k,
+                   cdp1=ac.cdp1 / k, cdp2=ac.cdp2 / k ** 2, cdp8=ac.cdp8 / k ** 8)
+
+
+def _tip_heights(col, hh, mu, gam):
+    """Lowest wing point above the surface for the replays: hh - (b/2) sin|mu| cos gamma for the flat
+    wing or the lowest of the WingShape points."""
+    s = 0.5 * col.ac.span
+    if getattr(col, "shape", None) is None:
+        return hh - s * np.sin(np.abs(mu)) * np.cos(gam)
+    return hh - np.max([d for d, _, _ in col.shape.low_points(s, np.abs(mu), gam)], axis=0)
+
+
 class WaveParams:
     """One deep-water wave component: a (m), wavelength (m), to_deg (math-frame direction of travel).
 
@@ -348,8 +423,10 @@ class Collocation:
                  midpoints=False, rate_limits=False, n_min=None, n_frac=1.0, mu_frac=1.0,
                  bank_rate_max_deg_s=None, cl_rate_max_per_s=None, phase_pin="theta",
                  rate_model="constant", roll_pb2v=None, ground_effect=False, motor=False,
-                 v_travel_min=None, folded_prop=False):
-        """folded_prop (motor=False only): an airframe with a folded propeller, Delta CD0 =
+                 v_travel_min=None, folded_prop=False, wing_shape=None):
+        """wing_shape: a WingShape (tip_model "geometric" only): the wingtip constraint holds the
+        lowest wing points of the bent wing and the aircraft is shaped_aircraft(ac, wing_shape).
+        folded_prop (motor=False only): an airframe with a folded propeller, Delta CD0 =
         prop.folded_drag_cda_m2 / S added to cd0 over the whole cycle (with motor=True the smooth
         switch of _drag applies instead). ground_effect: induced drag times ground_effect_phi (default off).
         motor: thrust T in [0, T_max] per node as a third control (kept in extra variables after
@@ -373,6 +450,11 @@ class Collocation:
         self.ge, self.motor = bool(ground_effect), bool(motor)
         if folded_prop and not motor:
             ac = folded_aircraft(ac)
+        if wing_shape is not None and tip_model != "geometric":
+            raise ValueError("wing_shape needs tip_model geometric")
+        self.shape = wing_shape
+        if wing_shape is not None:
+            ac = shaped_aircraft(ac, wing_shape)
         self.v_travel_min = None if v_travel_min is None else float(v_travel_min)
         self.ac, self.prof, self.mode, self.cycle, self.N = ac, prof, mode, cycle, n
         self.u_fixed = u10
@@ -690,6 +772,15 @@ class Collocation:
         if self.tip_model == "abs":
             tip = hh - 0.5 * ac.span * absmu - self.h_tip
             Jt[i, N * NS + i * NC + 1] = -0.5 * ac.span * dabs
+        elif self.shape is not None:
+            tips, Jts = [], []
+            for dep, ddmu, ddg in self.shape.low_points(0.5 * ac.span, absmu, gam):
+                Jx = Jh.copy()
+                Jx[i, N * NS + i * NC + 1] = -ddmu * dabs
+                Jx[i, i * NS + 4] = -ddg * sc[i * NS + 4]
+                tips.append(hh - dep - self.h_tip)
+                Jts.append(Jx)
+            tip, Jt = np.concatenate(tips), np.vstack(Jts)
         else:
             sa, ca = np.sin(absmu), np.cos(absmu)
             tip = hh - 0.5 * ac.span * sa * np.cos(gam) - self.h_tip
@@ -821,6 +912,12 @@ class Collocation:
         if self.tip_model == "abs":
             tip = hm - 0.5 * ac.span * absmu - self.h_tip
             dtip = dh - 0.5 * ac.span * dabs * dmu
+        elif self.shape is not None:
+            tips, dtips = [], []
+            for dep, ddmu, ddg in self.shape.low_points(0.5 * ac.span, absmu, gm):
+                tips.append(hm - dep - self.h_tip)
+                dtips.append(dh - ddmu[:, None] * dabs * dmu - ddg[:, None] * Jsm[:, 4, :])
+            tip, dtip = np.concatenate(tips), np.vstack(dtips)
         else:
             sa, ca = np.sin(absmu), np.cos(absmu)
             tip = hm - 0.5 * ac.span * sa * np.cos(gm) - self.h_tip
@@ -981,7 +1078,7 @@ def control_stats(col, x, sub=20):
         hh = s[:, 2]
         if wv is not None:
             hh = hh - wv.a * np.cos(wv.k * (wv.cw * s[:, 0] + wv.sw * s[:, 1]) - wv.om * t + phi)
-        return hh, hh - 0.5 * ac.span * np.sin(np.abs(c[:, 1])) * np.cos(s[:, 4])
+        return hh, _tip_heights(col, hh, c[:, 1], s[:, 4])
 
     M = N - 1
     kt = np.arange(M) * dt
@@ -1085,7 +1182,7 @@ def dense_replay(col, x, sub=None):
         c = C[:-1] + (C[1:] - C[:-1]) * fr
         t_ = kt + fr * dt
         hh = s[:, 2] - surf(s, t_)
-        tip = hh - 0.5 * ac.span * np.sin(np.abs(c[:, 1])) * np.cos(s[:, 4])
+        tip = _tip_heights(col, hh, c[:, 1], s[:, 4])
         nn = K * s[:, 3] ** 2 * c[:, 0]
         hmin, tmin = min(hmin, hh.min()), min(tmin, tip.min())
         nmax, nmin = max(nmax, nn.max()), min(nmin, nn.min())
@@ -1342,8 +1439,12 @@ def solve(ac, prof, mode="min_wind", cycle="travel", n=40, u10=None, chi=np.pi /
           bank_rate_max_deg_s=None, cl_rate_max_per_s=None, phase_pin="theta", m_search=(0,),
           rate_model="constant", roll_pb2v=None, ground_effect=False, motor=False,
           v_travel_min=None, folded_prop=False, replay_check=False, refine=False,
-          wave_preset="model", dt_max=0.25, n_cap=160, refine_tries=2, refine_maxiter=100):
+          wave_preset="model", dt_max=0.25, n_cap=160, refine_tries=2, refine_maxiter=100,
+          wing_shape=None):
     """Solve for the best converged cycle among the seeded initial guesses.
+
+    wing_shape: a WingShape for a bent wing (see Collocation; the info then holds the shaped
+    aircraft's numbers).
 
     ground_effect, motor, v_travel_min and mode "min_power": see Collocation.
     midpoints (flat mode; the wave mode has WaveParams.midpoints), rate_limits, n_min, n_frac,
@@ -1372,7 +1473,7 @@ def solve(ac, prof, mode="min_wind", cycle="travel", n=40, u10=None, chi=np.pi /
                mu_frac=mu_frac, bank_rate_max_deg_s=bank_rate_max_deg_s,
                cl_rate_max_per_s=cl_rate_max_per_s, phase_pin=phase_pin, rate_model=rate_model,
                roll_pb2v=roll_pb2v, ground_effect=ground_effect, motor=motor,
-               v_travel_min=v_travel_min, folded_prop=folded_prop)
+               v_travel_min=v_travel_min, folded_prop=folded_prop, wing_shape=wing_shape)
     col = Collocation(**ckw)
     ckw["wave"] = col.wv   # the same WaveParams object for every mesh
     if x0 is not None and len(x0) != col.nv:   # a start from another mesh: resample it
