@@ -408,6 +408,26 @@ What it means for the design:
 - Swell can carry part of the energy, and with a calibrated wave wind the wind needed over swell may still fall below the flat-sea minimum; that is a route towards ds.min_u10_ms of R-02, and it waits for Q-058 and Q-059.
 - The flight control must follow the wave phase with feedback, which is the receding-horizon planner of Q-057.
 
+### Second pass: replay-checked cycles over swell (wave study 4)
+
+The second pass (`python -m sim.dsopt --wave-study4`, `sim/out/dsopt_wave4.json`) fixed what K-008 and K-011 found and asked the question again with the calibrated wave wind:
+
+- every cycle is replayed densely and counts only if it closes and keeps its height and wingtip between nodes; long cycles are re-solved on a finer mesh until they do;
+- the wave wind uses the amplitudes and decays of P63, and the low bound of P64 for the vertical part;
+- roll and lift-coefficient rates, the load-factor floor and COARE 3.5 are in, and each case runs with the control margins (lowest point 2 m, 0.8 of the load limit) and without them;
+- the phase is pinned on the wave and several phase slips and rotated starts are tried.
+
+Of dsopt.wave4_cases_planned cases, dsopt.wave4_cases_run ran within the time; the rest (the albatross-like glider at the longer period and part of the low bound) are left for later.
+
+What it found:
+
+- Over a 3 m swell both candidates sustain a cycle with no wind at all, with and without the margins: dsopt.wave4_floor_cases cases in all, every case run with the wave wind of P63 and dsopt.wave4_p64_floor_cases of dsopt.wave4_p64_cases_run with the low bound of P64 (the one miss looks like a local optimum, since the same case along the wave reaches it); the baseline's cycles last dsopt.wave4_baseline_floor_period_min_s to dsopt.wave4_baseline_floor_period_max_s and turn low on the forward face or the crest.
+- The albatross-like glider's cycles over 3 m swell sit at the period bound of dsopt.wave4_period_bound_s and are not natural periods, so their existence is shown but not their shape.
+- Over a 1 m swell the waves do not help: only one case beats the flat sea, by dsopt.wave4_hs1_best_gain_ms, against flat minima of dsopt.wave4_flat_margin_baseline_ms and dsopt.wave4_flat_margin_albatross_ms with margins and dsopt.wave4_flat_none_baseline_ms and dsopt.wave4_flat_none_albatross_ms without; the others need more wind than the flat sea, because a cycle forced to repeat with the wave pays for that when the wave gives little, so for small waves the right answer is the better of a wave-synchronized and an unsynchronized cycle.
+
+What it means: a large swell can carry the drone with no wind, if it follows the wave phase; a small swell cannot, and the wind must do it.
+This is the bird's light-wind behaviour (P42, P74, P80), and it makes the wave-aware closed loop the next thing to show (Q-060).
+
 ## Control modes {#control-modes}
 
 The owner asked for a state transition diagram as well as a flowchart (2026-10-29).

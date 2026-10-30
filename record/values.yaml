@@ -1037,6 +1037,84 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#simulator-fitness
+  - key: dsopt.wave4_cases_planned
+    v: 64
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_cases_run
+    v: 31
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_floor_cases
+    v: 18
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_p64_floor_cases
+    v: 6
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_p64_cases_run
+    v: 7
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_flat_margin_baseline_ms
+    v: 13.11
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_flat_margin_albatross_ms
+    v: 10.32
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_flat_none_baseline_ms
+    v: 10.89
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_flat_none_albatross_ms
+    v: 9.41
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_hs1_best_gain_ms
+    v: 0.76
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_baseline_floor_period_min_s
+    v: 16.3
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_baseline_floor_period_max_s
+    v: 37
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
+  - key: dsopt.wave4_period_bound_s
+    v: 60
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-cycles
   - key: env.charnock
     v: 0.0144
     unit: 1
