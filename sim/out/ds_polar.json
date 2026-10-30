@@ -1,0 +1,3004 @@
+{
+ "meta": {
+  "tdr_run": "python -m sim.polar",
+  "commit": "2a6c46b",
+  "stamp": "sha-5127075e9e6a",
+  "runtime_s": 1300.9457449913025,
+  "n_nodes": 40,
+  "dropped": [],
+  "frame": "wind toward +x, chi ccw from +x: 0 downwind, 180 deg straight upwind",
+  "dsopt": "solve(mode=max_speed, cycle=travel, midpoints, rate_limits, pb2v, n_min 0, tip_model geometric, replay_check, coare35 log profile, seeds 0-2 stop_after 1, plus warm starts from the neighbouring course in both sweep directions)",
+  "margin_sets": {
+   "standard": {
+    "h_min": 2.0,
+    "n_frac": 0.8,
+    "mu_frac": 0.9,
+    "v_factor": 1.2
+   },
+   "light": {
+    "h_min": 1.5,
+    "n_frac": 0.9,
+    "mu_frac": 0.95,
+    "v_factor": 1.15
+   }
+  },
+  "margin_order": "standard first; light only for courses standard did not solve"
+ },
+ "rows": [
+  {
+   "aircraft": "albatross-3m",
+   "u10": 9.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": false
+    }
+   ],
+   "runtime_s": 315.3110945224762,
+   "best": {
+    "upwind": null,
+    "downwind": null
+   }
+  },
+  {
+   "aircraft": "baseline-2m",
+   "u10": 9.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": false
+    }
+   ],
+   "runtime_s": 321.53310656547546,
+   "best": {
+    "upwind": null,
+    "downwind": null
+   }
+  },
+  {
+   "aircraft": "sealedhull-2p5m",
+   "u10": 9.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": false
+    }
+   ],
+   "runtime_s": 314.1827087402344,
+   "best": {
+    "upwind": null,
+    "downwind": null
+   }
+  },
+  {
+   "aircraft": "albatross-3m",
+   "u10": 11.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 15.576088831571935,
+     "ground_speed": 18.712749387296352,
+     "period": 7.836796935825515,
+     "n_max": 3.1999999999993345,
+     "vmg_downwind": 15.576088831571935,
+     "vmg_upwind": -15.576088831571935,
+     "z_min": 2.000000000000001,
+     "runs": 2
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 12.446154603529386,
+     "ground_speed": 18.30340401703194,
+     "period": 8.029119960380745,
+     "n_max": 3.199999999991493,
+     "vmg_downwind": 12.022062169535614,
+     "vmg_upwind": -12.022062169535614,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 18.961250250326678,
+     "ground_speed": 19.146188287012748,
+     "period": 7.373282862839887,
+     "n_max": 3.199999999998787,
+     "vmg_downwind": 16.42092440429695,
+     "vmg_upwind": -16.42092440429695,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 19.100758990428492,
+     "ground_speed": 19.165815739553935,
+     "period": 7.215562178144932,
+     "n_max": 3.1999999999975177,
+     "vmg_downwind": 13.506276207941902,
+     "vmg_upwind": -13.506276207941902,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 18.16581062121563,
+     "ground_speed": 18.970454679380893,
+     "period": 7.116697675347352,
+     "n_max": 3.199999999999962,
+     "vmg_downwind": 9.082905310607817,
+     "vmg_upwind": -9.082905310607817,
+     "z_min": 2.000000000000001,
+     "runs": 3
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 16.339500403803,
+     "ground_speed": 18.351545288945225,
+     "period": 6.987653774534915,
+     "n_max": 3.1999999999927504,
+     "vmg_downwind": 4.228973891964545,
+     "vmg_upwind": -4.228973891964545,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 13.841652974630724,
+     "ground_speed": 17.454595164896066,
+     "period": 6.946519413426607,
+     "n_max": 3.1999999999941737,
+     "vmg_downwind": 8.475568005144978e-16,
+     "vmg_upwind": -8.475568005144978e-16,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 10.828480367848691,
+     "ground_speed": 16.358583301588098,
+     "period": 6.920069072910223,
+     "n_max": 3.19999999994316,
+     "vmg_downwind": -2.8026169487179917,
+     "vmg_upwind": 2.8026169487179917,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 7.501807283984221,
+     "ground_speed": 14.981670049889278,
+     "period": 6.987186273694363,
+     "n_max": 3.199999999988919,
+     "vmg_downwind": -3.750903641992109,
+     "vmg_upwind": 3.750903641992109,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 4.097743305619035,
+     "ground_speed": 13.699974924467535,
+     "period": 7.157124177131404,
+     "n_max": 3.199999999993745,
+     "vmg_downwind": -2.897542078964999,
+     "vmg_upwind": 2.897542078964999,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 0.6909506222178627,
+     "ground_speed": 12.875038362523947,
+     "period": 7.287499148374082,
+     "n_max": 3.1999999999993087,
+     "vmg_downwind": -0.5983807916013337,
+     "vmg_upwind": 0.5983807916013337,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -2.5764972789131084,
+     "ground_speed": 12.25324254266458,
+     "period": 7.432451903258174,
+     "n_max": 3.199999999900607,
+     "vmg_downwind": 2.48870526306568,
+     "vmg_upwind": -2.48870526306568,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -5.4620808354915935,
+     "ground_speed": 11.654142781271183,
+     "period": 7.577153316341287,
+     "n_max": 3.1999999999946604,
+     "vmg_downwind": 5.4620808354915935,
+     "vmg_upwind": -5.4620808354915935,
+     "z_min": 2.000000000000001,
+     "runs": 2
+    }
+   ],
+   "runtime_s": 273.7681522369385,
+   "best": {
+    "upwind": {
+     "course_deg": 120.0,
+     "vmg": 3.7509036419921116,
+     "progress": 7.501807283984221
+    },
+    "downwind": {
+     "course_deg": 30.0,
+     "vmg": 16.42092440429695,
+     "progress": 18.961250250326678
+    }
+   }
+  },
+  {
+   "aircraft": "baseline-2m",
+   "u10": 11.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": false
+    }
+   ],
+   "runtime_s": 357.7413766384125,
+   "best": {
+    "upwind": null,
+    "downwind": null
+   }
+  },
+  {
+   "aircraft": "sealedhull-2p5m",
+   "u10": 11.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": false
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": false
+    }
+   ],
+   "runtime_s": 393.6942765712738,
+   "best": {
+    "upwind": null,
+    "downwind": null
+   }
+  },
+  {
+   "aircraft": "albatross-3m",
+   "u10": 13.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 22.165017371399166,
+     "ground_speed": 24.01483896758457,
+     "period": 9.269032848668852,
+     "n_max": 3.1999999999969915,
+     "vmg_downwind": 22.165017371399166,
+     "vmg_upwind": -22.165017371399166,
+     "z_min": 2.0000000000000004,
+     "runs": 1
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 24.082750051517223,
+     "ground_speed": 24.516590476890546,
+     "period": 8.464552421175465,
+     "n_max": 3.1999999999978224,
+     "vmg_downwind": 23.262150242824877,
+     "vmg_upwind": -23.262150242824877,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 24.656360763761334,
+     "ground_speed": 24.65638600926122,
+     "period": 8.117441868303516,
+     "n_max": 3.199999999994991,
+     "vmg_downwind": 21.3530347862912,
+     "vmg_upwind": -21.3530347862912,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 24.1731608458838,
+     "ground_speed": 24.44767859674978,
+     "period": 7.490051161798249,
+     "n_max": 3.1999999999999846,
+     "vmg_downwind": 17.093005956837576,
+     "vmg_upwind": -17.093005956837576,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 22.75381520258431,
+     "ground_speed": 23.838436664052264,
+     "period": 7.07742483725827,
+     "n_max": 3.1999999999828552,
+     "vmg_downwind": 11.376907601292157,
+     "vmg_upwind": -11.376907601292157,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 20.469378788126935,
+     "ground_speed": 22.878421900919577,
+     "period": 7.004571484614226,
+     "n_max": 3.199999999971618,
+     "vmg_downwind": 5.297865071784806,
+     "vmg_upwind": -5.297865071784806,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 17.456634233652277,
+     "ground_speed": 21.50744322697381,
+     "period": 7.042925898607287,
+     "n_max": 3.1999999999467423,
+     "vmg_downwind": 1.0689105619064186e-15,
+     "vmg_upwind": -1.0689105619064186e-15,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 13.945225792204988,
+     "ground_speed": 19.855197616283295,
+     "period": 7.003772074870764,
+     "n_max": 3.1999999999965714,
+     "vmg_downwind": -3.60929002327754,
+     "vmg_upwind": 3.60929002327754,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 10.128952384561163,
+     "ground_speed": 17.974147382118556,
+     "period": 6.970152424822235,
+     "n_max": 3.1999999999997017,
+     "vmg_downwind": -5.064476192280579,
+     "vmg_upwind": 5.064476192280579,
+     "z_min": 2.000000000000001,
+     "runs": 3
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 6.27491294435914,
+     "ground_speed": 15.730804713033002,
+     "period": 7.1201002511183695,
+     "n_max": 3.199999999999791,
+     "vmg_downwind": -4.437033494311592,
+     "vmg_upwind": 4.437033494311592,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 2.66386222220581,
+     "ground_speed": 13.26918143866831,
+     "period": 7.625071394648698,
+     "n_max": 3.199999999999195,
+     "vmg_downwind": -2.3069723566118987,
+     "vmg_upwind": 2.3069723566118987,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -0.46304012333510886,
+     "ground_speed": 10.795160173127124,
+     "period": 8.194315357334595,
+     "n_max": 3.1999999999945152,
+     "vmg_downwind": 0.44726241373745707,
+     "vmg_upwind": -0.44726241373745707,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -2.9905811818750574,
+     "ground_speed": 9.181838683919635,
+     "period": 8.573970541297,
+     "n_max": 3.1999999999600566,
+     "vmg_downwind": 2.9905811818750574,
+     "vmg_upwind": -2.9905811818750574,
+     "z_min": 2.0,
+     "runs": 2
+    }
+   ],
+   "runtime_s": 360.82873344421387,
+   "best": {
+    "upwind": {
+     "course_deg": 120.0,
+     "vmg": 5.0644761922805825,
+     "progress": 10.128952384561163
+    },
+    "downwind": {
+     "course_deg": 15.0,
+     "vmg": 23.262150242824877,
+     "progress": 24.082750051517223
+    }
+   }
+  },
+  {
+   "aircraft": "baseline-2m",
+   "u10": 13.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 18.216979902592893,
+     "ground_speed": 20.105432511229004,
+     "period": 7.185804317135366,
+     "n_max": 3.599999999999363,
+     "vmg_downwind": 18.216979902592893,
+     "vmg_upwind": -18.216979902592893,
+     "z_min": 1.5,
+     "runs": 2
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 19.904829883959575,
+     "ground_speed": 20.38607488079021,
+     "period": 6.716627984061873,
+     "n_max": 3.599999999999877,
+     "vmg_downwind": 19.226589252806992,
+     "vmg_upwind": -19.226589252806992,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 20.459360535293804,
+     "ground_speed": 20.460132535957964,
+     "period": 6.58827708366185,
+     "n_max": 3.5999999999983556,
+     "vmg_downwind": 17.718325968749227,
+     "vmg_upwind": -17.718325968749227,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 19.841950120935607,
+     "ground_speed": 20.30593031988615,
+     "period": 6.338266339644251,
+     "n_max": 3.5999999999930794,
+     "vmg_downwind": 14.030377482478805,
+     "vmg_upwind": -14.030377482478805,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 18.285678001986692,
+     "ground_speed": 19.76695126319406,
+     "period": 6.068211199854254,
+     "n_max": 3.599999999998418,
+     "vmg_downwind": 9.142839000993348,
+     "vmg_upwind": -9.142839000993348,
+     "z_min": 1.5000000000000002,
+     "runs": 3
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 15.960957230341148,
+     "ground_speed": 18.920230115334043,
+     "period": 5.889860985612381,
+     "n_max": 3.5999999999989587,
+     "vmg_downwind": 4.13099970927907,
+     "vmg_upwind": -4.13099970927907,
+     "z_min": 1.5000000000000002,
+     "runs": 3
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 13.007680144997222,
+     "ground_speed": 17.88750263768868,
+     "period": 5.810109324111902,
+     "n_max": 3.5999999999353687,
+     "vmg_downwind": 7.964906926951713e-16,
+     "vmg_upwind": -7.964906926951713e-16,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 9.603035054647833,
+     "ground_speed": 16.626532753944225,
+     "period": 5.81380100279674,
+     "n_max": 3.5999999999736505,
+     "vmg_downwind": -2.4854483629299864,
+     "vmg_upwind": 2.4854483629299864,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 5.990929876507795,
+     "ground_speed": 15.104509736667653,
+     "period": 5.954973358442654,
+     "n_max": 3.5999999999995436,
+     "vmg_downwind": -2.995464938253896,
+     "vmg_upwind": 2.995464938253896,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 2.4238529632875245,
+     "ground_speed": 13.449830726216016,
+     "period": 6.19746510555253,
+     "n_max": 3.599999999894425,
+     "vmg_downwind": -1.7139228669397162,
+     "vmg_upwind": 1.7139228669397162,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": -0.8629328133727362,
+     "ground_speed": 11.781508588717527,
+     "period": 6.5478061483475125,
+     "n_max": 3.599999999997497,
+     "vmg_downwind": 0.7473217381399656,
+     "vmg_upwind": -0.7473217381399656,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": -3.7262618946190065,
+     "ground_speed": 10.830031667948525,
+     "period": 6.766866915670735,
+     "n_max": 3.599999999998277,
+     "vmg_downwind": 3.5992925995293326,
+     "vmg_upwind": -3.5992925995293326,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": -6.139761443025421,
+     "ground_speed": 10.223513018528518,
+     "period": 6.993950687825121,
+     "n_max": 3.5999999999986723,
+     "vmg_downwind": 6.139761443025421,
+     "vmg_upwind": -6.139761443025421,
+     "z_min": 1.5,
+     "runs": 2
+    }
+   ],
+   "runtime_s": 494.9444704055786,
+   "best": {
+    "upwind": {
+     "course_deg": 120.0,
+     "vmg": 2.995464938253898,
+     "progress": 5.990929876507795
+    },
+    "downwind": {
+     "course_deg": 15.0,
+     "vmg": 19.226589252806992,
+     "progress": 19.904829883959575
+    }
+   }
+  },
+  {
+   "aircraft": "sealedhull-2p5m",
+   "u10": 13.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 18.19055615502245,
+     "ground_speed": 20.16400209642835,
+     "period": 7.474232515186692,
+     "n_max": 3.5999999999999828,
+     "vmg_downwind": 18.19055615502245,
+     "vmg_upwind": -18.19055615502245,
+     "z_min": 1.5,
+     "runs": 2
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 19.948630270011535,
+     "ground_speed": 20.465881241795863,
+     "period": 7.2164410060789805,
+     "n_max": 3.599999999957148,
+     "vmg_downwind": 19.26889717689601,
+     "vmg_upwind": -19.26889717689601,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 20.574062871896235,
+     "ground_speed": 20.5748444579561,
+     "period": 6.8299058228382,
+     "n_max": 3.5999999999999104,
+     "vmg_downwind": 17.817661106120365,
+     "vmg_upwind": -17.817661106120365,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 20.038386712382874,
+     "ground_speed": 20.478355306640417,
+     "period": 6.7180228902690695,
+     "n_max": 3.59999999998623,
+     "vmg_downwind": 14.16927912836434,
+     "vmg_upwind": -14.16927912836434,
+     "z_min": 1.5000000000000002,
+     "runs": 3
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 18.513934862692956,
+     "ground_speed": 19.922705668918958,
+     "period": 6.359840024207052,
+     "n_max": 3.599999999990669,
+     "vmg_downwind": 9.25696743134648,
+     "vmg_upwind": -9.25696743134648,
+     "z_min": 1.5000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 16.222504121720853,
+     "ground_speed": 19.106370947466424,
+     "period": 6.165173461840191,
+     "n_max": 3.5999999998707444,
+     "vmg_downwind": 4.198693025955498,
+     "vmg_upwind": -4.198693025955498,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 13.277012921675505,
+     "ground_speed": 18.08590695252753,
+     "period": 6.098423449218286,
+     "n_max": 3.5999999999878045,
+     "vmg_downwind": 8.129825688383978e-16,
+     "vmg_upwind": -8.129825688383978e-16,
+     "z_min": 1.5000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 9.86734617524633,
+     "ground_speed": 16.826055469036287,
+     "period": 6.050012611155365,
+     "n_max": 3.5999999999729124,
+     "vmg_downwind": -2.5538571147732667,
+     "vmg_upwind": 2.5538571147732667,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 6.214202529504401,
+     "ground_speed": 15.389807598830949,
+     "period": 6.161236148398852,
+     "n_max": 3.5999999999306556,
+     "vmg_downwind": -3.1071012647521994,
+     "vmg_upwind": 3.1071012647521994,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 2.5939290896683644,
+     "ground_speed": 13.677566579960528,
+     "period": 6.390714843831077,
+     "n_max": 3.5999999999999814,
+     "vmg_downwind": -1.8341848492215485,
+     "vmg_upwind": 1.8341848492215485,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": -0.7450858733090078,
+     "ground_speed": 11.964589604564702,
+     "period": 6.780097608530773,
+     "n_max": 3.5999999999927432,
+     "vmg_downwind": 0.6452632942865146,
+     "vmg_upwind": -0.6452632942865146,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": -3.7020218725352785,
+     "ground_speed": 11.18645758026006,
+     "period": 6.843979397184209,
+     "n_max": 3.5999999999855468,
+     "vmg_downwind": 3.5758785361688425,
+     "vmg_upwind": -3.5758785361688425,
+     "z_min": 1.5,
+     "runs": 3
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": -6.210513833086284,
+     "ground_speed": 10.492967527235091,
+     "period": 7.22362652877654,
+     "n_max": 3.5025867858881155,
+     "vmg_downwind": 6.210513833086284,
+     "vmg_upwind": -6.210513833086284,
+     "z_min": 1.5,
+     "runs": 2
+    }
+   ],
+   "runtime_s": 376.3888432979584,
+   "best": {
+    "upwind": {
+     "course_deg": 120.0,
+     "vmg": 3.1071012647522016,
+     "progress": 6.214202529504401
+    },
+    "downwind": {
+     "course_deg": 15.0,
+     "vmg": 19.26889717689601,
+     "progress": 19.948630270011535
+    }
+   }
+  },
+  {
+   "aircraft": "albatross-3m",
+   "u10": 16.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 29.130027882297853,
+     "ground_speed": 30.284145529627637,
+     "period": 11.16544742449506,
+     "n_max": 3.199999999996919,
+     "vmg_downwind": 29.130027882297853,
+     "vmg_upwind": -29.130027882297853,
+     "z_min": 2.000000000000001,
+     "runs": 1
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 30.644919759047532,
+     "ground_speed": 30.847151728120483,
+     "period": 9.621843993966454,
+     "n_max": 3.1999999999968387,
+     "vmg_downwind": 29.600719439820185,
+     "vmg_upwind": -29.600719439820185,
+     "z_min": 2.0,
+     "runs": 1
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 30.983518656842538,
+     "ground_speed": 30.995086980736588,
+     "period": 8.294571639804518,
+     "n_max": 3.1999999999991093,
+     "vmg_downwind": 26.83251425545475,
+     "vmg_upwind": -26.83251425545475,
+     "z_min": 2.0,
+     "runs": 2
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 30.17357595995221,
+     "ground_speed": 30.630553044793025,
+     "period": 7.643220959428962,
+     "n_max": 3.199999999999997,
+     "vmg_downwind": 21.3359401739296,
+     "vmg_upwind": -21.3359401739296,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 28.242344331016085,
+     "ground_speed": 29.78371525613098,
+     "period": 7.408095632074861,
+     "n_max": 3.199999999998656,
+     "vmg_downwind": 14.121172165508046,
+     "vmg_upwind": -14.121172165508046,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 25.28951726309456,
+     "ground_speed": 28.41984892266034,
+     "period": 7.4619213397678905,
+     "n_max": 3.199999999999801,
+     "vmg_downwind": 6.545408709137847,
+     "vmg_upwind": -6.545408709137847,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 21.53680063668571,
+     "ground_speed": 26.550105536072408,
+     "period": 7.343555371265991,
+     "n_max": 3.1999999999988975,
+     "vmg_downwind": 1.3187486981795919e-15,
+     "vmg_upwind": -1.3187486981795919e-15,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 17.24920783685363,
+     "ground_speed": 24.242330187634387,
+     "period": 7.26891746040306,
+     "n_max": 3.199999999999145,
+     "vmg_downwind": -4.464423501109375,
+     "vmg_upwind": 4.464423501109375,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 12.704719260336596,
+     "ground_speed": 21.62745060201123,
+     "period": 7.108389188648542,
+     "n_max": 3.199999999972119,
+     "vmg_downwind": -6.352359630168295,
+     "vmg_upwind": 6.352359630168295,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 8.16147111869429,
+     "ground_speed": 18.84812545199857,
+     "period": 7.0598962073768785,
+     "n_max": 3.199999999999491,
+     "vmg_downwind": -5.771031572486891,
+     "vmg_upwind": 5.771031572486891,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 3.91406339080395,
+     "ground_speed": 15.75115820075562,
+     "period": 7.371429888247215,
+     "n_max": 3.1999999999925786,
+     "vmg_downwind": -3.38967832845888,
+     "vmg_upwind": 3.38967832845888,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 0.267012169312318,
+     "ground_speed": 12.444966875820148,
+     "period": 7.848937978771755,
+     "n_max": 3.1999999999687154,
+     "vmg_downwind": -0.25791395027223735,
+     "vmg_upwind": 0.25791395027223735,
+     "z_min": 2.0,
+     "runs": 2
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -2.486961792493223,
+     "ground_speed": 8.977732860084092,
+     "period": 9.350413617277825,
+     "n_max": 3.1999999999994695,
+     "vmg_downwind": 2.486961792493223,
+     "vmg_upwind": -2.486961792493223,
+     "z_min": 2.0,
+     "runs": 2
+    }
+   ],
+   "runtime_s": 355.55665016174316,
+   "best": {
+    "upwind": {
+     "course_deg": 120.0,
+     "vmg": 6.3523596301683,
+     "progress": 12.704719260336596
+    },
+    "downwind": {
+     "course_deg": 15.0,
+     "vmg": 29.600719439820185,
+     "progress": 30.644919759047532
+    }
+   }
+  },
+  {
+   "aircraft": "baseline-2m",
+   "u10": 16.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 23.727425390443397,
+     "ground_speed": 25.16675389073228,
+     "period": 8.023031550667056,
+     "n_max": 3.199999999999532,
+     "vmg_downwind": 23.727425390443397,
+     "vmg_upwind": -23.727425390443397,
+     "z_min": 2.000000000000001,
+     "runs": 2
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 25.242787413673362,
+     "ground_speed": 25.43753097946939,
+     "period": 7.632066266953616,
+     "n_max": 3.1999999999999997,
+     "vmg_downwind": 24.382660290391737,
+     "vmg_upwind": -24.382660290391737,
+     "z_min": 2.0000048226124627,
+     "runs": 3
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 25.35297915648097,
+     "ground_speed": 25.44946948880081,
+     "period": 7.3477655729625155,
+     "n_max": 3.1999999999999424,
+     "vmg_downwind": 21.95632401112989,
+     "vmg_upwind": -21.95632401112989,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 24.22381024391959,
+     "ground_speed": 25.03798866335141,
+     "period": 6.766346574262797,
+     "n_max": 3.1999999999976643,
+     "vmg_downwind": 17.128820489651698,
+     "vmg_upwind": -17.128820489651698,
+     "z_min": 2.000000000000001,
+     "runs": 3
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 22.074428548712554,
+     "ground_speed": 24.23916726174361,
+     "period": 6.3942605059927,
+     "n_max": 3.199999999999647,
+     "vmg_downwind": 11.037214274356279,
+     "vmg_upwind": -11.037214274356279,
+     "z_min": 2.000000000000001,
+     "runs": 3
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 19.038364478228196,
+     "ground_speed": 23.094713447061636,
+     "period": 6.207730235664311,
+     "n_max": 3.199999999999876,
+     "vmg_downwind": 4.927491314568773,
+     "vmg_upwind": -4.927491314568773,
+     "z_min": 2.000000000000001,
+     "runs": 3
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 15.300486613736487,
+     "ground_speed": 21.651753201857268,
+     "period": 6.139788518204547,
+     "n_max": 3.199999999984086,
+     "vmg_downwind": 9.368845978454658e-16,
+     "vmg_upwind": -9.368845978454658e-16,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 11.106419041933236,
+     "ground_speed": 19.900130843045062,
+     "period": 6.09176542452974,
+     "n_max": 3.1999999999698825,
+     "vmg_downwind": -2.8745527709416145,
+     "vmg_upwind": 2.8745527709416145,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 6.742030611636693,
+     "ground_speed": 17.944554562945733,
+     "period": 6.080969017692292,
+     "n_max": 3.199999999985675,
+     "vmg_downwind": -3.371015305818345,
+     "vmg_upwind": 3.371015305818345,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 2.5103574392428296,
+     "ground_speed": 15.730006609188147,
+     "period": 6.28323518393937,
+     "n_max": 3.1999999999972024,
+     "vmg_downwind": -1.7750907684907011,
+     "vmg_upwind": 1.7750907684907011,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -1.30428582476774,
+     "ground_speed": 13.52522876408544,
+     "period": 6.575759674594071,
+     "n_max": 3.199999999999603,
+     "vmg_downwind": 1.1295446580448016,
+     "vmg_upwind": -1.1295446580448016,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -4.464312985273663,
+     "ground_speed": 11.470174420639898,
+     "period": 7.131379826519212,
+     "n_max": 3.199999999983784,
+     "vmg_downwind": 4.312195209113479,
+     "vmg_upwind": -4.312195209113479,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -6.818144961659649,
+     "ground_speed": 10.244449880252722,
+     "period": 7.595598398482947,
+     "n_max": 3.1999999999999993,
+     "vmg_downwind": 6.818144961659649,
+     "vmg_upwind": -6.818144961659649,
+     "z_min": 2.0,
+     "runs": 2
+    }
+   ],
+   "runtime_s": 238.59089922904968,
+   "best": {
+    "upwind": {
+     "course_deg": 120.0,
+     "vmg": 3.3710153058183474,
+     "progress": 6.742030611636693
+    },
+    "downwind": {
+     "course_deg": 15.0,
+     "vmg": 24.382660290391737,
+     "progress": 25.242787413673362
+    }
+   }
+  },
+  {
+   "aircraft": "sealedhull-2p5m",
+   "u10": 16.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 23.759219045917426,
+     "ground_speed": 25.206087778537718,
+     "period": 8.591446534537436,
+     "n_max": 3.199999999985995,
+     "vmg_downwind": 23.759219045917426,
+     "vmg_upwind": -23.759219045917426,
+     "z_min": 2.0,
+     "runs": 1
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 25.355894623966982,
+     "ground_speed": 25.5818152695604,
+     "period": 7.69670952651496,
+     "n_max": 3.1999999999663777,
+     "vmg_downwind": 24.491913465953854,
+     "vmg_upwind": -24.491913465953854,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 25.536381291005817,
+     "ground_speed": 25.617010363451158,
+     "period": 7.454518213245118,
+     "n_max": 3.199999999989252,
+     "vmg_downwind": 22.1151549187367,
+     "vmg_upwind": -22.1151549187367,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 24.416781039965088,
+     "ground_speed": 25.217768622535704,
+     "period": 6.948722940345165,
+     "n_max": 3.199999999999126,
+     "vmg_downwind": 17.265271448106436,
+     "vmg_upwind": -17.265271448106436,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 22.279640217099335,
+     "ground_speed": 24.402112447081784,
+     "period": 6.529040010819354,
+     "n_max": 3.1999999999947155,
+     "vmg_downwind": 11.139820108549669,
+     "vmg_upwind": -11.139820108549669,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 19.24817735798081,
+     "ground_speed": 23.264563223151328,
+     "period": 6.429243601482418,
+     "n_max": 3.1999999999987008,
+     "vmg_downwind": 4.981794883756554,
+     "vmg_upwind": -4.981794883756554,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 15.51098178982152,
+     "ground_speed": 21.80033674044126,
+     "period": 6.3805095982081514,
+     "n_max": 3.199999999988836,
+     "vmg_downwind": 9.497737100268905e-16,
+     "vmg_upwind": -9.497737100268905e-16,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 11.314614938986946,
+     "ground_speed": 20.050146818086166,
+     "period": 6.298367078457848,
+     "n_max": 3.1999999999999855,
+     "vmg_downwind": -2.9284378342113184,
+     "vmg_upwind": 2.9284378342113184,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 6.9372472299168715,
+     "ground_speed": 18.09716197235164,
+     "period": 6.207110790607083,
+     "n_max": 3.1999999999999997,
+     "vmg_downwind": -3.4686236149584344,
+     "vmg_upwind": 3.4686236149584344,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 2.6638628010722267,
+     "ground_speed": 15.929156249737892,
+     "period": 6.377081385724395,
+     "n_max": 3.1999999999555064,
+     "vmg_downwind": -1.8836354507887625,
+     "vmg_upwind": 1.8836354507887625,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -1.2000228291462518,
+     "ground_speed": 13.70189710862094,
+     "period": 6.710970430794049,
+     "n_max": 3.1999999999930737,
+     "vmg_downwind": 1.0392502551619272,
+     "vmg_upwind": -1.0392502551619272,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -4.402206337630434,
+     "ground_speed": 11.545710878853372,
+     "period": 7.372602177087273,
+     "n_max": 3.1999999999421807,
+     "vmg_downwind": 4.25220479417065,
+     "vmg_upwind": -4.25220479417065,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -6.827055520373604,
+     "ground_speed": 10.474184176105634,
+     "period": 7.816668677185201,
+     "n_max": 3.1999999999726567,
+     "vmg_downwind": 6.827055520373604,
+     "vmg_upwind": -6.827055520373604,
+     "z_min": 2.0000000000000004,
+     "runs": 2
+    }
+   ],
+   "runtime_s": 275.35717511177063,
+   "best": {
+    "upwind": {
+     "course_deg": 120.0,
+     "vmg": 3.4686236149584366,
+     "progress": 6.9372472299168715
+    },
+    "downwind": {
+     "course_deg": 15.0,
+     "vmg": 24.491913465953854,
+     "progress": 25.355894623966982
+    }
+   }
+  },
+  {
+   "aircraft": "albatross-3m",
+   "u10": 20.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": true,
+     "margin_set": "light",
+     "margins": {
+      "h_min": 1.5,
+      "n_frac": 0.9,
+      "mu_frac": 0.95,
+      "v_factor": 1.15
+     },
+     "progress": 38.06196718821194,
+     "ground_speed": 38.98003595965932,
+     "period": 13.730928004434155,
+     "n_max": 3.599999999993086,
+     "vmg_downwind": 38.06196718821194,
+     "vmg_upwind": -38.06196718821194,
+     "z_min": 1.662916140701569,
+     "runs": 1
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 38.30196224422596,
+     "ground_speed": 38.44003230551088,
+     "period": 10.869711062394607,
+     "n_max": 3.1999999999986617,
+     "vmg_downwind": 36.99685452924666,
+     "vmg_upwind": -36.99685452924666,
+     "z_min": 2.0,
+     "runs": 2
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 38.47732259010727,
+     "ground_speed": 38.53548138245794,
+     "period": 9.156813896863378,
+     "n_max": 3.1999999999958213,
+     "vmg_downwind": 33.322338832641755,
+     "vmg_upwind": -33.322338832641755,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 37.2020112080651,
+     "ground_speed": 37.95144757091081,
+     "period": 8.383023240304428,
+     "n_max": 3.1999999999996924,
+     "vmg_downwind": 26.30579439900078,
+     "vmg_upwind": -26.30579439900078,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 34.57241636123272,
+     "ground_speed": 36.78048496760557,
+     "period": 8.030028868936107,
+     "n_max": 3.1999999999940454,
+     "vmg_downwind": 17.286208180616363,
+     "vmg_upwind": -17.286208180616363,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 30.712940531452176,
+     "ground_speed": 34.91958479352745,
+     "period": 8.131202599570152,
+     "n_max": 3.2000000000000006,
+     "vmg_downwind": 7.949093940640958,
+     "vmg_upwind": -7.949093940640958,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 25.9640709321059,
+     "ground_speed": 32.428514560879115,
+     "period": 7.937577737307754,
+     "n_max": 3.199999999991207,
+     "vmg_downwind": 1.5898408179919164e-15,
+     "vmg_upwind": -1.5898408179919164e-15,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 20.64937595124665,
+     "ground_speed": 29.442549740924523,
+     "period": 7.79724543959336,
+     "n_max": 3.199999999998032,
+     "vmg_downwind": -5.344451765664616,
+     "vmg_upwind": 5.344451765664616,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 15.096193660273142,
+     "ground_speed": 26.021606827769837,
+     "period": 7.502090397916587,
+     "n_max": 3.2000000000000015,
+     "vmg_downwind": -7.548096830136568,
+     "vmg_upwind": 7.548096830136568,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 9.64169971377344,
+     "ground_speed": 22.368622362251298,
+     "period": 7.322166971814131,
+     "n_max": 3.1999999999797586,
+     "vmg_downwind": -6.817711249773593,
+     "vmg_upwind": 6.817711249773593,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 4.585739386982669,
+     "ground_speed": 18.696483210343125,
+     "period": 7.305976703269619,
+     "n_max": 3.199999999916073,
+     "vmg_downwind": -3.9713668042618706,
+     "vmg_upwind": 3.9713668042618706,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 0.2687662254125326,
+     "ground_speed": 14.646406995284055,
+     "period": 7.686969544587657,
+     "n_max": 3.199999999998989,
+     "vmg_downwind": -0.2596082383601945,
+     "vmg_upwind": 0.2596082383601945,
+     "z_min": 2.0,
+     "runs": 2
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -2.937211061256676,
+     "ground_speed": 10.273656412685897,
+     "period": 9.347305740123785,
+     "n_max": 3.1999999999956046,
+     "vmg_downwind": 2.937211061256676,
+     "vmg_upwind": -2.937211061256676,
+     "z_min": 2.0,
+     "runs": 2
+    }
+   ],
+   "runtime_s": 353.9915211200714,
+   "best": {
+    "upwind": {
+     "course_deg": 120.0,
+     "vmg": 7.548096830136573,
+     "progress": 15.096193660273142
+    },
+    "downwind": {
+     "course_deg": 0.0,
+     "vmg": 38.06196718821194,
+     "progress": 38.06196718821194
+    }
+   }
+  },
+  {
+   "aircraft": "baseline-2m",
+   "u10": 20.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 31.672727456422948,
+     "ground_speed": 32.53092946146835,
+     "period": 10.718527702476877,
+     "n_max": 3.1999999999966455,
+     "vmg_downwind": 31.672727456422948,
+     "vmg_upwind": -31.672727456422948,
+     "z_min": 2.0,
+     "runs": 2
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 32.796323432726645,
+     "ground_speed": 32.833084789887266,
+     "period": 9.336821261659944,
+     "n_max": 3.1999999999999655,
+     "vmg_downwind": 31.678815811000018,
+     "vmg_upwind": -31.678815811000018,
+     "z_min": 2.000000000000001,
+     "runs": 2
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 32.524928085659354,
+     "ground_speed": 32.7350567562173,
+     "period": 8.18834631107103,
+     "n_max": 3.199999999997889,
+     "vmg_downwind": 28.167413978442973,
+     "vmg_upwind": -28.167413978442973,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 30.900937870503878,
+     "ground_speed": 32.07257625900401,
+     "period": 7.2804897625403235,
+     "n_max": 3.1999999999999518,
+     "vmg_downwind": 21.850262713257486,
+     "vmg_upwind": -21.850262713257486,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 28.052319723200597,
+     "ground_speed": 30.935612688818974,
+     "period": 6.848573872297727,
+     "n_max": 3.1999999999999744,
+     "vmg_downwind": 14.026159861600302,
+     "vmg_upwind": -14.026159861600302,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 24.137342460750098,
+     "ground_speed": 29.358184148310134,
+     "period": 6.668293346903526,
+     "n_max": 3.199999999965079,
+     "vmg_downwind": 6.247203927003868,
+     "vmg_upwind": -6.247203927003868,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 19.409315603204814,
+     "ground_speed": 27.30481001353725,
+     "period": 6.5140149968011976,
+     "n_max": 3.1999999999961206,
+     "vmg_downwind": 1.1884778113552778e-15,
+     "vmg_upwind": -1.1884778113552778e-15,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 14.215238913101489,
+     "ground_speed": 24.776951223602065,
+     "period": 6.423322138113182,
+     "n_max": 3.1999999999999513,
+     "vmg_downwind": -3.6791745613931237,
+     "vmg_upwind": 3.6791745613931237,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 8.90202116760173,
+     "ground_speed": 21.989289724515338,
+     "period": 6.328411005441383,
+     "n_max": 3.1999999999886644,
+     "vmg_downwind": -4.451010583800863,
+     "vmg_upwind": 4.451010583800863,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 3.792686597311055,
+     "ground_speed": 19.114299006309523,
+     "period": 6.326781432359723,
+     "n_max": 3.199999999999993,
+     "vmg_downwind": -2.6818344118739796,
+     "vmg_upwind": 2.6818344118739796,
+     "z_min": 2.000000000000001,
+     "runs": 3
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -0.7895382111728504,
+     "ground_speed": 16.068842263343395,
+     "period": 6.51745664907618,
+     "n_max": 3.1999999999649362,
+     "vmg_downwind": 0.6837601481342112,
+     "vmg_upwind": -0.6837601481342112,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -4.525980319602858,
+     "ground_speed": 13.100025106919933,
+     "period": 7.008423340902273,
+     "n_max": 3.1999999999929005,
+     "vmg_downwind": 4.3717612799804515,
+     "vmg_upwind": -4.3717612799804515,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -7.144057381708833,
+     "ground_speed": 10.528469165783154,
+     "period": 8.062722256783994,
+     "n_max": 3.1999999999998114,
+     "vmg_downwind": 7.144057381708833,
+     "vmg_upwind": -7.144057381708833,
+     "z_min": 2.0,
+     "runs": 2
+    }
+   ],
+   "runtime_s": 233.0892298221588,
+   "best": {
+    "upwind": {
+     "course_deg": 120.0,
+     "vmg": 4.451010583800866,
+     "progress": 8.90202116760173
+    },
+    "downwind": {
+     "course_deg": 15.0,
+     "vmg": 31.678815811000018,
+     "progress": 32.796323432726645
+    }
+   }
+  },
+  {
+   "aircraft": "sealedhull-2p5m",
+   "u10": 20.0,
+   "cases": [
+    {
+     "chi_deg": 0.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 31.968090432248214,
+     "ground_speed": 32.76631881322816,
+     "period": 11.06396938593468,
+     "n_max": 3.1999999999992017,
+     "vmg_downwind": 31.968090432248214,
+     "vmg_upwind": -31.968090432248214,
+     "z_min": 2.0,
+     "runs": 2
+    },
+    {
+     "chi_deg": 15.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 33.07934948151178,
+     "ground_speed": 33.10605997593526,
+     "period": 9.384216721491677,
+     "n_max": 3.1999999999971864,
+     "vmg_downwind": 31.952197981034125,
+     "vmg_upwind": -31.952197981034125,
+     "z_min": 2.000000000000001,
+     "runs": 2
+    },
+    {
+     "chi_deg": 30.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 32.74282299666623,
+     "ground_speed": 32.97501741556546,
+     "period": 8.070025427449643,
+     "n_max": 3.1999999999999433,
+     "vmg_downwind": 28.356116506730274,
+     "vmg_upwind": -28.356116506730274,
+     "z_min": 2.0000000000000013,
+     "runs": 3
+    },
+    {
+     "chi_deg": 45.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 31.082187484751163,
+     "ground_speed": 32.272479826980515,
+     "period": 7.351348126277351,
+     "n_max": 3.1999999999994193,
+     "vmg_downwind": 21.97842554457919,
+     "vmg_upwind": -21.97842554457919,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 60.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 28.221955985676487,
+     "ground_speed": 31.11417942861055,
+     "period": 6.862865218575251,
+     "n_max": 3.199999999997529,
+     "vmg_downwind": 14.110977992838247,
+     "vmg_upwind": -14.110977992838247,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 75.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 24.284727564650552,
+     "ground_speed": 29.512420912771308,
+     "period": 6.798998675671115,
+     "n_max": 3.1999999999999886,
+     "vmg_downwind": 6.28534999885772,
+     "vmg_upwind": -6.28534999885772,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 90.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 19.551360765753625,
+     "ground_speed": 27.386303950612167,
+     "period": 6.789076663274546,
+     "n_max": 3.199999999988882,
+     "vmg_downwind": 1.197175569037766e-15,
+     "vmg_upwind": -1.197175569037766e-15,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 105.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 14.353511973251303,
+     "ground_speed": 24.846978154888696,
+     "period": 6.650881520386753,
+     "n_max": 3.1999999999939126,
+     "vmg_downwind": -3.714962262784502,
+     "vmg_upwind": 3.714962262784502,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 120.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 9.03331029025877,
+     "ground_speed": 22.088025666776645,
+     "period": 6.505677992513306,
+     "n_max": 3.199999999955947,
+     "vmg_downwind": -4.516655145129383,
+     "vmg_upwind": 4.516655145129383,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 135.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": 3.8941372393596554,
+     "ground_speed": 19.283451060492123,
+     "period": 6.486975400342105,
+     "n_max": 3.199999999982789,
+     "vmg_downwind": -2.7535708488222737,
+     "vmg_upwind": 2.7535708488222737,
+     "z_min": 2.0000000000000004,
+     "runs": 3
+    },
+    {
+     "chi_deg": 150.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -0.7324939399217357,
+     "ground_speed": 16.266170408711815,
+     "period": 6.796391499086571,
+     "n_max": 3.1999999999794952,
+     "vmg_downwind": 0.6343583600903756,
+     "vmg_upwind": -0.6343583600903756,
+     "z_min": 2.0,
+     "runs": 3
+    },
+    {
+     "chi_deg": 165.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -4.5117601639173674,
+     "ground_speed": 13.250356952477995,
+     "period": 7.2936845283209015,
+     "n_max": 3.199999999999961,
+     "vmg_downwind": 4.358025664349985,
+     "vmg_upwind": -4.358025664349985,
+     "z_min": 2.0,
+     "runs": 2
+    },
+    {
+     "chi_deg": 180.0,
+     "converged": true,
+     "margin_set": "standard",
+     "margins": {
+      "h_min": 2.0,
+      "n_frac": 0.8,
+      "mu_frac": 0.9,
+      "v_factor": 1.2
+     },
+     "progress": -7.183841820912632,
+     "ground_speed": 10.513596813111477,
+     "period": 8.770502801989489,
+     "n_max": 3.199999999989937,
+     "vmg_downwind": 7.183841820912632,
+     "vmg_upwind": -7.183841820912632,
+     "z_min": 2.0,
+     "runs": 1
+    }
+   ],
+   "runtime_s": 250.26963829994202,
+   "best": {
+    "upwind": {
+     "course_deg": 120.0,
+     "vmg": 4.516655145129386,
+     "progress": 9.03331029025877
+    },
+    "downwind": {
+     "course_deg": 0.0,
+     "vmg": 31.968090432248214,
+     "progress": 31.968090432248214
+    }
+   }
+  }
+ ]
+}

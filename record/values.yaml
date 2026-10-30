@@ -1127,6 +1127,60 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#viewer
+  - key: nav.best_upwind_course_off_wind_deg
+    v: 60
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_upwind_vmg_u11_ms
+    v: 3.75
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_upwind_vmg_u20_ms
+    v: 7.55
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.baseline_upwind_vmg_u13_ms
+    v: 3.0
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.baseline_upwind_vmg_u20_ms
+    v: 4.45
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.no_progress_within_deg_min
+    v: 15
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.no_progress_within_deg_max
+    v: 30
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_polar_min_u10_ms
+    v: 11
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.baseline_polar_min_u10_ms
+    v: 13
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
   - key: env.charnock
     v: 0.0144
     unit: 1
