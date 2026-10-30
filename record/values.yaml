@@ -1415,6 +1415,84 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
+  - key: mpc.motorlib_baseline_calm_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_baseline_u9_w
+    v: 10.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_baseline_u11_w
+    v: 7.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_albatross_calm_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_albatross_u9_w
+    v: 9.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_power_ratio_min
+    v: 1.0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_power_ratio_max
+    v: 2.5
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_run_s
+    v: 180
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.reflex_baseline_u9_count
+    v: 31
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.reflex_energy_factor_min
+    v: 4
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.reflex_energy_factor_max
+    v: 5
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_wave_ended
+    v: 8
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_wave_runs
+    v: 16
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
   - key: env.charnock
     v: 0.0144
     unit: 1

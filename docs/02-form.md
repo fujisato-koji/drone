@@ -340,6 +340,16 @@ The motor as a third control (`python -m sim.mpc --burst-exp`, `sim/out/mpc.json
 - The true wind of these runs used the fixed Charnock constant while the library used COARE 3.5, which helps the planner slightly; and the smooth folded-propeller switch kept most of the folded drag during the spells with little thrust (K-013).
 - What follows: cycles with the optimal thrust timing in the library as the planner's seed, thrust samples that can propose sustained thrust, a separate reflex that gives a short strong burst when contact or stall is predicted a second or two ahead, and wave-synchronized cycles for the waves (Q-060).
 
+Motor-assisted cycles in the library and a reflex (`python -m sim.mpc --motor-lib-exp`, `sim/out/mpc_library_motor.json`, `sim/out/mpc.json` key motor_library_exp):
+
+- The library now holds, for the five kept forms from calm to 24 m/s, the soaring cycles where they exist and below them the optimizer's minimum-power cycles with their thrust schedule; those need, for example, mpc.motorlib_baseline_calm_w in calm air, mpc.motorlib_baseline_u9_w at 9 m/s and mpc.motorlib_baseline_u11_w at 11 m/s for the baseline, and mpc.motorlib_albatross_calm_w and mpc.motorlib_albatross_u9_w for the albatross-like glider.
+- The planner starts from that thrust schedule, its samples can hold a thrust level over several knots, the folded drag follows the commanded motor state, and the true wind uses COARE 3.5 as the library does.
+- On a flat sea below the soaring minimum every run flew the whole mpc.motorlib_run_s, including the baseline at 6 and 9 m/s that ended in the burst experiment, at mpc.motorlib_power_ratio_min to mpc.motorlib_power_ratio_max times the optimizer's power; per kilometre it was about the same, because the planner flew faster than the cycle's travel speed.
+- The thrust still runs as a low trickle almost all the time rather than in bursts.
+- The reflex, set to act when the airspeed is predicted below 1.05 stall speeds or a wingtip below 0.3 m, fired almost continuously, because the planner flies close to its own speed floor: at 9 m/s the baseline took mpc.reflex_baseline_u9_count reflexes, climbed far above its cycle and spent mpc.reflex_energy_factor_min to mpc.reflex_energy_factor_max times the energy; over waves it did not clearly help, and mpc.motorlib_wave_ended of mpc.motorlib_wave_runs wave runs still ended early.
+- So the reflex needs a stall threshold below the planner's floor and a test on wingtip contact first, and the waves still need wave-synchronized cycles in the library (Q-060).
+
+
 ## Candidate forms {#candidate-forms}
 
 The yardsticks are: the smallest U10 that sustains soaring; progress speed over the ground at the design wind; survival on the water (self-righting, sealing, take-off); solar area; mass; what one person can build and repair; cost.
