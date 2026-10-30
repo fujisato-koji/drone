@@ -64,14 +64,52 @@ class TestDesignModel(unittest.TestCase):
         self.assertAlmostEqual(w.airfoil_cd("SD7037", cl, 2e5), a0 + a1 * cl + a2 * cl ** 2 + a8 * cl ** 8, 12)
         low = (a0 + a1 * cl + a2 * cl ** 2) * (1e5 / 2e5) ** -n + a8 * cl ** 8
         self.assertAlmostEqual(w.airfoil_cd("SD7037", cl, 1e5), low, 12)
-        d = w.Design(2.5, 16.0)
+        d = w.Design(2.5, 16.0, cda=w.CDA_BASE)
         ac = w.build_aircraft(d, 1.5e5)
         want = w.airfoil_cd("SD7037", 0.6, 1.5e5) + d.cda / ac.wing_area
         self.assertAlmostEqual(float(ac.cd(0.6) - ac.k_induced * 0.36), want, 10)
 
     def test_span_efficiency(self):
-        f = 0.0524 * .45 ** 4 - .15 * .45 ** 3 + .1659 * .45 ** 2 - .0706 * .45 + .0119
+        lam = 0.45 - (-0.357 + 0.45)   # Nita and Scholz eq. 37 at zero sweep: offset 0.093
+        self.assertAlmostEqual(lam, 0.357, 12)
+        f = 0.0524 * lam ** 4 - .15 * lam ** 3 + .1659 * lam ** 2 - .0706 * lam + .0119
         self.assertAlmostEqual(w.span_efficiency(20, 0.45, 3.0), (1 - 2 * (0.06 / 3) ** 2) / (1 + f * 20), 12)
+        self.assertAlmostEqual(w.span_efficiency(12, 0.45, 3.0), 0.977, places=3)   # K-014: 0.977 against 0.973 without the offset
+
+    def test_body_drag_buildup(self):
+        bd = w.body_drag(3.0, 9.0 / 16.0, 12.0)
+        parts = bd["pod"] + bd["boom"] + bd["tail"]
+        self.assertAlmostEqual(bd["total"], 1.10 * parts, 12)
+        self.assertAlmostEqual(bd["gaps"], 0.10 * parts, 12)
+        fr = 1.0 / 0.07   # pod: Cf 0.455/log10(Re)^2.58, Hoerner form factor, body-of-revolution wetted area
+        swet = np.pi * 0.07 * (1 - 2 / fr) ** (2 / 3) * (1 + 1 / fr ** 2)
+        cf = 0.455 / np.log10(12.0 / w.NU_AIR) ** 2.58
+        self.assertAlmostEqual(bd["pod"], cf * (1 + 1.5 / fr ** 1.5 + 7 / fr ** 3) * swet, 12)
+        # tail areas from the volume coefficients: S_h = 0.4 S c / arm, S_v = 0.02 S b / arm
+        arm = w.TAIL_ARM_PER_SPAN * 3.0
+        self.assertAlmostEqual(bd["s_h"], 0.4 * (9.0 / 16.0) * (3.0 / 16.0) / arm, 12)
+        self.assertAlmostEqual(bd["s_v"], 0.02 * (9.0 / 16.0) * 3.0 / arm, 12)
+        # the design uses it: a fixed area overrides
+        d = w.Design(3.0, 16.0)
+        ac = w.build_aircraft(d, 2e5)
+        v = 2e5 * w.NU_AIR / (ac.wing_area / 3.0)
+        cda = w.body_drag(3.0, ac.wing_area, v)["total"]
+        self.assertAlmostEqual(float(ac.cd(0.0)), 0.01061 + cda / ac.wing_area, 10)
+        ac2 = w.build_aircraft(w.Design(3.0, 16.0, cda=10e-4), 2e5)
+        self.assertAlmostEqual(float(ac2.cd(0.0)), 0.01061 + 10e-4 / ac2.wing_area, 10)
+
+    def test_ballast(self):
+        m0 = w.mass_model(3.0, 16.0, 1.5)["mass"]
+        d = w.Design(3.0, 16.0, ballast=0.5)
+        mm = w.basics(d)[0]
+        self.assertGreater(mm["mass"], m0 + 0.5)   # the spar carries the ballast too
+        self.assertAlmostEqual(mm["mass"], mm["m_other"] + mm["m_wing"], 12)
+        bal = w.ballast_to_mass(3.0, 16.0, 1.5, 3.0)
+        self.assertAlmostEqual(w.basics(w.Design(3.0, 16.0, ballast=bal))[0]["mass"], 3.0, 9)
+        g = w.ballast_grid(3.0, 16.0)
+        self.assertEqual(g[:3], [0.0, 0.5, 1.0])
+        self.assertLess(w.basics(w.Design(3.0, 16.0, ballast=round(g[-1], 4)))[0]["mass"], value("ds.mass_max_kg") + 1e-9)
+        self.assertFalse(w.feasibility(w.Design(3.0, 16.0, ballast=2.0))[0])   # above the mass limit
 
     def test_mass_consistency(self):
         mm = w.mass_model(3.0, 25.0, 1.5)
@@ -84,14 +122,31 @@ class TestDesignModel(unittest.TestCase):
 
     def test_feasibility(self):
         self.assertFalse(w.feasibility(w.Design(3.0, 25.0))[0])   # Re 69k at 1.2 Vs
+        self.assertTrue(w.feasibility(w.Design(3.0, 25.0, ballast=0.5))[0])   # ballast raises the stall speed
         self.assertTrue(w.feasibility(w.Design(3.0, 16.0))[0])
         self.assertFalse(w.feasibility(w.Design(3.5, 12.0))[0])   # span limit
 
     def test_quick_evaluation(self):
-        r = w.evaluate(("A", w.Design(3.0, 20.0), None))
+        r = w.solve_a(w.Design(3.0, 20.0, ballast=0.5), seeds=(0, 1, 2))
         self.assertTrue(r["success"])
         self.assertTrue(5.0 < r["u10"] < 20.0)
         self.assertTrue(r["replay_pass"])
+        self.assertAlmostEqual(r["mass"], w.basics(w.Design(3.0, 20.0, ballast=0.5))[0]["mass"], 12)
+        self.assertLessEqual(abs(r["re_used"] - r["history"][-1]["re"]), 1e-6)   # the aircraft solved is the one reported
+
+
+class TestSteadyGuess(unittest.TestCase):
+    def test_steady_level_flight_is_feasible(self):
+        from sim.dsopt import profile_for
+        d = w.Design(3.0, 16.0, ballast=0.5)
+        ac = w.build_aircraft(d, 1.5e5)
+        prof = profile_for(9.0, "log", roughness="coare35")
+        for chi in (20.0, 180.0):
+            x, info, col = w.steady_guess(ac, prof, 9.0, chi, w.MARGINS)
+            self.assertLess(col.violation(x), 1e-9)
+            self.assertTrue(info["thrust_ok"] and info["cl_ok"])
+            self.assertGreaterEqual(info["progress"], info["v_travel_min"] - 1e-9)
+            self.assertAlmostEqual(info["power_w"], col.avg_power(x), 6)
 
 
 if __name__ == "__main__":

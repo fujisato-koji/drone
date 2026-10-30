@@ -795,7 +795,7 @@ items:
     opened: 2026-10-30
   - id: Q-067
     kind: finding
-    text: "The wing-sizing study (docs/02-form.md#wing-sizing) fixed the mass by the wing's size, so the lighter slender wings ranked lower, while at equal mass they soar from less wind (K-014); and each design was solved from one start. Rerun with the wing loading as a variable (ballast or a heavier structure up to ds.mass_max_kg), several starts per design, the body drag area built up from pod, boom, tail and linkages, the taper offset of Nita and Scholz, and the objectives of the soaring minimum, the upwind progress, and the motor power below the minimum, since a heavier aircraft also costs more energy when the wind fails."
+    text: "The wing-sizing study (docs/02-form.md#wing-sizing) fixed the mass by the wing's size, so the lighter slender wings ranked lower, while at equal mass they soar from less wind (K-014); and each design was solved from one start. The second pass (sim/out/wingopt2.json) made the wing loading a variable (ballast up to ds.mass_max_kg), solved each soaring minimum from six starts, built the body drag up from pod, boom, tails and linkages, applied the taper offset of Nita and Scholz, and added the motor power. Settled: ballast up to the mass limit gives the lowest soaring minimum (wing.best_u10_min_ms, against wing.unballasted_u10_min_ms to wing.unballasted_u10_max_ms without it), the three best designs are within the optimizer's repeatability (wing.top3_spread_ms against wing.start_scatter_ms), the mass limit therefore binds, and the price is motor power at the standard margins (the front in docs/02-form.md#wing-sizing); the upwind objective is the support value h(180), not a speed made good (docs/02-form.md#navigation). Left: the 2.5 m rows, intermediate ballast between the grid points and the limit, the tail sizing (arm, aspect ratios, the horizontal tail's Reynolds number is below the data of the airfoil fit), a motor-power optimizer that finds the minimum (its results are above a steady level flight, so the powers are upper bounds), and h(180) for more than the top four."
     waits_for: assistant
     affects:
       - R-02
@@ -812,5 +812,15 @@ items:
       - Q-060
       - Q-055
     raised_by: checker
+    phase: design
+    opened: 2026-10-30
+  - id: Q-069
+    kind: question
+    text: "Should the drone carry variable ballast, water taken from the sea and dumped to it, so that it soars heavy in strong wind (the soaring minimum falls with the wing loading up to ds.mass_max_kg, Q-067) and flies light on the motor in weak wind (the motor power rises with the mass)? It costs a pump, a tank and a dump valve, and a way to take water on at sea, and it works against a sealed hull."
+    waits_for: owner
+    affects:
+      - Q-067
+      - ds.mass_max_kg
+    raised_by: assistant
     phase: design
     opened: 2026-10-30
