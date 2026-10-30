@@ -1,0 +1,2 @@
+// tdr-run: python -m sim.export_aircraft commit 1512c2c stamp sha-56512cb9e67b
+window.AIRCRAFT = {"baseline-2m":{"mass":1.5,"span":2.0,"wing_area":0.25,"cd0":0.015,"oswald":0.85,"cl_max":1.2,"cl_min":-0.3,"mu_max":1.2,"n_max":4.0,"rho":1.225,"k_induced":0.0234051,"v_stall":8.94883},"albatross-3m":{"mass":3.0,"span":3.0,"wing_area":0.36,"cd0":0.012,"oswald":0.9,"cl_max":1.3,"cl_min":-0.3,"mu_max":1.2,"n_max":4.0,"rho":1.225,"k_induced":0.0141471,"v_stall":10.1326}};

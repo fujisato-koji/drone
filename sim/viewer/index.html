@@ -36,6 +36,9 @@
   .card { background: #fcfcfb; color: #52514e; border-radius: 4px; padding: 4px 0 0; margin: 0 0 8px; width: 280px; }
   .card .ct { color: #0b0b0b; font-size: 12px; font-weight: 600; padding: 0 6px 2px; }
   .card canvas { display: block; width: 280px; height: 170px; }
+  .card canvas#strip { height: 96px; }
+  .ctl input[type=number] { width: 64px; }
+  .ctl input[type=checkbox] { margin: 0 4px 0 0; }
   #tip { position: fixed; pointer-events: none; display: none; background: #0b0b0b; color: #f0efec;
          font-size: 11px; padding: 2px 6px; border-radius: 3px; z-index: 10; white-space: nowrap; }
 </style>
@@ -56,6 +59,7 @@
 
   <details class="sec" open>
     <summary id="sec1s" data-i="sec1"></summary>
+    <div class="ctl"><label for="envMode" data-i="envMode" data-t="envModeTip"></label><select id="envMode" data-t="envModeTip"><option value="scenario" data-i="emScen"></option><option value="free" data-i="emFree"></option><option value="varying" data-i="emVar"></option></select></div>
     <div id="scen" style="display:none">
       <div class="ctl"><label for="hour" data-i="hour" data-t="hourTip"></label><input id="hour" type="range" min="0" max="72" step="0.1" value="0" data-t="hourTip"><span class="val" id="hourv"></span></div>
       <div class="ctl"><button id="play" type="button" data-t="playTip"></button>
@@ -67,6 +71,19 @@
       <div class="ctl"><label for="u10" data-i="u10" data-t="u10Tip"></label><input id="u10" type="range" min="2" max="25" step="0.5" data-t="u10Tip"><span class="val" id="u10v"></span></div>
       <div class="ctl"><label for="from" data-i="from" data-t="fromTip"></label><input id="from" type="range" min="0" max="359" step="1" data-t="fromTip"><span class="val" id="fromv"></span></div>
     </div>
+    <div id="freeCtl" style="display:none">
+      <div class="ctl"><label for="age" data-i="age" data-t="ageTip"></label><input id="age" type="range" min="0" max="5" step="1" value="0" data-t="ageTip"><span class="val" id="agev"></span></div>
+      <div class="ctl"><label class="auto" data-t="swOnTip"><input id="swOn" type="checkbox" data-t="swOnTip"><span data-i="swOn"></span></label></div>
+      <div class="ctl"><label for="swHs" data-i="swHs" data-t="swHsTip"></label><input id="swHs" type="range" min="0.2" max="4" step="0.1" value="1" data-t="swHsTip"><span class="val" id="swHsv"></span></div>
+      <div class="ctl"><label for="swTp" data-i="swTp" data-t="swTpTip"></label><input id="swTp" type="range" min="6" max="18" step="0.5" value="11" data-t="swTpTip"><span class="val" id="swTpv"></span></div>
+      <div class="ctl"><label for="swFrom" data-i="swFrom" data-t="swFromTip"></label><input id="swFrom" type="range" min="0" max="359" step="1" value="200" data-t="swFromTip"><span class="val" id="swFromv"></span></div>
+      <table id="envro"></table>
+    </div>
+    <div id="varCtl" style="display:none">
+      <div class="ctl"><label for="slowKind" data-i="slowKind" data-t="slowKindTip"></label><select id="slowKind" data-t="slowKindTip"><option value="calm" data-i="skCalm"></option><option value="cell" data-i="skCell"></option></select></div>
+      <div class="ctl"><label for="envSeed" data-i="envSeed" data-t="envSeedTip"></label><input id="envSeed" type="number" min="1" max="999999" step="1" value="1" data-t="envSeedTip"></div>
+      <div class="card"><div class="ct" data-i="stripT" data-t="stripTip"></div><canvas id="strip" width="280" height="96" data-t="stripTip"></canvas></div>
+    </div>
     <div class="dim" id="timeNote" data-i="timeNote"></div>
     <div class="dim" id="rough"></div>
     <div class="dim" id="lockNote" style="display:none"></div>
@@ -76,11 +93,9 @@
     <summary data-i="sec2" data-t="sec2Tip"></summary>
     <div id="fl">
       <div class="ctl step"><label for="flAc" data-i="stAc" data-t="flAcTip"></label><select id="flAc" data-t="flAcTip"></select></div>
-      <div class="ctl step"><label for="flCyc" data-i="stCyc" data-t="flCycTip"></label><select id="flCyc" data-t="flCycTip"><option value="travel" data-i="cycTravel"></option><option value="loiter" data-i="cycLoiter"></option></select></div>
       <div class="ctl step"><label for="flPos" data-i="stPos" data-t="flPosTip"></label><select id="flPos" data-t="flPosTip"><option value="mast" data-i="posMast"></option><option value="click" data-i="posClick"></option></select></div>
       <div class="dim hint" id="flPt"></div>
       <div class="ctl step"><label for="flHead" data-i="stHead" data-t="flHeadTip"></label><select id="flHead" data-t="flHeadTip"><option value="up" data-i="hUp"></option><option value="down" data-i="hDown"></option><option value="left" data-i="hLeft"></option><option value="right" data-i="hRight"></option><option value="ref" data-i="hRef"></option></select></div>
-      <div class="ctl step"><label for="flCtl" data-i="stCtl" data-t="flCtlTip"></label><select id="flCtl" data-t="flCtlTip"><option value="track" data-i="ctlTrack"></option><option value="mpc" data-i="ctlMpc"></option></select></div>
       <div class="ctl step"><label for="flWorld" data-i="stWorld" data-t="flWorldTip"></label><select id="flWorld" data-t="flWorldTip"><option value="flat" data-i="worldFlat"></option><option value="truth" data-i="worldTruth"></option></select></div>
       <div class="ctl step"><label for="flMotor" data-i="stMotor" data-t="flMotorTip"></label><select id="flMotor" data-t="flMotorTip"><option value="off" data-i="motorOff"></option><option value="on" data-i="motorOn"></option></select></div>
       <div class="ctl step"><label for="flPw" data-i="stPw" data-t="flPwTip"></label><select id="flPw" data-t="flPwTip"><option value="free" data-i="pwFree"></option><option value="normal" data-i="pwNormal" selected></option><option value="costly" data-i="pwCostly"></option></select></div>
@@ -124,9 +139,12 @@
 <script src="field.js"></script>
 <script src="traj.js"></script>
 <script src="flight.js"></script>
-<script src="refs.js"></script>
+<script src="aircraft.js"></script>
 <script src="library.js"></script>
 <script src="library_motor.js"></script>
+<script src="seagen.js"></script>
+<script src="envsea.js"></script>
+<script src="gust.js"></script>
 <script src="mpc.js"></script>
 <script type="module">
 import * as THREE from 'three';
@@ -140,9 +158,25 @@ const I18N = {
     what: '嵐のシナリオの海と風を、選んだ時刻で、実寸（1:1）で表示します。',
     whatNoScen: '設定した風と波を、実寸（1:1）で表示します。',
     langTip: 'Switch to English。表示言語を切り替えます。',
-    sec1: '① 海と風の時刻',
-    sec1TipScen: '風速と風向はシナリオが決めるので、ここでは動かせません。経過時間を動かすと変わります。',
+    sec1: '① 海と風の設定',
+    sec1TipScen: '「シナリオ」では風速と風向をシナリオが決めます。「自由に設定」と「変動あり」では、スライダーで海と風を決めます。',
     sec1TipNoScen: '風速と風向のスライダーで、見せる海と風を決めます。',
+    envMode: '設定の方法', envModeTip: '「シナリオ」は嵐のシナリオの海と風です。「自由に設定」は、風速、向き、海の発達、うねりを自分で決めます。「変動あり」は、自由な設定に加えて、平均の風が時間とともにゆれ、突風が吹き、短い波が風の変化に遅れてついていきます。',
+    emScen: 'シナリオ', emFree: '自由に設定', emVar: '変動あり',
+    age: '海の発達', ageTip: '風が吹き始めてからの時間です。左端は十分に発達した海で、右へ行くほど短い時間の、まだ育っていない海になります。時間が短いほど、波は低く短くなります。',
+    ageFull: '十分に発達', ageH: (h) => h + ' 時間',
+    swOn: 'うねりを加える', swOnTip: '風とは別の向きから来る、周期の長い波を加えます。',
+    swHs: 'うねりの波高', swHsTip: 'うねりの波高です。',
+    swTp: 'うねりの周期', swTpTip: 'うねりの周期です。長いほど波長が長くなります。',
+    swFrom: 'うねりの向き', swFromTip: 'うねりが来る方位です。0 deg が北、90 deg が東です。',
+    slowKind: 'ゆるやかな変化', slowKindTip: '平均の風のゆっくりした変化です。「穏やか」は標準偏差が約 0.3 m/s のゆれで、6 時間から 10 分の周期を含みます。「対流セル」は、周期 30 から 60 分、振れ幅 2 から 4 m/s の、ほぼ周期的な変化です。',
+    skCalm: '穏やか', skCell: '対流セル',
+    envSeed: '乱数の種', envSeedTip: 'ゆるやかな変化と突風の乱数の種です。同じ値なら同じ変動になります。',
+    stripT: '10 m の風速（直近 5 分）', stripTip: '観測柱の高さ 10 m の風速です。橙の線は突風と波を含む値、青の線は平均の風です。時間は実時間の秒で進みます。',
+    stripAxis: '秒前', stripMean: '平均の風', stripAct: '観測柱の値',
+    e_u10: 'いまの平均の風（10 m）', e_du: '平均の風の変化', e_hs: '風浪の波高と周期', e_hsw: 'うねりの波高',
+    lockVarTip: '「変動あり」では時間は実時間の秒で進むので、変えられません。',
+    envLockTip: '飛行中は設定の方法を変えられません。',
     hour: '嵐の経過時間（時間）', timeNote: '波と機体は実時間（秒）で動きます。経過時間は嵐の筋書きの時刻です。', hourTip: '嵐のシナリオの経過時間です。海と風がこの時刻のものになります。',
     play: '再生', pauseBtn: '停止', playTip: '経過時間を自動で進めます。もう一度押すと止まります。',
     rate: '再生の速さ', rateTip: '再生中に、1 秒で進める経過時間です。',
@@ -150,19 +184,15 @@ const I18N = {
     from: '風の吹いてくる向き', fromTip: '風が吹いてくる方位です。0 deg が北、90 deg が東です。',
     sec2: '② 機体を飛ばす', sec2Tip: '上から順に選んで、発進を押します。',
     stAc: '1. 機体', flAcTip: '飛ばす機体を選びます。',
-    stCyc: '2. 飛び方', flCycTip: '参照軌道の種類を選びます。',
-    cycTravel: '進む（風を横切る）', cycLoiter: 'その場にとどまる',
-    stPos: '3. 発進する場所', flPosTip: '発進する場所を選びます。',
+    stPos: '2. 発進する場所', flPosTip: '発進する場所を選びます。',
     posMast: '観測柱の位置', posClick: '海面をクリックした点',
     ptHint: '海面をクリックして、発進する点を選びます。',
     ptSet: (x, y) => '発進する点: (' + x + ', ' + y + ') m',
-    stHead: '4. 向き', flHeadTip: '発進するときの機体の向きです。風を基準に決まります。',
+    stHead: '3. 向き', flHeadTip: '発進するときの機体の向きです。風を基準に決まります。',
     hUp: '風上へ', hDown: '風下へ', hLeft: '風を横切って左へ', hRight: '風を横切って右へ', hRef: '参照軌道の向き',
-    stCtl: '5. 制御', flCtlTip: '機体の動かし方を選びます。「周期軌道を追う」は、参照軌道を追う従来の制御です。「MPC（リアルタイム）」は、周期軌道の表をもとに、0.5 秒ごとに先の 6 秒を計画し直します。MPC では「2. 飛び方」を使わず、風下から 20 度ずれた向きへ進む周期軌道を使います。',
-    ctlTrack: '周期軌道を追う', ctlMpc: 'MPC（リアルタイム）',
-    stWorld: 'MPC から見た海', flWorldTip: 'MPC が先の飛行を予測するときに使う海です。「平らと仮定」は、海面を高さ 0 の平らな面とし、風を対数の分布にします。「真の波」は、いま表示している波と風をそのまま使います。MPC のときだけ有効です。',
+    stWorld: 'MPC から見た海', flWorldTip: 'MPC が先の飛行を予測するときに使う海です。「平らと仮定」は、海面を高さ 0 の平らな面とし、風を対数の分布にします。「真の波」は、いま表示している波と、いまの平均の風を使います。どちらも、先の突風は知りません。',
     worldFlat: '平らと仮定', worldTruth: '真の波',
-    stMotor: '6. モータ補助', flMotorTip: 'モータの推力を、MPC が選ぶ三つ目の操作に加えます。「あり」にすると、MPC は必要な場面でだけ短くモータを回して、飛行を延ばします。プロペラは、回していないときは折りたたまれ、その分の抵抗が加わります。MPC のときだけ有効です。',
+    stMotor: '4. モータ補助', flMotorTip: 'モータの推力を、MPC が選ぶ三つ目の操作に加えます。「あり」にすると、MPC は必要な場面でだけ短くモータを回して、飛行を延ばします。プロペラは、回していないときは折りたたまれ、その分の抵抗が加わります。',
     motorOff: 'なし', motorOn: 'あり',
     stPw: '電力の重み', flPwTip: 'モータで使う電力量に付ける重みです。「惜しまない」はほとんど気にせず、「ふつう」は中間、「節約」は強く惜しみます。節約にしすぎると、MPC は必要な場面でもモータを使わず、着水することがあります。モータ補助が「あり」のときだけ有効です。',
     pwFree: '惜しまない', pwNormal: 'ふつう', pwCostly: '節約',
@@ -196,18 +226,14 @@ const I18N = {
     warnMany: (n, m) => '注意: 1 コマに ' + n + ' 成分あり、先頭の ' + m + ' だけを使います。',
     warnNearest: 'この端末は頂点用の変数が少ないため、2 コマの混ぜ合わせをやめ、近い方のコマだけを使います。',
     rough: (r, st) => '粗度のモデル: ' + r + (st ? '、2 次のストークス項あり' : ''),
-    refsMissing: 'window.REFS がありません。python -m sim.export_refs で refs.js を作ってください。飛行は使えません。',
-    refsAt: (ks) => '参照軌道のある風速 u10: ' + ks + ' m/s',
-    refsNone: 'この飛び方の参照軌道はありません。ガードだけで飛びます。',
+    aircraftMissing: 'window.AIRCRAFT がありません。python -m sim.export_aircraft で aircraft.js を作ってください。飛行は使えません。',
     needClick: '先に、海面をクリックして発進する点を選んでください。',
     numFail: (s) => '数値が壊れました。t = ' + s + ' s',
     splashed: (s) => '着水しました。t = ' + s + ' s',
     splashLbl: (s) => '着水 t = ' + s + ' s',
-    refTxt: (cyc, p) => (cyc === 'travel' ? '進む' : 'その場') + '、周期 ' + p + ' s',
-    refNone: '参照軌道なし（ガードだけ）',
     stopped: '（停止中）', yes: 'はい', no: 'いいえ', na: 'なし',
     f_el: '飛行時間', f_v: '対気速度', f_h: '水面からの高さ', f_dist: '観測柱からの距離', f_e: 'エネルギー z + V^2/2g', f_n: '荷重倍数',
-    f_ms: '計画にかかった時間', f_ms_tip: '計画 1 回の計算時間です。直近の値と平均を出します。MPC のときだけ値が入ります。',
+    f_ms: '計画にかかった時間', f_ms_tip: '計画 1 回の計算時間です。直近の値と平均を出します。',
     f_late: '遅れた計画の数', f_late_tip: '次の計画の時刻までに、新しい計画が届かなかった回数です。そのあいだは前の計画の続きで飛びます。',
     f_sel: '周期軌道の表の選択', f_sel_tip: '計画が使っている表の風速 u10 と、風に対する進行方向 chi です。',
     f_end: '終わった理由', f_end_tip: '飛行が終わった理由です。中心が水面に触れたか、翼端が水面に触れたかを区別します。',
@@ -223,7 +249,7 @@ const I18N = {
     mpcErr: (m) => 'MPC のワーカーでエラーが出ました: ' + m,
     libMissing: 'window.LIBRARY がありません。python -m sim.export_library で library.js を作ってください。MPC は使えません。',
     tipSplashed: (s) => '翼端が水面に触れました。t = ' + s + ' s', tipLbl: (s) => '翼端接触 t = ' + s + ' s',
-    f_ph: '周期の位相', f_gd: 'ガード作動', f_de: '1 周期のエネルギー変化', f_u: '使った u10 と今の風', f_ref: '参照軌道',
+    f_ph: '周期の位相', f_u: '使った u10 と今の風', f_ref: '参照軌道',
     r_t: '波の時刻', r_u10: '基準の 10 m の風速', r_us: '摩擦速度 u*', r_z0: '粗度長 z0', r_hsTp: ' の波高と周期',
     r_eta: '観測柱の水面の高さ', r_w2: '観測柱 2 m の風速', r_w10: '観測柱 10 m の風速', r_vw2: '観測柱 2 m の上下の風',
     s_hour: '表示中の時刻', s_u10: '10 m の風速', s_from: '風の吹いてくる向き', s_hss: '風浪の波高', s_tps: '風浪の周期',
@@ -234,9 +260,25 @@ const I18N = {
     what: 'Shows the sea and wind of the storm scenario at the chosen hour, at 1:1 scale.',
     whatNoScen: 'Shows the sea and wind you set, at 1:1 scale.',
     langTip: '表示言語を切り替えます。Switches the display language.',
-    sec1: '1. Sea and wind time',
-    sec1TipScen: 'The scenario sets wind speed and direction, so they cannot be moved here. Move the elapsed time instead.',
+    sec1: '1. Sea and wind setting',
+    sec1TipScen: 'With "Scenario" the scenario sets wind speed and direction. With "Free setting" and "Varying" the sliders choose the sea and wind.',
     sec1TipNoScen: 'The wind speed and direction sliders choose the sea and wind.',
+    envMode: 'Setting', envModeTip: '"Scenario" is the sea and wind of the storm scenario. "Free setting" lets you choose wind speed, direction, sea development and swell. "Varying" adds, on top of the free setting, a mean wind that drifts in time, gusts, and short waves that follow the wind change with a delay.',
+    emScen: 'Scenario', emFree: 'Free setting', emVar: 'Varying',
+    age: 'Sea development', ageTip: 'Time since the wind began. The left end is a fully developed sea; further right is a younger sea that has had less time to grow. A shorter time gives lower and shorter waves.',
+    ageFull: 'Fully developed', ageH: (h) => h + ' h',
+    swOn: 'Add a swell', swOnTip: 'Adds a long-period wave from a direction of its own.',
+    swHs: 'Swell height', swHsTip: 'Significant height of the swell.',
+    swTp: 'Swell period', swTpTip: 'Peak period of the swell. Longer means a longer wavelength.',
+    swFrom: 'Swell from', swFromTip: 'Direction the swell comes from. 0 deg is north, 90 deg is east.',
+    slowKind: 'Slow change', slowKindTip: 'Slow change of the mean wind. "Calm" is a drift with a standard deviation of about 0.3 m/s over periods of 6 h to 10 min. "Convection cells" is a quasi-periodic swing with a period of 30 to 60 min and an amplitude of 2 to 4 m/s.',
+    skCalm: 'Calm', skCell: 'Convection cells',
+    envSeed: 'Random seed', envSeedTip: 'Seed of the slow change and the gusts. The same value gives the same variation.',
+    stripT: 'Wind at 10 m, last 5 min', stripTip: 'Wind speed at 10 m at the mast. The orange line includes gusts and waves, the blue line is the mean wind. Time runs in real seconds.',
+    stripAxis: 's ago', stripMean: 'mean wind', stripAct: 'at the mast',
+    e_u10: 'Mean wind now (10 m)', e_du: 'Change of the mean wind', e_hs: 'Wind sea height / period', e_hsw: 'Swell height',
+    lockVarTip: 'In "Varying" time runs in real seconds, so this cannot be changed.',
+    envLockTip: 'The setting cannot be changed while flying.',
     hour: 'Storm time (hours)', timeNote: 'Waves and the aircraft move in real time (seconds); this is the time in the story of the storm.', hourTip: 'Elapsed time in the storm scenario. Sea and wind follow this hour.',
     play: 'Play', pauseBtn: 'Pause', playTip: 'Advances the elapsed time automatically. Press again to stop.',
     rate: 'Play speed', rateTip: 'Hours of scenario time per second while playing.',
@@ -244,19 +286,15 @@ const I18N = {
     from: 'Wind from', fromTip: 'Direction the wind comes from. 0 deg is north, 90 deg is east.',
     sec2: '2. Fly an aircraft', sec2Tip: 'Choose from the top down, then press Launch.',
     stAc: '1. Aircraft', flAcTip: 'Chooses the aircraft to fly.',
-    stCyc: '2. Flight style', flCycTip: 'Chooses the kind of reference trajectory.',
-    cycTravel: 'Travel (across the wind)', cycLoiter: 'Loiter (stay in place)',
-    stPos: '3. Launch at', flPosTip: 'Chooses where the aircraft starts.',
+    stPos: '2. Launch at', flPosTip: 'Chooses where the aircraft starts.',
     posMast: 'Mast position', posClick: 'Clicked point on the sea',
     ptHint: 'Click the sea to choose the launch point.',
     ptSet: (x, y) => 'Launch point: sim (' + x + ', ' + y + ') m',
-    stHead: '4. Heading', flHeadTip: 'Heading at launch, relative to the wind.',
+    stHead: '3. Heading', flHeadTip: 'Heading at launch, relative to the wind.',
     hUp: 'Upwind', hDown: 'Downwind', hLeft: 'Crosswind, left', hRight: 'Crosswind, right', hRef: 'Reference heading (rotated into the wind)',
-    stCtl: '5. Control', flCtlTip: 'Chooses how the aircraft is flown. "Follow the cycle" is the earlier tracker of a reference trajectory. "MPC (real time)" plans the next 6 s again every 0.5 s from a table of periodic cycles. MPC does not use "2. Flight style"; it uses the cycle that travels 20 degrees off downwind.',
-    ctlTrack: 'Follow the cycle', ctlMpc: 'MPC (real time)',
-    stWorld: 'Sea as MPC sees it', flWorldTip: 'The sea the MPC uses to predict the flight. "Assume flat" takes the surface as a flat plane at height 0 with a log wind profile. "True waves" uses the waves and wind on screen as they are. Active only with MPC.',
+    stWorld: 'Sea as MPC sees it', flWorldTip: 'The sea the MPC uses to predict the flight. "Assume flat" takes the surface as a flat plane at height 0 with a log wind profile. "True waves" uses the waves on screen and the mean wind of the moment. Neither knows the gusts ahead.',
     worldFlat: 'Assume flat', worldTruth: 'True waves',
-    stMotor: '6. Motor assist', flMotorTip: 'Adds the motor thrust as a third control the MPC chooses. With "On" the MPC runs the motor in short bursts only where needed, to extend the flight. The propeller is folded when the motor is off, which adds drag. Active only with MPC.',
+    stMotor: '4. Motor assist', flMotorTip: 'Adds the motor thrust as a third control the MPC chooses. With "On" the MPC runs the motor in short bursts only where needed, to extend the flight. The propeller is folded when the motor is off, which adds drag.',
     motorOff: 'Off', motorOn: 'On',
     stPw: 'Power weight', flPwTip: 'The weight on the electric energy the motor uses. "Spare no power" hardly cares, "Normal" is in between, "Save power" cares a lot. Too much saving and the MPC does not use the motor even when it is needed, and may splash. Active only when Motor assist is On.',
     pwFree: 'Spare no power', pwNormal: 'Normal', pwCostly: 'Save power',
@@ -290,18 +328,14 @@ const I18N = {
     warnMany: (n, m) => 'Warning: ' + n + ' components in a frame, only the first ' + m + ' are used.',
     warnNearest: 'Few vertex uniforms on this device: nearest frame is used instead of a crossfade.',
     rough: (r, st) => 'roughness model: ' + r + (st ? ', second-order (Stokes) term on' : ''),
-    refsMissing: 'window.REFS missing: run python -m sim.export_refs to create refs.js. Flight is off.',
-    refsAt: (ks) => 'references at u10 = ' + ks + ' m/s',
-    refsNone: 'no reference for this cycle: guard mode only',
+    aircraftMissing: 'window.AIRCRAFT missing: run python -m sim.export_aircraft to create aircraft.js. Flight is off.',
     needClick: 'Click the sea to choose a launch point first.',
     numFail: (s) => 'Numerical failure at t = ' + s + ' s',
     splashed: (s) => 'Splashed at t = ' + s + ' s',
     splashLbl: (s) => 'splashed at t = ' + s + ' s',
-    refTxt: (cyc, p) => cyc + ', period ' + p + ' s',
-    refNone: 'no reference (guard mode only)',
     stopped: ' (stopped)', yes: 'yes', no: 'no', na: 'n/a',
     f_el: 'Flight time', f_v: 'Airspeed', f_h: 'Height above surface', f_dist: 'Distance from the mast', f_e: 'Energy z + V^2/2g', f_n: 'Load factor',
-    f_ms: 'Planning time', f_ms_tip: 'Compute time of one plan, last and mean. Filled with MPC only.',
+    f_ms: 'Planning time', f_ms_tip: 'Compute time of one plan, last and mean.',
     f_late: 'Late plans', f_late_tip: 'How often a new plan had not arrived by the time of the next plan. The aircraft keeps flying the previous plan meanwhile.',
     f_sel: 'Cycle table pick', f_sel_tip: 'The wind speed u10 of the table entry the plan uses, and its travel direction chi relative to the wind.',
     f_end: 'End reason', f_end_tip: 'Why the flight ended: the centre or a wingtip touched the water.',
@@ -317,7 +351,7 @@ const I18N = {
     mpcErr: (m) => 'Error in the MPC worker: ' + m,
     libMissing: 'window.LIBRARY missing: run python -m sim.export_library to create library.js. MPC is off.',
     tipSplashed: (s) => 'Wingtip touched the water at t = ' + s + ' s', tipLbl: (s) => 'wingtip contact t = ' + s + ' s',
-    f_ph: 'Cycle phase', f_gd: 'Guard active', f_de: 'Energy change per cycle', f_u: 'u10 used / wind now', f_ref: 'Reference',
+    f_ph: 'Cycle phase', f_u: 'u10 used / wind now', f_ref: 'Reference',
     r_t: 'Wave time', r_u10: 'Wind at 10 m', r_us: 'Friction velocity u*', r_z0: 'Roughness length z0', r_hsTp: ' Hs / Tp',
     r_eta: 'Surface height at mast', r_w2: 'Wind at 2 m', r_w10: 'Wind at 10 m', r_vw2: 'Vertical wind at 2 m',
     s_hour: 'Elapsed time', s_u10: 'Wind at 10 m', s_from: 'Wind from', s_hss: 'Wind sea height', s_tps: 'Wind sea period',
@@ -434,8 +468,40 @@ function surface(x, y, t) {
   return surf;
 }
 function meanSpeed(h) { return h > W.z0 ? (W.ustar / C.karman) * Math.log(h / W.z0) : 0; }
-// wind at height h above the local surface; uses the cache filled by surface()
-function windAt(h, o) {
+
+// ---------------------------------------------------------------- environment (free setting, varying wind)
+// mode 'scenario' (the exported field), 'free' (sliders, SeaGen sea) or 'varying' (free plus a mean wind
+// that drifts, gusts, and short waves that follow the wind). In 'varying' the wind at sea time t is
+//   mean 10 m wind U(t) = u0 + slow(t - t0)   (W.u10 and W.ustar are scaled to it, z0 stays),
+//   gusts from a frozen turbulence field carried by the set wind u0 (windAt adds them),
+//   short waves (period under 2 s): amplitude times (lagged U / u0)^2, lagged with the response time of
+//   their period (gust.js). The dominant sea keeps the set amplitudes.
+const ENV = { mode: 'scenario', slow: null, gust: null, u0: 0, us0: 0, t0: 0, tLast: 0, U: 0, du: 0,
+  a0: null, sIdx: [], tau: [], lag: null, dirty: false, trains: [], samples: [], nextSample: 0, w10: 0 };
+const GV = [0, 0, 0];
+function envResetLag() {
+  ENV.lag = new Float64Array(ENV.sIdx.length).fill(ENV.U || ENV.u0);
+}
+// bring W and the short waves to sea time t (monotonic calls; the lag advances by the time since the last call)
+function envUpdate(t) {
+  if (ENV.mode !== 'varying' || !ENV.slow) return;
+  const tm = t - ENV.t0;
+  ENV.du = ENV.slow.at(tm);
+  const U = Math.max(1, ENV.u0 + ENV.du);
+  ENV.U = U; W.u10 = U; W.ustar = ENV.us0 * U / ENV.u0;
+  const dt = tm - ENV.tLast;
+  if (dt > 0) {
+    ENV.tLast = tm;
+    for (let j = 0; j < ENV.sIdx.length; j++) {
+      ENV.lag[j] += (U - ENV.lag[j]) * (1 - Math.exp(-dt / ENV.tau[j]));
+      CO.a[ENV.sIdx[j]] = ENV.a0[ENV.sIdx[j]] * Gust.shortScale(ENV.lag[j], ENV.u0);
+    }
+    if (ENV.sIdx.length) ENV.dirty = true;
+  }
+}
+// wind at height h above the local surface; uses the cache filled by surface().
+// With gx, gy, gt (world position and sea time) the gusts of the varying mode are added.
+function windAt(h, o, gx, gy, gt) {
   if (h <= W.z0) { o.u = surf.ou; o.v = surf.ov; o.w = surf.ow; return o; }
   const sp = meanSpeed(h);
   let u = sp * W.ex, v = sp * W.ey, w = 0;
@@ -445,6 +511,10 @@ function windAt(h, o) {
     const up = f * cosT[i];
     u += up * CO.dx[i]; v += up * CO.dy[i];
     w -= f * sinT[i];
+  }
+  if (ENV.gust && gt !== undefined) {
+    ENV.gust.at(gx, gy, h + surf.eta, h, gt, W, GV);
+    u += GV[0]; v += GV[1]; w += GV[2];
   }
   o.u = u; o.v = v; o.w = w; return o;
 }
@@ -664,25 +734,28 @@ function updateGlider(t) {
 }
 
 // ---------------------------------------------------------------- flight (live, uses flight.js)
-const REFS = window.REFS || null;
+const AIRCRAFT = window.AIRCRAFT || null;
 const FDT = 0.01, FMAX_STEPS = 20, TRAIL_DT = 0.1, TRAIL_N = 600;   // 60 s of trail
 const fwv = { u: 0, v: 0, w: 0 };
 // the viewer's own wind and surface, as the mast uses them (scenario blend, second-order surface)
 const fSurface = (x, y, t) => surface(x, y, t).eta;
 const fWind = (x, y, z, t) => {
   const e = surface(x, y, t).eta;
-  windAt(z - e, fwv);
+  windAt(z - e, fwv, x, y, t);   // the aircraft flies in the full field: mean, slow change, gusts, waves
   return [fwv.u, fwv.v, fwv.w];
 };
 Object.defineProperty(fWind, 'z0', { get: () => W.z0 });
-const FL = { on: false, started: false, s: null, ac: null, tr: null, cl: 0, mu: 0, acc: 0, el: 0,
-  trail: [], splash: null, pt: null, refText: '-', uText: '-', mpc: false, act: null, end: null,
+const FL = { on: false, started: false, s: null, ac: null, cl: 0, mu: 0, acc: 0, el: 0,
+  trail: [], splash: null, pt: null, act: null, end: null,
   motor: false, T: 0, eJ: 0, nOn: 0, nStep: 0, tMax: 0, eta: 1, foldDcd: 0 };
 
 // ---------------------------------------------------------------- MPC (planner in a Web Worker)
 // The planner (mpc.js) runs in a worker made from a Blob URL of its own source text, which also
 // works from file://. The main thread flies the aircraft through the actuators as always; every
 // 0.5 s of flight time it posts the state and keeps flying the current plan from its time offset.
+// The planner's world is the sea and the mean wind of that moment (W, and the wave components with
+// their amplitudes of that moment); it gets no gusts, so it does not know the turbulence ahead. The
+// aircraft itself flies in the full field.
 const HAVE_MPC = !!(window.MPC && ((window.LIBRARY && window.LIBRARY.aircraft) || (window.LIBRARY_MOTOR && window.LIBRARY_MOTOR.aircraft)));
 // cycle table of an aircraft: the motor library when the motor is on, else the old table, else the
 // soaring cycles of the motor library (null or an empty list: none)
@@ -737,7 +810,7 @@ function mpcRequest(t) {
     act: a.cl === null ? null : { cl: a.cl, mu: a.mu, clCmd: a.cmdLast[0], muCmd: a.cmdLast[1], T: a.T },
     world: { kind: kind, wind: { ustar: W.ustar, z0: W.z0, ex: W.ex, ey: W.ey, karman: C.karman },
       stokes: STOKES, maxComponents: MPC_MAXC },
-    u10: W.u10, chiDeg: MPC_CHI };
+    u10: W.u10, chiDeg: MPC_CHI };   // W.u10 and W.ustar: the mean wind of this moment, no gusts
   if (kind === 'truth') {
     req.world.comps = {};
     for (const key of ['a', 'k', 'omega', 'phase', 'dx', 'dy', 'urel']) req.world.comps[key] = CO[key].slice(0, N);
@@ -798,7 +871,7 @@ const ptMark = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THRE
   new THREE.LineBasicMaterial({ color: 0xf2c200 }));
 ptMark.visible = false; ptMark.frustumCulled = false; scene.add(ptMark);
 
-const flRows = ['el', 'v', 'h', 'dist', 'e', 'n', 'ph', 'gd', 'de', 'u', 'ref', 'ms', 'late', 'sel', 'end', 'pw', 'on', 'wh', 'rf'];
+const flRows = ['el', 'v', 'h', 'dist', 'e', 'n', 'ph', 'u', 'ref', 'ms', 'late', 'sel', 'end', 'pw', 'on', 'wh', 'rf'];
 const flTipped = ['ms', 'late', 'sel', 'end', 'pw', 'on', 'wh', 'rf'];   // rows with a tooltip on the label
 $('flro').innerHTML = flRows.map((r) => '<tr><td data-i="f_' + r + '"' + (flTipped.includes(r) ? ' data-t="f_' + r + '_tip"' : '') + '></td><td id="fl_' + r + '"></td></tr>').join('');
 const setFl = (k, s) => { $('fl_' + k).textContent = s; };
@@ -810,33 +883,26 @@ const renderFl = () => {
   $('flPt').textContent = FL.pt ? tx('ptSet', FL.pt.x, FL.pt.y) : tx('ptHint');
 };
 dyn.push(renderFl);
-if (!REFS || !Object.keys(REFS).length) {
-  flNoteFn = () => tx('refsMissing');
-  for (const id of ['flAc', 'flCyc', 'flPos', 'flHead', 'flCtl', 'flWorld', 'flMotor', 'flPw', 'flGo', 'flStop', 'flChase']) $(id).disabled = true;
+if (!AIRCRAFT || !Object.keys(AIRCRAFT).length) {
+  flNoteFn = () => tx('aircraftMissing');
+  for (const id of ['flAc', 'flPos', 'flHead', 'flWorld', 'flMotor', 'flPw', 'flGo', 'flStop', 'flChase']) $(id).disabled = true;
 } else {
-  $('flAc').innerHTML = Object.keys(REFS).filter((n) => n !== 'flyingwing-2m').map((n) => '<option>' + n + '</option>').join('');
-  const showRefs = () => {
-    if ($('flCtl').value === 'mpc') {
-      const es = HAVE_MPC ? libFor($('flAc').value, $('flMotor').value === 'on') : null;
-      const ks = es ? [...new Set(es.map((x) => x.u10))].sort((a, b) => a - b) : [];
-      flNoteFn = () => !HAVE_MPC ? tx('libMissing') : es && es.length ? tx('mpcLibAt', ks.join(', ')) : tx('mpcNoLib'); renderFl();
-      return;
-    }
-    const e = REFS[$('flAc').value][$('flCyc').value] || {};
-    const ks = Object.keys(e).map(Number).sort((a, b) => a - b);
-    flNoteFn = () => ks.length ? tx('refsAt', ks.join(', ')) : tx('refsNone'); renderFl();
+  const names = Object.keys(AIRCRAFT).filter((n) => n !== 'flyingwing-2m'
+    && (!HAVE_MPC || (libFor(n, true) || []).length || (libFor(n, false) || []).length));
+  $('flAc').innerHTML = names.map((n) => '<option>' + n + '</option>').join('');
+  const showAc = () => {
+    const es = HAVE_MPC ? libFor($('flAc').value, $('flMotor').value === 'on') : null;
+    const ks = es ? [...new Set(es.map((x) => x.u10))].sort((a, b) => a - b) : [];
+    flNoteFn = () => !HAVE_MPC ? tx('libMissing') : es && es.length ? tx('mpcLibAt', ks.join(', ')) : tx('mpcNoLib'); renderFl();
   };
-  $('flAc').addEventListener('change', showRefs); $('flCyc').addEventListener('change', showRefs);
-  $('flMotor').addEventListener('change', showRefs);
-  $('flCtl').addEventListener('change', () => { syncCtl(); showRefs(); });
-  showRefs();
+  $('flAc').addEventListener('change', showAc);
+  $('flMotor').addEventListener('change', showAc);
+  showAc();
 }
-// the sea choice is for MPC only; MPC does not use the flight style
+// the power weight and the reflex apply only with the motor on
 function syncCtl() {
-  const mpc = $('flCtl').value === 'mpc';
-  $('flWorld').disabled = !mpc; $('flCyc').disabled = mpc;
-  $('flMotor').disabled = !mpc; $('flPw').disabled = !mpc || $('flMotor').value !== 'on';
-  $('flReflex').disabled = !mpc || $('flMotor').value !== 'on';
+  const off = $('flMotor').value !== 'on';
+  $('flPw').disabled = off; $('flReflex').disabled = off;
 }
 $('flMotor').addEventListener('change', syncCtl);
 syncCtl();
@@ -846,48 +912,28 @@ function launchPoint() {
 }
 function stopFlight() { FL.on = false; if (!FL.end) FL.end = 'S'; }
 function launch() {
-  if (!REFS) return;
+  if (!AIRCRAFT) return;
   if ($('flPos').value === 'click' && !FL.pt) { flNoteFn = () => tx('needClick'); renderFl(); return; }
-  const entry = REFS[$('flAc').value], cyc = $('flCyc').value, ac = entry.params;
-  const mpcMode = $('flCtl').value === 'mpc';
-  let lib = null;
-  if (mpcMode) {
-    if (!HAVE_MPC) { flNoteFn = () => tx('libMissing'); renderFl(); return; }
-    lib = libFor($('flAc').value, $('flMotor').value === 'on');
-    if (!lib || !lib.length) { flNoteFn = () => tx('mpcNoLib'); renderFl(); return; }
-    if (!mpcEnsureWorker()) return;
-  }
-  const table = entry[cyc] || {};
-  let ref = null, uUsed = null;
-  if (!mpcMode) {
-    for (const k of Object.keys(table).map(Number)) if (uUsed === null || Math.abs(k - W.u10) < Math.abs(uUsed - W.u10)) uUsed = k;
-    if (uUsed !== null) ref = table[String(uUsed)];
-  }
+  const name = $('flAc').value, ac = AIRCRAFT[name];
+  if (!HAVE_MPC) { flNoteFn = () => tx('libMissing'); renderFl(); return; }
+  const lib = libFor(name, $('flMotor').value === 'on');
+  if (!lib || !lib.length) { flNoteFn = () => tx('mpcNoLib'); renderFl(); return; }
+  if (!mpcEnsureWorker()) return;
   const p = launchPoint();
-  const psiW = Flight.windPsi(fWind, fSurface, p.x, p.y, T, Math.atan2(W.ey, W.ex));
-  let zr = 10, V, gam = 0, psiRef = null;
-  if (mpcMode) {   // the highest node of the library cycle the planner starts from
-    const c0 = MPC.pickCycle(lib, W.u10, MPC_CHI * Math.PI / 180);
-    let k = 0;
-    for (let i = 1; i < c0.z.length; i++) if (c0.z[i] > c0.z[k]) k = i;
-    zr = c0.z[k]; V = c0.V[k]; gam = c0.g[k]; psiRef = c0.psi[k];
-  } else if (ref) {   // the highest node of the reference
-    const n = ref.z.length - 1;
-    let k = 0;
-    for (let i = 1; i < n; i++) if (ref.z[i] > ref.z[k]) k = i;
-    zr = ref.z[k]; V = ref.V[k]; gam = ref.gamma[k]; psiRef = ref.psi[k];
-  } else {
-    V = Math.sqrt(2 * ac.mass * Flight.G / (ac.rho * ac.wing_area * Math.sqrt(ac.cd0 / ac.k_induced)));
-  }
+  const psiW = Math.atan2(W.ey, W.ex);   // the heading of the mean wind
+  // the highest node of the library cycle the planner starts from
+  const c0 = MPC.pickCycle(lib, W.u10, MPC_CHI * Math.PI / 180);
+  let k = 0;
+  for (let i = 1; i < c0.z.length; i++) if (c0.z[i] > c0.z[k]) k = i;
+  const zr = c0.z[k], V = c0.V[k], gam = c0.g[k], psiRef = c0.psi[k];
   const head = $('flHead').value;
   let psi = psiW + Math.PI;   // upwind
   if (head === 'down') psi = psiW;
   else if (head === 'left') psi = psiW + Math.PI / 2;
   else if (head === 'right') psi = psiW - Math.PI / 2;
   else if (head === 'ref' && psiRef !== null) psi = psiRef + psiW;
-  FL.ac = ac; FL.tr = mpcMode ? null : new Flight.Tracker(ref, ac);
-  FL.mpc = mpcMode; FL.end = null; FL.act = null;
-  FL.motor = mpcMode && $('flMotor').value === 'on';
+  FL.ac = ac; FL.end = null; FL.act = null;
+  FL.motor = $('flMotor').value === 'on';
   FL.reflex = FL.motor && $('flReflex').checked;
   FL.rx = { on: false, n: 0, eJ: 0 };
   FL.T = 0; FL.eJ = 0; FL.nOn = 0; FL.nStep = 0;
@@ -898,7 +944,7 @@ function launch() {
     FL.foldDcd = MPC.MOTOR.foldedCdaM2 / ac.wing_area;
   }
   MP.flight++; MP.busy = false; MP.plan = null; MP.last = 0; MP.sum = 0; MP.n = 0; MP.late = 0; MP.info = null;
-  if (mpcMode) {
+  {
     const A = libActuators();
     FL.act = new MPC.Actuators(ac, { rateModel: A.rate_model, tau: A.tau_s, clRate: A.cl_rate_per_s, kPb2v: A.k_pb2v, delay: A.delay_s });
     MP.worker.postMessage({ type: 'init', ac: ac, entries: lib,
@@ -906,8 +952,6 @@ function launch() {
   }
   FL.s = [p.x, p.y, fSurface(p.x, p.y, T) + zr, V, gam, psi];
   FL.cl = 0; FL.mu = 0; FL.acc = 0; FL.el = 0; FL.trail = []; FL.splash = null; FL.started = true; FL.on = true;
-  FL.uText = uUsed === null ? '-' : uUsed + ' / ' + W.u10.toFixed(1) + ' m/s';
-  FL.refInfo = ref ? [cyc, ref.period] : null;
   splashMark.visible = false; splashLbl.style.display = 'none'; flSplashFn = () => ''; renderFl();
   buildShape(ac);
   flightMesh.visible = true;
@@ -943,7 +987,8 @@ function flightAdvance(dtWanted, t0) {
   let done = 0;
   for (let i = 0; i < n && FL.on; i++) {
     const t = t0 + i * FDT;
-    if (FL.mpc) {
+    envUpdate(t);   // the varying wind and the short waves at this step
+    {
       if (Math.round(FL.el / FDT) % MPC_EVERY === 0) mpcRequest(t);
       const ac = FL.ac, V = FL.s[3];
       let pc = mpcControls(t);
@@ -969,10 +1014,6 @@ function flightAdvance(dtWanted, t0) {
         FL.cl = MPC.nLimitedCl(ac, V, a[0]); FL.mu = a[1];
         FL.s = Flight.rk4(FL.s, a[0], a[1], ac, fWind, t, FDT, true);
       }
-    } else {
-      const c = FL.tr.command(FL.s, fWind, fSurface, t);
-      FL.cl = c.cl; FL.mu = c.mu;
-      FL.s = Flight.rk4(FL.s, c.cl, c.mu, FL.ac, fWind, t, FDT);
     }
     FL.el += FDT; done++;
     if (!FL.s.every(Number.isFinite)) { FL.end = 'N'; stopFlight(); { const ts = FL.el.toFixed(1); flSplashFn = () => tx('numFail', ts); renderFl(); } break; }
@@ -982,7 +1023,7 @@ function flightAdvance(dtWanted, t0) {
       if (FL.trail.length > TRAIL_N) FL.trail.shift();
     }
     // with MPC the wingtip counts too (the planner's clearance is the geometric wingtip height)
-    const tipH = FL.mpc ? hgt - 0.5 * FL.ac.span * Math.sin(Math.abs(FL.mu)) * Math.cos(FL.s[4]) : hgt;
+    const tipH = hgt - 0.5 * FL.ac.span * Math.sin(Math.abs(FL.mu)) * Math.cos(FL.s[4]);
     if (hgt < 0 || tipH < 0) {
       const tip = hgt >= 0;
       FL.splash = { x: FL.s[0], y: FL.s[1], z: FL.s[2], t: FL.el, tip: tip };
@@ -1016,29 +1057,17 @@ function updateFlightView() {
   trailGeo.attributes.position.needsUpdate = true; trailGeo.attributes.color.needsUpdate = true;
   // readouts
   const m = Flight.metrics(s, FL.ac, fWind, fSurface, T, FL.cl);
-  const pa = FL.tr ? FL.tr.passes : [];
   setFl('el', FL.el.toFixed(1) + ' s' + (FL.on ? '' : tx('stopped')));
   setFl('v', m.airspeed.toFixed(1) + ' m/s');
   setFl('h', m.height.toFixed(2) + ' m');
   setFl('dist', Math.hypot(s[0] - mx, s[1] - my).toFixed(0) + ' m');
   setFl('e', (m.energy * Flight.G).toFixed(0) + ' J/kg');
   setFl('n', m.loadFactor.toFixed(2));
-  if (FL.mpc) {
-    setFl('ph', MP.info ? (MP.info.tau0 / MP.info.period).toFixed(2) : '-');
-    setFl('gd', tx('na'));
-  } else {
-    setFl('ph', FL.tr.phase === null ? '-' : (FL.tr.phase / FL.tr.ref.n).toFixed(2));
-    setFl('gd', FL.tr.guard ? tx('yes') : tx('no'));
-  }
-  setFl('de', pa.length >= 2 ? ((pa[pa.length - 1].energy - pa[pa.length - 2].energy) * Flight.G).toFixed(1) + ' J/kg' : tx('na'));
-  if (FL.mpc) {
-    setFl('u', MP.info ? MP.info.u10 + ' / ' + W.u10.toFixed(1) + ' m/s' : '-'); setFl('ref', tx('refMpc'));
-  } else {
-    setFl('u', FL.uText); setFl('ref', FL.refInfo ? tx('refTxt', FL.refInfo[0], FL.refInfo[1]) : tx('refNone'));
-  }
-  setFl('ms', FL.mpc && MP.n ? tx('mpcMs', MP.last.toFixed(1), (MP.sum / MP.n).toFixed(1)) : '-');
-  setFl('late', FL.mpc ? String(MP.late) : '-');
-  setFl('sel', FL.mpc && MP.info ? tx('mpcSel', MP.info.u10, MP.info.chiDeg, MP.info.marginSet) : '-');
+  setFl('ph', MP.info ? (MP.info.tau0 / MP.info.period).toFixed(2) : '-');
+  setFl('u', MP.info ? MP.info.u10 + ' / ' + W.u10.toFixed(1) + ' m/s' : '-'); setFl('ref', tx('refMpc'));
+  setFl('ms', MP.n ? tx('mpcMs', MP.last.toFixed(1), (MP.sum / MP.n).toFixed(1)) : '-');
+  setFl('late', String(MP.late));
+  setFl('sel', MP.info ? tx('mpcSel', MP.info.u10, MP.info.chiDeg, MP.info.marginSet) : '-');
   setFl('end', FL.end ? tx('end' + FL.end) : '-');
   setFl('pw', FL.motor && FL.el > 0 ? (FL.eJ / FL.el).toFixed(1) + ' W' : '-');
   setFl('on', FL.motor && FL.nStep ? (100 * FL.nOn / FL.nStep).toFixed(0) + ' %' : '-');
@@ -1051,7 +1080,7 @@ function updateFlightView() {
     exhaust.scale.set(1, sc, 1); exhaust.position.x = -(0.35 + 0.05 * sc) * FL.ac.span;
   }
   // the current plan, drawn from where the aircraft is on it
-  planLine.visible = FL.mpc && !!MP.plan;
+  planLine.visible = !!MP.plan;
   if (planLine.visible) {
     const i0 = Math.min(PLAN_PTS - 2, Math.max(0, Math.floor((T - MP.plan.t0) / MP.plan.dt)));
     planGeo.setDrawRange(i0, PLAN_PTS - i0);
@@ -1075,6 +1104,7 @@ function updateFlightView() {
 
 // ---------------------------------------------------------------- UI
 const u10El = $('u10'), fromEl = $('from'), spdEl = $('spd');
+const modeEl = $('envMode'), ageEl = $('age'), slowEl = $('slowKind'), seedEl = $('envSeed');
 u10El.value = W.u10; fromEl.value = Math.round(W.from_deg) % 360;
 const hourEl = $('hour'), rateEl = $('rate');
 let playing = false, hourNow = 0;   // hourNow keeps sub-step precision (the slider rounds to 0.1)
@@ -1086,13 +1116,24 @@ function syncHour() {
 const renderPlay = () => { $('play').textContent = playing ? tx('pauseBtn') : tx('play'); };
 dyn.push(renderPlay);
 if (SCEN) {
-  $('scen').style.display = '';
-  u10El.disabled = true; fromEl.disabled = true; $('windCtl').style.display = 'none';   // the scenario sets the wind
   hourEl.addEventListener('input', () => { hourNow = +hourEl.value; setHour(hourNow); syncHour(); });
   $('play').addEventListener('click', () => { playing = !playing; renderPlay(); });
 }
-function syncLabels() { $('u10v').textContent = (+u10El.value).toFixed(1) + ' m/s'; $('fromv').textContent = fromEl.value + ' deg'; $('spdv').textContent = (+spdEl.value).toFixed(1) + 'x'; }
-function onWind() { if (SCEN) return; setWind(+u10El.value, +fromEl.value); syncLabels(); }
+function syncLabels() {
+  $('u10v').textContent = (+u10El.value).toFixed(1) + ' m/s'; $('fromv').textContent = fromEl.value + ' deg'; $('spdv').textContent = (+spdEl.value).toFixed(1) + 'x';
+  const h = EnvSea.AGE_HOURS[+ageEl.value];
+  $('agev').textContent = h ? tx('ageH', h) : tx('ageFull');
+  $('swHsv').textContent = (+$('swHs').value).toFixed(1) + ' m'; $('swTpv').textContent = (+$('swTp').value).toFixed(1) + ' s';
+  $('swFromv').textContent = $('swFrom').value + ' deg';
+}
+dyn.push(syncLabels);
+// In the free and varying modes a slider change rebuilds the sea after a short pause (rebuildSea below).
+function onWind() {
+  syncLabels();
+  if (ENV.mode !== 'scenario') { scheduleRebuild(); return; }
+  if (SCEN) return;
+  setWind(+u10El.value, +fromEl.value); syncLabels();
+}
 u10El.addEventListener('input', onWind); fromEl.addEventListener('input', onWind);
 spdEl.addEventListener('input', syncLabels);
 $('ptc').addEventListener('change', () => { points.visible = $('ptc').checked; });
@@ -1209,6 +1250,129 @@ $('ch1').addEventListener('mousemove', (e) => {
 });
 $('ch1').addEventListener('mouseleave', () => { tip.style.display = 'none'; });
 
+// ---------------------------------------------------------------- environment: modes, rebuilt sea, strip chart
+// Fill the merged component set from one set of components (the free setting has no second frame).
+function setComponents(c) {
+  N = Math.min(c.a.length, MAXC);
+  for (let i = 0; i < N; i++) {
+    CO.a[i] = c.a[i]; CO.k[i] = c.k[i]; CO.omega[i] = c.omega[i]; CO.phase[i] = c.phase[i];
+    CO.dx[i] = c.dx[i]; CO.dy[i] = c.dy[i]; CO.urel[i] = c.urel[i];
+  }
+  ENV.a0 = Float64Array.from(CO.a.subarray(0, N));
+  ENV.sIdx = []; ENV.tau = [];
+  for (let i = 0; i < N; i++) {   // short waves (period under 2 s) follow the slow wind
+    if (CO.omega[i] > 2 * Math.PI / Gust.DEFAULTS.shortPeriod) { ENV.sIdx.push(i); ENV.tau.push(Gust.responseTime(2 * Math.PI / CO.omega[i])); }
+  }
+  envResetLag();
+  uploadC();
+}
+// Build the sea of the sliders with SeaGen. The phases come from a fixed seed, so a slider change
+// moves the sea smoothly. The flight and the planner read CO and W, so they use the new sea at once
+// and the planner's next plan sees it.
+function rebuildSea() {
+  const sw = $('swOn').checked ? { hs: +$('swHs').value, tp: +$('swTp').value, fromDeg: +$('swFrom').value } : null;
+  const set = { u10: +u10El.value, fromDeg: +fromEl.value, hours: EnvSea.AGE_HOURS[+ageEl.value], swell: sw,
+    seed: (F.meta && F.meta.seed) || 1 };
+  const b = EnvSea.build(set, C), w = b.wind;
+  W.u10 = w.u10; W.from_deg = w.from_deg; W.to_deg = w.to_deg; W.ex = w.ex; W.ey = w.ey; W.ustar = w.ustar; W.z0 = w.z0;
+  ENV.u0 = set.u10; ENV.us0 = w.ustar; ENV.U = set.u10; ENV.du = 0; ENV.trains = b.trains;
+  setComponents(b.comps);
+  seaMat.uniforms.uRange.value = Math.max(1, b.hsTotal);
+  ENV.samples = [];   // the strip chart starts again under the new setting
+  if (ENV.mode === 'varying' && ENV.slow) {   // the set wind changed under the running variation
+    W.adv = ENV.u0; ENV.tLast = T - ENV.t0; envUpdate(T);
+  }
+}
+let rebuildTimer = 0;
+function scheduleRebuild() {
+  clearTimeout(rebuildTimer);
+  rebuildTimer = setTimeout(() => { if (ENV.mode !== 'scenario') rebuildSea(); }, 150);
+}
+function startVarying() {
+  const seed = Math.max(1, Math.round(+seedEl.value) || 1);
+  ENV.slow = Gust.slowWind(seed, slowEl.value); ENV.gust = Gust.create(seed);
+  W.karman = C.karman; W.adv = ENV.u0;   // the gust field is carried by the set wind
+  ENV.t0 = T; ENV.tLast = 0; ENV.U = ENV.u0; envResetLag();
+  ENV.samples = []; ENV.nextSample = T;
+  envUpdate(T);
+}
+function applyEnvMode(init) {
+  const prev = ENV.mode, m = modeEl.value, scen = m === 'scenario';
+  ENV.mode = m; ENV.gust = null; ENV.slow = null; W.adv = undefined;
+  $('scen').style.display = scen && SCEN ? '' : 'none';
+  $('windCtl').style.display = scen && SCEN ? 'none' : '';   // the scenario sets the wind
+  $('freeCtl').style.display = scen ? 'none' : '';
+  $('timeNote').style.display = scen ? '' : 'none';   // it explains the storm hour
+  $('varCtl').style.display = m === 'varying' ? '' : 'none';
+  u10El.disabled = fromEl.disabled = scen && SCEN;
+  for (const id of ['swHs', 'swTp', 'swFrom']) $(id).disabled = !$('swOn').checked;
+  if (m === 'varying') { spdEl.value = 1; $('pause').checked = false; syncLabels(); }   // time runs in real seconds
+  if (init) return;
+  if (scen) {
+    seaMat.uniforms.uRange.value = Math.max(1, hsTot);
+    if (SCEN) { setHour(hourNow); syncHour(); updateScRo(); } else { setHour(0); setWind(+u10El.value, +fromEl.value); }
+  } else {
+    if (prev === 'scenario') { u10El.value = Math.min(25, Math.max(2, W.u10)); fromEl.value = Math.round(W.from_deg) % 360; }
+    rebuildSea();
+    if (m === 'varying') startVarying();
+  }
+  syncLabels();
+}
+modeEl.addEventListener('change', () => applyEnvMode(false));
+for (const el of [ageEl, $('swHs'), $('swTp'), $('swFrom')]) el.addEventListener('input', onWind);
+$('swOn').addEventListener('change', () => {
+  for (const id of ['swHs', 'swTp', 'swFrom']) $(id).disabled = !$('swOn').checked;
+  scheduleRebuild();
+});
+for (const el of [slowEl, seedEl]) el.addEventListener('change', () => { if (ENV.mode === 'varying') startVarying(); });
+const envRows = ['u10', 'du', 'hs', 'hsw'];
+$('envro').innerHTML = envRows.map((r) => '<tr><td data-i="e_' + r + '"></td><td id="env_' + r + '"></td></tr>').join('');
+function updateEnvRo() {
+  const sg = (v) => (v >= 0 ? '+' : '') + v.toFixed(2);
+  $('env_u10').textContent = W.u10.toFixed(2) + ' m/s';
+  $('env_du').textContent = ENV.mode === 'varying' ? sg(ENV.du) + ' m/s' : '-';
+  const a = ENV.trains[0], b = ENV.trains[1];
+  $('env_hs').textContent = a ? a.hs.toFixed(2) + ' m / ' + a.tp.toFixed(1) + ' s' : '-';
+  $('env_hsw').textContent = b ? b.hs.toFixed(2) + ' m' : '-';
+}
+// strip chart of the last 5 minutes of the wind at 10 m at the mast
+const STRIP_S = 300, SW = 280, SH = 96;
+const gS = (() => {
+  const cv = $('strip'), r = Math.min(devicePixelRatio || 1, 2);
+  cv.width = SW * r; cv.height = SH * r;
+  const g = cv.getContext('2d'); g.setTransform(r, 0, 0, r, 0, 0); return g;
+})();
+function drawStrip() {
+  const ml = 30, mr = 8, mt = 16, mb = 24, pw = SW - ml - mr, ph = SH - mt - mb, g = gS;
+  g.clearRect(0, 0, SW, SH); g.fillStyle = CS.surface; g.fillRect(0, 0, SW, SH);
+  const S = ENV.samples;
+  let lo = ENV.u0 - 1, hi = ENV.u0 + 1;
+  for (const q of S) { lo = Math.min(lo, q[1], q[2]); hi = Math.max(hi, q[1], q[2]); }
+  lo = Math.floor(lo - 0.5); hi = Math.ceil(hi + 0.5);
+  const xp = (t) => ml + (1 - (T - t) / STRIP_S) * pw, yp = (v) => mt + ph - (v - lo) / (hi - lo) * ph;
+  g.font = '10px system-ui, sans-serif'; g.lineWidth = 1;
+  g.strokeStyle = CS.grid; g.fillStyle = CS.text2; g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (const v of [lo, (lo + hi) / 2, hi]) {
+    const y = Math.round(yp(v)) + 0.5;
+    g.beginPath(); g.moveTo(ml, y); g.lineTo(ml + pw, y); g.stroke();
+    g.fillText(Number.isInteger(v) ? String(v) : v.toFixed(1), ml - 4, y);
+  }
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  for (const a of [300, 200, 100, 0]) g.fillText(String(a), ml + (1 - a / STRIP_S) * pw, mt + ph + 3);
+  g.fillText(tx('stripAxis'), ml + pw / 2, mt + ph + 13);
+  const line = (k, col) => {
+    g.strokeStyle = col; g.lineWidth = 1.5; g.beginPath();
+    let first = true;
+    for (const q of S) { const x = xp(q[0]); if (x < ml) continue; if (first) { g.moveTo(x, yp(q[k])); first = false; } else g.lineTo(x, yp(q[k])); }
+    g.stroke(); g.lineWidth = 1;
+  };
+  line(1, CS.s2); line(2, CS.s1);
+  g.textAlign = 'left'; g.textBaseline = 'middle';
+  g.fillStyle = CS.s1; g.fillText(tx('stripMean'), ml, 7);
+  g.fillStyle = CS.s2; g.fillText(tx('stripAct'), ml + g.measureText(tx('stripMean')).width + 12, 7);
+}
+applyEnvMode(true);
+
 // ---------------------------------------------------------------- main loop
 let T = 0, last = performance.now();
 const wv = { u: 0, v: 0, w: 0 };
@@ -1222,7 +1386,7 @@ function wrapParticle(i) {
 function stepParticles(dt, t) {
   for (let i = 0; i < NP; i++) {
     surface(px[i], py[i], t);
-    windAt(ph[i], wv);
+    windAt(ph[i], wv, px[i], py[i], t);
     px[i] += wv.u * dt; py[i] += wv.v * dt;
     ph[i] = Math.min(40, Math.max(0.3, ph[i] + wv.w * dt));
     wrapParticle(i);
@@ -1255,6 +1419,15 @@ function loop(now) {
     if (points.visible) for (let s = 0; s < ns; s++) stepParticles(h, T + s * h);
     T += dt;
   }
+  envUpdate(T);   // the varying wind and the short waves at the new sea time
+  if (ENV.dirty) { ENV.dirty = false; uploadC(); }
+  {   // locks: the setting does not change in flight, and time runs in real seconds when the wind varies
+    const lv = ENV.mode === 'varying';
+    spdEl.disabled = $('pause').disabled = lv;
+    spdEl.title = tx(lv ? 'lockVarTip' : 'spdTip');
+    $('pause').title = $('pause').parentElement.title = tx(lv ? 'lockVarTip' : 'pauseTip');
+    modeEl.disabled = FL.on; modeEl.title = tx(FL.on ? 'envLockTip' : 'envModeTip');
+  }
   // the drawn sea follows the aircraft while it flies (display only; the flight model is analytic)
   {
     const fol = FL.on && $('seaFollow').checked;
@@ -1272,7 +1445,7 @@ function loop(now) {
   const eta = surf.eta;
   mastLine.position.set(mx, eta, -my);
   for (let j = 0; j < HM.length; j++) {
-    windAt(HM[j], wv);
+    windAt(HM[j], wv, mx, my, T);
     const sh = Math.hypot(wv.u, wv.v);
     spd[j] = sh; ww[j] = wv.w;
     const len = Math.max(0.02, Math.min(25, 0.6 * Math.hypot(sh, wv.w)));
@@ -1281,12 +1454,20 @@ function loop(now) {
     arrows[j].setDirection(_dir);
     arrows[j].setLength(len, Math.min(len * 0.3, 1.2), Math.min(len * 0.15, 0.6));
     if (HM[j] === 2) { setRo('w2', sh.toFixed(2) + ' m/s'); setRo('vw2', wv.w.toFixed(2) + ' m/s'); }
-    if (HM[j] === 10) setRo('w10', sh.toFixed(2) + ' m/s');
+    if (HM[j] === 10) { setRo('w10', sh.toFixed(2) + ' m/s'); ENV.w10 = sh; }
   }
   setRo('t', T.toFixed(1) + ' s'); setRo('u10', W.u10.toFixed(1) + ' m/s');
   setRo('us', W.ustar.toFixed(3) + ' m/s'); setRo('z0', W.z0.toExponential(2) + ' m');
   setRo('eta', eta.toFixed(2) + ' m');
   if (SCEN) updateScRo();
+  if (ENV.mode !== 'scenario') updateEnvRo();
+  if (ENV.mode === 'varying') {
+    if (T >= ENV.nextSample) {
+      ENV.samples.push([T, ENV.w10, W.u10]); ENV.nextSample = T + 0.5;
+      while (ENV.samples.length && T - ENV.samples[0][0] > STRIP_S) ENV.samples.shift();
+    }
+    drawStrip();
+  }
   $('mastpos').textContent = tx('mastPos', mx, my);
   drawCharts();
 
