@@ -1416,31 +1416,25 @@ items:
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.best_ar
-    v: 12
+    v: 20
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.best_mass_kg
-    v: 1.87
+    v: 3.0
     unit: kg
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.best_ld_max
-    v: 27.5
+    v: 28.2
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.best_u10_min_ms
-    v: 13.22
-    unit: m/s
-    status: calculated
-    basis:
-      - docs/02-form.md#wing-sizing
-  - key: wing.best_upwind_vmg_u16_ms
-    v: 2.34
+    v: 12.87
     unit: m/s
     status: calculated
     basis:
@@ -1525,6 +1519,546 @@ items:
       - docs/02-form.md#wing-sizing
   - key: wing.best_fat_pod_u10_ms
     v: 14.95
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.best_ballast_kg
+    v: 1.55
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.best_wing_loading_npm2
+    v: 65.4
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.body_cda_min_m2
+    v: 0.00198
+    unit: m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.body_cda_max_m2
+    v: 0.00392
+    unit: m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.best_body_cda_m2
+    v: 0.00231
+    unit: m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.unballasted_u10_min_ms
+    v: 15.22
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.unballasted_u10_max_ms
+    v: 15.65
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.ballast_gain_min_ms
+    v: 2.02
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.ballast_gain_max_ms
+    v: 2.53
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.top3_spread_ms
+    v: 0.14
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.h180_ar20_sd7037_ms
+    v: -6.32
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.h180_ar25_sd7037_ms
+    v: -5.56
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.h180_ar16_sd7037_ms
+    v: -7.26
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.h180_ar20_ag35r_ms
+    v: -6.33
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p6_chi20_min_w
+    v: 28.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p6_chi20_max_w
+    v: 33.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p9_chi20_min_w
+    v: 28.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p9_chi20_max_w
+    v: 33.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p13_chi20_min_w
+    v: 0.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p13_chi20_max_w
+    v: 2.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p6_chi180_min_w
+    v: 26.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p6_chi180_max_w
+    v: 33.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p9_chi180_min_w
+    v: 35.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p9_chi180_max_w
+    v: 36.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p13_chi180_min_w
+    v: 49.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.follow_p13_chi180_max_w
+    v: 53.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front1_ballast_kg
+    v: 1.55
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front1_mass_kg
+    v: 3.0
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front1_wing_loading_npm2
+    v: 65.4
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front1_ld_glide
+    v: 25.1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front1_u10_ms
+    v: 12.87
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front1_c9_w
+    v: 30.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front1_wh_per_km
+    v: 0.44
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front1_c9_chi180_w
+    v: 35.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front2_ballast_kg
+    v: 1.39
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front2_mass_kg
+    v: 3.0
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front2_wing_loading_npm2
+    v: 52.3
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front2_ld_glide
+    v: 24.6
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front2_u10_ms
+    v: 13.01
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front2_c9_w
+    v: 28.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front2_wh_per_km
+    v: 0.44
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front2_c9_chi180_w
+    v: 35.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front3_ballast_kg
+    v: 1.12
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front3_mass_kg
+    v: 3.0
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front3_wing_loading_npm2
+    v: 39.2
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front3_ld_glide
+    v: 23.4
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front3_u10_ms
+    v: 13.49
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front3_c9_w
+    v: 26.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front3_wh_per_km
+    v: 0.45
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front3_c9_chi180_w
+    v: 36.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front4_ballast_kg
+    v: 0.5
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front4_mass_kg
+    v: 2.1
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front4_wing_loading_npm2
+    v: 36.6
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front4_ld_glide
+    v: 23.0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front4_u10_ms
+    v: 14.02
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front4_c9_w
+    v: 17.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front4_wh_per_km
+    v: 0.3
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front4_c9_chi180_w
+    v: 26.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front5_ballast_kg
+    v: 0.5
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front5_mass_kg
+    v: 1.93
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front5_wing_loading_npm2
+    v: 42.2
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front5_ld_glide
+    v: 23.1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front5_u10_ms
+    v: 14.04
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front5_c9_w
+    v: 17.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front5_wh_per_km
+    v: 0.28
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front5_c9_chi180_w
+    v: 24.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front6_ballast_kg
+    v: 0.0
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front6_mass_kg
+    v: 1.59
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front6_wing_loading_npm2
+    v: 27.8
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front6_ld_glide
+    v: 21.8
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front6_u10_ms
+    v: 15.22
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front6_c9_w
+    v: 12.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front6_wh_per_km
+    v: 0.23
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front6_c9_chi180_w
+    v: 22.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front7_ballast_kg
+    v: 0.0
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front7_mass_kg
+    v: 1.43
+    unit: kg
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front7_wing_loading_npm2
+    v: 31.1
+    unit: N/m2
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front7_ld_glide
+    v: 21.7
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front7_u10_ms
+    v: 15.4
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front7_c9_w
+    v: 11.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front7_wh_per_km
+    v: 0.21
+    unit: Wh/km
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.front7_c9_chi180_w
+    v: 21.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.c9_chi20_min_w
+    v: 11.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.c9_chi20_max_w
+    v: 35.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.c9_chi180_min_w
+    v: 20.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.c9_chi180_max_w
+    v: 37.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.start_repeat_ms
+    v: 0.1
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.tail_quarter_gain_min_ms
+    v: 0.155
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.tail_quarter_gain_max_ms
+    v: 0.24
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.tail_half_gain_best_ms
+    v: 0.33
     unit: m/s
     status: calculated
     basis:

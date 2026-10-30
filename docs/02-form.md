@@ -459,23 +459,74 @@ This is the bird's light-wind behaviour (P42, P74, P80), and it makes the wave-a
 
 ## Wing sizing with measured airfoil data {#wing-sizing}
 
-Until this pass the candidate forms carried assumed drag polars and masses (Q-014); the owner asked whether the wing itself had been optimized, and it had not.
-`sim/wingopt.py` builds a design from its span, aspect ratio, taper and airfoil and ranks it (`python -m sim.wingopt`, `sim/out/wingopt.json`):
+Until the first pass the candidate forms carried assumed drag polars and masses (Q-014); the owner asked whether the wing itself had been optimized, and it had not.
+`sim/wingopt.py` builds a design from its span, aspect ratio, taper, airfoil and ballast and scores it (`python -m sim.wingopt`, `sim/out/wingopt2.json`; the first pass is `sim/out/wingopt.json`).
+The second pass (Q-067) is the current result.
+It was run in steps, each a command of `sim/wingopt.py` that adds to `sim/out/wingopt2.json`:
+`python -m sim.wingopt --ballast 0,0.5` (span 3.0 m, aspect ratios 12, 16, 20 and 25, both airfoils, ballast none, 0.5 kg and the mass limit); `--followup 4` (the top four by soaring minimum, with h(180) and the motor power at 6, 9 and 13 m/s and courses 20 and 180 deg from the library's full solver settings); and `--c9-steady` (the 9 m/s motor power of every design at both courses, with the steady-flight start and then the seeds).
+The steps `--c9-all` and `--c9-standard` ran in between and are superseded by `--c9-steady`; their results stay in the file.
+The file's main stamp is that of the first command; each later step carries its own stamp under `steps`, and a step that ran under an earlier version of the file is stamped with the file as it is now.
 
-- Profile drag from measured low-speed airfoil polars, fitted with a Reynolds-number scaling over 98k to 300k (P155); a design whose mean chord falls below a Reynolds number of wing.re_floor at 1.2 times its stall speed is left out, since the data end there and the drag rises steeply below.
-- Induced drag with the span efficiency of Nita and Scholz for the taper and the fuselage (P156), and a separate drag area for the fuselage and tail of wing.cda_par_base_m2 (S7, S8, P145), so a larger wing does not hide the body's drag.
-- Wing mass from an areal density of wing.rho_a_base_kg_m2, between thermal sailplanes and slope racers (M17), plus the spar caps for the ultimate load and a joiner; the rest from the component masses of the mass model.
-- The optimizer's soaring minimum with the control library's margins, COARE 3.5, the roll and lift-coefficient rates and the heights held between nodes; the upwind progress from the polar's courses.
+The model:
+
+- Profile drag from measured low-speed airfoil polars, fitted with a Reynolds-number scaling over the range of the data (P155); a design whose mean chord falls below a Reynolds number of wing.re_floor at 1.2 times its stall speed is left out, since the data end there and the drag rises steeply below.
+- Induced drag with the span efficiency of Nita and Scholz for the taper and the fuselage (P156), with their offset of the taper ratio for an unswept wing (their equation 37 at zero sweep, which the first pass had left out).
+- Body drag built up, not fixed (the first pass used wing.cda_par_base_m2): a pod and a boom at the turbulent flat-plate friction of their own Reynolds numbers with the Hoerner form factor and the wetted area of a body of revolution; a horizontal and a vertical tail sized by volume coefficients on the mean chord and the span, with the profile drag of the SD7037 fit at the tail's Reynolds number; and a margin for gaps and linkages (P145, S7, S8).
+  The sum is wing.body_cda_min_m2 to wing.body_cda_max_m2 over the designs and wing.best_body_cda_m2 for the best, so the fixed area of the first pass was low, as the checker suspected (K-014).
+- Wing mass from an areal density of wing.rho_a_base_kg_m2, between thermal sailplanes and slope racers (M17), plus the spar caps for the ultimate load and a joiner; the rest from the component masses of the mass model, plus ballast that the spar also carries.
+  The ballast grid is none, 0.5 kg and the mass limit ds.mass_max_kg.
+- Objective A, the soaring minimum, with the control library's margins, COARE 3.5, the roll and lift-coefficient rates and the heights held between nodes, from six starts of the optimizer.
+- Objective B, the support value h(180) of the achievable mean ground velocities at u10 16 m/s, which is the speed made good straight upwind; the first pass's upwind figure is withdrawn because it was not one (below).
+- Objective C, the average electric power of a motor-assisted travel cycle (the optimizer's minimum-power mode with the motor and the control library's margins) at 9 m/s and course 20 deg from downwind, and objective D, its energy per kilometre; the follow-up adds 6 and 13 m/s and the course straight upwind, for the top four designs, with the library's full solver settings.
+  The 9 m/s cases of all designs at both courses start from a steady level flight (at the polar of its own airspeed) and then from the seeds: at 20 deg the steady start solved every design, straight upwind it failed for every design and the seeds solved them.
 
 What it found:
 
-- The best design is wing.best_span_m in span with an aspect ratio of wing.best_ar and the AG35 airfoil, wing.best_mass_kg, with a maximum lift-to-drag ratio of wing.best_ld_max at the cycle's mean Reynolds number and wing.best_ld_glide at its own best-glide speed; it soars from wing.best_u10_min_ms with the margins and makes wing.best_upwind_vmg_u16_ms towards a target straight upwind at 16 m/s.
-- On the geometry of a 3 m thermal sailplane the polar is a few percent pessimistic against its designer's calculation, and measured 3 m sailplanes glide at about 18 to 25, so these ratios are plausible at the top end (K-014).
-- Rebuilt with the same polar and mass model, the old candidates need wing.rebuilt_albatross_u10_min_ms (the albatross-like glider), wing.rebuilt_baseline_u10_min_ms (the baseline) and wing.rebuilt_sealedhull_u10_min_ms (the sealed hull); the lower minimum winds of the form comparison came from assumed polars that were too clean and from flying without the control margins.
-- Slender wings rank lower here, but not because of their chord: brought to the same mass with ballast, an aspect ratio of 20 soars from wing.equal_mass_ar20_u10_ms and 25 from wing.equal_mass_ar25_u10_ms, better than the broad wing; they rank lower because their smaller area makes them lighter, and with the margins and the rate limits the minimum wind falls with mass up to the mass limit (K-014). Many of the most slender designs also fall below the Reynolds-number floor. The wing loading, with ballast or a heavier structure, is a variable for the next pass (Q-067).
-- A heavier skin helps: at the slope racers' areal density the minimum wind falls by wing.heavy_skin_gain_min_ms to wing.heavy_skin_gain_max_ms, half through the higher Reynolds number of the faster flight and half because the roll-rate and lift-coefficient-rate limits loosen at higher speed (K-014); a fat sensor pod (twice the drag area) costs wing.fat_pod_loss_min_ms to wing.fat_pod_loss_max_ms, and the base drag area may itself be low (the tail alone takes about that much), so the body must stay slim; the taper hardly matters.
-- Each design is a single run of a local optimizer from one start, and more starts move some results by up to a metre per second, so ranks closer than that are not reliable (K-014).
-- So on a flat sea in neutral air, with the margins a controller needs, the wind alone carries the drone only from about 13 m/s; the routes to R-02's design point are the swell (see the cycles synchronized with the waves), the extra shear under swell and in stable air (Q-061), and the motor (Q-055).
+- The best soaring minimum is wing.best_u10_min_ms, of a design wing.best_span_m in span with an aspect ratio of wing.best_ar, the SD7037 airfoil and ballast of wing.best_ballast_kg up to the mass limit (wing.best_mass_kg, wing loading wing.best_wing_loading_npm2); its maximum lift-to-drag ratio is wing.best_ld_max at the cycle's mean Reynolds number and wing.best_ld_glide at its own best-glide speed.
+- The best of several starts repeats to within wing.start_repeat_ms (K-016), but the tail sizing moves the minima more than the three best designs differ: a tail a quarter smaller lowers the soaring minima by wing.tail_quarter_gain_min_ms to wing.tail_quarter_gain_max_ms and half the tail lowers the best design's by wing.tail_half_gain_best_ms, against wing.top3_spread_ms between the three best, so their order is not reliable; what is reliable is that slender wings with ballast up to the limit beat the broad wing, and that the mass limit binds.
+- Ballast helps by wing.ballast_gain_min_ms to wing.ballast_gain_max_ms for the designs that could be solved without it; without ballast the minimum is wing.unballasted_u10_min_ms to wing.unballasted_u10_max_ms.
+  The first pass's broad wing ranked first only because ballast was not a variable.
+- The price is motor power. At the standard margins the Pareto front of the soaring minimum against the motor power at 9 m/s and course 20 deg is the table below (keys; each row is a design and its ballast), with the motor power straight upwind in the last column; every design could be solved at both courses.
+  The motor power is the optimizer's result at the Reynolds number of the motor cycle's own airspeed; at 6 and 9 m/s it is level flight at the speed floor of the margins (the speed of least power lies below it), found from a steady start and from random starts, so the model finds no soaring gain at these winds.
+  An earlier comparison took the steady flight's polar at the soaring cycle's Reynolds number, found the optimizer above it, and reported the lower of the two; that is withdrawn (K-016).
+  The thrust of the level flight is within the motor's thrust limit (prop.thrust_max_per_weight); the record has no power limit.
+
+| Front row | Design | Ballast | Mass | Wing loading | L/D at glide | Soaring minimum | Motor power at 9 m/s, 20 deg | Energy per km | Motor power at 9 m/s, upwind |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | AR 20, SD7037, at the mass limit | wing.front1_ballast_kg | wing.front1_mass_kg | wing.front1_wing_loading_npm2 | wing.front1_ld_glide | wing.front1_u10_ms | wing.front1_c9_w | wing.front1_wh_per_km | wing.front1_c9_chi180_w |
+| 2 | AR 16, SD7037, at the mass limit | wing.front2_ballast_kg | wing.front2_mass_kg | wing.front2_wing_loading_npm2 | wing.front2_ld_glide | wing.front2_u10_ms | wing.front2_c9_w | wing.front2_wh_per_km | wing.front2_c9_chi180_w |
+| 3 | AR 12, SD7037, at the mass limit | wing.front3_ballast_kg | wing.front3_mass_kg | wing.front3_wing_loading_npm2 | wing.front3_ld_glide | wing.front3_u10_ms | wing.front3_c9_w | wing.front3_wh_per_km | wing.front3_c9_chi180_w |
+| 4 | AR 16, SD7037, 0.5 kg of ballast | wing.front4_ballast_kg | wing.front4_mass_kg | wing.front4_wing_loading_npm2 | wing.front4_ld_glide | wing.front4_u10_ms | wing.front4_c9_w | wing.front4_wh_per_km | wing.front4_c9_chi180_w |
+| 5 | AR 20, SD7037, 0.5 kg of ballast | wing.front5_ballast_kg | wing.front5_mass_kg | wing.front5_wing_loading_npm2 | wing.front5_ld_glide | wing.front5_u10_ms | wing.front5_c9_w | wing.front5_wh_per_km | wing.front5_c9_chi180_w |
+| 6 | AR 16, SD7037, no ballast | wing.front6_ballast_kg | wing.front6_mass_kg | wing.front6_wing_loading_npm2 | wing.front6_ld_glide | wing.front6_u10_ms | wing.front6_c9_w | wing.front6_wh_per_km | wing.front6_c9_chi180_w |
+| 7 | AR 20, SD7037, no ballast | wing.front7_ballast_kg | wing.front7_mass_kg | wing.front7_wing_loading_npm2 | wing.front7_ld_glide | wing.front7_u10_ms | wing.front7_c9_w | wing.front7_wh_per_km | wing.front7_c9_chi180_w |
+
+- Over all designs the motor power at 9 m/s is wing.c9_chi20_min_w to wing.c9_chi20_max_w at 20 deg and wing.c9_chi180_min_w to wing.c9_chi180_max_w straight upwind; the unballasted designs need the least and the heaviest the most, and the heavy front rows give the soaring minimum up at a power cost that grows with the ballast.
+  An earlier table of seven designs solved only at the light margins is withdrawn: every design is solved at the standard margins.
+
+- Straight upwind, soaring alone makes no progress: the support value h(180) of the top four is wing.h180_ar20_sd7037_ms, wing.h180_ar25_sd7037_ms, wing.h180_ar16_sd7037_ms and wing.h180_ar20_ag35r_ms, all negative, so the drone drifts downwind at 16 m/s however it flies the cycle.
+  The first pass reported the progress of the optimizer's maximum-speed cycle at courses off the wind times the cosine of the angle off the wind as a speed made good upwind; that is not one.
+  The optimizer maximises only the component of the mean ground velocity along the course and leaves the cross-track velocity free, so its value at a course is a support value of the achievable mean ground velocities, not a speed along a track (see [the navigation section](#navigation)).
+  The first pass's upwind figure is therefore withdrawn, and upwind legs are flown on the motor.
+- The motor power of the top four, with the library's full settings and the standard margins, is wing.follow_p9_chi20_min_w to wing.follow_p9_chi20_max_w at 9 m/s and course 20 deg (wing.follow_p6_chi20_min_w to wing.follow_p6_chi20_max_w at 6 m/s and wing.follow_p13_chi20_min_w to wing.follow_p13_chi20_max_w at 13 m/s); straight upwind it is wing.follow_p6_chi180_min_w to wing.follow_p6_chi180_max_w, wing.follow_p9_chi180_min_w to wing.follow_p9_chi180_max_w and wing.follow_p13_chi180_min_w to wing.follow_p13_chi180_max_w at 6, 9 and 13 m/s.
+- On the geometry of a 3 m thermal sailplane the polar is a few percent pessimistic against its designer's calculation, and measured 3 m sailplanes glide in the range of these ratios, so they are plausible at the top end (K-014).
+
+Fixes to the first pass:
+
+- The first pass's `solve_a` reported the aircraft of a Reynolds number that had not been solved when its second Reynolds pass ended unconverged, and discarded a good first pass when the second failed; it now keeps the last converged pass and its own aircraft and flags a Reynolds number that did not converge.
+- Each soaring minimum is the best of six starts with a passing dense replay; the second Reynolds pass is warm-started from it.
+- The taper offset and the body drag build-up are above.
+
+Caveats:
+
+- The grid is cut for run time: span 3.0 m only (no 2.5 m rows), aspect ratios 12 to 25, two airfoils, and ballast of none, 0.5 kg and the limit; intermediate ballast and the 2.5 m rows are not run, and aspect ratio 25 without ballast falls below the Reynolds floor.
+- The motor powers are local optima: the optimizer returns level flight at the speed floor, and it was not shown to find a cycle that mixes soaring and thrust, which could use less; the main run's cut solver settings failed on most designs, so the front uses the full settings; the top four's 6 and 13 m/s and straight-upwind figures in the follow-up are the optimizer's results from random starts.
+- The tail's Reynolds number is below the data of the airfoil fit, so the tail's drag is an extrapolation, and the tail's arm and aspect ratios are assumed; the tails are a large share of the body drag, and the pod's and the boom's wetted areas use Torenbeek's fuselage formula, which the record does not hold (S7 gives the friction and the form factor).
+- Everything rests on single airfoil fits (P155), a structure heavier or lighter than the areal density of wing.rho_a_base_kg_m2 changes the minimum (K-014), and the tail sizing moves the minima by more than the three best designs differ.
+
+First pass, kept as history: with the mass fixed by the wing's size, a broad wing of aspect ratio 12 with the AG35 airfoil came first and the lighter slender wings ranked lower; rebuilt with the same polar and mass model the old candidates needed wing.rebuilt_albatross_u10_min_ms (the albatross-like glider), wing.rebuilt_baseline_u10_min_ms (the baseline) and wing.rebuilt_sealedhull_u10_min_ms (the sealed hull), higher than the form comparison's because its polars were too clean and it flew without the control margins; at equal mass an aspect ratio of 20 soared from wing.equal_mass_ar20_u10_ms and 25 from wing.equal_mass_ar25_u10_ms (K-014); a heavier skin lowered the minimum by wing.heavy_skin_gain_min_ms to wing.heavy_skin_gain_max_ms, half through the Reynolds number and half through the rate limits that loosen at higher speed (K-014); a fat sensor pod (twice the drag area) cost wing.fat_pod_loss_min_ms to wing.fat_pod_loss_max_ms (wing.best_fat_pod_u10_ms for the best design then); the taper hardly mattered.
+
+- So on a flat sea in neutral air, with the margins a controller needs, the wind alone carries the drone only from wing.best_u10_min_ms at best; the routes to R-02's design point are the swell (see the cycles synchronized with the waves), the extra shear under swell and in stable air (Q-061), and the motor (Q-055).
 
 ## Navigation: the speed polar, the velocity hull and the tactical layer {#navigation}
 
