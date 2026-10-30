@@ -80,6 +80,8 @@
       <div class="ctl step"><label for="flPos" data-i="stPos" data-t="flPosTip"></label><select id="flPos" data-t="flPosTip"><option value="mast" data-i="posMast"></option><option value="click" data-i="posClick"></option></select></div>
       <div class="dim hint" id="flPt"></div>
       <div class="ctl step"><label for="flHead" data-i="stHead" data-t="flHeadTip"></label><select id="flHead" data-t="flHeadTip"><option value="up" data-i="hUp"></option><option value="down" data-i="hDown"></option><option value="left" data-i="hLeft"></option><option value="right" data-i="hRight"></option><option value="ref" data-i="hRef"></option></select></div>
+      <div class="ctl step"><label for="flCtl" data-i="stCtl" data-t="flCtlTip"></label><select id="flCtl" data-t="flCtlTip"><option value="track" data-i="ctlTrack"></option><option value="mpc" data-i="ctlMpc"></option></select></div>
+      <div class="ctl step"><label for="flWorld" data-i="stWorld" data-t="flWorldTip"></label><select id="flWorld" data-t="flWorldTip"><option value="flat" data-i="worldFlat"></option><option value="truth" data-i="worldTruth"></option></select></div>
       <div class="ctl"><button id="flGo" type="button" data-i="go" data-t="goTip"></button><button id="flStop" type="button" data-i="stop" data-t="stopTip"></button></div>
       <div class="ctl"><label class="auto" data-t="chaseTip"><input id="flChase" type="checkbox" data-t="chaseTip"> <span data-i="chase"></span></label></div>
       <table id="flro"></table>
@@ -120,6 +122,8 @@
 <script src="traj.js"></script>
 <script src="flight.js"></script>
 <script src="refs.js"></script>
+<script src="library.js"></script>
+<script src="mpc.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -150,6 +154,10 @@ const I18N = {
     ptSet: (x, y) => '発進する点: (' + x + ', ' + y + ') m',
     stHead: '4. 向き', flHeadTip: '発進するときの機体の向きです。風を基準に決まります。',
     hUp: '風上へ', hDown: '風下へ', hLeft: '風を横切って左へ', hRight: '風を横切って右へ', hRef: '参照軌道の向き',
+    stCtl: '5. 制御', flCtlTip: '機体の動かし方を選びます。「周期軌道を追う」は、参照軌道を追う従来の制御です。「MPC（リアルタイム）」は、周期軌道の表をもとに、0.5 秒ごとに先の 6 秒を計画し直します。MPC では「2. 飛び方」を使わず、風下から 20 度ずれた向きへ進む周期軌道を使います。',
+    ctlTrack: '周期軌道を追う', ctlMpc: 'MPC（リアルタイム）',
+    stWorld: 'MPC から見た海', flWorldTip: 'MPC が先の飛行を予測するときに使う海です。「平らと仮定」は、海面を高さ 0 の平らな面とし、風を対数の分布にします。「真の波」は、いま表示している波と風をそのまま使います。MPC のときだけ有効です。',
+    worldFlat: '平らと仮定', worldTruth: '真の波',
     go: '発進', goTip: '選んだ条件で機体を発進させます。', stop: '止める', stopTip: '飛行を止めます。機体と軌跡はそのまま残ります。',
     chase: '機体を追いかけるカメラ', chaseTip: 'カメラの注目点を機体に合わせ続けます。',
     frozenTip: '飛行中は海の状態を固定しています。',
@@ -189,6 +197,19 @@ const I18N = {
     refNone: '参照軌道なし（ガードだけ）',
     stopped: '（停止中）', yes: 'はい', no: 'いいえ', na: 'なし',
     f_el: '飛行時間', f_v: '対気速度', f_h: '水面からの高さ', f_dist: '観測柱からの距離', f_e: 'エネルギー z + V^2/2g', f_n: '荷重倍数',
+    f_ms: '計画にかかった時間', f_ms_tip: '計画 1 回の計算時間です。直近の値と平均を出します。MPC のときだけ値が入ります。',
+    f_late: '遅れた計画の数', f_late_tip: '次の計画の時刻までに、新しい計画が届かなかった回数です。そのあいだは前の計画の続きで飛びます。',
+    f_sel: '周期軌道の表の選択', f_sel_tip: '計画が使っている表の風速 u10 と、風に対する進行方向 chi です。',
+    f_end: '終わった理由', f_end_tip: '飛行が終わった理由です。中心が水面に触れたか、翼端が水面に触れたかを区別します。',
+    mpcMs: (l, m) => '直近 ' + l + ' ms、平均 ' + m + ' ms', mpcSel: (u, c, set) => 'u10 ' + u + ' m/s、chi ' + c + ' deg、余裕 ' + set,
+    endC: '中心が水面に触れた', endT: '翼端が水面に触れた', endN: '数値が壊れた', endS: '止めた',
+    refMpc: 'MPC（周期軌道の表）',
+    mpcLibAt: (ks) => 'MPC の表にある風速 u10: ' + ks + ' m/s',
+    mpcNoLib: 'この機体の周期軌道の表がありません。MPC は使えません。',
+    mpcNoWorker: 'ワーカーを作れませんでした。MPC は使えません。',
+    mpcErr: (m) => 'MPC のワーカーでエラーが出ました: ' + m,
+    libMissing: 'window.LIBRARY がありません。python -m sim.export_library で library.js を作ってください。MPC は使えません。',
+    tipSplashed: (s) => '翼端が水面に触れました。t = ' + s + ' s', tipLbl: (s) => '翼端接触 t = ' + s + ' s',
     f_ph: '周期の位相', f_gd: 'ガード作動', f_de: '1 周期のエネルギー変化', f_u: '使った u10 と今の風', f_ref: '参照軌道',
     r_t: '波の時刻', r_u10: '基準の 10 m の風速', r_us: '摩擦速度 u*', r_z0: '粗度長 z0', r_hsTp: ' の波高と周期',
     r_eta: '観測柱の水面の高さ', r_w2: '観測柱 2 m の風速', r_w10: '観測柱 10 m の風速', r_vw2: '観測柱 2 m の上下の風',
@@ -218,6 +239,10 @@ const I18N = {
     ptSet: (x, y) => 'Launch point: sim (' + x + ', ' + y + ') m',
     stHead: '4. Heading', flHeadTip: 'Heading at launch, relative to the wind.',
     hUp: 'Upwind', hDown: 'Downwind', hLeft: 'Crosswind, left', hRight: 'Crosswind, right', hRef: 'Reference heading (rotated into the wind)',
+    stCtl: '5. Control', flCtlTip: 'Chooses how the aircraft is flown. "Follow the cycle" is the earlier tracker of a reference trajectory. "MPC (real time)" plans the next 6 s again every 0.5 s from a table of periodic cycles. MPC does not use "2. Flight style"; it uses the cycle that travels 20 degrees off downwind.',
+    ctlTrack: 'Follow the cycle', ctlMpc: 'MPC (real time)',
+    stWorld: 'Sea as MPC sees it', flWorldTip: 'The sea the MPC uses to predict the flight. "Assume flat" takes the surface as a flat plane at height 0 with a log wind profile. "True waves" uses the waves and wind on screen as they are. Active only with MPC.',
+    worldFlat: 'Assume flat', worldTruth: 'True waves',
     go: 'Launch', goTip: 'Launches the aircraft with the chosen settings.', stop: 'Stop', stopTip: 'Stops the flight. The aircraft and trail stay.',
     chase: 'Chase camera', chaseTip: 'Keeps the camera target on the aircraft.',
     frozenTip: 'The sea state is fixed while the aircraft flies.',
@@ -257,6 +282,19 @@ const I18N = {
     refNone: 'no reference (guard mode only)',
     stopped: ' (stopped)', yes: 'yes', no: 'no', na: 'n/a',
     f_el: 'Flight time', f_v: 'Airspeed', f_h: 'Height above surface', f_dist: 'Distance from the mast', f_e: 'Energy z + V^2/2g', f_n: 'Load factor',
+    f_ms: 'Planning time', f_ms_tip: 'Compute time of one plan, last and mean. Filled with MPC only.',
+    f_late: 'Late plans', f_late_tip: 'How often a new plan had not arrived by the time of the next plan. The aircraft keeps flying the previous plan meanwhile.',
+    f_sel: 'Cycle table pick', f_sel_tip: 'The wind speed u10 of the table entry the plan uses, and its travel direction chi relative to the wind.',
+    f_end: 'End reason', f_end_tip: 'Why the flight ended: the centre or a wingtip touched the water.',
+    mpcMs: (l, m) => 'last ' + l + ' ms, mean ' + m + ' ms', mpcSel: (u, c, set) => 'u10 ' + u + ' m/s, chi ' + c + ' deg, margins ' + set,
+    endC: 'centre touched the water', endT: 'wingtip touched the water', endN: 'numerical failure', endS: 'stopped',
+    refMpc: 'MPC (cycle table)',
+    mpcLibAt: (ks) => 'MPC table at u10 = ' + ks + ' m/s',
+    mpcNoLib: 'No cycle table for this aircraft: MPC is off.',
+    mpcNoWorker: 'Could not create the worker: MPC is off.',
+    mpcErr: (m) => 'Error in the MPC worker: ' + m,
+    libMissing: 'window.LIBRARY missing: run python -m sim.export_library to create library.js. MPC is off.',
+    tipSplashed: (s) => 'Wingtip touched the water at t = ' + s + ' s', tipLbl: (s) => 'wingtip contact t = ' + s + ' s',
     f_ph: 'Cycle phase', f_gd: 'Guard active', f_de: 'Energy change per cycle', f_u: 'u10 used / wind now', f_ref: 'Reference',
     r_t: 'Wave time', r_u10: 'Wind at 10 m', r_us: 'Friction velocity u*', r_z0: 'Roughness length z0', r_hsTp: ' Hs / Tp',
     r_eta: 'Surface height at mast', r_w2: 'Wind at 2 m', r_w10: 'Wind at 10 m', r_vw2: 'Vertical wind at 2 m',
@@ -616,7 +654,69 @@ const fWind = (x, y, z, t) => {
 };
 Object.defineProperty(fWind, 'z0', { get: () => W.z0 });
 const FL = { on: false, started: false, s: null, ac: null, tr: null, cl: 0, mu: 0, acc: 0, el: 0,
-  trail: [], splash: null, pt: null, refText: '-', uText: '-' };
+  trail: [], splash: null, pt: null, refText: '-', uText: '-', mpc: false, act: null, end: null };
+
+// ---------------------------------------------------------------- MPC (planner in a Web Worker)
+// The planner (mpc.js) runs in a worker made from a Blob URL of its own source text, which also
+// works from file://. The main thread flies the aircraft through the actuators as always; every
+// 0.5 s of flight time it posts the state and keeps flying the current plan from its time offset.
+const HAVE_MPC = !!(window.MPC && window.LIBRARY && window.LIBRARY.aircraft);
+const MPC_CHI = 20, MPC_MAXC = 48;   // travel 20 degrees off downwind; wave components the planner uses
+const MPC_EVERY = Math.round(((window.MPC && MPC.DEFAULTS.replanS) || 0.5) / FDT);
+const PLAN_PTS = window.MPC ? Math.round(MPC.DEFAULTS.horizonS / MPC.DEFAULTS.dt) + 1 : 2;
+const MP = { worker: null, busy: false, plan: null, flight: 0, last: 0, sum: 0, n: 0, late: 0, info: null };
+const planPos = new Float32Array(PLAN_PTS * 3);
+const planGeo = new THREE.BufferGeometry();
+planGeo.setAttribute('position', new THREE.BufferAttribute(planPos, 3));
+const planLine = new THREE.Line(planGeo, new THREE.LineBasicMaterial({ color: 0x8fd3ff, transparent: true, opacity: 0.4 }));
+planLine.frustumCulled = false; planLine.visible = false;
+scene.add(planLine);
+function mpcOnMessage(e) {
+  const m = e.data;
+  if (m.type === 'error') { const msg = m.message; flSplashFn = () => tx('mpcErr', msg); renderFl(); return; }
+  if (m.type !== 'plan' || m.id !== MP.flight) return;   // a reply of an earlier flight
+  MP.busy = false;
+  MP.plan = { t0: m.t0, knotsT: m.knotsT, cl: m.cl, mu: m.mu, dt: m.dt };
+  MP.last = m.ms; MP.sum += m.ms; MP.n++;
+  MP.info = m.info;
+  for (let i = 0; i < PLAN_PTS; i++) planPos.set([m.path[6 * i], m.path[6 * i + 2], -m.path[6 * i + 1]], 3 * i);
+  planGeo.attributes.position.needsUpdate = true;
+}
+function mpcEnsureWorker() {
+  if (MP.worker) return true;
+  try {
+    const url = URL.createObjectURL(new Blob([MPC.workerSource()], { type: 'text/javascript' }));
+    const w = new Worker(url);
+    w.onmessage = mpcOnMessage;
+    w.onerror = (ev) => { const msg = ev.message || 'error'; flSplashFn = () => tx('mpcErr', msg); renderFl(); };
+    MP.worker = w;
+    return true;
+  } catch (err) {
+    flNoteFn = () => tx('mpcNoWorker'); renderFl();
+    return false;
+  }
+}
+// post the state at sea time t; if the previous request is still running the plan is late
+function mpcRequest(t) {
+  if (MP.busy) { if (MP.plan) MP.late++; return; }
+  const a = FL.act, kind = $('flWorld').value;
+  const req = { t: t, s: FL.s.slice(),
+    act: a.cl === null ? null : { cl: a.cl, mu: a.mu, clCmd: a.cmdLast[0], muCmd: a.cmdLast[1] },
+    world: { kind: kind, wind: { ustar: W.ustar, z0: W.z0, ex: W.ex, ey: W.ey, karman: C.karman },
+      stokes: STOKES, maxComponents: MPC_MAXC },
+    u10: W.u10, chiDeg: MPC_CHI };
+  if (kind === 'truth') {
+    req.world.comps = {};
+    for (const key of ['a', 'k', 'omega', 'phase', 'dx', 'dy', 'urel']) req.world.comps[key] = CO[key].slice(0, N);
+  }
+  MP.busy = true;
+  MP.worker.postMessage({ type: 'plan', id: MP.flight, req: req });
+}
+// controls from the current plan at sea time t; before the first plan: glide at best L/D, wings level
+function mpcControls(t) {
+  if (!MP.plan) return [Math.sqrt(FL.ac.cd0 / FL.ac.k_induced), 0];
+  return MPC.planControls(MP.plan, t - MP.plan.t0);
+}
 
 // aircraft shape: two thin wing boxes and a fuselage, true size; local +X forward, +Y up, +Z right
 const flightMesh = new THREE.Group();
@@ -659,8 +759,9 @@ const ptMark = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THRE
   new THREE.LineBasicMaterial({ color: 0xf2c200 }));
 ptMark.visible = false; ptMark.frustumCulled = false; scene.add(ptMark);
 
-const flRows = ['el', 'v', 'h', 'dist', 'e', 'n', 'ph', 'gd', 'de', 'u', 'ref'];
-$('flro').innerHTML = flRows.map((r) => '<tr><td data-i="f_' + r + '"></td><td id="fl_' + r + '"></td></tr>').join('');
+const flRows = ['el', 'v', 'h', 'dist', 'e', 'n', 'ph', 'gd', 'de', 'u', 'ref', 'ms', 'late', 'sel', 'end'];
+const flTipped = ['ms', 'late', 'sel', 'end'];   // rows with a tooltip on the label
+$('flro').innerHTML = flRows.map((r) => '<tr><td data-i="f_' + r + '"' + (flTipped.includes(r) ? ' data-t="f_' + r + '_tip"' : '') + '></td><td id="fl_' + r + '"></td></tr>').join('');
 const setFl = (k, s) => { $('fl_' + k).textContent = s; };
 for (const r of flRows) setFl(r, '-');
 // texts under the flight controls, kept as functions so a language change redraws them
@@ -672,34 +773,62 @@ const renderFl = () => {
 dyn.push(renderFl);
 if (!REFS || !Object.keys(REFS).length) {
   flNoteFn = () => tx('refsMissing');
-  for (const id of ['flAc', 'flCyc', 'flPos', 'flHead', 'flGo', 'flStop', 'flChase']) $(id).disabled = true;
+  for (const id of ['flAc', 'flCyc', 'flPos', 'flHead', 'flCtl', 'flWorld', 'flGo', 'flStop', 'flChase']) $(id).disabled = true;
 } else {
   $('flAc').innerHTML = Object.keys(REFS).map((n) => '<option>' + n + '</option>').join('');
   const showRefs = () => {
+    if ($('flCtl').value === 'mpc') {
+      const es = HAVE_MPC ? window.LIBRARY.aircraft[$('flAc').value] : null;
+      const ks = es ? [...new Set(es.map((x) => x.u10))].sort((a, b) => a - b) : [];
+      flNoteFn = () => !HAVE_MPC ? tx('libMissing') : es ? tx('mpcLibAt', ks.join(', ')) : tx('mpcNoLib'); renderFl();
+      return;
+    }
     const e = REFS[$('flAc').value][$('flCyc').value] || {};
     const ks = Object.keys(e).map(Number).sort((a, b) => a - b);
     flNoteFn = () => ks.length ? tx('refsAt', ks.join(', ')) : tx('refsNone'); renderFl();
   };
   $('flAc').addEventListener('change', showRefs); $('flCyc').addEventListener('change', showRefs);
+  $('flCtl').addEventListener('change', () => { syncCtl(); showRefs(); });
   showRefs();
 }
+// the sea choice is for MPC only; MPC does not use the flight style
+function syncCtl() {
+  const mpc = $('flCtl').value === 'mpc';
+  $('flWorld').disabled = !mpc; $('flCyc').disabled = mpc;
+}
+syncCtl();
 function launchPoint() {
   if ($('flPos').value === 'click' && FL.pt) return FL.pt;
   return { x: mx, y: my };
 }
-function stopFlight() { FL.on = false; }
+function stopFlight() { FL.on = false; if (!FL.end) FL.end = 'S'; }
 function launch() {
   if (!REFS) return;
   if ($('flPos').value === 'click' && !FL.pt) { flNoteFn = () => tx('needClick'); renderFl(); return; }
   const entry = REFS[$('flAc').value], cyc = $('flCyc').value, ac = entry.params;
+  const mpcMode = $('flCtl').value === 'mpc';
+  let lib = null;
+  if (mpcMode) {
+    if (!HAVE_MPC) { flNoteFn = () => tx('libMissing'); renderFl(); return; }
+    lib = window.LIBRARY.aircraft[$('flAc').value];
+    if (!lib) { flNoteFn = () => tx('mpcNoLib'); renderFl(); return; }
+    if (!mpcEnsureWorker()) return;
+  }
   const table = entry[cyc] || {};
   let ref = null, uUsed = null;
-  for (const k of Object.keys(table).map(Number)) if (uUsed === null || Math.abs(k - W.u10) < Math.abs(uUsed - W.u10)) uUsed = k;
-  if (uUsed !== null) ref = table[String(uUsed)];
+  if (!mpcMode) {
+    for (const k of Object.keys(table).map(Number)) if (uUsed === null || Math.abs(k - W.u10) < Math.abs(uUsed - W.u10)) uUsed = k;
+    if (uUsed !== null) ref = table[String(uUsed)];
+  }
   const p = launchPoint();
   const psiW = Flight.windPsi(fWind, fSurface, p.x, p.y, T, Math.atan2(W.ey, W.ex));
   let zr = 10, V, gam = 0, psiRef = null;
-  if (ref) {   // the highest node of the reference
+  if (mpcMode) {   // the highest node of the library cycle the planner starts from
+    const c0 = MPC.pickCycle(lib, W.u10, MPC_CHI * Math.PI / 180);
+    let k = 0;
+    for (let i = 1; i < c0.z.length; i++) if (c0.z[i] > c0.z[k]) k = i;
+    zr = c0.z[k]; V = c0.V[k]; gam = c0.g[k]; psiRef = c0.psi[k];
+  } else if (ref) {   // the highest node of the reference
     const n = ref.z.length - 1;
     let k = 0;
     for (let i = 1; i < n; i++) if (ref.z[i] > ref.z[k]) k = i;
@@ -713,7 +842,14 @@ function launch() {
   else if (head === 'left') psi = psiW + Math.PI / 2;
   else if (head === 'right') psi = psiW - Math.PI / 2;
   else if (head === 'ref' && psiRef !== null) psi = psiRef + psiW;
-  FL.ac = ac; FL.tr = new Flight.Tracker(ref, ac);
+  FL.ac = ac; FL.tr = mpcMode ? null : new Flight.Tracker(ref, ac);
+  FL.mpc = mpcMode; FL.end = null; FL.act = null;
+  MP.flight++; MP.busy = false; MP.plan = null; MP.last = 0; MP.sum = 0; MP.n = 0; MP.late = 0; MP.info = null;
+  if (mpcMode) {
+    const A = window.LIBRARY.actuators;
+    FL.act = new MPC.Actuators(ac, { rateModel: A.rate_model, tau: A.tau_s, clRate: A.cl_rate_per_s, kPb2v: A.k_pb2v, delay: A.delay_s });
+    MP.worker.postMessage({ type: 'init', ac: ac, entries: lib, settings: {}, actuators: A });
+  }
   FL.s = [p.x, p.y, fSurface(p.x, p.y, T) + zr, V, gam, psi];
   FL.cl = 0; FL.mu = 0; FL.acc = 0; FL.el = 0; FL.trail = []; FL.splash = null; FL.started = true; FL.on = true;
   FL.uText = uUsed === null ? '-' : uUsed + ' / ' + W.u10.toFixed(1) + ' m/s';
@@ -753,20 +889,34 @@ function flightAdvance(dtWanted, t0) {
   let done = 0;
   for (let i = 0; i < n && FL.on; i++) {
     const t = t0 + i * FDT;
-    const c = FL.tr.command(FL.s, fWind, fSurface, t);
-    FL.cl = c.cl; FL.mu = c.mu;
-    FL.s = Flight.rk4(FL.s, c.cl, c.mu, FL.ac, fWind, t, FDT);
+    if (FL.mpc) {
+      if (Math.round(FL.el / FDT) % MPC_EVERY === 0) mpcRequest(t);
+      const ac = FL.ac, V = FL.s[3];
+      const pc = mpcControls(t);
+      const cmd = MPC.nLimitedCl(ac, V, Math.min(Math.max(pc[0], ac.cl_min), ac.cl_max));   // the command is held to the limit
+      const a = FL.act.step(cmd, Math.min(Math.max(pc[1], -ac.mu_max), ac.mu_max), FDT, V);
+      FL.cl = MPC.nLimitedCl(ac, V, a[0]); FL.mu = a[1];
+      FL.s = Flight.rk4(FL.s, a[0], a[1], ac, fWind, t, FDT, true);
+    } else {
+      const c = FL.tr.command(FL.s, fWind, fSurface, t);
+      FL.cl = c.cl; FL.mu = c.mu;
+      FL.s = Flight.rk4(FL.s, c.cl, c.mu, FL.ac, fWind, t, FDT);
+    }
     FL.el += FDT; done++;
-    if (!FL.s.every(Number.isFinite)) { stopFlight(); { const ts = FL.el.toFixed(1); flSplashFn = () => tx('numFail', ts); renderFl(); } break; }
+    if (!FL.s.every(Number.isFinite)) { FL.end = 'N'; stopFlight(); { const ts = FL.el.toFixed(1); flSplashFn = () => tx('numFail', ts); renderFl(); } break; }
     const hgt = FL.s[2] - fSurface(FL.s[0], FL.s[1], t + FDT);
     if (Math.round(FL.el / FDT) % Math.round(TRAIL_DT / FDT) === 0) {
       FL.trail.push([FL.s[0], FL.s[2], -FL.s[1], hgt]);
       if (FL.trail.length > TRAIL_N) FL.trail.shift();
     }
-    if (hgt < 0) {
-      FL.splash = { x: FL.s[0], y: FL.s[1], z: FL.s[2], t: FL.el };
+    // with MPC the wingtip counts too (the planner's clearance is the geometric wingtip height)
+    const tipH = FL.mpc ? hgt - 0.5 * FL.ac.span * Math.sin(Math.abs(FL.mu)) * Math.cos(FL.s[4]) : hgt;
+    if (hgt < 0 || tipH < 0) {
+      const tip = hgt >= 0;
+      FL.splash = { x: FL.s[0], y: FL.s[1], z: FL.s[2], t: FL.el, tip: tip };
       splashMark.position.set(FL.s[0], FL.s[2], -FL.s[1]); splashMark.visible = true;
-      { const ts = FL.el.toFixed(1); flSplashFn = () => tx('splashed', ts); renderFl(); }
+      { const ts = FL.el.toFixed(1); flSplashFn = () => tx(tip ? 'tipSplashed' : 'splashed', ts); renderFl(); }
+      FL.end = tip ? 'T' : 'C';
       stopFlight();
       break;
     }
@@ -794,23 +944,42 @@ function updateFlightView() {
   trailGeo.attributes.position.needsUpdate = true; trailGeo.attributes.color.needsUpdate = true;
   // readouts
   const m = Flight.metrics(s, FL.ac, fWind, fSurface, T, FL.cl);
-  const pa = FL.tr.passes;
+  const pa = FL.tr ? FL.tr.passes : [];
   setFl('el', FL.el.toFixed(1) + ' s' + (FL.on ? '' : tx('stopped')));
   setFl('v', m.airspeed.toFixed(1) + ' m/s');
   setFl('h', m.height.toFixed(2) + ' m');
   setFl('dist', Math.hypot(s[0] - mx, s[1] - my).toFixed(0) + ' m');
   setFl('e', (m.energy * Flight.G).toFixed(0) + ' J/kg');
   setFl('n', m.loadFactor.toFixed(2));
-  setFl('ph', FL.tr.phase === null ? '-' : (FL.tr.phase / FL.tr.ref.n).toFixed(2));
-  setFl('gd', FL.tr.guard ? tx('yes') : tx('no'));
+  if (FL.mpc) {
+    setFl('ph', MP.info ? (MP.info.tau0 / MP.info.period).toFixed(2) : '-');
+    setFl('gd', tx('na'));
+  } else {
+    setFl('ph', FL.tr.phase === null ? '-' : (FL.tr.phase / FL.tr.ref.n).toFixed(2));
+    setFl('gd', FL.tr.guard ? tx('yes') : tx('no'));
+  }
   setFl('de', pa.length >= 2 ? ((pa[pa.length - 1].energy - pa[pa.length - 2].energy) * Flight.G).toFixed(1) + ' J/kg' : tx('na'));
-  setFl('u', FL.uText); setFl('ref', FL.refInfo ? tx('refTxt', FL.refInfo[0], FL.refInfo[1]) : tx('refNone'));
+  if (FL.mpc) {
+    setFl('u', MP.info ? MP.info.u10 + ' / ' + W.u10.toFixed(1) + ' m/s' : '-'); setFl('ref', tx('refMpc'));
+  } else {
+    setFl('u', FL.uText); setFl('ref', FL.refInfo ? tx('refTxt', FL.refInfo[0], FL.refInfo[1]) : tx('refNone'));
+  }
+  setFl('ms', FL.mpc && MP.n ? tx('mpcMs', MP.last.toFixed(1), (MP.sum / MP.n).toFixed(1)) : '-');
+  setFl('late', FL.mpc ? String(MP.late) : '-');
+  setFl('sel', FL.mpc && MP.info ? tx('mpcSel', MP.info.u10, MP.info.chiDeg, MP.info.marginSet) : '-');
+  setFl('end', FL.end ? tx('end' + FL.end) : '-');
+  // the current plan, drawn from where the aircraft is on it
+  planLine.visible = FL.mpc && !!MP.plan;
+  if (planLine.visible) {
+    const i0 = Math.min(PLAN_PTS - 2, Math.max(0, Math.floor((T - MP.plan.t0) / MP.plan.dt)));
+    planGeo.setDrawRange(i0, PLAN_PTS - i0);
+  }
   // splash label
   if (FL.splash) {
     _fp.set(FL.splash.x, FL.splash.z, -FL.splash.y).project(camera);
     if (_fp.z < 1) {
       splashLbl.style.display = 'block';
-      splashLbl.textContent = tx('splashLbl', FL.splash.t.toFixed(1));
+      splashLbl.textContent = tx(FL.splash.tip ? 'tipLbl' : 'splashLbl', FL.splash.t.toFixed(1));
       splashLbl.style.left = ((_fp.x + 1) / 2 * innerWidth + 8) + 'px';
       splashLbl.style.top = ((1 - _fp.y) / 2 * innerHeight - 8) + 'px';
     } else splashLbl.style.display = 'none';

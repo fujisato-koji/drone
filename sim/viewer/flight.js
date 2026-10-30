@@ -13,8 +13,11 @@
 
   // windFn(x, y, z, t) -> [u, v, w]. Optional windFn.z0 is the roughness length used only to
   // pick the one-sided z derivative near the surface, as aircraft.wind_derivs does.
-  function derivatives(s, cl, mu, ac, windFn, t) {
+  // Optional nLimit (default false): reduce cl to the load-factor limit at the current airspeed
+  // (sim.aircraft.n_limited_cl), as the MPC mode flies.
+  function derivatives(s, cl, mu, ac, windFn, t, nLimit) {
     var x = s[0], y = s[1], z = s[2], V = s[3], g = s[4], p = s[5];
+    if (nLimit) cl = Math.min(cl, ac.n_max * ac.mass * G / (0.5 * ac.rho * V * V * ac.wing_area));
     var cg = Math.cos(g), sg = Math.sin(g), cp = Math.cos(p), sp = Math.sin(p);
     var eV = [cg * cp, cg * sp, sg], eg = [-sg * cp, -sg * sp, cg], ep = [-sp, cp, 0];
     var z0 = windFn.z0 || 0;
@@ -45,12 +48,12 @@
   }
 
   // classical RK4 with the controls held over the step
-  function rk4(s, cl, mu, ac, windFn, t, dt) {
+  function rk4(s, cl, mu, ac, windFn, t, dt, nLimit) {
     var add = function (a, b, c) { return a.map(function (v, i) { return v + c * b[i]; }); };
-    var k1 = derivatives(s, cl, mu, ac, windFn, t);
-    var k2 = derivatives(add(s, k1, dt / 2), cl, mu, ac, windFn, t + dt / 2);
-    var k3 = derivatives(add(s, k2, dt / 2), cl, mu, ac, windFn, t + dt / 2);
-    var k4 = derivatives(add(s, k3, dt), cl, mu, ac, windFn, t + dt);
+    var k1 = derivatives(s, cl, mu, ac, windFn, t, nLimit);
+    var k2 = derivatives(add(s, k1, dt / 2), cl, mu, ac, windFn, t + dt / 2, nLimit);
+    var k3 = derivatives(add(s, k2, dt / 2), cl, mu, ac, windFn, t + dt / 2, nLimit);
+    var k4 = derivatives(add(s, k3, dt), cl, mu, ac, windFn, t + dt, nLimit);
     return s.map(function (v, i) { return v + dt / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]); });
   }
 

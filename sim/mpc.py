@@ -157,6 +157,7 @@ class MPPIPlanner:
         self._frac = (tau - self.knots_t[idx]) / (self.knots_t[idx + 1] - self.knots_t[idx])
         self.U = None                                         # (2, n_ctrl) nominal plan
         self.guide = None
+        self.eps_hook = None        # test hook: callable(iteration) -> (n_samples, 2, n_ctrl) perturbations
         # smooth perturbation basis: cos(pi m tau / H), m = 1..smooth_modes (zero mean excursions
         # lasting from one horizon down to 2 H / smooth_modes), so a coherent turn can be sampled
         m = np.arange(1, smooth_modes + 1)[:, None]
@@ -285,6 +286,17 @@ class MPPIPlanner:
                          0.0)
         return cost, path, dead
 
+    def update(self, U, Us, cost, dead):
+        """The MPPI weighted update of the nominal U from the samples Us (S, 2, n_ctrl) with their
+        costs and dead flags. Returns (new U, effective sample size, number dead)."""
+        ok = ~dead
+        scale = float(np.std(cost[ok])) if ok.sum() >= 2 else float(np.std(cost))
+        scale = max(scale, 1e-6)
+        w = np.exp(-(cost - cost.min()) / (self.lam * scale))
+        w /= w.sum()
+        ess = float(1.0 / np.sum(w ** 2))
+        return self._clip(U + np.tensordot(w, Us - U[None], axes=(0, 0))), ess, int(dead.sum())
+
     # -- one planning call ---------------------------------------------------------------------
     def plan(self, world, t, state, target_dir, guide=None):
         """Plan from state at time t in `world`. Returns a Plan. target_dir: unit (ux, uy).
@@ -306,11 +318,14 @@ class MPPIPlanner:
         ess = 1.0
         n_dead = 0
         for _ in range(n_it):
-            eps = self.rng.standard_normal((self.n_samples, 2, self.n_ctrl)) * sig
-            if self.smooth_modes:
-                z = self.rng.standard_normal((self.n_samples, 2, self.smooth_modes))
-                eps += (self.smooth_gain * sig[None, :, :] / np.sqrt(self.smooth_modes)
-                        * (z @ self._basis))
+            if self.eps_hook is not None:
+                eps = np.array(self.eps_hook(_), float)
+            else:
+                eps = self.rng.standard_normal((self.n_samples, 2, self.n_ctrl)) * sig
+                if self.smooth_modes:
+                    z = self.rng.standard_normal((self.n_samples, 2, self.smooth_modes))
+                    eps += (self.smooth_gain * sig[None, :, :] / np.sqrt(self.smooth_modes)
+                            * (z @ self._basis))
             eps[0] = 0.0
             Us = self._clip(U[None] + eps)
             cand = self._candidates()
@@ -318,14 +333,7 @@ class MPPIPlanner:
             if guide is not None and prev is not None:
                 Us[1 + len(cand)] = self._clip(prev.copy())
             cost, _, dead = self.rollout(world, t, s0, Us, target_dir)
-            ok = ~dead
-            scale = float(np.std(cost[ok])) if ok.sum() >= 2 else float(np.std(cost))
-            scale = max(scale, 1e-6)
-            w = np.exp(-(cost - cost.min()) / (self.lam * scale))
-            w /= w.sum()
-            ess = float(1.0 / np.sum(w ** 2))
-            n_dead = int(dead.sum())
-            U = self._clip(U + np.tensordot(w, Us - U[None], axes=(0, 0)))
+            U, ess, n_dead = self.update(U, Us, cost, dead)
         self.U = U
         cost, path, dead = self.rollout(world, t, s0, U[None], target_dir)
         nfirst = int(round(self.replan_s / self.dt))
