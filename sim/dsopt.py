@@ -852,6 +852,106 @@ def control_stats(col, x, sub=20):
             "replay_closure": float(np.abs(s - S[1:]).max())}
 
 
+def dense_replay(col, x, sub=None):
+    """K-011 replay: integrate every interval from its start node with the interpolated controls.
+
+    RK4 with sub substeps per interval (at least 20, and at most about 0.02 s each). Reports the
+    largest closure error against the next node in height, airspeed (absolute and relative),
+    flight-path angle and heading, the dense minimum of the height above the surface and of the
+    geometric wingtip height, and the dense maximum of the load factor. replay_pass: closure
+    within 0.05 m in height and 1% in airspeed, and dense h and tip not more than 0.02 m below
+    their limits (col.h_min, col.h_tip).
+    """
+    S, C, T, u = col.unpack(x)
+    ac, N, wv = col.ac, col.N, col.wv
+    dt = T / (N - 1)
+    if sub is None:
+        sub = max(20, int(np.ceil(dt / 0.02)))
+    K = 0.5 * ac.rho * ac.wing_area / (ac.mass * G)
+    phi = col.phi0(x) if wv is not None else 0.0
+
+    def f(s, c, t):
+        if wv is None:
+            return dyn(s, c, ac, col.prof, u)
+        return derivs_wave(s, c, ac, col.prof, wv, t, u, phi)
+
+    def surf(s, t):
+        if wv is None:
+            return 0.0
+        return wv.a * np.cos(wv.k * (wv.cw * s[:, 0] + wv.sw * s[:, 1]) - wv.om * t + phi)
+
+    kt = np.arange(N - 1) * dt
+    s = S[:-1].copy()
+    hmin = tmin = np.inf
+    nmax = -np.inf
+    nmin = np.inf
+    for j in range(sub + 1):
+        fr = j / sub
+        c = C[:-1] + (C[1:] - C[:-1]) * fr
+        t_ = kt + fr * dt
+        hh = s[:, 2] - surf(s, t_)
+        tip = hh - 0.5 * ac.span * np.sin(np.abs(c[:, 1])) * np.cos(s[:, 4])
+        nn = K * s[:, 3] ** 2 * c[:, 0]
+        hmin, tmin = min(hmin, hh.min()), min(tmin, tip.min())
+        nmax, nmin = max(nmax, nn.max()), min(nmin, nn.min())
+        if j == sub:
+            break
+        hs = dt / sub
+        cm = C[:-1] + (C[1:] - C[:-1]) * (fr + 0.5 / sub)
+        cn = C[:-1] + (C[1:] - C[:-1]) * (fr + 1.0 / sub)
+        k1 = f(s, c, t_)
+        k2 = f(s + 0.5 * hs * k1, cm, t_ + 0.5 * hs)
+        k3 = f(s + 0.5 * hs * k2, cm, t_ + 0.5 * hs)
+        k4 = f(s + hs * k3, cn, t_ + hs)
+        s = s + hs / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4)
+    err = np.abs(s - S[1:])
+    out = {"rc_closure_h": float(err[:, 2].max()), "rc_closure_V": float(err[:, 3].max()),
+           "rc_closure_V_rel": float((err[:, 3] / S[1:, 3]).max()),
+           "rc_closure_gamma": float(err[:, 4].max()), "rc_closure_psi": float(err[:, 5].max()),
+           "rc_h_min": float(hmin), "rc_tip_min": float(tmin), "rc_n_max": float(nmax),
+           "rc_n_min": float(nmin), "rc_sub": int(sub)}
+    out["replay_pass"] = bool(out["rc_closure_h"] <= 0.05 and out["rc_closure_V_rel"] <= 0.01
+                              and hmin >= col.h_min - 0.02 and tmin >= col.h_tip - 0.02)
+    return out
+
+
+def wave_preset_params(name):
+    """(w_scale, u_scale, decay) of a calibration preset; None for "model" (WaveParams defaults)."""
+    from sim.record import value
+    if name == "model":
+        return None
+    if name not in ("p63", "p64_low"):
+        raise ValueError(name)
+    w = 0.6 if name == "p64_low" else value("lit.wave_induced_amp_w", 1.07)
+    return {"w_scale": float(w), "u_scale": 1.0,
+            "decay": (value("lit.wave_induced_decay_u", 0.77),
+                      value("lit.wave_induced_decay_w", 0.62))}
+
+
+def _apply_preset(wave, preset):
+    """Fill w_scale, u_scale and decay of a wave dict from the preset unless given explicitly."""
+    if wave is None or isinstance(wave, WaveParams) or preset == "model":
+        if preset not in ("model", "p63", "p64_low"):
+            raise ValueError(preset)
+        return wave
+    wave = dict(wave)
+    for k, v in wave_preset_params(preset).items():
+        wave.setdefault(k, v)
+    return wave
+
+
+def _resample(col, x, col2):
+    """Start vector for col2 (other node count) from the solution x of col (same T, u10, phi0)."""
+    from scipy.interpolate import CubicSpline
+    S, C, T, u = col.unpack(x)
+    t1 = np.linspace(0.0, T, col.N)
+    t2 = np.linspace(0.0, T, col2.N)
+    S2 = CubicSpline(t1, S, axis=0)(t2)
+    C2 = np.stack([np.interp(t2, t1, C[:, j]) for j in range(NC)], axis=1)
+    S2[0, 0] = S2[0, 1] = 0.0
+    return col2.pack(S2, C2, T, u, col.phi0(x) if col.wv is not None else 0.0)
+
+
 def rotate_start(col, x, delta_deg):
     """Start vector x with the track rotated by delta_deg about the origin (x, y, psi).
 
@@ -936,12 +1036,111 @@ def _better_info(a, b, mode):
     return a["violation"] < b["violation"]
 
 
+def _run_col(col, xs, m_offsets, seed, mode, tol, maxiter, verbose, check):
+    """Solve one start for every m offset; returns (best candidate, all candidates).
+
+    A candidate is (info, x, col, res). info["converged"]: optimizer and violation test only;
+    info["success"] adds the dense replay when check is True.
+    """
+    t0 = time.time()
+    cons = [{"type": "eq", "fun": col.eq_fun, "jac": col.eq_jac},
+            {"type": "ineq", "fun": col.ineq_fun, "jac": col.ineq_jac}]
+    bnds = col.bounds()
+    lo = np.array([b[0] for b in bnds])
+    hi = np.array([b[1] for b in bnds])
+    xs = np.clip(xs, lo, hi)
+    m0 = col.set_m(xs)
+    offs = tuple(m_offsets) if (col.wv is not None and col.wv.a > 0.0) else (0,)
+    cand, allc = None, []
+    for off in offs:
+        col.m = m0 + int(off)
+        res = minimize(col.objective, xs, jac=True, method="SLSQP", bounds=bnds,
+                       constraints=cons, options={"maxiter": maxiter, "ftol": 1e-9})
+        viol = col.violation(res.x)
+        conv = bool(res.success and viol < tol)
+        rc = dense_replay(col, res.x) if (check and conv) else None
+        ok = conv and (rc is None or rc["replay_pass"])
+        info = _summary(col, res.x, res, viol, ok, seed, time.time() - t0)
+        info["converged"] = conv
+        if rc is not None:
+            info.update(rc)
+        info["m_offset"] = int(off)
+        if verbose:
+            print(seed, off, info["success"], "%.2e" % viol, info["u10"], info["period"],
+                  info["ground_speed"], info["iterations"], "%.1fs" % info["runtime_s"],
+                  flush=True)
+        c = (info, res.x.copy(), col, res)
+        allc.append(c)
+        if _better_info(info, None if cand is None else cand[0], mode):
+            cand = c
+    return cand, allc
+
+
+def refine_mesh(cand, ckw, tol, maxiter, dt_max=0.25, n_cap=160, verbose=False):
+    """Re-solve a converged cycle on a finer mesh until its replay check passes.
+
+    First step: n = max(n, ceil(T / dt_max) + 1) nodes (so that dt <= dt_max). If the replay
+    check still fails, the node count grows by a factor 1.5 until it passes or reaches n_cap.
+    Each solve is warm-started by cubic interpolation of the previous one and keeps its integer
+    m. Returns a candidate tuple like _run_col; success is the replay result of the last
+    converged solve (a failed re-solve keeps the previous one).
+    """
+    info0, x, col, res = cand
+    n_init = col.N
+    pass_init = dense_replay(col, x)["replay_pass"]
+    cur = cand
+    steps = 0
+    while True:
+        info, x, col, res = cur
+        n_need = int(np.ceil(info["period"] / dt_max)) + 1
+        if col.N < n_need:
+            n_new = min(n_need, n_cap)
+        elif not dense_replay(col, x)["replay_pass"]:
+            n_new = min(int(np.ceil(1.5 * col.N)), n_cap)
+        else:
+            break
+        if n_new <= col.N:
+            break
+        c2 = Collocation(**dict(ckw, n=n_new))
+        c2.m = int(info.get("m", col.m))
+        xs = _resample(col, x, c2)
+        bnds = c2.bounds()
+        xs = np.clip(xs, [b[0] for b in bnds], [b[1] for b in bnds])
+        cons = [{"type": "eq", "fun": c2.eq_fun, "jac": c2.eq_jac},
+                {"type": "ineq", "fun": c2.ineq_fun, "jac": c2.ineq_jac}]
+        t0 = time.time()
+        r2 = minimize(c2.objective, xs, jac=True, method="SLSQP", bounds=bnds,
+                      constraints=cons, options={"maxiter": maxiter, "ftol": 1e-9})
+        viol = c2.violation(r2.x)
+        conv = bool(r2.success and viol < tol)
+        steps += 1
+        if verbose:
+            print("refine", n_new, conv, "%.2e" % viol, "%.1fs" % (time.time() - t0), flush=True)
+        if not conv:
+            break
+        rc2 = dense_replay(c2, r2.x)
+        i2 = _summary(c2, r2.x, r2, viol, rc2["replay_pass"], info0["seed"],
+                      info["runtime_s"] + time.time() - t0)
+        i2["converged"] = True
+        i2.update(rc2)
+        i2["m_offset"] = info.get("m_offset")
+        cur = (i2, r2.x.copy(), c2, r2)
+    info, x, col, res = cur
+    rc = dense_replay(col, x)
+    info.update(rc)
+    info["success"] = bool(info.get("converged", True) and rc["replay_pass"])
+    info.update({"refined": steps > 0, "refine_steps": steps, "n_nodes_initial": n_init,
+                 "replay_pass_initial": bool(pass_init), "n_nodes": col.N})
+    return (info, x, col, res)
+
+
 def solve(ac, prof, mode="min_wind", cycle="travel", n=40, u10=None, chi=np.pi / 2,
           h_min=1.0, h_tip_min=0.3, v_factor=1.1, seeds=(0, 1, 2), maxiter=300, tol=1e-5,
           x0=None, return_x=False, verbose=False, stop_after=2, tip_model="abs", wave=None,
           midpoints=False, rate_limits=False, n_min=None, n_frac=1.0, mu_frac=1.0,
           bank_rate_max_deg_s=None, cl_rate_max_per_s=None, phase_pin="theta", m_search=(0,),
-          rate_model="constant", roll_pb2v=None):
+          rate_model="constant", roll_pb2v=None, replay_check=False, refine=False,
+          wave_preset="model", dt_max=0.25, n_cap=160, refine_tries=2, refine_maxiter=100):
     """Solve for the best converged cycle among the seeded initial guesses.
 
     midpoints (flat mode; the wave mode has WaveParams.midpoints), rate_limits, n_min, n_frac,
@@ -949,50 +1148,63 @@ def solve(ac, prof, mode="min_wind", cycle="travel", n=40, u10=None, chi=np.pi /
     integer m taken from each start (wave mode, a > 0); each start is solved once per offset and
     the best feasible result is kept. The defaults reproduce the earlier flat results exactly.
 
+    replay_check=True (see dense_replay): a converged solve is a success only if the dense replay
+    closes (0.05 m in height, 1% in airspeed) and h and the tip stay within 0.02 m of their
+    limits; the replay numbers (rc_*) are added to the result. refine=True (implies the replay
+    check): the converged candidates (the refine_tries with the lowest objective) are re-solved
+    on a finer mesh (see refine_mesh; at most refine_maxiter SLSQP iterations per solve) and the
+    first whose replay passes is returned.
+    wave_preset "model", "p63" or "p64_low" fills w_scale, u_scale and decay of a wave dict
+    unless the dict gives them.
+
     tip_model "abs" or "geometric" (wingtip height, see Collocation._path). wave = {a, wavelength,
     to_deg} switches to the wave-synchronized mode (heights above the moving surface, wave wind,
     theta periodicity with m taken from each initial guess); x0 then needs the extra phi0 slot.
     """
-    col = Collocation(ac, prof, mode, cycle, n, u10, chi, h_min, h_tip_min, v_factor,
-                      tip_model, wave, midpoints, rate_limits, n_min, n_frac, mu_frac,
-                      bank_rate_max_deg_s, cl_rate_max_per_s, phase_pin, rate_model, roll_pb2v)
-    cons = [{"type": "eq", "fun": col.eq_fun, "jac": col.eq_jac},
-            {"type": "ineq", "fun": col.ineq_fun, "jac": col.ineq_jac}]
-    bnds = col.bounds()
+    check = bool(replay_check) or bool(refine)
+    wave = _apply_preset(wave, wave_preset)
+    ckw = dict(ac=ac, prof=prof, mode=mode, cycle=cycle, n=n, u10=u10, chi=chi, h_min=h_min,
+               h_tip_min=h_tip_min, v_factor=v_factor, tip_model=tip_model, wave=wave,
+               midpoints=midpoints, rate_limits=rate_limits, n_min=n_min, n_frac=n_frac,
+               mu_frac=mu_frac, bank_rate_max_deg_s=bank_rate_max_deg_s,
+               cl_rate_max_per_s=cl_rate_max_per_s, phase_pin=phase_pin, rate_model=rate_model,
+               roll_pb2v=roll_pb2v)
+    col = Collocation(**ckw)
+    ckw["wave"] = col.wv   # the same WaveParams object for every mesh
+    if x0 is not None and len(x0) != col.nv:   # a start from another mesh: resample it
+        n0 = (len(x0) - (3 if col.wv is not None else 2)) // 8
+        x0 = _resample(Collocation(**dict(ckw, n=n0)), np.asarray(x0), col)
     starts = [(None, x0)] if x0 is not None else [(s, None) for s in seeds]
-    best = None
+    best, pool = None, []
     n_ok = 0
     for seed, xs in starts:
-        t0 = time.time()
         if xs is None:
             xs = col.guess(np.random.default_rng(seed))
-        lo = np.array([b[0] for b in bnds])
-        hi = np.array([b[1] for b in bnds])
-        xs = np.clip(xs, lo, hi)
-        m0 = col.set_m(xs)
-        offs = tuple(m_search) if (col.wv is not None and col.wv.a > 0.0) else (0,)
-        cand = None
-        for off in offs:
-            col.m = m0 + int(off)
-            res = minimize(col.objective, xs, jac=True, method="SLSQP", bounds=bnds,
-                           constraints=cons, options={"maxiter": maxiter, "ftol": 1e-9})
-            viol = col.violation(res.x)
-            ok = bool(res.success and viol < tol)
-            info = _summary(col, res.x, res, viol, ok, seed, time.time() - t0)
-            if verbose:
-                print(seed, off, info["success"], "%.2e" % viol, info["u10"], info["period"],
-                      info["ground_speed"], info["iterations"], "%.1fs" % info["runtime_s"],
-                      flush=True)
-            if _better_info(info, None if cand is None else cand[0], mode):
-                cand = (info, res.x.copy())
-        info, ok = cand[0], cand[0]["success"]
-        if _better_info(info, None if best is None else best[0], mode):
+        cand, allc = _run_col(col, xs, m_search, seed, mode, tol, maxiter, verbose,
+                              check and not refine)
+        if refine:
+            pool += [c for c in allc if c[0]["converged"]]
+        if _better_info(cand[0], None if best is None else best[0], mode):
             best = cand
-        n_ok += int(ok)
+        n_ok += int(cand[0]["converged"] if refine else cand[0]["success"])
         if n_ok >= stop_after:
             break
+    if refine and pool:
+        sgn = 1 if mode == "min_wind" else -1
+        pool.sort(key=lambda c: sgn * c[0]["objective"])
+        first = None
+        for c in pool[:refine_tries]:
+            r = refine_mesh(c, ckw, tol, min(maxiter, refine_maxiter), dt_max, n_cap, verbose)
+            if first is None:
+                first = r
+            if r[0]["success"]:
+                first = r
+                break
+        best = first
+    if best[0].get("m") is not None:
+        best[2].m = int(best[0]["m"])
     if return_x:
-        return best[0], best[1], col
+        return best[0], best[1], best[2]
     return best[0]
 
 
@@ -1061,12 +1273,22 @@ def solve_min_wind(ac, z0_mode="fixed8", roughness="charnock", z0=None, u10_ref=
     kw.pop("mode", None)
     if z0_mode not in ("fixed8", "self_consistent"):
         raise ValueError(z0_mode)
+    cold_fallback = bool(kw.pop("cold_fallback", True))   # False: a failed x0 start is returned as is
+    return _solve_min_wind(ac, z0_mode, roughness, z0, u10_ref, kind, knee, tol_u10, max_outer,
+                           x0, seeds, verbose, kw, return_x, cold_fallback)
+
+
+def _solve_min_wind(ac, z0_mode, roughness, z0, u10_ref, kind, knee, tol_u10, max_outer,
+                    x0, seeds, verbose, kw, return_x, cold_fallback=True):
+
+    if verbose:
+        kw = dict(kw, verbose=True)
 
     def one(u_for_z0, xs):
         prof = profile_for(u_for_z0, kind, roughness, z0, knee)
         if xs is not None:
             r = solve(ac, prof, "min_wind", x0=xs, return_x=True, **kw)
-            if r[0]["success"]:
+            if r[0]["success"] or not cold_fallback:
                 return r, prof
         return solve(ac, prof, "min_wind", seeds=seeds, return_x=True, x0=None, **kw), prof
 
@@ -1081,11 +1303,16 @@ def solve_min_wind(ac, z0_mode="fixed8", roughness="charnock", z0=None, u10_ref=
         (info, x, col), prof = one(u_cur, xs)
         hist.append({"u10_for_z0": u_cur, "z0": prof.z0, "u10_found": info["u10"],
                      "success": info["success"], "scaling_predicted": predicted})
+        if it == 0:   # what the first solve of the outer loop needed (later ones start refined)
+            first = {"n_nodes_first": info.get("n_nodes_initial", info.get("n_nodes")),
+                     "replay_pass_first": info.get("replay_pass_initial", info.get("replay_pass"))}
         if not info["success"]:
             break
         if abs(info["u10"] - u_cur) < tol_u10:
             break
         xs = x
+        if kw.get("refine"):
+            kw = dict(kw, n=col.N)   # continue on the refined mesh
         K = info["u10"] / prof.L
         predicted = _scaled_fixed_point(K, kind, knee, info["u10"], roughness)
         u_cur = predicted
@@ -1096,7 +1323,7 @@ def solve_min_wind(ac, z0_mode="fixed8", roughness="charnock", z0=None, u10_ref=
         err = abs(hist[1]["u10_found"] - hist[1]["u10_for_z0"])
     info.update({"z0": hist[-1]["z0"], "z0_mode": z0_mode, "roughness": roughness,
                  "outer_iterations": len(hist), "outer_converged": done,
-                 "outer_history": hist, "scaling_error_first_step": err})
+                 "outer_history": hist, "scaling_error_first_step": err, **first})
     if verbose:
         print("outer", [(round(h["u10_for_z0"], 3), round(h["u10_found"], 3)) for h in hist],
               flush=True)
@@ -1113,11 +1340,22 @@ def main(argv=None):
     ap.add_argument("--wave-study3", action="store_true",
                     help="third pass: midpoints, rate limits, n >= 0, theta pin, m search, rotated "
                          "starts -> sim/out/dsopt_constraints.json")
+    ap.add_argument("--wave-study4", action="store_true",
+                    help="fourth pass: calibrated wave wind, replay check, mesh refinement, margins "
+                         "-> sim/out/dsopt_wave4.json")
     ap.add_argument("--constraint-study", action="store_true",
                     help="flat-sea tables A and B -> sim/out/dsopt_constraints.json")
     ap.add_argument("--constraint-study2", action="store_true",
                     help="flat-sea tables A2 and B2 (roll rate p b / 2V) -> "
                          "sim/out/dsopt_constraints.json")
+    ap.add_argument("--aircraft", default=None, help="comma list for --wave-study4 (default both)")
+    ap.add_argument("--out", default=None, help="output path for --wave-study4")
+    ap.add_argument("--budget-min", type=float, default=40.0,
+                    help="--wave-study4: no case is started after this many minutes")
+    ap.add_argument("--presets", default=None, help="comma list for --wave-study4")
+    ap.add_argument("--tp", default=None, help="comma list of Tp (s) for --wave-study4")
+    ap.add_argument("--hs", default=None, help="comma list of Hs (m) for --wave-study4")
+    ap.add_argument("--no-flat", action="store_true", help="--wave-study4: skip the flat references")
     ap.add_argument("--nodes", type=int, default=30)
     ap.add_argument("--workers", type=int, default=7)
     args = ap.parse_args(argv)
@@ -1130,6 +1368,21 @@ def main(argv=None):
     elif args.constraint_study2:
         from sim.formstudy import constraint_study2
         constraint_study2(n=args.nodes, workers=args.workers)
+    elif args.wave_study4:
+        from sim.formstudy import wave_study4
+        kw = {}
+        if args.aircraft:
+            kw["names"] = tuple(args.aircraft.split(","))
+        if args.presets:
+            kw["presets"] = tuple(args.presets.split(","))
+        if args.tp:
+            kw["tps"] = tuple(float(v) for v in args.tp.split(","))
+        if args.hs:
+            kw["hs_list"] = tuple(float(v) for v in args.hs.split(","))
+        if args.out:
+            kw["path"] = args.out
+        wave_study4(n=args.nodes, workers=min(args.workers, 4), budget_s=args.budget_min * 60.0,
+                    with_flat=not args.no_flat, **kw)
     elif args.wave_study3:
         from sim.formstudy import wave_study3
         wave_study3(n=args.nodes, workers=args.workers)
