@@ -67,6 +67,7 @@
       <div class="ctl"><label for="u10" data-i="u10" data-t="u10Tip"></label><input id="u10" type="range" min="2" max="25" step="0.5" data-t="u10Tip"><span class="val" id="u10v"></span></div>
       <div class="ctl"><label for="from" data-i="from" data-t="fromTip"></label><input id="from" type="range" min="0" max="359" step="1" data-t="fromTip"><span class="val" id="fromv"></span></div>
     </div>
+    <div class="dim" id="timeNote" data-i="timeNote"></div>
     <div class="dim" id="rough"></div>
     <div class="dim" id="lockNote" style="display:none"></div>
   </details>
@@ -81,7 +82,6 @@
       <div class="ctl step"><label for="flHead" data-i="stHead" data-t="flHeadTip"></label><select id="flHead" data-t="flHeadTip"><option value="up" data-i="hUp"></option><option value="down" data-i="hDown"></option><option value="left" data-i="hLeft"></option><option value="right" data-i="hRight"></option><option value="ref" data-i="hRef"></option></select></div>
       <div class="ctl"><button id="flGo" type="button" data-i="go" data-t="goTip"></button><button id="flStop" type="button" data-i="stop" data-t="stopTip"></button></div>
       <div class="ctl"><label class="auto" data-t="chaseTip"><input id="flChase" type="checkbox" data-t="chaseTip"> <span data-i="chase"></span></label></div>
-      <div class="ctl"><label class="auto" data-t="freezeTip"><input id="flFreeze" type="checkbox" checked data-t="freezeTip"> <span data-i="freeze"></span></label></div>
       <table id="flro"></table>
       <div class="dim" id="flNote"></div>
       <div class="warn" id="flSplash"></div>
@@ -134,7 +134,7 @@ const I18N = {
     sec1: '① 海と風の時刻',
     sec1TipScen: '風速と風向はシナリオが決めるので、ここでは動かせません。経過時間を動かすと変わります。',
     sec1TipNoScen: '風速と風向のスライダーで、見せる海と風を決めます。',
-    hour: '経過時間', hourTip: '嵐のシナリオの経過時間です。海と風がこの時刻のものになります。',
+    hour: '嵐の経過時間（時間）', timeNote: '波と機体は実時間（秒）で動きます。経過時間は嵐の筋書きの時刻です。', hourTip: '嵐のシナリオの経過時間です。海と風がこの時刻のものになります。',
     play: '再生', pauseBtn: '停止', playTip: '経過時間を自動で進めます。もう一度押すと止まります。',
     rate: '再生の速さ', rateTip: '再生中に、1 秒で進める経過時間です。',
     u10: '10 m の風速', u10Tip: '高さ 10 m の風速です。海の状態もこれに合わせて変わります。',
@@ -151,7 +151,7 @@ const I18N = {
     hUp: '風上へ', hDown: '風下へ', hLeft: '風を横切って左へ', hRight: '風を横切って右へ', hRef: '参照軌道の向き',
     go: '発進', goTip: '選んだ条件で機体を発進させます。', stop: '止める', stopTip: '飛行を止めます。機体と軌跡はそのまま残ります。',
     chase: '機体を追いかけるカメラ', chaseTip: 'カメラの注目点を機体に合わせ続けます。',
-    freeze: '飛行中は時刻を止める', freezeTip: '飛行中は、シナリオの経過時間を進めません。',
+    frozenTip: '飛行中は海の状態を固定しています。',
     sec3: '③ 表示', sec3Tip: '波と粒子の見せ方を変えます。飛行や風は変わりません。',
     spd: '波の動きの速さ', spdTip: '波のアニメーションの速さです。0 で止まります。',
     pause: '波を止める', pauseTip: '波の動きを止めます。シナリオの時刻には関係ありません。',
@@ -201,7 +201,7 @@ const I18N = {
     sec1: '1. Sea and wind time',
     sec1TipScen: 'The scenario sets wind speed and direction, so they cannot be moved here. Move the elapsed time instead.',
     sec1TipNoScen: 'The wind speed and direction sliders choose the sea and wind.',
-    hour: 'Elapsed time', hourTip: 'Elapsed time in the storm scenario. Sea and wind follow this hour.',
+    hour: 'Storm time (hours)', timeNote: 'Waves and the aircraft move in real time (seconds); this is the time in the story of the storm.', hourTip: 'Elapsed time in the storm scenario. Sea and wind follow this hour.',
     play: 'Play', pauseBtn: 'Pause', playTip: 'Advances the elapsed time automatically. Press again to stop.',
     rate: 'Play speed', rateTip: 'Hours of scenario time per second while playing.',
     u10: 'Wind at 10 m', u10Tip: 'Wind speed at 10 m height. The sea state follows it.',
@@ -218,7 +218,7 @@ const I18N = {
     hUp: 'Upwind', hDown: 'Downwind', hLeft: 'Crosswind, left', hRight: 'Crosswind, right', hRef: 'Reference heading (rotated into the wind)',
     go: 'Launch', goTip: 'Launches the aircraft with the chosen settings.', stop: 'Stop', stopTip: 'Stops the flight. The aircraft and trail stay.',
     chase: 'Chase camera', chaseTip: 'Keeps the camera target on the aircraft.',
-    freeze: 'Freeze scenario hour while flying', freezeTip: 'Does not advance the scenario hour during a flight.',
+    frozenTip: 'The sea state is fixed while the aircraft flies.',
     sec3: '3. Display', sec3Tip: 'Changes how waves and particles are shown. Flight and wind are unchanged.',
     spd: 'Wave speed', spdTip: 'Speed of the wave animation. 0 stops it.',
     pause: 'Freeze waves', pauseTip: 'Stops the wave motion. Unrelated to the scenario hour.',
@@ -667,7 +667,7 @@ const renderFl = () => {
 dyn.push(renderFl);
 if (!REFS || !Object.keys(REFS).length) {
   flNoteFn = () => tx('refsMissing');
-  for (const id of ['flAc', 'flCyc', 'flPos', 'flHead', 'flGo', 'flStop', 'flChase', 'flFreeze']) $(id).disabled = true;
+  for (const id of ['flAc', 'flCyc', 'flPos', 'flHead', 'flGo', 'flStop', 'flChase']) $(id).disabled = true;
 } else {
   $('flAc').innerHTML = Object.keys(REFS).map((n) => '<option>' + n + '</option>').join('');
   const showRefs = () => {
@@ -979,7 +979,10 @@ function updateParticleBuffers(t) {
 function loop(now) {
   requestAnimationFrame(loop);
   const real = Math.min(0.25, (now - last) / 1000); last = now;
-  if (SCEN && playing && !(FL.on && $('flFreeze').checked)) {
+  if (SCEN) {   // while a flight runs the scenario hour stays fixed, and its controls are locked
+    for (const el of [hourEl, $('play')]) { el.disabled = FL.on; el.title = tx(FL.on ? 'frozenTip' : el === hourEl ? 'hourTip' : 'playTip'); }
+  }
+  if (SCEN && playing && !FL.on) {
     hourNow += real * (+rateEl.value);
     if (hourNow > 72) hourNow -= 72;   // loop
     hourEl.value = hourNow; setHour(hourNow); syncHour();
