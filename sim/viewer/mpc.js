@@ -361,7 +361,7 @@ function mpcFactory() {
   // Library cycle matched to the current state (sim.mpc.CycleGuide without the wave shift).
   var GUIDE_SIG = [3.0, null, 0.25, 0.6];
   var SWITCH_MATCH_MAX = 2.0, SWITCH_MAX_WAIT_S = 15.0;
-  var STEADY_SIG_H = 0.5, STEADY_W_D = 200.0;   // match to a steady reference: tight height, heavier terminal weight
+  var STEADY_SIG_H = 0.5, STEADY_SIG_PSI = 0.04, STEADY_W_D = 200.0;   // match to a steady reference: tight height, heavier terminal weight
   function Guide(cycle, world, t, s, psiW, horizon, wD, tauHint, hintWindow, sig) {
     this.cycle = cycle; this.psiW = psiW; this.H = horizon; this.wD = wD;
     var sg = sig || GUIDE_SIG;   // sig: [h, V or null, gamma, heading] tolerances of the match
@@ -388,7 +388,7 @@ function mpcFactory() {
     this.dEc = cycle.energy(te) - cycle.energy(this.tauS);
     this.E0 = G * this.h0 + 0.5 * V * V;
     if (cycle.d.steady) {
-      this.sig[0] = Math.min(this.sig[0], STEADY_SIG_H); this.wD = Math.max(this.wD, STEADY_W_D);   // see sim.mpc.CycleGuide
+      this.sig[0] = Math.min(this.sig[0], STEADY_SIG_H); this.sig[3] = Math.min(this.sig[3], STEADY_SIG_PSI); this.wD = Math.max(this.wD, STEADY_W_D);   // see sim.mpc.CycleGuide
       this.dEc = cycle.energy(te) - this.E0;
     }   // a steady reference holds an energy level (see sim.mpc.CycleGuide)
   }

@@ -1200,6 +1200,7 @@ def dominant_wave(world):
 
 
 STEADY_SIG_H = 0.5         # m; height tolerance of the match to a steady reference
+STEADY_SIG_PSI = 0.04       # rad; heading tolerance of the match to a steady reference
 STEADY_W_D = 200.0         # terminal weight of the match to a steady reference
 
 
@@ -1262,7 +1263,7 @@ class CycleGuide:
         if cycle.d.get("steady"):
             # tight about the reference height (the shear makes level flight unstable, so a loose tolerance lets the
             # aircraft wander upwards) and a heavier terminal weight
-            self.sig = (min(self.sig[0], STEADY_SIG_H), self.sig[1], self.sig[2], self.sig[3])
+            self.sig = (min(self.sig[0], STEADY_SIG_H), self.sig[1], self.sig[2], min(self.sig[3], STEADY_SIG_PSI))
             self.w_d = max(self.w_d, STEADY_W_D)
             # a steady reference holds an energy level, not an energy gain: the shortfall is measured against the
             # reference energy, so that sinking back to the reference height from above is not penalised (with
@@ -1890,7 +1891,7 @@ def nav_summary(nav, log, track, target, arrived, t_end, update_s):
                           "min_leg_s": nav.min_leg_s, "arrival_radius_m": nav.arrival_radius,
                           "amort_s": getattr(nav, "amort_s", None)},
             "track": track, "commands": [[c["t"], c["bearing"], c["chi"], c["side"], c["mode"],
-                                          c["vmg"], c["tacked"], c.get("kind", ""), c.get("cycle")]
+                                          c["vmg"], c["tacked"], c.get("kind", ""), c.get("cycle"), c.get("cross")]
                                          for c in log]}
 
 
