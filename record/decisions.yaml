@@ -146,3 +146,10 @@ items:
       - Q-046
       - Q-047
       - Q-007
+  - id: D-017
+    date: 2026-10-30
+    by: owner
+    what: "The owner left it to the assistant which candidate forms to keep (remove those that no longer matter, support the others in the planner). The flying wing leaves active study, since it needs the most wind of the designed forms and has no other merit; the sealed hull stays as the form that can rest on the water; the two demonstrators stay as references with flight data (P48, P87); the albatross-like glider and the baseline stay as the leading forms. Every kept form gets cycles in the planner's library."
+    touches:
+      - Q-024
+      - Q-057

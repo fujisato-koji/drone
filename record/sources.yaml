@@ -1303,3 +1303,67 @@ items:
     read: partial
     retrieved: 2026-10-30
     note: "A folded propeller adds about 3% to the nacelle drag against 81% windmilling."
+  - id: P147
+    class: P
+    title: "DNV-RP-C205 Environmental conditions and environmental loads, DNV, 2010 (and DNVGL-RP-C205 2017)"
+    url: "https://rules.dnv.com/docs/pdf/DNVPM/codes/docs/2010-10/rp-c205.pdf"
+    license: "copyright DNV"
+    read: partial
+    retrieved: 2026-10-30
+    note: "Sections 2.3.2, 2.3.4, 2.3.5: the Frøya (NPD) spectrum S(f) = 320 (U0/10)^2 (z/10)^0.45 / (1 + f~^n)^(5/(3n)), f~ = 172 f (z/10)^(2/3) (U0/10)^-0.75, n = 0.468, valid down to 1/2400 Hz, developed for neutral conditions over water; its coherence; Iu = 0.06 (1 + 0.043 U0)(z/10)^-0.22; the 1 h to 10 min conversion; the Ochi-Shin spectrum; Mann's model can be applied. Equations read from a garbled text layer; root signs to be checked on the page images."
+  - id: P148
+    class: P
+    title: "Design standards for offshore wind farms, ABS for BSEE, TAP 670, 2011"
+    url: "https://www.bsee.gov/sites/bsee.gov/files/tap-technical-assessment-program/670aa.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "API RP 2A-WSD, API 2INT-MET and ISO 19901-1 use the same NPD spectrum; IEC 61400-1 Kaimal spectra with sigma2 = 0.8 sigma1 and sigma3 = 0.5 sigma1 and length scales 8.1, 2.7 and 0.66 Lambda1 with Lambda1 = 0.7 z below 60 m; IEC 61400-3 recommends Mann's spectrum."
+  - id: P149
+    class: P
+    title: "Spectral structure of mesoscale winds over the water, X. G. Larsen, C. Vincent and S. Larsen, Quarterly Journal of the Royal Meteorological Society, 2013"
+    url: "https://backend.orbit.dtu.dk/ws/files/12161609/Spectral_structure.pdf"
+    license: "copyright RMetS, private study"
+    read: partial
+    retrieved: 2026-10-30
+    note: "North Sea and Baltic, 10-min means at 62 to 69 m: S(f) = a1 f^(-5/3) + a2 f^(-3) with a1 = 3e-4 and a2 = 3e-11 (9e-11 in winter, 1.5e-11 in summer); little vertical variation; damped in stable and larger in unstable conditions linked to convective cells; lateral coherence exp(-7.7 f d/U0). A second reader derives a standard deviation of about 0.27 m/s over 10 min to 1 h, joining the Frøya spectrum at 1/2400 Hz."
+  - id: P150
+    class: P
+    title: "Mesoscale wind fluctuations over Danish waters, C. Vincent, PhD thesis Risø-PhD-70, 2010"
+    url: "https://backend.orbit.dtu.dk/ws/files/5578190/ris-phd-70.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "Open cellular convection gives hour-scale wind fluctuations of up to 10 m/s at 70 m, cells of 2 to 100 km, a spectral peak near one hour in a cited case; variability grows with rain rate."
+  - id: P151
+    class: P
+    title: "Comparison of methods for the identification of mesoscale wind speed fluctuations, A. Mehrens and L. von Bremen, Meteorologische Zeitschrift, 2017"
+    url: "https://oops.uni-oldenburg.de/3325/"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "FINO1 at 100 m: in fluctuation periods the 10-min mean changes several times by more than 2 m/s; 89 highly variable days in 4384."
+  - id: P152
+    class: P
+    title: "From standard wind measurements to spectral characterization: turbulence length scale and distribution, M. Kelly, Wind Energy Science 3, 533, 2018"
+    url: "https://wes.copernicus.org/articles/3/533/2018/"
+    license: CC BY 4.0
+    read: partial
+    retrieved: 2026-10-30
+    note: "In the neutral surface layer the Mann length scale is about 0.92 z."
+  - id: P153
+    class: P
+    title: "User manual and system documentation of WAVEWATCH III version 5.16, NOAA/NCEP, 2016"
+    url: "https://polar.ncep.noaa.gov/waves/wavewatch/manual.v5.16.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "Section 2.3.7, WAM cycle 3 wind input: growth rate beta = 0.25 (rho_a/rho_w) max(0, 28 (u*/c) cos(dtheta) - 1) sigma; a second reader derives e-folding times of 21 s at 0.5 s period to 50 min at 4 s at 10 m/s."
+  - id: P154
+    class: P
+    title: "Hao and Shen, wind-wave growth and decay, Journal of Fluid Mechanics 946, A8, 2022"
+    url: "https://doi.org/10.1017/jfm.2022.577"
+    license: CC BY 4.0
+    read: partial
+    retrieved: 2026-10-30
+    note: "Quoting Waseda et al. 2001: waves adjust to a wind change in 15 to 20 periods for c/u* of 1 to 1.5 and 210 to 420 periods for c/u* of 9; quoting Hwang et al. 2011: decay is much slower than growth."
