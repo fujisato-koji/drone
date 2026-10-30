@@ -224,7 +224,7 @@ Albatrosses meet the same question by soaring when the wind serves, sitting on t
 - ERA5 (P165), hourly, from 2005 to 2024 in UTC: the 10 m wind speed through the Open-Meteo historical weather API (P166) at 0.25 deg, and the significant wave height with its mean and peak period through the Open-Meteo marine API with the ERA5 ocean model (P167) at 0.5 deg.
 - ERA5 through that service has no swell and wind-sea partition (P167), so the swell is estimated (see the method).
 - Three Southern Ocean points in the wandering albatross's range: open water north of the Crozet Islands where the birds breeding there forage; the latitude of the record's insolation point (P51) but upwind of the Kerguelen Islands in the westerlies, out of their wake; and the open South Pacific sector of the circumpolar range, far from land.
-- Three North Pacific points in the Laysan and black-footed albatross range: the subtropical gyre north-east of the Hawaiian colonies, where breeding birds forage; the transition zone, the main foraging belt of both species; and the Kuroshio-Oyashio extension east of the Kuril Islands, a winter foraging area.
+- Three North Pacific points in the Laysan and black-footed albatross range: the subtropical gyre north-east of the Hawaiian colonies, where breeding birds forage; the transition zone, the main foraging belt of both species; and the north-west Pacific south-east of the Kuril Islands, at the edge of the subarctic gyre north of the Kuroshio extension, a winter foraging area.
 - Their coordinates are in `sim/climate.py` (`PUBLIC_POINTS`); all lie on the 0.5 deg grid, which both ERA5 grids share.
 - The home operating area (private:loc-01): open-sea points 30 to 100 km off the coast on its open-ocean side, at the same grid spacing, kept with their raw downloads in the owner's private store; only statistics derived from them enter the record and this document.
 - Each region pools its points: spells are found at each point and their lengths pooled, and the shares count the hours of all points.
@@ -236,9 +236,9 @@ Albatrosses meet the same question by soaring when the wind serves, sitting on t
 - Seasons are calendar months: DJF, MAM, JJA and SON, so DJF is the austral summer.
 - Four thresholds of the 10 m wind: 6 m/s; ds.min_u10_ms, the design point of R-02; 11 m/s, the best soaring minimum that the wingtip skim study found with a skid and dihedral (branch `design/skim-mass`, not yet in the record), used here as a plain number; and wing.best_u10_min_ms, the best soaring minimum on a flat sea.
 - A spell is a run of consecutive hours with the wind below the threshold; a spell belongs to the season of its first hour, and its percentiles count spells, not hours.
-- Swell during weak wind: the total height Hs, and a lower bound on the swell height, the part of Hs that the largest wind sea the hour's wind can hold does not explain (the fully developed sea of the environment model, with env.pm_hs_coefficient, removed in energy); in weak wind the two are close, since the fully developed sea is small; the period is the median peak period of the weak hours with at least 2 m of that swell.
+- Swell during weak wind: the total height Hs, and a lower bound on the swell height, the part of Hs that the largest wind sea the hour's wind can hold does not explain (the fully developed sea of the environment model, with env.pm_hs_coefficient, removed in energy), a lower bound as long as the wind sea does not exceed that fully developed sea (K-018 found the share a point or two lower with a larger one); in weak wind the two are close, since the fully developed sea is small; the period is the median peak period of the weak hours with at least 2 m of that swell.
 - Energy to ride out a spell on the motor: the motor's electric power plus ds.avionics_power_w over the spell; floating: ds.avionics_power_w alone over the same time; no solar yield is credited.
-- The motor power: for the albatross-like glider motor.albatross_calm_w, its calm-air level flight with ground effect, over spells below ds.min_u10_ms (the drone as R-02 would have it); for the best wing of the wing sizing wing.front1_c9_w, which is level flight at the speed floor (see the wing sizing) and so stands for any wind below its soaring minimum, over spells below wing.best_u10_min_ms (the drone as it stands); its calm-air figure is not in the record.
+- The motor power: for the albatross-like glider motor.albatross_calm_w, its calm-air level flight with ground effect, over spells below ds.min_u10_ms (the drone as R-02 would have it); for the best wing of the wing sizing wing.front1_c9_w, level flight at the speed floor on the control library's track 20 deg off downwind (see the wing sizing), which stands for weak wind on that track, over spells below wing.best_u10_min_ms (the drone as it stands); straight upwind it needs wing.front1_c9_chi180_w, and its calm-air figure is not in the record.
 - Cell mass at lit.cell_p45b_wh_per_kg, before any margin for ageing (ds.eol_capacity_fraction) or the storage charge.
 - Daily solar yield on the darkest design day, with the cell assumptions of the flight patterns study over the wing area (form.albatross_3m.wing_area_m2; the best wing's from wing.best_span_m and wing.best_ar), from lit.insolation_50s_june_kwh_m2_day for the Southern Ocean and lit.insolation_home_december_kwh_m2_day for the home area; the record has no insolation for the North Pacific points.
 
@@ -266,23 +266,23 @@ The wind by season, and the share of hours below each threshold:
 | home area | year | climate.home_year_u10_mean_ms | climate.home_year_u10_p10_ms | climate.home_year_u10_p50_ms | climate.home_year_u10_p90_ms | climate.home_year_below_u6_share | climate.home_year_below_dsmin_share | climate.home_year_below_skim11_share | climate.home_year_below_best_share |
 <!-- climate_keys wind end -->
 
-The spells over the whole year, in hours:
+The spells over the whole year, in hours; the percentiles count spells, the next to last column says how many spells a year at one point are longer than the 99th percentile spell, and the last gives the 99th percentile by hours, the length that 99% of the weak hours do not exceed in their spell (K-018):
 
 <!-- climate_keys spells begin -->
-| region | below | median | 90th | 99th | longest | share of the weak hours in spells of 24 h or more |
-|---|---|---|---|---|---|---|
-| Southern Ocean | 6 m/s | climate.so_spell_u6_p50_h | climate.so_spell_u6_p90_h | climate.so_spell_u6_p99_h | climate.so_spell_u6_max_h | climate.so_spell_u6_ge24h_share |
-| Southern Ocean | ds.min_u10_ms | climate.so_spell_dsmin_p50_h | climate.so_spell_dsmin_p90_h | climate.so_spell_dsmin_p99_h | climate.so_spell_dsmin_max_h | climate.so_spell_dsmin_ge24h_share |
-| Southern Ocean | 11 m/s | climate.so_spell_skim11_p50_h | climate.so_spell_skim11_p90_h | climate.so_spell_skim11_p99_h | climate.so_spell_skim11_max_h | climate.so_spell_skim11_ge24h_share |
-| Southern Ocean | wing.best_u10_min_ms | climate.so_spell_best_p50_h | climate.so_spell_best_p90_h | climate.so_spell_best_p99_h | climate.so_spell_best_max_h | climate.so_spell_best_ge24h_share |
-| North Pacific | 6 m/s | climate.np_spell_u6_p50_h | climate.np_spell_u6_p90_h | climate.np_spell_u6_p99_h | climate.np_spell_u6_max_h | climate.np_spell_u6_ge24h_share |
-| North Pacific | ds.min_u10_ms | climate.np_spell_dsmin_p50_h | climate.np_spell_dsmin_p90_h | climate.np_spell_dsmin_p99_h | climate.np_spell_dsmin_max_h | climate.np_spell_dsmin_ge24h_share |
-| North Pacific | 11 m/s | climate.np_spell_skim11_p50_h | climate.np_spell_skim11_p90_h | climate.np_spell_skim11_p99_h | climate.np_spell_skim11_max_h | climate.np_spell_skim11_ge24h_share |
-| North Pacific | wing.best_u10_min_ms | climate.np_spell_best_p50_h | climate.np_spell_best_p90_h | climate.np_spell_best_p99_h | climate.np_spell_best_max_h | climate.np_spell_best_ge24h_share |
-| home area | 6 m/s | climate.home_spell_u6_p50_h | climate.home_spell_u6_p90_h | climate.home_spell_u6_p99_h | climate.home_spell_u6_max_h | climate.home_spell_u6_ge24h_share |
-| home area | ds.min_u10_ms | climate.home_spell_dsmin_p50_h | climate.home_spell_dsmin_p90_h | climate.home_spell_dsmin_p99_h | climate.home_spell_dsmin_max_h | climate.home_spell_dsmin_ge24h_share |
-| home area | 11 m/s | climate.home_spell_skim11_p50_h | climate.home_spell_skim11_p90_h | climate.home_spell_skim11_p99_h | climate.home_spell_skim11_max_h | climate.home_spell_skim11_ge24h_share |
-| home area | wing.best_u10_min_ms | climate.home_spell_best_p50_h | climate.home_spell_best_p90_h | climate.home_spell_best_p99_h | climate.home_spell_best_max_h | climate.home_spell_best_ge24h_share |
+| region | below | median | 90th | 99th | longest | share of the weak hours in spells of 24 h or more | spells a year longer than the 99th | 99th by hours |
+|---|---|---|---|---|---|---|---|---|
+| Southern Ocean | 6 m/s | climate.so_spell_u6_p50_h | climate.so_spell_u6_p90_h | climate.so_spell_u6_p99_h | climate.so_spell_u6_max_h | climate.so_spell_u6_ge24h_share | climate.so_spell_u6_per_year_over_p99 | climate.so_spell_u6_hw_p99_h |
+| Southern Ocean | ds.min_u10_ms | climate.so_spell_dsmin_p50_h | climate.so_spell_dsmin_p90_h | climate.so_spell_dsmin_p99_h | climate.so_spell_dsmin_max_h | climate.so_spell_dsmin_ge24h_share | climate.so_spell_dsmin_per_year_over_p99 | climate.so_spell_dsmin_hw_p99_h |
+| Southern Ocean | 11 m/s | climate.so_spell_skim11_p50_h | climate.so_spell_skim11_p90_h | climate.so_spell_skim11_p99_h | climate.so_spell_skim11_max_h | climate.so_spell_skim11_ge24h_share | climate.so_spell_skim11_per_year_over_p99 | climate.so_spell_skim11_hw_p99_h |
+| Southern Ocean | wing.best_u10_min_ms | climate.so_spell_best_p50_h | climate.so_spell_best_p90_h | climate.so_spell_best_p99_h | climate.so_spell_best_max_h | climate.so_spell_best_ge24h_share | climate.so_spell_best_per_year_over_p99 | climate.so_spell_best_hw_p99_h |
+| North Pacific | 6 m/s | climate.np_spell_u6_p50_h | climate.np_spell_u6_p90_h | climate.np_spell_u6_p99_h | climate.np_spell_u6_max_h | climate.np_spell_u6_ge24h_share | climate.np_spell_u6_per_year_over_p99 | climate.np_spell_u6_hw_p99_h |
+| North Pacific | ds.min_u10_ms | climate.np_spell_dsmin_p50_h | climate.np_spell_dsmin_p90_h | climate.np_spell_dsmin_p99_h | climate.np_spell_dsmin_max_h | climate.np_spell_dsmin_ge24h_share | climate.np_spell_dsmin_per_year_over_p99 | climate.np_spell_dsmin_hw_p99_h |
+| North Pacific | 11 m/s | climate.np_spell_skim11_p50_h | climate.np_spell_skim11_p90_h | climate.np_spell_skim11_p99_h | climate.np_spell_skim11_max_h | climate.np_spell_skim11_ge24h_share | climate.np_spell_skim11_per_year_over_p99 | climate.np_spell_skim11_hw_p99_h |
+| North Pacific | wing.best_u10_min_ms | climate.np_spell_best_p50_h | climate.np_spell_best_p90_h | climate.np_spell_best_p99_h | climate.np_spell_best_max_h | climate.np_spell_best_ge24h_share | climate.np_spell_best_per_year_over_p99 | climate.np_spell_best_hw_p99_h |
+| home area | 6 m/s | climate.home_spell_u6_p50_h | climate.home_spell_u6_p90_h | climate.home_spell_u6_p99_h | climate.home_spell_u6_max_h | climate.home_spell_u6_ge24h_share | climate.home_spell_u6_per_year_over_p99 | climate.home_spell_u6_hw_p99_h |
+| home area | ds.min_u10_ms | climate.home_spell_dsmin_p50_h | climate.home_spell_dsmin_p90_h | climate.home_spell_dsmin_p99_h | climate.home_spell_dsmin_max_h | climate.home_spell_dsmin_ge24h_share | climate.home_spell_dsmin_per_year_over_p99 | climate.home_spell_dsmin_hw_p99_h |
+| home area | 11 m/s | climate.home_spell_skim11_p50_h | climate.home_spell_skim11_p90_h | climate.home_spell_skim11_p99_h | climate.home_spell_skim11_max_h | climate.home_spell_skim11_ge24h_share | climate.home_spell_skim11_per_year_over_p99 | climate.home_spell_skim11_hw_p99_h |
+| home area | wing.best_u10_min_ms | climate.home_spell_best_p50_h | climate.home_spell_best_p90_h | climate.home_spell_best_p99_h | climate.home_spell_best_max_h | climate.home_spell_best_ge24h_share | climate.home_spell_best_per_year_over_p99 | climate.home_spell_best_hw_p99_h |
 <!-- climate_keys spells end -->
 
 The waves during the hours below each threshold, over the whole year (shares of those hours):
@@ -320,7 +320,7 @@ The energy to ride out the spells of the whole year on the motor or floating, in
 | home area | best wing (wing.best_u10_min_ms) | climate.home_best_motor_p50_wh | climate.home_best_motor_p90_wh | climate.home_best_motor_p99_wh | climate.home_best_float_p50_wh | climate.home_best_float_p90_wh | climate.home_best_float_p99_wh | climate.home_best_motor_p99_cell_kg | climate.home_best_float_p99_cell_kg |
 <!-- climate_keys energy end -->
 
-The battery that rides out the 90th and 99th percentile spells by season, in Wh (spells counted by the season of their first hour):
+The energy to ride out the 90th and 99th percentile spells by season, in Wh (spells counted by the season of their first hour); these are percentiles of spells, so a year aloft meets spells longer than them (the spells table):
 
 <!-- climate_keys battery begin -->
 | region | season | albatross-like glider: motor, 90th | albatross-like glider: motor, 99th | albatross-like glider: floating, 90th | albatross-like glider: floating, 99th | best wing: motor, 90th | best wing: motor, 99th | best wing: floating, 90th | best wing: floating, 99th |
@@ -356,6 +356,7 @@ Floating:
 - Floating, the same spells cost only the avionics.
 - Below ds.min_u10_ms the 99th percentile spell takes climate.so_albatross_float_p99_wh in the Southern Ocean, climate.so_albatross_float_p99_cell_kg of cells and a fraction of ds.mass_max_kg, but climate.np_albatross_float_p99_wh in the North Pacific and climate.home_albatross_float_p99_wh in the home area, climate.np_albatross_float_p99_cell_kg and climate.home_albatross_float_p99_cell_kg of cells, close to the whole of ds.mass_max_kg, with no solar yield credited.
 - Below wing.best_u10_min_ms, the drone as it stands, the 99th percentile spell on the water takes climate.so_best_float_p99_wh in the Southern Ocean, climate.np_best_float_p99_wh in the North Pacific and climate.home_best_float_p99_wh in the home area, more than a drone of ds.mass_max_kg can carry as cells; there only the sun can carry the avionics.
+- A year aloft meets spells longer than the 99th percentile spell: below ds.min_u10_ms climate.so_spell_dsmin_per_year_over_p99 a year at a point in the Southern Ocean, climate.np_spell_dsmin_per_year_over_p99 in the North Pacific and climate.home_spell_dsmin_per_year_over_p99 in the home area; a battery meant to last the year has to float through the 99th percentile by hours (climate.so_spell_dsmin_hw_p99_h, climate.np_spell_dsmin_hw_p99_h and climate.home_spell_dsmin_hw_p99_h at ds.avionics_power_w), or the sun has to carry the avionics.
 - So the drone's answer to a calm is the bird's, to sit on the water (P82), and the battery is sized by the floating time, the avionics draw and the sun, not by the motor (Q-012).
 - The share of hours below the soaring minimum is the share of time on the water, on the motor or on the swell: below ds.min_u10_ms it is climate.so_year_below_dsmin_share in the Southern Ocean, climate.np_year_below_dsmin_share in the North Pacific and climate.home_year_below_dsmin_share in the home area, and below wing.best_u10_min_ms it is climate.so_year_below_best_share, climate.np_year_below_best_share and climate.home_year_below_best_share.
 - The worst season is the local summer, DJF in the Southern Ocean and JJA in the North Pacific and the home area (the battery table); in the Southern Ocean the seasons differ little, while in the North Pacific and the home area the summer spells are several times the winter ones.
@@ -394,8 +395,8 @@ The home area:
 - Spells are hourly, and one hour above the threshold breaks a spell, so the counts are inflated by the wind flickering around the threshold and the percentiles by count are short; joining breaks under 3 h lengthens them (`sim/out/climate.json`), and the share of the weak hours in spells of 24 h or more shows how much of the weak time lies in long spells.
 - A spell belongs to the season of its first hour, so a long summer spell that starts in spring counts in spring.
 - The thresholds are the model's flat-sea soaring minima in neutral air; stability, the shear under swell (Q-061) and the waves (Q-060) move them, and 11 m/s comes from a study not yet in the record.
-- The swell is a lower bound from the total height, not ERA5's own partition, and the wave grid is 0.5 deg.
-- No solar yield is credited in the battery figures, the cell figures carry no margin for ageing or reserve, and the darkest-day insolation is known for two places only.
+- The swell is a lower bound from the total height, not ERA5's own partition, and the wave grid is 0.5 deg; the service has no peak period from 2024-11-19 to the end of 2024 at any point, and those hours are left out of the period medians (`missing_hours` in `sim/out/climate.json`).
+- No solar yield is credited in the battery figures, the cell figures carry no margin for ageing or reserve, and the darkest-day insolation is known for two places only; the Southern Ocean value at 50S is used for the whole region, including the darker point at 55S.
 - Two or three points stand for each region, and the run used commit ebbabcf with the working tree of this branch (the stamp is in `sim/out/climate.json`).
 
 ## Numbers from the literature for the form study {#literature-numbers}

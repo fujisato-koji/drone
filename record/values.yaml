@@ -5049,7 +5049,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.so_son_below_u6_share
-    v: 0.093
+    v: 0.094
     unit: 1
     status: calculated
     basis:
@@ -5097,7 +5097,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.so_year_below_u6_share
-    v: 0.107
+    v: 0.108
     unit: 1
     status: calculated
     basis:
@@ -5156,6 +5156,18 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wind-climate
+  - key: climate.so_spell_u6_per_year_over_p99
+    v: 1.07
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.so_spell_u6_hw_p99_h
+    v: 78
+    unit: h
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
   - key: climate.so_spell_dsmin_p50_h
     v: 7
     unit: h
@@ -5183,6 +5195,18 @@ items:
   - key: climate.so_spell_dsmin_ge24h_share
     v: 0.459
     unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.so_spell_dsmin_per_year_over_p99
+    v: 1.58
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.so_spell_dsmin_hw_p99_h
+    v: 119
+    unit: h
     status: calculated
     basis:
       - docs/02-form.md#wind-climate
@@ -5216,6 +5240,18 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wind-climate
+  - key: climate.so_spell_skim11_per_year_over_p99
+    v: 2.22
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.so_spell_skim11_hw_p99_h
+    v: 250
+    unit: h
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
   - key: climate.so_spell_best_p50_h
     v: 13
     unit: h
@@ -5243,6 +5279,18 @@ items:
   - key: climate.so_spell_best_ge24h_share
     v: 0.82
     unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.so_spell_best_per_year_over_p99
+    v: 2.13
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.so_spell_best_hw_p99_h
+    v: 425
+    unit: h
     status: calculated
     basis:
       - docs/02-form.md#wind-climate
@@ -5277,7 +5325,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.so_weak_u6_hs_survival_share
-    v: 0.091
+    v: 0.092
     unit: 1
     status: calculated
     basis:
@@ -5457,7 +5505,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.so_best_motor_p99_wh
-    v: 7160
+    v: 7161
     unit: Wh
     status: calculated
     basis:
@@ -5481,7 +5529,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.so_best_motor_p99_cell_kg
-    v: 30.99
+    v: 31.0
     unit: kg
     status: calculated
     basis:
@@ -5547,7 +5595,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.so_mam_albatross_motor_p99_wh
-    v: 1379
+    v: 1378
     unit: Wh
     status: calculated
     basis:
@@ -5571,7 +5619,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.so_mam_best_motor_p99_wh
-    v: 7073
+    v: 7074
     unit: Wh
     status: calculated
     basis:
@@ -5733,7 +5781,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.np_mam_u10_mean_ms
-    v: 8.31
+    v: 8.32
     unit: m/s
     status: calculated
     basis:
@@ -5960,6 +6008,18 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wind-climate
+  - key: climate.np_spell_u6_per_year_over_p99
+    v: 1.72
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.np_spell_u6_hw_p99_h
+    v: 304
+    unit: h
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
   - key: climate.np_spell_dsmin_p50_h
     v: 10
     unit: h
@@ -5987,6 +6047,18 @@ items:
   - key: climate.np_spell_dsmin_ge24h_share
     v: 0.79
     unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.np_spell_dsmin_per_year_over_p99
+    v: 1.72
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.np_spell_dsmin_hw_p99_h
+    v: 1034
+    unit: h
     status: calculated
     basis:
       - docs/02-form.md#wind-climate
@@ -6020,6 +6092,18 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wind-climate
+  - key: climate.np_spell_skim11_per_year_over_p99
+    v: 1.4
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.np_spell_skim11_hw_p99_h
+    v: 2667
+    unit: h
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
   - key: climate.np_spell_best_p50_h
     v: 18
     unit: h
@@ -6047,6 +6131,18 @@ items:
   - key: climate.np_spell_best_ge24h_share
     v: 0.942
     unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.np_spell_best_per_year_over_p99
+    v: 1.07
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+  - key: climate.np_spell_best_hw_p99_h
+    v: 4155
+    unit: h
     status: calculated
     basis:
       - docs/02-form.md#wind-climate
@@ -6129,7 +6225,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.np_weak_skim11_hs2_share
-    v: 0.534
+    v: 0.535
     unit: 1
     status: calculated
     basis:
@@ -6261,7 +6357,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.np_best_motor_p99_wh
-    v: 27326
+    v: 27327
     unit: Wh
     status: calculated
     basis:
@@ -6285,7 +6381,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.np_best_motor_p99_cell_kg
-    v: 118.29
+    v: 118.3
     unit: kg
     status: calculated
     basis:
@@ -6327,7 +6423,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.np_djf_best_motor_p99_wh
-    v: 9893
+    v: 9894
     unit: Wh
     status: calculated
     basis:
@@ -6375,7 +6471,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.np_mam_best_motor_p99_wh
-    v: 70919
+    v: 70920
     unit: Wh
     status: calculated
     basis:
@@ -6393,7 +6489,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.np_jja_albatross_motor_p90_wh
-    v: 3120
+    v: 3119
     unit: Wh
     status: calculated
     basis:
@@ -6447,7 +6543,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.np_son_albatross_motor_p99_wh
-    v: 3504
+    v: 3505
     unit: Wh
     status: calculated
     basis:
@@ -6471,7 +6567,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.np_son_best_motor_p99_wh
-    v: 16500
+    v: 16501
     unit: Wh
     status: calculated
     basis:
@@ -6483,7 +6579,7 @@ items:
     basis:
       - docs/02-form.md#wind-climate
   - key: climate.np_son_best_float_p99_wh
-    v: 1486
+    v: 1487
     unit: Wh
     status: calculated
     basis:
@@ -6524,14 +6620,14 @@ items:
       - docs/02-form.md#wind-climate
       - private:loc-01
   - key: climate.home_djf_below_dsmin_share
-    v: 0.56
+    v: 0.561
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wind-climate
       - private:loc-01
   - key: climate.home_djf_below_skim11_share
-    v: 0.829
+    v: 0.828
     unit: 1
     status: calculated
     basis:
@@ -6810,6 +6906,20 @@ items:
     basis:
       - docs/02-form.md#wind-climate
       - private:loc-01
+  - key: climate.home_spell_u6_per_year_over_p99
+    v: 2.48
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+      - private:loc-01
+  - key: climate.home_spell_u6_hw_p99_h
+    v: 261
+    unit: h
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+      - private:loc-01
   - key: climate.home_spell_dsmin_p50_h
     v: 11
     unit: h
@@ -6841,6 +6951,20 @@ items:
   - key: climate.home_spell_dsmin_ge24h_share
     v: 0.814
     unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+      - private:loc-01
+  - key: climate.home_spell_dsmin_per_year_over_p99
+    v: 2.2
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+      - private:loc-01
+  - key: climate.home_spell_dsmin_hw_p99_h
+    v: 606
+    unit: h
     status: calculated
     basis:
       - docs/02-form.md#wind-climate
@@ -6880,6 +7004,20 @@ items:
     basis:
       - docs/02-form.md#wind-climate
       - private:loc-01
+  - key: climate.home_spell_skim11_per_year_over_p99
+    v: 1.07
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+      - private:loc-01
+  - key: climate.home_spell_skim11_hw_p99_h
+    v: 2262
+    unit: h
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+      - private:loc-01
   - key: climate.home_spell_best_p50_h
     v: 46
     unit: h
@@ -6911,6 +7049,20 @@ items:
   - key: climate.home_spell_best_ge24h_share
     v: 0.985
     unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+      - private:loc-01
+  - key: climate.home_spell_best_per_year_over_p99
+    v: 0.57
+    unit: 1/year
+    status: calculated
+    basis:
+      - docs/02-form.md#wind-climate
+      - private:loc-01
+  - key: climate.home_spell_best_hw_p99_h
+    v: 3910
+    unit: h
     status: calculated
     basis:
       - docs/02-form.md#wind-climate
@@ -7105,7 +7257,7 @@ items:
       - docs/02-form.md#wind-climate
       - private:loc-01
   - key: climate.home_albatross_motor_p99_wh
-    v: 4350
+    v: 4351
     unit: Wh
     status: calculated
     basis:
@@ -7133,7 +7285,7 @@ items:
       - docs/02-form.md#wind-climate
       - private:loc-01
   - key: climate.home_albatross_motor_p99_cell_kg
-    v: 18.83
+    v: 18.84
     unit: kg
     status: calculated
     basis:
@@ -7161,7 +7313,7 @@ items:
       - docs/02-form.md#wind-climate
       - private:loc-01
   - key: climate.home_best_motor_p99_wh
-    v: 47686
+    v: 47684
     unit: Wh
     status: calculated
     basis:
@@ -7189,7 +7341,7 @@ items:
       - docs/02-form.md#wind-climate
       - private:loc-01
   - key: climate.home_best_motor_p99_cell_kg
-    v: 206.43
+    v: 206.42
     unit: kg
     status: calculated
     basis:
@@ -7210,7 +7362,7 @@ items:
       - docs/02-form.md#wind-climate
       - private:loc-01
   - key: climate.home_djf_albatross_motor_p99_wh
-    v: 2322
+    v: 2323
     unit: Wh
     status: calculated
     basis:
@@ -7238,7 +7390,7 @@ items:
       - docs/02-form.md#wind-climate
       - private:loc-01
   - key: climate.home_djf_best_motor_p99_wh
-    v: 22960
+    v: 22961
     unit: Wh
     status: calculated
     basis:
@@ -7252,7 +7404,7 @@ items:
       - docs/02-form.md#wind-climate
       - private:loc-01
   - key: climate.home_djf_best_float_p99_wh
-    v: 2068
+    v: 2069
     unit: Wh
     status: calculated
     basis:
@@ -7406,7 +7558,7 @@ items:
       - docs/02-form.md#wind-climate
       - private:loc-01
   - key: climate.home_son_best_motor_p99_wh
-    v: 20782
+    v: 20781
     unit: Wh
     status: calculated
     basis:

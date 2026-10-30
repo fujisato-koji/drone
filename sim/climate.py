@@ -68,7 +68,7 @@ DATASETS = {
 }
 
 # Public points (lat, lon in degrees; on the 0.5 deg grid, which both ERA5 grids share), and why:
-# so_1 45S 52E: open water about 150 km north of the Crozet Islands, inside the foraging range of the
+# so_1 45S 52E: open water about 160 km north of the Crozet Islands, inside the foraging range of the
 #   wandering albatrosses breeding there, away from the islands' wake.
 # so_2 50S 65E: the latitude of the record's Southern Ocean insolation point (P51, 50S 70E), moved 5 deg
 #   west so that it lies upwind of the Kerguelen Islands in the westerlies rather than in their wake.
@@ -76,7 +76,8 @@ DATASETS = {
 # np_1 35N 150W: north-east of the Hawaiian colonies, where breeding Laysan and black-footed albatrosses
 #   forage in the subtropical gyre (light winds in summer).
 # np_2 40N 170W: the North Pacific transition zone, the main foraging belt of both species.
-# np_3 45N 160E: the Kuroshio-Oyashio extension east of the Kuril Islands, a winter foraging area.
+# np_3 45N 160E: the north-west Pacific south-east of the Kuril Islands, at the edge of the subarctic gyre
+#   north of the Kuroshio extension, a winter foraging area.
 PUBLIC_POINTS = (
     {"id": "so_1", "region": "so", "lat": -45.0, "lon": 52.0},
     {"id": "so_2", "region": "so", "lat": -50.0, "lon": 65.0},
@@ -94,6 +95,7 @@ SEASONS = {"djf": (12, 1, 2), "mam": (3, 4, 5), "jja": (6, 7, 8), "son": (9, 10,
 SKIM_U10_MS = 11.0
 CALM_U10_MS = 6.0
 SPELL_PCTS = (50, 90, 99)
+HOURS_PER_YEAR = 8766.0
 HS_LEVELS_M = (2.0, 3.0)
 
 
@@ -111,8 +113,9 @@ def private_points(private_dir) -> list:
     if not p.exists():
         return []
     d = json.loads(p.read_text(encoding="utf-8"))
-    return [{"id": q["id"], "region": "home", "lat": float(q["lat"]), "lon": float(q["lon"]), "private": True}
-            for q in d["points"]]
+    # the ids are made here, never taken from the file, so no name from the private store reaches an output
+    return [{"id": f"home_{i + 1}", "region": "home", "lat": float(q["lat"]), "lon": float(q["lon"]),
+             "private": True} for i, q in enumerate(d["points"])]
 
 
 def all_points(private_dir) -> list:
@@ -277,11 +280,14 @@ def prepare(point, cache, private_dir):
     if d.get("wind") is None:
         return None
     u = d["wind"]["wind_speed_10m"]
-    s = {"id": point["id"], "region": point["region"], "u10": u, "month": months_of(t), "hours": len(t)}
+    s = {"id": point["id"], "region": point["region"], "u10": u, "month": months_of(t), "hours": len(t),
+         "missing_hours": {"u10": int(np.isnan(u).sum())}}
     if d.get("waves") is not None:
         hs = d["waves"]["wave_height"]
         s.update(hs=hs, tp=d["waves"]["wave_peak_period"], tm=d["waves"]["wave_period"],
                  swell=swell_lower_bound(hs, u))
+        # hours without a value are left out of each statistic (the peak period ends 2024-11-18, K-018)
+        s["missing_hours"].update(hs=int(np.isnan(hs).sum()), tp=int(np.isnan(s["tp"]).sum()))
     if not point["private"]:
         s["grid"] = {"wind": d.get("wind_grid"), "waves": d.get("waves_grid")}
     return s
@@ -293,8 +299,9 @@ def _pct(x, p):
     return float(np.percentile(x, p)) if x.size else None
 
 
-def _r(x, nd=3):
-    return None if x is None or not np.isfinite(x) else round(float(x), nd)
+def _r(x):
+    """A finite float or None; the analysis keeps full precision and sim.climate_keys rounds once (K-018)."""
+    return None if x is None or not np.isfinite(x) else float(x)
 
 
 def _mean(x):
@@ -306,12 +313,22 @@ def _std(x):
 
 
 def _share(num, den):
-    return None if den == 0 else round(num / den, 4)
+    return None if den == 0 else num / den
+
+
+def hour_weighted_pct(lengths, p):
+    """Length L such that p percent of the hours in the spells lie in spells no longer than L."""
+    x = np.sort(np.asarray(lengths, dtype=float))
+    if not x.size:
+        return None
+    c = np.cumsum(x)
+    return float(x[np.searchsorted(c, p / 100.0 * c[-1])])
 
 
 def spell_table(series, thr, merge_break=None) -> dict:
     """Spells below thr pooled over the series, by the season of their first hour."""
-    lens, months, hours_all = [], [], []
+    lens, months = [], []
+    point_years = sum(len(s["u10"]) for s in series) / HOURS_PER_YEAR
     for s in series:
         weak = np.isfinite(s["u10"]) & (s["u10"] < thr)
         runs = spell_runs(weak)
@@ -326,11 +343,18 @@ def spell_table(series, thr, merge_break=None) -> dict:
         x = lens[m]
         row = {"count": int(x.size)}
         for p in SPELL_PCTS:
-            row[f"p{p}_h"] = _r(_pct(x, p), 1)
+            row[f"p{p}_h"] = _r(_pct(x, p))
         row["max_h"] = float(x.max()) if x.size else None
         tot = float(x.sum())
         for h in (24, 72):
             row[f"hours_share_in_ge{h}h"] = _share(float(x[x >= h].sum()), tot) if tot else None
+        # how often a spell longer than the percentile spell comes, per point and year of the series
+        # (the season's spells over all the years), and the spell a random weak hour lies in (K-018)
+        for p in (90, 99):
+            lim = row[f"p{p}_h"]
+            row[f"per_year_longer_than_p{p}"] = (float((x > lim).sum()) / point_years
+                                                 if lim is not None and point_years else None)
+            row[f"hour_weighted_p{p}_h"] = hour_weighted_pct(x, p)
         out[name] = row
     return out
 
@@ -375,9 +399,9 @@ def stats(series, P_avionics, motor_w, solar_day_wh) -> dict:
                     row[f"swell_ge{lv:g}_share"] = _share(int((sw[wk] >= lv).sum()), n)
                 row["hs_ge_survival_share"] = _share(int((hs[wk] >= survival).sum()), n)
                 big = wk & (sw >= HS_LEVELS_M[0])
-                row["tp_p50_s_swell_ge2"] = _r(_pct(tp[big], 50), 2)
-                row["tp_p10_s_swell_ge2"] = _r(_pct(tp[big], 10), 2)
-                row["tp_p90_s_swell_ge2"] = _r(_pct(tp[big], 90), 2)
+                row["tp_p50_s_swell_ge2"] = _r(_pct(tp[big], 50))
+                row["tp_p10_s_swell_ge2"] = _r(_pct(tp[big], 10))
+                row["tp_p90_s_swell_ge2"] = _r(_pct(tp[big], 90))
                 res["weak_wind_waves"][tn][name] = row
         res["spells"][tn] = spell_table(series, tv)
         res["spells_merged_3h"][tn] = spell_table(series, tv, merge_break=3)
@@ -403,11 +427,11 @@ def energy_row(hours, motor_w, avionics_w, solar_day_wh=None) -> dict:
     wh_kg = record.value("lit.cell_p45b_wh_per_kg")
     motor = (motor_w + avionics_w) * hours
     flt = avionics_w * hours
-    row = {"spell_h": _r(hours, 1), "motor_wh": _r(motor, 1), "float_wh": _r(flt, 1),
+    row = {"spell_h": _r(hours), "motor_wh": _r(motor), "float_wh": _r(flt),
            "motor_cell_kg": _r(motor / wh_kg), "float_cell_kg": _r(flt / wh_kg)}
     if solar_day_wh is not None:
         # darkest-month daily solar yield spread over the day; the night still has to be bridged
-        row["float_net_of_solar_wh"] = _r(max(avionics_w - solar_day_wh / 24.0, 0.0) * hours, 1)
+        row["float_net_of_solar_wh"] = _r(max(avionics_w - solar_day_wh / 24.0, 0.0) * hours)
     return row
 
 
@@ -449,15 +473,15 @@ def analyse(cache, private_dir) -> dict:
                "solar_cell_eff": SOLAR_CELL_EFF, "solar_coverage": SOLAR_COVERAGE,
                "survival_hs_m": record.value("ds.survival_hs_m"),
                "cell_wh_per_kg": record.value("lit.cell_p45b_wh_per_kg")},
-           "solar_day_wh": {r: {k: _r(v, 1) for k, v in d.items()} for r, d in solar.items()},
-           "avionics_day_wh": _r(av * 24.0, 1),
+           "solar_day_wh": {r: {k: _r(v) for k, v in d.items()} for r, d in solar.items()},
+           "avionics_day_wh": _r(av * 24.0),
            "sources": {}, "points": {}, "regions": {}}
     for p in pts:
         s = prepared[p["id"]]
         if s is None:
             continue
         st = stats([s], av, motor_w, solar.get(p["region"], {}))
-        info = {"region": p["region"]}
+        info = {"region": p["region"], "missing_hours": s["missing_hours"]}
         if not p["private"]:
             info.update(lat=p["lat"], lon=p["lon"], grid=s.get("grid"))
             out["sources"][p["id"]] = source_meta(p, cache, private_dir)

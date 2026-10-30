@@ -12,7 +12,9 @@ below dsmin) and best (the best wing of the wing sizing, spells below best):
 
 - climate.<r>_<s>_u10_{mean,p10,p50,p90}_ms and climate.<r>_<s>_below_<t>_share; climate.<r>_year_u10_std_ms
 - climate.<r>_spell_<t>_{p50,p90,p99,max}_h and climate.<r>_spell_<t>_ge24h_share (share of the hours
-  below t that lie in spells of at least 24 h), for the whole year
+  below t that lie in spells of at least 24 h), climate.<r>_spell_<t>_per_year_over_p99 (spells longer than
+  the 99th percentile spell per point and year) and climate.<r>_spell_<t>_hw_p99_h (the 99th percentile by
+  hours: 99% of the hours below t lie in spells no longer than this), for the whole year
 - climate.<r>_weak_<t>_{hs2,hs3,swell2,swell3,hs_survival}_share and climate.<r>_weak_<t>_tp_s, for the
   hours below t over the whole year; climate.<r>_year_hs_survival_share for all hours
 - climate.<r>_<a>_{motor,float}_{p50,p90,p99}_wh and climate.<r>_<a>_{motor,float}_p99_cell_kg (year)
@@ -71,6 +73,9 @@ def keys(d) -> list:
             for f in ("p50", "p90", "p99", "max"):
                 out.append((f"climate.{r}_spell_{t}_{f}_h", _num(sp[f + "_h"], 0), "h"))
             out.append((f"climate.{r}_spell_{t}_ge24h_share", _num(sp["hours_share_in_ge24h"], 3), "1"))
+            out.append((f"climate.{r}_spell_{t}_per_year_over_p99", _num(sp.get("per_year_longer_than_p99"), 2),
+                        "1/year"))
+            out.append((f"climate.{r}_spell_{t}_hw_p99_h", _num(sp.get("hour_weighted_p99_h"), 0), "h"))
         if g.get("weak_wind_waves"):
             out.append((f"climate.{r}_year_hs_survival_share", _num(g["waves"]["year"]["hs_ge_survival_share"], 3),
                         "1"))
@@ -142,7 +147,8 @@ def table_wind(d):
 
 
 def table_spells(d):
-    head = ["region", "below", "median", "90th", "99th", "longest", "share of the weak hours in spells of 24 h or more"]
+    head = ["region", "below", "median", "90th", "99th", "longest", "share of the weak hours in spells of 24 h or more",
+            "spells a year longer than the 99th", "99th by hours"]
     L = [_row(head), "|" + "---|" * len(head)]
     for r in REGIONS:
         if r not in d["regions"]:
@@ -150,7 +156,7 @@ def table_spells(d):
         for t in THRESHOLDS:
             L.append(_row([REGION_NAME[r], THR_NAME[t]]
                           + [_k(f"climate.{r}_spell_{t}_{f}_h") for f in ("p50", "p90", "p99", "max")]
-                          + [_k(f"climate.{r}_spell_{t}_ge24h_share")]))
+                          + [_k(f"climate.{r}_spell_{t}_{f}") for f in ("ge24h_share", "per_year_over_p99", "hw_p99_h")]))
     return L
 
 

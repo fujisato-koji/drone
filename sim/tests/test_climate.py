@@ -73,8 +73,9 @@ class TestAnalysis(unittest.TestCase):
         _write(self.cache / "so_1_waves.json.gz", -45.0, 52.0, waves)
         self.secret = (12.345, 98.765)
         (self.private).mkdir(parents=True)
+        # a place-like id in the private store must not reach the output; the code names the point home_1
         (self.private / "sites.json").write_text(json.dumps(
-            {"points": [{"id": "home_1", "lat": self.secret[0], "lon": self.secret[1]}]}), encoding="utf-8")
+            {"points": [{"id": "Secretplace", "lat": self.secret[0], "lon": self.secret[1]}]}), encoding="utf-8")
         raw = self.private / "climate" / "raw"
         _write(raw / "home_1_wind.json.gz", self.secret[0], self.secret[1], wind)
         _write(raw / "home_1_waves.json.gz", self.secret[0], self.secret[1], waves)
@@ -86,15 +87,22 @@ class TestAnalysis(unittest.TestCase):
     def test_shares_and_spells(self):
         g = self.res["regions"]["so"]
         n = 24 * 30
-        self.assertAlmostEqual(g["below"]["u6"]["year"], round(24 / n, 4))
-        self.assertAlmostEqual(g["below"]["dsmin"]["year"], round(29 / n, 4))
-        self.assertAlmostEqual(g["below"]["best"]["year"], round(31 / n, 4))
+        self.assertAlmostEqual(g["below"]["u6"]["year"], 24 / n)
+        self.assertAlmostEqual(g["below"]["dsmin"]["year"], 29 / n)
+        self.assertAlmostEqual(g["below"]["best"]["year"], 31 / n)
         sp = g["spells"]["best"]["year"]
         self.assertEqual(sp["count"], 3)
         self.assertEqual(sp["max_h"], 24.0)
         self.assertEqual(sp["p50_h"], 5.0)
         self.assertEqual(g["spells"]["u6"]["djf"]["count"], 1)
         self.assertEqual(g["spells"]["u6"]["jja"]["count"], 0)
+        # spells of 24, 5 and 2 h: the 77 weak hours by length are 2, 5 and 24 h long
+        self.assertEqual(sp["hour_weighted_p90_h"], 24.0)
+        self.assertEqual(C.hour_weighted_pct([2, 5, 24], 5), 2.0)
+        self.assertEqual(C.hour_weighted_pct([2, 5, 24], 10), 5.0)
+        # one spell longer than the 90th percentile spell in 30 days of one point
+        self.assertAlmostEqual(sp["per_year_longer_than_p90"], 1 / (24 * 30 / C.HOURS_PER_YEAR))
+        self.assertEqual(self.res["points"]["so_1"]["missing_hours"], {"u10": 0, "hs": 0, "tp": 0})
 
     def test_weak_wind_waves(self):
         w = self.res["regions"]["so"]["weak_wind_waves"]["u6"]["year"]
@@ -114,6 +122,7 @@ class TestAnalysis(unittest.TestCase):
         text = json.dumps(self.res)
         for x in self.secret:
             self.assertNotIn(str(x), text)
+        self.assertNotIn("Secretplace", text)
         self.assertNotIn("lat", self.res["points"]["home_1"])
         self.assertNotIn("home_1", self.res["sources"])
         self.assertIn("home", self.res["regions"])

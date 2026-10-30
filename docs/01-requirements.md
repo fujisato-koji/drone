@@ -874,7 +874,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.so_son_u10_p10_ms | 6.15 | m/s | calculated | docs/02-form.md#wind-climate |
 | climate.so_son_u10_p50_ms | 11.28 | m/s | calculated | docs/02-form.md#wind-climate |
 | climate.so_son_u10_p90_ms | 15.9 | m/s | calculated | docs/02-form.md#wind-climate |
-| climate.so_son_below_u6_share | 0.093 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_below_u6_share | 0.094 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_son_below_dsmin_share | 0.204 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_son_below_skim11_share | 0.471 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_son_below_best_share | 0.661 | 1 | calculated | docs/02-form.md#wind-climate |
@@ -882,7 +882,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.so_year_u10_p10_ms | 5.82 | m/s | calculated | docs/02-form.md#wind-climate |
 | climate.so_year_u10_p50_ms | 10.99 | m/s | calculated | docs/02-form.md#wind-climate |
 | climate.so_year_u10_p90_ms | 15.72 | m/s | calculated | docs/02-form.md#wind-climate |
-| climate.so_year_below_u6_share | 0.107 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_below_u6_share | 0.108 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_year_below_dsmin_share | 0.227 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_year_below_skim11_share | 0.5 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_year_below_best_share | 0.686 | 1 | calculated | docs/02-form.md#wind-climate |
@@ -892,27 +892,35 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.so_spell_u6_p99_h | 46 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_u6_max_h | 93 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_u6_ge24h_share | 0.271 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_per_year_over_p99 | 1.07 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_hw_p99_h | 78 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_dsmin_p50_h | 7 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_dsmin_p90_h | 28 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_dsmin_p99_h | 71 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_dsmin_max_h | 169 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_dsmin_ge24h_share | 0.459 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_per_year_over_p99 | 1.58 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_hw_p99_h | 119 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_skim11_p50_h | 10 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_skim11_p90_h | 48 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_skim11_p99_h | 135 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_skim11_max_h | 362 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_skim11_ge24h_share | 0.702 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim11_per_year_over_p99 | 2.22 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim11_hw_p99_h | 250 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_best_p50_h | 13 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_best_p90_h | 72 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_best_p99_h | 215 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_best_max_h | 532 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_spell_best_ge24h_share | 0.82 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_per_year_over_p99 | 2.13 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_hw_p99_h | 425 | h | calculated | docs/02-form.md#wind-climate |
 | climate.so_year_hs_survival_share | 0.424 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_weak_u6_hs2_share | 0.88 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_weak_u6_hs3_share | 0.374 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_weak_u6_swell2_share | 0.848 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_weak_u6_swell3_share | 0.351 | 1 | calculated | docs/02-form.md#wind-climate |
-| climate.so_weak_u6_hs_survival_share | 0.091 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_hs_survival_share | 0.092 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_weak_u6_tp_s | 11.8 | s | calculated | docs/02-form.md#wind-climate |
 | climate.so_weak_dsmin_hs2_share | 0.902 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.so_weak_dsmin_hs3_share | 0.413 | 1 | calculated | docs/02-form.md#wind-climate |
@@ -942,11 +950,11 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.so_albatross_float_p99_cell_kg | 0.92 | kg | calculated | docs/02-form.md#wind-climate |
 | climate.so_best_motor_p50_wh | 433 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_best_motor_p90_wh | 2398 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.so_best_motor_p99_wh | 7160 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_motor_p99_wh | 7161 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_best_float_p50_wh | 39 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_best_float_p90_wh | 216 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_best_float_p99_wh | 645 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.so_best_motor_p99_cell_kg | 30.99 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_motor_p99_cell_kg | 31.0 | kg | calculated | docs/02-form.md#wind-climate |
 | climate.so_best_float_p99_cell_kg | 2.79 | kg | calculated | docs/02-form.md#wind-climate |
 | climate.so_djf_albatross_motor_p90_wh | 658 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_djf_albatross_motor_p99_wh | 1603 | Wh | calculated | docs/02-form.md#wind-climate |
@@ -957,11 +965,11 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.so_djf_best_float_p90_wh | 297 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_djf_best_float_p99_wh | 834 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_mam_albatross_motor_p90_wh | 575 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.so_mam_albatross_motor_p99_wh | 1379 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_albatross_motor_p99_wh | 1378 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_mam_albatross_float_p90_wh | 84 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_mam_albatross_float_p99_wh | 201 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_mam_best_motor_p90_wh | 2364 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.so_mam_best_motor_p99_wh | 7073 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_best_motor_p99_wh | 7074 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_mam_best_float_p90_wh | 213 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_mam_best_float_p99_wh | 637 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.so_jja_albatross_motor_p90_wh | 534 | Wh | calculated | docs/02-form.md#wind-climate |
@@ -988,7 +996,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.np_djf_below_dsmin_share | 0.303 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.np_djf_below_skim11_share | 0.566 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.np_djf_below_best_share | 0.72 | 1 | calculated | docs/02-form.md#wind-climate |
-| climate.np_mam_u10_mean_ms | 8.31 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_u10_mean_ms | 8.32 | m/s | calculated | docs/02-form.md#wind-climate |
 | climate.np_mam_u10_p10_ms | 3.64 | m/s | calculated | docs/02-form.md#wind-climate |
 | climate.np_mam_u10_p50_ms | 8.04 | m/s | calculated | docs/02-form.md#wind-climate |
 | climate.np_mam_u10_p90_ms | 13.33 | m/s | calculated | docs/02-form.md#wind-climate |
@@ -1026,21 +1034,29 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.np_spell_u6_p99_h | 131 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_u6_max_h | 366 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_u6_ge24h_share | 0.64 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_per_year_over_p99 | 1.72 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_hw_p99_h | 304 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_dsmin_p50_h | 10 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_dsmin_p90_h | 62 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_dsmin_p99_h | 246 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_dsmin_max_h | 1409 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_dsmin_ge24h_share | 0.79 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_per_year_over_p99 | 1.72 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_hw_p99_h | 1034 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_skim11_p50_h | 15 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_skim11_p90_h | 105 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_skim11_p99_h | 558 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_skim11_max_h | 3077 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_skim11_ge24h_share | 0.904 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim11_per_year_over_p99 | 1.4 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim11_hw_p99_h | 2667 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_best_p50_h | 18 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_best_p90_h | 152 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_best_p99_h | 821 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_best_max_h | 4419 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_spell_best_ge24h_share | 0.942 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_per_year_over_p99 | 1.07 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_hw_p99_h | 4155 | h | calculated | docs/02-form.md#wind-climate |
 | climate.np_year_hs_survival_share | 0.175 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.np_weak_u6_hs2_share | 0.348 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.np_weak_u6_hs3_share | 0.11 | 1 | calculated | docs/02-form.md#wind-climate |
@@ -1054,7 +1070,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.np_weak_dsmin_swell3_share | 0.114 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.np_weak_dsmin_hs_survival_share | 0.036 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.np_weak_dsmin_tp_s | 11.6 | s | calculated | docs/02-form.md#wind-climate |
-| climate.np_weak_skim11_hs2_share | 0.534 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim11_hs2_share | 0.535 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.np_weak_skim11_hs3_share | 0.207 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.np_weak_skim11_swell2_share | 0.347 | 1 | calculated | docs/02-form.md#wind-climate |
 | climate.np_weak_skim11_swell3_share | 0.128 | 1 | calculated | docs/02-form.md#wind-climate |
@@ -1076,18 +1092,18 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.np_albatross_float_p99_cell_kg | 3.19 | kg | calculated | docs/02-form.md#wind-climate |
 | climate.np_best_motor_p50_wh | 599 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_best_motor_p90_wh | 5062 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.np_best_motor_p99_wh | 27326 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_motor_p99_wh | 27327 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_best_float_p50_wh | 54 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_best_float_p90_wh | 456 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_best_float_p99_wh | 2462 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.np_best_motor_p99_cell_kg | 118.29 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_motor_p99_cell_kg | 118.3 | kg | calculated | docs/02-form.md#wind-climate |
 | climate.np_best_float_p99_cell_kg | 10.66 | kg | calculated | docs/02-form.md#wind-climate |
 | climate.np_djf_albatross_motor_p90_wh | 637 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_djf_albatross_motor_p99_wh | 1837 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_djf_albatross_float_p90_wh | 93 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_djf_albatross_float_p99_wh | 268 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_djf_best_motor_p90_wh | 2631 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.np_djf_best_motor_p99_wh | 9893 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_best_motor_p99_wh | 9894 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_djf_best_float_p90_wh | 237 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_djf_best_float_p99_wh | 891 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_mam_albatross_motor_p90_wh | 1212 | Wh | calculated | docs/02-form.md#wind-climate |
@@ -1095,10 +1111,10 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.np_mam_albatross_float_p90_wh | 177 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_mam_albatross_float_p99_wh | 607 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_mam_best_motor_p90_wh | 6803 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.np_mam_best_motor_p99_wh | 70919 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_best_motor_p99_wh | 70920 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_mam_best_float_p90_wh | 613 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_mam_best_float_p99_wh | 6389 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.np_jja_albatross_motor_p90_wh | 3120 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_albatross_motor_p90_wh | 3119 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_jja_albatross_motor_p99_wh | 8705 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_jja_albatross_float_p90_wh | 455 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_jja_albatross_float_p99_wh | 1271 | Wh | calculated | docs/02-form.md#wind-climate |
@@ -1107,20 +1123,20 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.np_jja_best_float_p90_wh | 2446 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_jja_best_float_p99_wh | 6827 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_son_albatross_motor_p90_wh | 1110 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.np_son_albatross_motor_p99_wh | 3504 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_albatross_motor_p99_wh | 3505 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_son_albatross_float_p90_wh | 162 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_son_albatross_float_p99_wh | 512 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_son_best_motor_p90_wh | 5415 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.np_son_best_motor_p99_wh | 16500 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_best_motor_p99_wh | 16501 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.np_son_best_float_p90_wh | 488 | Wh | calculated | docs/02-form.md#wind-climate |
-| climate.np_son_best_float_p99_wh | 1486 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_best_float_p99_wh | 1487 | Wh | calculated | docs/02-form.md#wind-climate |
 | climate.home_djf_u10_mean_ms | 7.62 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_djf_u10_p10_ms | 3.11 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_djf_u10_p50_ms | 7.45 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_djf_u10_p90_ms | 12.31 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_djf_below_u6_share | 0.345 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
-| climate.home_djf_below_dsmin_share | 0.56 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
-| climate.home_djf_below_skim11_share | 0.829 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_below_dsmin_share | 0.561 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_below_skim11_share | 0.828 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_djf_below_best_share | 0.923 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_mam_u10_mean_ms | 6.82 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_mam_u10_p10_ms | 2.77 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
@@ -1160,21 +1176,29 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.home_spell_u6_p99_h | 115 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_u6_max_h | 334 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_u6_ge24h_share | 0.624 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_per_year_over_p99 | 2.48 | 1/year | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_hw_p99_h | 261 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_dsmin_p50_h | 11 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_dsmin_p90_h | 69 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_dsmin_p99_h | 212 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_dsmin_max_h | 799 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_dsmin_ge24h_share | 0.814 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_per_year_over_p99 | 2.2 | 1/year | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_hw_p99_h | 606 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_skim11_p50_h | 25 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_skim11_p90_h | 187 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_skim11_p99_h | 754 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_skim11_max_h | 2389 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_skim11_ge24h_share | 0.957 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim11_per_year_over_p99 | 1.07 | 1/year | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim11_hw_p99_h | 2262 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_best_p50_h | 46 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_best_p90_h | 381 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_best_p99_h | 1432 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_best_max_h | 3910 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_spell_best_ge24h_share | 0.985 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_per_year_over_p99 | 0.57 | 1/year | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_hw_p99_h | 3910 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_year_hs_survival_share | 0.014 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_weak_u6_hs2_share | 0.063 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_weak_u6_hs3_share | 0.007 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
@@ -1202,28 +1226,28 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.home_weak_best_tp_s | 11.1 | s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_albatross_motor_p50_wh | 226 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_albatross_motor_p90_wh | 1418 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
-| climate.home_albatross_motor_p99_wh | 4350 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_motor_p99_wh | 4351 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_albatross_float_p50_wh | 33 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_albatross_float_p90_wh | 207 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_albatross_float_p99_wh | 635 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
-| climate.home_albatross_motor_p99_cell_kg | 18.83 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_motor_p99_cell_kg | 18.84 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_albatross_float_p99_cell_kg | 2.75 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_best_motor_p50_wh | 1548 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_best_motor_p90_wh | 12677 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
-| climate.home_best_motor_p99_wh | 47686 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_motor_p99_wh | 47684 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_best_float_p50_wh | 140 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_best_float_p90_wh | 1142 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_best_float_p99_wh | 4296 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
-| climate.home_best_motor_p99_cell_kg | 206.43 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_motor_p99_cell_kg | 206.42 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_best_float_p99_cell_kg | 18.6 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_djf_albatross_motor_p90_wh | 966 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
-| climate.home_djf_albatross_motor_p99_wh | 2322 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_albatross_motor_p99_wh | 2323 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_djf_albatross_float_p90_wh | 141 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_djf_albatross_float_p99_wh | 339 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_djf_best_motor_p90_wh | 9078 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
-| climate.home_djf_best_motor_p99_wh | 22960 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_best_motor_p99_wh | 22961 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_djf_best_float_p90_wh | 818 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
-| climate.home_djf_best_float_p99_wh | 2068 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_best_float_p99_wh | 2069 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_mam_albatross_motor_p90_wh | 1305 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_mam_albatross_motor_p99_wh | 3459 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_mam_albatross_float_p90_wh | 190 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
@@ -1245,7 +1269,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | climate.home_son_albatross_float_p90_wh | 186 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_son_albatross_float_p99_wh | 495 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_son_best_motor_p90_wh | 10226 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
-| climate.home_son_best_motor_p99_wh | 20782 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_best_motor_p99_wh | 20781 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_son_best_float_p90_wh | 921 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.home_son_best_float_p99_wh | 1872 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
 | climate.solar_day_albatross_so_wh | 25.6 | Wh | calculated | docs/02-form.md#wind-climate |
