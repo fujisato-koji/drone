@@ -847,3 +847,5 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-10-31
+    closed: 2026-10-31
+    closed_by: D-019

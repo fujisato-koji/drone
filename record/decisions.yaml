@@ -162,3 +162,13 @@ items:
       - Q-063
       - Q-064
       - Q-068
+  - id: D-019
+    date: 2026-10-31
+    by: owner
+    what: "Adopt the skim study's direction for the tip sensor and the skid (Q-071): a range reading from the wingtip to the water is the primary trigger of the reflex and the wet sensor at the tip is the last resort; the skid blade trails in the water flow (a castering blade that accepts the spread of the crab angle along the skim arc)."
+    touches:
+      - Q-071
+      - Q-063
+      - Q-068
+      - Q-070
+      - R-12
