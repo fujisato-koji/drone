@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>Sea and wind</title>
+<title>海と風のシミュレータ</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; }
@@ -20,9 +20,19 @@
   #panel td { padding: 0 0 1px; }
   #panel td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
   .ctl { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
-  .ctl label { width: 70px; flex: none; }
+  .ctl label { width: 112px; flex: none; }
+  .ctl label.auto { width: auto; }
+  .ctl.step label { width: 100px; }
+  .ctl select { flex: 1; min-width: 0; }
+  #panel .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+  #panel .top button { flex: none; }
+  #panel details.sec { margin: 12px 0 0; }
+  #panel summary { cursor: pointer; font-size: 13px; font-weight: 600; padding: 2px 0 3px; margin: 0 0 5px;
+                   border-bottom: 1px solid rgba(255, 255, 255, 0.22); }
+  #panel .sub { margin: 8px 0 2px; font-weight: 600; }
+  #panel .hint { margin: -1px 0 3px 0; }
   .ctl input[type=range] { flex: 1; min-width: 0; }
-  .ctl .val { width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+  .ctl .val { width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
   .card { background: #fcfcfb; color: #52514e; border-radius: 4px; padding: 4px 0 0; margin: 0 0 8px; width: 280px; }
   .card .ct { color: #0b0b0b; font-size: 12px; font-weight: 600; padding: 0 6px 2px; }
   .card canvas { display: block; width: 280px; height: 170px; }
@@ -39,47 +49,69 @@
 <body>
 <canvas id="c"></canvas>
 <div id="panel">
-  <h1>Sea and wind</h1>
-  <div class="dim" id="meta">no data</div>
+  <div class="top"><h1 data-i="title"></h1><button id="lang" type="button" data-t="langTip"></button></div>
+  <div class="dim" id="what" data-i="what"></div>
+  <div class="dim" id="meta"></div>
   <div class="warn" id="warn"></div>
-  <div id="scen" style="display:none">
-    <h3>Scenario</h3>
-    <div class="ctl"><label for="hour">Hour</label><input id="hour" type="range" min="0" max="72" step="0.1" value="0"><span class="val" id="hourv"></span></div>
-    <div class="ctl"><button id="play" type="button">Play</button>
-      <label for="rate" style="width:auto">rate</label>
-      <select id="rate"><option value="1">1 h/s</option><option value="3" selected>3 h/s</option><option value="6">6 h/s</option></select></div>
-    <table id="sro"></table>
-  </div>
-  <div class="dim" id="rough"></div>
-  <h3>Readouts</h3>
-  <table id="ro"></table>
-  <h3>Flight</h3>
-  <div id="fl">
-    <div class="ctl"><label for="flAc">Aircraft</label><select id="flAc"></select></div>
-    <div class="ctl"><label for="flCyc">Cycle</label><select id="flCyc"><option value="travel">travel</option><option value="loiter">loiter</option></select></div>
-    <div class="ctl"><label for="flPos">Launch at</label><select id="flPos"><option value="mast">mast</option><option value="click">clicked point</option></select></div>
-    <div class="dim" id="flPt">Click the sea to choose the launch point.</div>
-    <div class="ctl"><label for="flHead">Heading</label><select id="flHead"><option value="up">upwind</option><option value="down">downwind</option><option value="left">crosswind, left</option><option value="right">crosswind, right</option><option value="ref">reference (rotated into the wind)</option></select></div>
-    <div class="ctl"><button id="flGo" type="button">Launch</button><button id="flStop" type="button">Stop</button>
-      <label style="width:auto"><input id="flChase" type="checkbox"> Chase camera</label></div>
-    <div class="ctl"><label style="width:auto"><input id="flFreeze" type="checkbox" checked> Freeze scenario hour while flying</label></div>
-    <div class="dim" id="flNote"></div>
-    <div class="warn" id="flSplash"></div>
-    <table id="flro"></table>
-  </div>
-  <h3>Controls</h3>
-  <div class="ctl"><label for="u10">U10 (m/s)</label><input id="u10" type="range" min="2" max="25" step="0.5"><span class="val" id="u10v"></span></div>
-  <div class="ctl"><label for="from">Wind from (deg)</label><input id="from" type="range" min="0" max="359" step="1"><span class="val" id="fromv"></span></div>
-  <div class="ctl"><label for="spd">Time speed</label><input id="spd" type="range" min="0" max="4" step="0.1" value="1"><span class="val" id="spdv"></span></div>
-  <div class="ctl"><label><input id="pause" type="checkbox"> Pause</label>
-    <label><input id="ptc" type="checkbox" checked> Particles</label></div>
-  <div class="dim" id="mastpos"></div>
-  <div class="dim" id="lockNote" style="display:none">U10 and wind from: set by the scenario.</div>
-  <div class="dim" style="margin-top:4px">Sea state from field.js; rerun the Python export to change it.</div>
-  <h3>Charts</h3>
-  <div class="card"><div class="ct">Wind speed vs height at the mast</div><canvas id="ch1" width="280" height="170"></canvas></div>
-  <div class="card"><div class="ct">Vertical wind at the mast</div><canvas id="ch2" width="280" height="170"></canvas></div>
-  <div class="dim"><b>Help</b>: drag to orbit, wheel to zoom, arrow keys move the mast (5 m steps; up = north, right = east). Yellow bar = 10 m, red line = x (east), green line = y (north).</div>
+
+  <details class="sec" open>
+    <summary id="sec1s" data-i="sec1"></summary>
+    <div id="scen" style="display:none">
+      <div class="ctl"><label for="hour" data-i="hour" data-t="hourTip"></label><input id="hour" type="range" min="0" max="72" step="0.1" value="0" data-t="hourTip"><span class="val" id="hourv"></span></div>
+      <div class="ctl"><button id="play" type="button" data-t="playTip"></button>
+        <label for="rate" style="width:auto" data-i="rate" data-t="rateTip"></label>
+        <select id="rate" data-t="rateTip"><option value="1">1 h/s</option><option value="3" selected>3 h/s</option><option value="6">6 h/s</option></select></div>
+      <table id="sro"></table>
+    </div>
+    <div id="windCtl">
+      <div class="ctl"><label for="u10" data-i="u10" data-t="u10Tip"></label><input id="u10" type="range" min="2" max="25" step="0.5" data-t="u10Tip"><span class="val" id="u10v"></span></div>
+      <div class="ctl"><label for="from" data-i="from" data-t="fromTip"></label><input id="from" type="range" min="0" max="359" step="1" data-t="fromTip"><span class="val" id="fromv"></span></div>
+    </div>
+    <div class="dim" id="rough"></div>
+    <div class="dim" id="lockNote" style="display:none"></div>
+  </details>
+
+  <details class="sec" open>
+    <summary data-i="sec2" data-t="sec2Tip"></summary>
+    <div id="fl">
+      <div class="ctl step"><label for="flAc" data-i="stAc" data-t="flAcTip"></label><select id="flAc" data-t="flAcTip"></select></div>
+      <div class="ctl step"><label for="flCyc" data-i="stCyc" data-t="flCycTip"></label><select id="flCyc" data-t="flCycTip"><option value="travel" data-i="cycTravel"></option><option value="loiter" data-i="cycLoiter"></option></select></div>
+      <div class="ctl step"><label for="flPos" data-i="stPos" data-t="flPosTip"></label><select id="flPos" data-t="flPosTip"><option value="mast" data-i="posMast"></option><option value="click" data-i="posClick"></option></select></div>
+      <div class="dim hint" id="flPt"></div>
+      <div class="ctl step"><label for="flHead" data-i="stHead" data-t="flHeadTip"></label><select id="flHead" data-t="flHeadTip"><option value="up" data-i="hUp"></option><option value="down" data-i="hDown"></option><option value="left" data-i="hLeft"></option><option value="right" data-i="hRight"></option><option value="ref" data-i="hRef"></option></select></div>
+      <div class="ctl"><button id="flGo" type="button" data-i="go" data-t="goTip"></button><button id="flStop" type="button" data-i="stop" data-t="stopTip"></button></div>
+      <div class="ctl"><label class="auto" data-t="chaseTip"><input id="flChase" type="checkbox" data-t="chaseTip"> <span data-i="chase"></span></label></div>
+      <div class="ctl"><label class="auto" data-t="freezeTip"><input id="flFreeze" type="checkbox" checked data-t="freezeTip"> <span data-i="freeze"></span></label></div>
+      <table id="flro"></table>
+      <div class="dim" id="flNote"></div>
+      <div class="warn" id="flSplash"></div>
+    </div>
+  </details>
+
+  <details class="sec" open>
+    <summary data-i="sec3" data-t="sec3Tip"></summary>
+    <div class="ctl"><label for="spd" data-i="spd" data-t="spdTip"></label><input id="spd" type="range" min="0" max="4" step="0.1" value="1" data-t="spdTip"><span class="val" id="spdv"></span></div>
+    <div class="ctl"><label class="auto" data-t="pauseTip"><input id="pause" type="checkbox" data-t="pauseTip"> <span data-i="pause"></span></label>
+      <label class="auto" data-t="ptcTip"><input id="ptc" type="checkbox" checked data-t="ptcTip"> <span data-i="ptc"></span></label></div>
+    <div class="dim" id="mastpos"></div>
+    <div class="sub" data-i="mastVals"></div>
+    <table id="ro"></table>
+  </details>
+
+  <details class="sec">
+    <summary data-i="secCharts" data-t="secChartsTip"></summary>
+    <div class="card"><div class="ct" data-i="ch1"></div><canvas id="ch1" width="280" height="170" data-t="ch1Tip"></canvas></div>
+    <div class="card"><div class="ct" data-i="ch2"></div><canvas id="ch2" width="280" height="170" data-t="ch2Tip"></canvas></div>
+  </details>
+
+  <details class="sec">
+    <summary data-i="secHelp" data-t="secHelpTip"></summary>
+    <div class="dim" data-i="help1"></div>
+    <div class="dim" data-i="help2"></div>
+    <div class="dim" data-i="help3"></div>
+    <div class="dim" data-i="help4"></div>
+    <div class="dim" data-i="help5"></div>
+  </details>
 </div>
 <div id="tip"></div>
 
@@ -92,13 +124,174 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = (id) => document.getElementById(id);
+// ---------------------------------------------------------------- language (ja / en)
+const I18N = {
+  ja: {
+    pageTitle: '海と風のシミュレータ', title: '海と風のシミュレータ',
+    what: '嵐のシナリオの海と風を、選んだ時刻で、実寸（1:1）で表示します。',
+    whatNoScen: '設定した風と波を、実寸（1:1）で表示します。',
+    langTip: 'Switch to English。表示言語を切り替えます。',
+    sec1: '① 海と風の時刻',
+    sec1TipScen: '風速と風向はシナリオが決めるので、ここでは動かせません。経過時間を動かすと変わります。',
+    sec1TipNoScen: '風速と風向のスライダーで、見せる海と風を決めます。',
+    hour: '経過時間', hourTip: '嵐のシナリオの経過時間です。海と風がこの時刻のものになります。',
+    play: '再生', pauseBtn: '停止', playTip: '経過時間を自動で進めます。もう一度押すと止まります。',
+    rate: '再生の速さ', rateTip: '再生中に、1 秒で進める経過時間です。',
+    u10: '10 m の風速', u10Tip: '高さ 10 m の風速です。海の状態もこれに合わせて変わります。',
+    from: '風の吹いてくる向き', fromTip: '風が吹いてくる方位です。0 deg が北、90 deg が東です。',
+    sec2: '② 機体を飛ばす', sec2Tip: '上から順に選んで、発進を押します。',
+    stAc: '1. 機体', flAcTip: '飛ばす機体を選びます。',
+    stCyc: '2. 飛び方', flCycTip: '参照軌道の種類を選びます。',
+    cycTravel: '進む（風を横切る）', cycLoiter: 'その場にとどまる',
+    stPos: '3. 発進する場所', flPosTip: '発進する場所を選びます。',
+    posMast: '観測柱の位置', posClick: '海面をクリックした点',
+    ptHint: '海面をクリックして、発進する点を選びます。',
+    ptSet: (x, y) => '発進する点: (' + x + ', ' + y + ') m',
+    stHead: '4. 向き', flHeadTip: '発進するときの機体の向きです。風を基準に決まります。',
+    hUp: '風上へ', hDown: '風下へ', hLeft: '風を横切って左へ', hRight: '風を横切って右へ', hRef: '参照軌道の向き',
+    go: '発進', goTip: '選んだ条件で機体を発進させます。', stop: '止める', stopTip: '飛行を止めます。機体と軌跡はそのまま残ります。',
+    chase: '機体を追いかけるカメラ', chaseTip: 'カメラの注目点を機体に合わせ続けます。',
+    freeze: '飛行中は時刻を止める', freezeTip: '飛行中は、シナリオの経過時間を進めません。',
+    sec3: '③ 表示', sec3Tip: '波と粒子の見せ方を変えます。飛行や風は変わりません。',
+    spd: '波の動きの速さ', spdTip: '波のアニメーションの速さです。0 で止まります。',
+    pause: '波を止める', pauseTip: '波の動きを止めます。シナリオの時刻には関係ありません。',
+    ptc: '風の粒子を表示', ptcTip: '風に流される粒子を表示します。',
+    mastPos: (x, y) => '観測柱の位置: (' + x + ', ' + y + ') m。矢印キーで動かせます。',
+    mastVals: '観測柱の値',
+    secCharts: 'グラフ', secChartsTip: '観測柱での風を図で見ます。',
+    ch1: '観測柱での高さごとの風速', ch1Tip: '線は平均の風速、点は観測柱での実際の風速です。点に合わせると値が出ます。',
+    ch2: '観測柱での上下の風', ch2Tip: '観測柱の高さごとの、上向きを正とした風です。',
+    ch1Axis: '水平の風速 (m/s)', ch2Axis: '上下の風 w (m/s)', chY: '水面からの高さ (m)',
+    chLegMean: '平均の風速', chLegAct: '観測柱の実際の値',
+    chTip: (h, s) => '高さ ' + h + ' m、風速 ' + s + ' m/s',
+    secHelp: '使い方', secHelpTip: '操作の説明です。',
+    help1: 'マウスのドラッグで回転、ホイールで拡大と縮小。',
+    help2: '矢印キーで観測柱を 5 m ずつ動かします。上が北、右が東です。',
+    help3: '黄色の棒が 10 m、赤い線が東、緑の線が北です。',
+    help4: '矢印と粒子と軌跡の色は、水面からの高さです。低いほど暗い赤、高いほど明るい黄色です。',
+    help5: '海の状態は field.js の内容です。変えるときは Python の出力をやり直します。',
+    meta: (g, sc, nf, nm) => '生成: ' + g + (sc ? '、シナリオ ' + sc + '、' + nf + ' コマ、1 コマ最大 ' + nm + ' 成分' : '、' + nm + ' 成分'),
+    noData: 'データなし',
+    noField: 'window.FIELD がありません。index.html の隣に field.js がありません。',
+    warnMany: (n, m) => '注意: 1 コマに ' + n + ' 成分あり、先頭の ' + m + ' だけを使います。',
+    warnNearest: 'この端末は頂点用の変数が少ないため、2 コマの混ぜ合わせをやめ、近い方のコマだけを使います。',
+    rough: (r, st) => '粗度のモデル: ' + r + (st ? '、2 次のストークス項あり' : ''),
+    refsMissing: 'window.REFS がありません。python -m sim.export_refs で refs.js を作ってください。飛行は使えません。',
+    refsAt: (ks) => '参照軌道のある風速 u10: ' + ks + ' m/s',
+    refsNone: 'この飛び方の参照軌道はありません。ガードだけで飛びます。',
+    needClick: '先に、海面をクリックして発進する点を選んでください。',
+    numFail: (s) => '数値が壊れました。t = ' + s + ' s',
+    splashed: (s) => '着水しました。t = ' + s + ' s',
+    splashLbl: (s) => '着水 t = ' + s + ' s',
+    refTxt: (cyc, p) => (cyc === 'travel' ? '進む' : 'その場') + '、周期 ' + p + ' s',
+    refNone: '参照軌道なし（ガードだけ）',
+    stopped: '（停止中）', yes: 'はい', no: 'いいえ', na: 'なし',
+    f_el: '飛行時間', f_v: '対気速度', f_h: '水面からの高さ', f_e: 'エネルギー z + V^2/2g', f_n: '荷重倍数',
+    f_ph: '周期の位相', f_gd: 'ガード作動', f_de: '1 周期のエネルギー変化', f_u: '使った u10 と今の風', f_ref: '参照軌道',
+    r_t: '波の時刻', r_u10: '基準の 10 m の風速', r_us: '摩擦速度 u*', r_z0: '粗度長 z0', r_hsTp: ' の波高と周期',
+    r_eta: '観測柱の水面の高さ', r_w2: '観測柱 2 m の風速', r_w10: '観測柱 10 m の風速', r_vw2: '観測柱 2 m の上下の風',
+    s_hour: '表示中の時刻', s_u10: '10 m の風速', s_from: '風の吹いてくる向き', s_hss: '風浪の波高', s_tps: '風浪の周期',
+    s_hsw: 'うねりの波高', s_us: '摩擦速度 u*', s_z0: '粗度長 z0', s_wc: '白波の割合'
+  },
+  en: {
+    pageTitle: 'Sea and wind', title: 'Sea and wind simulator',
+    what: 'Shows the sea and wind of the storm scenario at the chosen hour, at 1:1 scale.',
+    whatNoScen: 'Shows the sea and wind you set, at 1:1 scale.',
+    langTip: '表示言語を切り替えます。Switches the display language.',
+    sec1: '1. Sea and wind time',
+    sec1TipScen: 'The scenario sets wind speed and direction, so they cannot be moved here. Move the elapsed time instead.',
+    sec1TipNoScen: 'The wind speed and direction sliders choose the sea and wind.',
+    hour: 'Elapsed time', hourTip: 'Elapsed time in the storm scenario. Sea and wind follow this hour.',
+    play: 'Play', pauseBtn: 'Pause', playTip: 'Advances the elapsed time automatically. Press again to stop.',
+    rate: 'Play speed', rateTip: 'Hours of scenario time per second while playing.',
+    u10: 'Wind at 10 m', u10Tip: 'Wind speed at 10 m height. The sea state follows it.',
+    from: 'Wind from', fromTip: 'Direction the wind comes from. 0 deg is north, 90 deg is east.',
+    sec2: '2. Fly an aircraft', sec2Tip: 'Choose from the top down, then press Launch.',
+    stAc: '1. Aircraft', flAcTip: 'Chooses the aircraft to fly.',
+    stCyc: '2. Flight style', flCycTip: 'Chooses the kind of reference trajectory.',
+    cycTravel: 'Travel (across the wind)', cycLoiter: 'Loiter (stay in place)',
+    stPos: '3. Launch at', flPosTip: 'Chooses where the aircraft starts.',
+    posMast: 'Mast position', posClick: 'Clicked point on the sea',
+    ptHint: 'Click the sea to choose the launch point.',
+    ptSet: (x, y) => 'Launch point: sim (' + x + ', ' + y + ') m',
+    stHead: '4. Heading', flHeadTip: 'Heading at launch, relative to the wind.',
+    hUp: 'Upwind', hDown: 'Downwind', hLeft: 'Crosswind, left', hRight: 'Crosswind, right', hRef: 'Reference heading (rotated into the wind)',
+    go: 'Launch', goTip: 'Launches the aircraft with the chosen settings.', stop: 'Stop', stopTip: 'Stops the flight. The aircraft and trail stay.',
+    chase: 'Chase camera', chaseTip: 'Keeps the camera target on the aircraft.',
+    freeze: 'Freeze scenario hour while flying', freezeTip: 'Does not advance the scenario hour during a flight.',
+    sec3: '3. Display', sec3Tip: 'Changes how waves and particles are shown. Flight and wind are unchanged.',
+    spd: 'Wave speed', spdTip: 'Speed of the wave animation. 0 stops it.',
+    pause: 'Freeze waves', pauseTip: 'Stops the wave motion. Unrelated to the scenario hour.',
+    ptc: 'Show wind particles', ptcTip: 'Shows particles carried by the wind.',
+    mastPos: (x, y) => 'Mast at sim (' + x + ', ' + y + ') m. Arrow keys move it.',
+    mastVals: 'Values at the mast',
+    secCharts: 'Charts', secChartsTip: 'Shows the wind at the mast as graphs.',
+    ch1: 'Wind speed vs height at the mast', ch1Tip: 'The line is the mean speed, dots are the actual speed at the mast. Hover a dot for its value.',
+    ch2: 'Vertical wind at the mast', ch2Tip: 'Vertical wind at each mast height, up is positive.',
+    ch1Axis: 'horizontal wind speed (m/s)', ch2Axis: 'vertical wind w (m/s)', chY: 'height above surface (m)',
+    chLegMean: 'mean log profile', chLegAct: 'actual at mast',
+    chTip: (h, s) => 'h = ' + h + ' m, speed = ' + s + ' m/s',
+    secHelp: 'How to use', secHelpTip: 'Explains the controls.',
+    help1: 'Drag with the mouse to orbit, wheel to zoom.',
+    help2: 'Arrow keys move the mast in 5 m steps (up = north, right = east).',
+    help3: 'Yellow bar = 10 m, red line = east, green line = north.',
+    help4: 'Arrow, particle and trail colours show height above the surface: dark red is low, light yellow is high.',
+    help5: 'Sea state comes from field.js; rerun the Python export to change it.',
+    meta: (g, sc, nf, nm) => 'generated ' + g + (sc ? ', scenario ' + sc + ', ' + nf + ' frames, up to ' + nm + ' components per frame' : ', N = ' + nm + ' components'),
+    noData: 'no data',
+    noField: 'window.FIELD missing: field.js not found next to index.html',
+    warnMany: (n, m) => 'Warning: ' + n + ' components in a frame, only the first ' + m + ' are used.',
+    warnNearest: 'Few vertex uniforms on this device: nearest frame is used instead of a crossfade.',
+    rough: (r, st) => 'roughness model: ' + r + (st ? ', second-order (Stokes) term on' : ''),
+    refsMissing: 'window.REFS missing: run python -m sim.export_refs to create refs.js. Flight is off.',
+    refsAt: (ks) => 'references at u10 = ' + ks + ' m/s',
+    refsNone: 'no reference for this cycle: guard mode only',
+    needClick: 'Click the sea to choose a launch point first.',
+    numFail: (s) => 'Numerical failure at t = ' + s + ' s',
+    splashed: (s) => 'Splashed at t = ' + s + ' s',
+    splashLbl: (s) => 'splashed at t = ' + s + ' s',
+    refTxt: (cyc, p) => cyc + ', period ' + p + ' s',
+    refNone: 'no reference (guard mode only)',
+    stopped: ' (stopped)', yes: 'yes', no: 'no', na: 'n/a',
+    f_el: 'Flight time', f_v: 'Airspeed', f_h: 'Height above surface', f_e: 'Energy z + V^2/2g', f_n: 'Load factor',
+    f_ph: 'Cycle phase', f_gd: 'Guard active', f_de: 'Energy change per cycle', f_u: 'u10 used / wind now', f_ref: 'Reference',
+    r_t: 'Wave time', r_u10: 'Wind at 10 m', r_us: 'Friction velocity u*', r_z0: 'Roughness length z0', r_hsTp: ' Hs / Tp',
+    r_eta: 'Surface height at mast', r_w2: 'Wind at 2 m', r_w10: 'Wind at 10 m', r_vw2: 'Vertical wind at 2 m',
+    s_hour: 'Elapsed time', s_u10: 'Wind at 10 m', s_from: 'Wind from', s_hss: 'Wind sea height', s_tps: 'Wind sea period',
+    s_hsw: 'Swell height', s_us: 'Friction velocity u*', s_z0: 'Roughness length z0', s_wc: 'Whitecap fraction'
+  }
+};
+let LANG = 'ja';
+try { const s = localStorage.getItem('viewerLang'); if (s === 'ja' || s === 'en') LANG = s; } catch (e) { /* storage blocked */ }
+const tx = (k, ...a) => {
+  const v = I18N[LANG][k] !== undefined ? I18N[LANG][k] : I18N.en[k];
+  return typeof v === 'function' ? v(...a) : (v === undefined ? k : v);
+};
+const dyn = [];            // functions that redraw script-made text; run on every language change
+let uiReady = false;
+function applyStatic() {
+  document.documentElement.lang = LANG;
+  document.title = tx('pageTitle');
+  for (const el of document.querySelectorAll('[data-i]')) el.textContent = (el.dataset.pre || '') + tx(el.dataset.i);
+  for (const el of document.querySelectorAll('[data-t]')) el.title = tx(el.dataset.t);
+  $('lang').textContent = LANG === 'ja' ? 'English' : '日本語';
+}
+function applyLang() { applyStatic(); if (uiReady) for (const f of dyn) f(); }
+$('lang').addEventListener('click', () => {
+  LANG = LANG === 'ja' ? 'en' : 'ja';
+  try { localStorage.setItem('viewerLang', LANG); } catch (e) { /* storage blocked */ }
+  applyLang();
+});
+
 const F = window.FIELD;
 if (!F) {
-  $('meta').textContent = 'window.FIELD missing: field.js not found next to index.html';
+  applyStatic(); $('meta').textContent = tx('noField');
   throw new Error('FIELD missing');
 }
 const FR = F.frames || [F];                      // scenario frames, or the single field
 const SCEN = !!F.frames;
+$('what').dataset.i = SCEN ? 'what' : 'whatNoScen';
+$('sec1s').dataset.t = SCEN ? 'sec1TipScen' : 'sec1TipNoScen';
 const C = F.constants;
 const STOKES = !!(F.meta && F.meta.stokes);
 const ROUGH = (F.meta && F.meta.roughness) || 'charnock';
@@ -106,11 +299,13 @@ const SEA = 240, HALF = SEA / 2, MAXC = 128, MAXM = 2 * MAXC;   // merged compon
 const W = Object.assign({}, FR[0].wind);        // current (blended) wind
 let nMax = 0;
 for (const fr of FR) nMax = Math.max(nMax, fr.components.a.length);
-$('meta').textContent = 'generated ' + F.meta.generated + (SCEN
-  ? ', scenario ' + F.meta.scenario + ', ' + FR.length + ' frames, up to ' + nMax + ' components per frame'
-  : ', N = ' + nMax + ' components');
-if (nMax > MAXC) $('warn').textContent = 'Warning: ' + nMax + ' components in a frame, only the first ' + MAXC + ' are used.';
-$('rough').textContent = 'roughness model: ' + ROUGH + (STOKES ? ', second-order (Stokes) term on' : '');
+const warnMany = nMax > MAXC;
+let warnNear = false;
+dyn.push(() => {
+  $('meta').textContent = tx('meta', F.meta.generated, SCEN ? F.meta.scenario : '', FR.length, nMax);
+  $('warn').textContent = [warnMany ? tx('warnMany', nMax, MAXC) : '', warnNear ? tx('warnNearest') : ''].filter(Boolean).join(' ');
+  $('rough').textContent = tx('rough', ROUGH, STOKES);
+});
 
 // ---------------------------------------------------------------- merged component set
 // CO holds the components of the two neighbouring frames, amplitudes already weighted
@@ -313,7 +508,7 @@ const seaMat = new THREE.ShaderMaterial({
 // if the device offers too few vertex uniforms for two frames, use the nearer frame only
 const gl0 = renderer.getContext();
 const NEAREST = gl0.getParameter(gl0.MAX_VERTEX_UNIFORM_VECTORS) < 2 * MAXM + 40;
-if (NEAREST && SCEN) $('warn').textContent = 'Few vertex uniforms on this device: nearest frame is used instead of a crossfade.';
+if (NEAREST && SCEN) warnNear = true;
 const seaGeo = new THREE.PlaneGeometry(SEA, SEA, 240, 240); // local xy plane = sim xy
 const sea = new THREE.Mesh(seaGeo, seaMat);
 sea.frustumCulled = false;
@@ -459,21 +654,26 @@ const ptMark = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THRE
   new THREE.LineBasicMaterial({ color: 0xf2c200 }));
 ptMark.visible = false; ptMark.frustumCulled = false; scene.add(ptMark);
 
-const flRows = [['Flight time', 'el'], ['Airspeed', 'v'], ['Height above surface', 'h'], ['Energy z + V^2/2g', 'e'],
-  ['Load factor', 'n'], ['Cycle phase', 'ph'], ['Guard active', 'gd'], ['Energy change per cycle', 'de'],
-  ['u10 used / wind now', 'u'], ['Reference', 'ref']];
-$('flro').innerHTML = flRows.map((r) => '<tr><td>' + r[0] + '</td><td id="fl_' + r[1] + '"></td></tr>').join('');
+const flRows = ['el', 'v', 'h', 'e', 'n', 'ph', 'gd', 'de', 'u', 'ref'];
+$('flro').innerHTML = flRows.map((r) => '<tr><td data-i="f_' + r + '"></td><td id="fl_' + r + '"></td></tr>').join('');
 const setFl = (k, s) => { $('fl_' + k).textContent = s; };
-for (const r of flRows) setFl(r[1], '-');
+for (const r of flRows) setFl(r, '-');
+// texts under the flight controls, kept as functions so a language change redraws them
+let flNoteFn = () => '', flSplashFn = () => '';
+const renderFl = () => {
+  $('flNote').textContent = flNoteFn(); $('flSplash').textContent = flSplashFn();
+  $('flPt').textContent = FL.pt ? tx('ptSet', FL.pt.x, FL.pt.y) : tx('ptHint');
+};
+dyn.push(renderFl);
 if (!REFS || !Object.keys(REFS).length) {
-  $('flNote').textContent = 'window.REFS missing: run python -m sim.export_refs to create refs.js. Flight is off.';
+  flNoteFn = () => tx('refsMissing');
   for (const id of ['flAc', 'flCyc', 'flPos', 'flHead', 'flGo', 'flStop', 'flChase', 'flFreeze']) $(id).disabled = true;
 } else {
   $('flAc').innerHTML = Object.keys(REFS).map((n) => '<option>' + n + '</option>').join('');
   const showRefs = () => {
     const e = REFS[$('flAc').value][$('flCyc').value] || {};
     const ks = Object.keys(e).map(Number).sort((a, b) => a - b);
-    $('flNote').textContent = ks.length ? 'references at u10 = ' + ks.join(', ') + ' m/s' : 'no reference for this cycle: guard mode only';
+    flNoteFn = () => ks.length ? tx('refsAt', ks.join(', ')) : tx('refsNone'); renderFl();
   };
   $('flAc').addEventListener('change', showRefs); $('flCyc').addEventListener('change', showRefs);
   showRefs();
@@ -485,7 +685,7 @@ function launchPoint() {
 function stopFlight() { FL.on = false; }
 function launch() {
   if (!REFS) return;
-  if ($('flPos').value === 'click' && !FL.pt) { $('flNote').textContent = 'Click the sea to choose a launch point first.'; return; }
+  if ($('flPos').value === 'click' && !FL.pt) { flNoteFn = () => tx('needClick'); renderFl(); return; }
   const entry = REFS[$('flAc').value], cyc = $('flCyc').value, ac = entry.params;
   const table = entry[cyc] || {};
   let ref = null, uUsed = null;
@@ -512,8 +712,8 @@ function launch() {
   FL.s = [p.x, p.y, fSurface(p.x, p.y, T) + zr, V, gam, psi];
   FL.cl = 0; FL.mu = 0; FL.acc = 0; FL.el = 0; FL.trail = []; FL.splash = null; FL.started = true; FL.on = true;
   FL.uText = uUsed === null ? '-' : uUsed + ' / ' + W.u10.toFixed(1) + ' m/s';
-  FL.refText = ref ? cyc + ', period ' + ref.period + ' s' : 'no reference (guard mode only)';
-  splashMark.visible = false; splashLbl.style.display = 'none'; $('flSplash').textContent = '';
+  FL.refInfo = ref ? [cyc, ref.period] : null;
+  splashMark.visible = false; splashLbl.style.display = 'none'; flSplashFn = () => ''; renderFl();
   buildShape(ac);
   flightMesh.visible = true;
 }
@@ -533,7 +733,7 @@ $('flStop').addEventListener('click', stopFlight);
     if (Math.abs(hit.x) > HALF || Math.abs(hit.z) > HALF) return;
     FL.pt = { x: +hit.x.toFixed(1), y: +(-hit.z).toFixed(1) };
     $('flPos').value = 'click';
-    $('flPt').textContent = 'Launch point: sim (' + FL.pt.x + ', ' + FL.pt.y + ') m';
+    renderFl();
     ptMark.visible = true;
   });
 }
@@ -552,7 +752,7 @@ function flightAdvance(dtWanted, t0) {
     FL.cl = c.cl; FL.mu = c.mu;
     FL.s = Flight.rk4(FL.s, c.cl, c.mu, FL.ac, fWind, t, FDT);
     FL.el += FDT; done++;
-    if (!FL.s.every(Number.isFinite)) { stopFlight(); $('flSplash').textContent = 'Numerical failure at t = ' + FL.el.toFixed(1) + ' s'; break; }
+    if (!FL.s.every(Number.isFinite)) { stopFlight(); { const ts = FL.el.toFixed(1); flSplashFn = () => tx('numFail', ts); renderFl(); } break; }
     const hgt = FL.s[2] - fSurface(FL.s[0], FL.s[1], t + FDT);
     if (Math.round(FL.el / FDT) % Math.round(TRAIL_DT / FDT) === 0) {
       FL.trail.push([FL.s[0], FL.s[2], -FL.s[1], hgt]);
@@ -561,7 +761,7 @@ function flightAdvance(dtWanted, t0) {
     if (hgt < 0) {
       FL.splash = { x: FL.s[0], y: FL.s[1], z: FL.s[2], t: FL.el };
       splashMark.position.set(FL.s[0], FL.s[2], -FL.s[1]); splashMark.visible = true;
-      $('flSplash').textContent = 'Splashed at t = ' + FL.el.toFixed(1) + ' s';
+      { const ts = FL.el.toFixed(1); flSplashFn = () => tx('splashed', ts); renderFl(); }
       stopFlight();
       break;
     }
@@ -590,21 +790,21 @@ function updateFlightView() {
   // readouts
   const m = Flight.metrics(s, FL.ac, fWind, fSurface, T, FL.cl);
   const pa = FL.tr.passes;
-  setFl('el', FL.el.toFixed(1) + ' s' + (FL.on ? '' : ' (stopped)'));
+  setFl('el', FL.el.toFixed(1) + ' s' + (FL.on ? '' : tx('stopped')));
   setFl('v', m.airspeed.toFixed(1) + ' m/s');
   setFl('h', m.height.toFixed(2) + ' m');
   setFl('e', (m.energy * Flight.G).toFixed(0) + ' J/kg');
   setFl('n', m.loadFactor.toFixed(2));
   setFl('ph', FL.tr.phase === null ? '-' : (FL.tr.phase / FL.tr.ref.n).toFixed(2));
-  setFl('gd', FL.tr.guard ? 'yes' : 'no');
-  setFl('de', pa.length >= 2 ? ((pa[pa.length - 1].energy - pa[pa.length - 2].energy) * Flight.G).toFixed(1) + ' J/kg' : 'n/a');
-  setFl('u', FL.uText); setFl('ref', FL.refText);
+  setFl('gd', FL.tr.guard ? tx('yes') : tx('no'));
+  setFl('de', pa.length >= 2 ? ((pa[pa.length - 1].energy - pa[pa.length - 2].energy) * Flight.G).toFixed(1) + ' J/kg' : tx('na'));
+  setFl('u', FL.uText); setFl('ref', FL.refInfo ? tx('refTxt', FL.refInfo[0], FL.refInfo[1]) : tx('refNone'));
   // splash label
   if (FL.splash) {
     _fp.set(FL.splash.x, FL.splash.z, -FL.splash.y).project(camera);
     if (_fp.z < 1) {
       splashLbl.style.display = 'block';
-      splashLbl.textContent = 'splashed at t = ' + FL.splash.t.toFixed(1) + ' s';
+      splashLbl.textContent = tx('splashLbl', FL.splash.t.toFixed(1));
       splashLbl.style.left = ((_fp.x + 1) / 2 * innerWidth + 8) + 'px';
       splashLbl.style.top = ((1 - _fp.y) / 2 * innerHeight - 8) + 'px';
     } else splashLbl.style.display = 'none';
@@ -622,17 +822,19 @@ u10El.value = W.u10; fromEl.value = Math.round(W.from_deg) % 360;
 const hourEl = $('hour'), rateEl = $('rate');
 let playing = false, hourNow = 0;   // hourNow keeps sub-step precision (the slider rounds to 0.1)
 function syncHour() {
-  $('hourv').textContent = (+hourEl.value).toFixed(1);
+  $('hourv').textContent = (+hourEl.value).toFixed(1) + ' h';
   u10El.value = W.u10; fromEl.value = Math.round(W.from_deg) % 360;
   syncLabels();
 }
+const renderPlay = () => { $('play').textContent = playing ? tx('pauseBtn') : tx('play'); };
+dyn.push(renderPlay);
 if (SCEN) {
   $('scen').style.display = '';
-  u10El.disabled = true; fromEl.disabled = true; $('lockNote').style.display = '';
+  u10El.disabled = true; fromEl.disabled = true; $('windCtl').style.display = 'none';   // the scenario sets the wind
   hourEl.addEventListener('input', () => { hourNow = +hourEl.value; setHour(hourNow); syncHour(); });
-  $('play').addEventListener('click', () => { playing = !playing; $('play').textContent = playing ? 'Pause' : 'Play'; });
+  $('play').addEventListener('click', () => { playing = !playing; renderPlay(); });
 }
-function syncLabels() { $('u10v').textContent = (+u10El.value).toFixed(1); $('fromv').textContent = fromEl.value; $('spdv').textContent = (+spdEl.value).toFixed(1) + 'x'; }
+function syncLabels() { $('u10v').textContent = (+u10El.value).toFixed(1) + ' m/s'; $('fromv').textContent = fromEl.value + ' deg'; $('spdv').textContent = (+spdEl.value).toFixed(1) + 'x'; }
 function onWind() { if (SCEN) return; setWind(+u10El.value, +fromEl.value); syncLabels(); }
 u10El.addEventListener('input', onWind); fromEl.addEventListener('input', onWind);
 spdEl.addEventListener('input', syncLabels);
@@ -651,15 +853,14 @@ function resize() {
 addEventListener('resize', resize); resize();
 
 // readouts
-const roRows = [['t', 't'], ['U10', 'u10'], ['u*', 'us'], ['z0', 'z0']];
-if (!SCEN) F.trains.forEach((tr, i) => roRows.push([tr.name + ' Hs / Tp', 'tr' + i]));
-roRows.push(['eta at mast', 'eta'], ['wind @ 2 m', 'w2'], ['wind @ 10 m', 'w10'], ['vertical w @ 2 m', 'vw2']);
-$('ro').innerHTML = roRows.map((r) => '<tr><td>' + r[0] + '</td><td id="ro_' + r[1] + '"></td></tr>').join('');
+const roRows = [['r_t', 't'], ['r_u10', 'u10'], ['r_us', 'us'], ['r_z0', 'z0']];
+if (!SCEN) F.trains.forEach((tr, i) => roRows.push(['r_hsTp', 'tr' + i, tr.name]));
+roRows.push(['r_eta', 'eta'], ['r_w2', 'w2'], ['r_w10', 'w10'], ['r_vw2', 'vw2']);
+$('ro').innerHTML = roRows.map((r) => '<tr><td data-i="' + r[0] + '"' + (r[2] ? ' data-pre="' + r[2] + '"' : '') + '></td><td id="ro_' + r[1] + '"></td></tr>').join('');
 const setRo = (k, s) => { $('ro_' + k).textContent = s; };
 if (!SCEN) F.trains.forEach((tr, i) => setRo('tr' + i, tr.hs.toFixed(2) + ' m / ' + tr.tp.toFixed(1) + ' s'));
-const scRows = [['Hour', 'hour'], ['U10', 'u10'], ['Wind from', 'from'], ['Hs sea', 'hss'], ['Tp sea', 'tps'],
-  ['Hs swell', 'hsw'], ['u*', 'us'], ['z0', 'z0'], ['Whitecap fraction', 'wc']];
-$('sro').innerHTML = scRows.map((r) => '<tr><td>' + r[0] + '</td><td id="sc_' + r[1] + '"></td></tr>').join('');
+const scRows = ['hour', 'u10', 'from', 'hss', 'tps', 'hsw', 'us', 'z0', 'wc'];
+$('sro').innerHTML = scRows.map((r) => '<tr><td data-i="s_' + r + '"></td><td id="sc_' + r + '"></td></tr>').join('');
 const setSc = (k, s) => { $('sc_' + k).textContent = s; };
 function updateScRo() {
   setSc('hour', SC.hour.toFixed(1) + ' h'); setSc('u10', W.u10.toFixed(1) + ' m/s');
@@ -706,7 +907,7 @@ function frame(g, xmin, xmax, xticks, xlabel) {
   g.fillStyle = CS.text2; g.textAlign = 'center'; g.textBaseline = 'bottom';
   g.fillText(xlabel, ML + PW / 2, CH - 2);
   g.save(); g.translate(9, MT + PH / 2); g.rotate(-Math.PI / 2); g.textBaseline = 'top';
-  g.fillText('height above surface (m)', 0, 0); g.restore();
+  g.fillText(tx('chY'), 0, 0); g.restore();
   return xPix;
 }
 function dot(g, x, y, c) { g.fillStyle = c; g.beginPath(); g.arc(x, y, 4, 0, 2 * Math.PI); g.fill(); }
@@ -716,7 +917,7 @@ function drawCharts() {
   // chart 1
   const xmax = 1.3 * W.u10, step = xmax > 20 ? 10 : 5;
   const ticks = []; for (let v = 0; v <= xmax + 1e-9; v += step) ticks.push(v);
-  const xp = frame(g1, 0, xmax, ticks, 'horizontal wind speed (m/s)');
+  const xp = frame(g1, 0, xmax, ticks, tx('ch1Axis'));
   g1.strokeStyle = CS.s1; g1.lineWidth = 2; g1.beginPath();
   for (let j = 0; j <= 60; j++) {
     const h = 0.05 * Math.pow(30 / 0.05, j / 60);
@@ -732,10 +933,11 @@ function drawCharts() {
   // legend
   g1.font = '10px system-ui, sans-serif'; g1.textAlign = 'left'; g1.textBaseline = 'middle';
   g1.strokeStyle = CS.s1; g1.lineWidth = 2; g1.beginPath(); g1.moveTo(ML, 9); g1.lineTo(ML + 16, 9); g1.stroke(); g1.lineWidth = 1;
-  g1.fillStyle = CS.text2; g1.fillText('mean log profile', ML + 20, 9);
-  dot(g1, ML + 112, 9, CS.s2); g1.fillStyle = CS.text2; g1.fillText('actual at mast', ML + 120, 9);
+  g1.fillStyle = CS.text2; g1.fillText(tx('chLegMean'), ML + 20, 9);
+  const lx = ML + 20 + g1.measureText(tx('chLegMean')).width + 14;
+  dot(g1, lx, 9, CS.s2); g1.fillStyle = CS.text2; g1.fillText(tx('chLegAct'), lx + 8, 9);
   // chart 2
-  const xp2 = frame(g2, -2, 2, [-2, -1, 0, 1, 2], 'vertical wind w (m/s)');
+  const xp2 = frame(g2, -2, 2, [-2, -1, 0, 1, 2], tx('ch2Axis'));
   g2.strokeStyle = CS.muted; g2.beginPath(); g2.moveTo(Math.round(xp2(0)) + 0.5, MT); g2.lineTo(Math.round(xp2(0)) + 0.5, MT + PH); g2.stroke();
   for (let j = 0; j < HM.length; j++) dot(g2, clampX(xp2(ww[j])), yPix(HM[j]), CS.s2);
 }
@@ -745,7 +947,7 @@ $('ch1').addEventListener('mousemove', (e) => {
   let best = null, bd = 14;
   for (const m of markers1) { const d = Math.hypot(m.x - mxp, m.y - myp); if (d < bd) { bd = d; best = m; } }
   if (!best) { tip.style.display = 'none'; return; }
-  tip.textContent = 'h = ' + best.h + ' m, speed = ' + best.s.toFixed(2) + ' m/s';
+  tip.textContent = tx('chTip', best.h, best.s.toFixed(2));
   tip.style.left = (e.clientX + 12) + 'px'; tip.style.top = (e.clientY + 12) + 'px'; tip.style.display = 'block';
 });
 $('ch1').addEventListener('mouseleave', () => { tip.style.display = 'none'; });
@@ -812,7 +1014,7 @@ function loop(now) {
   setRo('us', W.ustar.toFixed(3) + ' m/s'); setRo('z0', W.z0.toExponential(2) + ' m');
   setRo('eta', eta.toFixed(2) + ' m');
   if (SCEN) updateScRo();
-  $('mastpos').textContent = 'Mast at sim (' + mx + ', ' + my + ') m. Arrow keys move it.';
+  $('mastpos').textContent = tx('mastPos', mx, my);
   drawCharts();
 
   updateGlider(T);
@@ -820,7 +1022,8 @@ function loop(now) {
   controls.update();
   renderer.render(scene, camera);
 }
-requestAnimationFrame((t) => { last = t; loop(t); });
+uiReady = true; applyLang();
+requestAnimationFrame((now) => { last = now; loop(now); });
 </script>
 </body>
 </html>
