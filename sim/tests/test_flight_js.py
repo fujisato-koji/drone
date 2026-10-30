@@ -1,4 +1,4 @@
-"""The viewer's flight.js against sim.aircraft, and its tracker on a flat log wind (needs node)."""
+"""The viewer's flight.js against sim.aircraft (needs node)."""
 import json
 import shutil
 import subprocess
@@ -24,30 +24,10 @@ const windFn = (x, y, z, t) => {
   return [sp * inp.ex, sp * inp.ey, 0];
 };
 windFn.z0 = inp.z0;
-const surfaceFn = () => 0;
-if (inp.run === 'integrate') {
-  let s = inp.s0.slice();
-  const dt = 0.01, n = 1000;
-  for (let i = 0; i < n; i++) s = Flight.rk4(s, 0.8, i < 500 ? 0.4 : -0.4, ac, windFn, i * dt, dt);
-  console.log(JSON.stringify({ s: s }));
-} else {
-  const tr = new Flight.Tracker(inp.ref, ac);
-  let s = inp.s0.slice(), t = 0, hmin = Infinity, guardSteps = 0, cl = 0;
-  const dt = 0.01, n = Math.round(inp.T / dt);
-  let nan = false;
-  for (let i = 0; i < n; i++) {
-    const c = tr.command(s, windFn, surfaceFn, t);
-    guardSteps += c.guard ? 1 : 0;
-    const clp = Math.min(Math.max(c.cl, ac.cl_min), ac.cl_max);
-    s = Flight.rk4(s, clp, c.mu, ac, windFn, t, dt);
-    t += dt;
-    const m = Flight.metrics(s, ac, windFn, surfaceFn, t, clp);
-    hmin = Math.min(hmin, m.height);
-    if (!s.every(Number.isFinite)) { nan = true; break; }
-  }
-  console.log(JSON.stringify({ hmin: hmin, guardSteps: guardSteps, nan: nan, passes: tr.passes.length,
-    s: s }));
-}
+let s = inp.s0.slice();
+const dt = 0.01, n = 1000;
+for (let i = 0; i < n; i++) s = Flight.rk4(s, 0.8, i < 500 ? 0.4 : -0.4, ac, windFn, i * dt, dt);
+console.log(JSON.stringify({ s: s }));
 """
 
 
@@ -86,19 +66,27 @@ class TestFlightJs(unittest.TestCase):
         print("\nJS vs Python after 10 s: max relative difference %.2e" % rel)
         self.assertLess(rel, 1e-6)
 
-    def test_tracker_keeps_height(self):
-        from sim.export_refs import solve_one
-        job, ref, _, why = solve_one(("baseline-2m", 13, "travel"))
-        self.assertIsNotNone(ref, "reference did not converge: " + why)
-        k = int(np.argmax(ref["z"][:-1]))
-        s0 = [0.0, 0.0, ref["z"][k], ref["V"][k], ref["gamma"][k], ref["psi"][k]]  # wind along +x
-        w13 = Wind(13.0)   # the wind the reference was solved for
-        base = dict(self.base, ustar=w13.ustar, z0=w13.z0, ex=w13.ex, ey=w13.ey)
-        res = run_node(dict(base, run="track", s0=s0, ref=ref, T=60.0))
-        print("\ntracker 60 s at u10 13: min height %.2f m, guard steps %d, phase wraps %d"
-              % (res["hmin"], res["guardSteps"], res["passes"]))
-        self.assertFalse(res["nan"])
-        self.assertGreater(res["hmin"], 0.0)
+
+class TestViewerAircraft(unittest.TestCase):
+    """aircraft.js carries the parameters of the library aircraft (no node needed)."""
+
+    def test_parameters_match_python(self):
+        from sim.aircraft_models import by_name
+        from sim.export_aircraft import build_params, params
+        text = (FLIGHT_JS.parent / "aircraft.js").read_text(encoding="utf-8")
+        data = json.loads(text[text.index("window.AIRCRAFT = ") + len("window.AIRCRAFT = "):].rstrip().rstrip(";"))
+        self.assertEqual(data, build_params())
+        for name, p in data.items():
+            self.assertEqual(p, params(by_name(name)))
+        lib = (FLIGHT_JS.parent / "library.js").read_text(encoding="utf-8")
+        for name in data:
+            self.assertIn('"%s"' % name, lib)
+
+    def test_tracker_is_gone_from_the_page(self):
+        page = (FLIGHT_JS.parent / "index.html").read_text(encoding="utf-8")
+        for word in ("refs.js", "REFS", "Tracker", "flCtl"):
+            self.assertNotIn(word, page)
+        self.assertNotIn("Tracker", FLIGHT_JS.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
