@@ -1,8 +1,8 @@
 {
  "meta": {
   "tdr_run": "python -c \"from sim import formstudy; formstudy.ground_motor_study()\"",
-  "commit": "2559896",
-  "stamp": "sha-a1722cac87a8"
+  "commit": "0612f70",
+  "stamp": "sha-a48d0d6e0897"
  },
  "settings": {
   "ground_effect": "model image (sim.groundeffect): rolled elliptic lifting line, image method, Trefftz plane drag, tabulated K(hc/b, bank)",
@@ -53,7 +53,7 @@
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.3403897599172817,
    "iterations": 241,
-   "runtime_s": 12.718492269515991
+   "runtime_s": 12.922267436981201
   },
   {
    "study": "motor",
@@ -75,7 +75,7 @@
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.2716797271796357,
    "iterations": 400,
-   "runtime_s": 16.882140636444092
+   "runtime_s": 15.341655969619751
   },
   {
    "study": "motor",
@@ -97,7 +97,7 @@
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.22739514046099835,
    "iterations": 381,
-   "runtime_s": 52.02891826629639
+   "runtime_s": 14.946394920349121
   },
   {
    "study": "motor",
@@ -119,7 +119,7 @@
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.19657175392532594,
    "iterations": 197,
-   "runtime_s": 21.38032579421997
+   "runtime_s": 3.457728862762451
   },
   {
    "study": "motor",
@@ -141,7 +141,7 @@
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.1792498190644097,
    "iterations": 134,
-   "runtime_s": 20.397053480148315
+   "runtime_s": 2.5103759765625
   },
   {
    "study": "motor",
@@ -149,21 +149,21 @@
    "cycle": "travel",
    "ground_effect": true,
    "u10": 0.0,
-   "u10_min_soaring": 11.026186411488787,
-   "success": true,
-   "violation": 2.7924204392088485e-11,
-   "period": 14.418577411343858,
-   "power_avg_w": 11.71641414646175,
-   "power_peak_w": 11.752814274859805,
-   "thrust_on_share": 1.0,
-   "wh_per_hour": 11.71641414646175,
-   "speed_along_chi": 6.498913604306328,
-   "wh_per_km": 0.5007851593798259,
+   "u10_min_soaring": 11.026187727453195,
+   "success": false,
+   "violation": 2.6138926892960157e-06,
+   "period": 56.23575504435371,
+   "power_avg_w": 11.40513483620579,
+   "power_peak_w": 160.94478219664822,
+   "thrust_on_share": 0.9834368530020704,
+   "wh_per_hour": 11.40513483620579,
+   "speed_along_chi": 7.810339140842023,
+   "wh_per_km": 0.40562809795166144,
    "v_travel_min": 5.478126752008813,
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.3403897599172817,
-   "iterations": 311,
-   "runtime_s": 16.567341804504395
+   "iterations": 400,
+   "runtime_s": 18.148914337158203
   },
   {
    "study": "motor",
@@ -171,21 +171,21 @@
    "cycle": "travel",
    "ground_effect": true,
    "u10": 3.0,
-   "u10_min_soaring": 11.026186411488787,
+   "u10_min_soaring": 11.026187727453195,
    "success": false,
-   "violation": 4.796280926699925e-06,
-   "period": 34.92696481359876,
-   "power_avg_w": 11.648794527247725,
-   "power_peak_w": 84.88630694595525,
+   "violation": 2.536493555471697e-07,
+   "period": 34.96876062707398,
+   "power_avg_w": 11.648769283875868,
+   "power_peak_w": 86.44424562733829,
    "thrust_on_share": 1.0,
-   "wh_per_hour": 11.648794527247725,
-   "speed_along_chi": 7.0405325561425025,
-   "wh_per_km": 0.4595925424342742,
+   "wh_per_hour": 11.648769283875868,
+   "speed_along_chi": 6.969104752615753,
+   "wh_per_km": 0.46430199579172277,
    "v_travel_min": 5.478126752008813,
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.2716797271796357,
    "iterations": 400,
-   "runtime_s": 18.83802366256714
+   "runtime_s": 16.63840937614441
   },
   {
    "study": "motor",
@@ -193,21 +193,21 @@
    "cycle": "travel",
    "ground_effect": true,
    "u10": 6.0,
-   "u10_min_soaring": 11.026186411488787,
+   "u10_min_soaring": 11.026187727453195,
    "success": false,
-   "violation": 3.3631889452198638e-09,
-   "period": 16.70416822271507,
-   "power_avg_w": 10.67458546716675,
-   "power_peak_w": 101.27715322508128,
+   "violation": 1.785481719678711e-08,
+   "period": 16.6975206525293,
+   "power_avg_w": 10.674686004209256,
+   "power_peak_w": 101.31992656482443,
    "thrust_on_share": 0.5900621118012422,
-   "wh_per_hour": 10.67458546716675,
-   "speed_along_chi": 9.134639710356542,
-   "wh_per_km": 0.32460641292800435,
+   "wh_per_hour": 10.674686004209256,
+   "speed_along_chi": 9.135133072757352,
+   "wh_per_km": 0.324591938957905,
    "v_travel_min": 5.478126752008813,
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.22739514046099835,
    "iterations": 400,
-   "runtime_s": 98.98953700065613
+   "runtime_s": 15.949566125869751
   },
   {
    "study": "motor",
@@ -215,21 +215,21 @@
    "cycle": "travel",
    "ground_effect": true,
    "u10": 9.0,
-   "u10_min_soaring": 11.026186411488787,
+   "u10_min_soaring": 11.026187727453195,
    "success": true,
-   "violation": 7.323338740694489e-11,
-   "period": 6.403102461410923,
-   "power_avg_w": 5.861655124711086,
-   "power_peak_w": 24.809815527179,
+   "violation": 7.185682604493593e-11,
+   "period": 6.40346484821759,
+   "power_avg_w": 5.861662463505395,
+   "power_peak_w": 24.78457680518351,
    "thrust_on_share": 0.8612836438923396,
-   "wh_per_hour": 5.861655124711086,
-   "speed_along_chi": 10.739374847288722,
-   "wh_per_km": 0.15161380972310834,
+   "wh_per_hour": 5.861662463505395,
+   "speed_along_chi": 10.739448946982355,
+   "wh_per_km": 0.15161295344240702,
    "v_travel_min": 5.478126752008813,
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.19657175392532594,
-   "iterations": 183,
-   "runtime_s": 9.423740148544312
+   "iterations": 186,
+   "runtime_s": 3.672654628753662
   },
   {
    "study": "motor",
@@ -237,21 +237,21 @@
    "cycle": "travel",
    "ground_effect": true,
    "u10": 11.03,
-   "u10_min_soaring": 11.026186411488787,
+   "u10_min_soaring": 11.026187727453195,
    "success": true,
-   "violation": 1.2514989045087077e-13,
-   "period": 6.080999141726976,
-   "power_avg_w": 6.5442577767825684e-15,
-   "power_peak_w": 4.897667533950299e-14,
+   "violation": 2.3814283878209608e-14,
+   "period": 6.081362136959405,
+   "power_avg_w": 9.480822083013532e-15,
+   "power_peak_w": 6.760035622999517e-14,
    "thrust_on_share": 0.0,
-   "wh_per_hour": 6.5442577767825684e-15,
-   "speed_along_chi": 12.606372749347031,
-   "wh_per_km": 1.4420082751668286e-16,
+   "wh_per_hour": 9.480822083013532e-15,
+   "speed_along_chi": 12.583770398561638,
+   "wh_per_km": 2.0928240156281023e-16,
    "v_travel_min": 5.478126752008813,
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.18059065283787257,
-   "iterations": 78,
-   "runtime_s": 2.3684167861938477
+   "iterations": 79,
+   "runtime_s": 1.6190011501312256
   },
   {
    "study": "motor",
@@ -273,7 +273,7 @@
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.3403897599172817,
    "iterations": 400,
-   "runtime_s": 16.299636840820312
+   "runtime_s": 15.932394742965698
   },
   {
    "study": "motor",
@@ -295,7 +295,7 @@
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.2716797271796357,
    "iterations": 400,
-   "runtime_s": 17.2280113697052
+   "runtime_s": 15.713048696517944
   },
   {
    "study": "motor",
@@ -317,7 +317,7 @@
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.22739514046099835,
    "iterations": 400,
-   "runtime_s": 71.969242811203
+   "runtime_s": 14.962360143661499
   },
   {
    "study": "motor",
@@ -339,7 +339,7 @@
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.19657175392532594,
    "iterations": 188,
-   "runtime_s": 44.64858365058899
+   "runtime_s": 11.57283329963684
   },
   {
    "study": "motor",
@@ -361,7 +361,7 @@
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.1792498190644097,
    "iterations": 284,
-   "runtime_s": 8.394988536834717
+   "runtime_s": 5.680591106414795
   },
   {
    "study": "motor",
@@ -369,21 +369,21 @@
    "cycle": "loiter",
    "ground_effect": true,
    "u10": 0.0,
-   "u10_min_soaring": 11.026186411488787,
+   "u10_min_soaring": 11.026187727453195,
    "success": false,
-   "violation": 6.177675990776815e-07,
+   "violation": 3.764513131221392e-07,
    "period": 60.0,
-   "power_avg_w": 11.478311770505814,
+   "power_avg_w": 11.479582751716988,
    "power_peak_w": 160.94478219664822,
    "thrust_on_share": 0.9834368530020704,
-   "wh_per_hour": 11.478311770505814,
-   "speed_along_chi": 0.14828383529627717,
+   "wh_per_hour": 11.479582751716988,
+   "speed_along_chi": -0.195333704083454,
    "wh_per_km": null,
    "v_travel_min": null,
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.3403897599172817,
    "iterations": 400,
-   "runtime_s": 19.106112957000732
+   "runtime_s": 18.138367891311646
   },
   {
    "study": "motor",
@@ -391,21 +391,21 @@
    "cycle": "loiter",
    "ground_effect": true,
    "u10": 3.0,
-   "u10_min_soaring": 11.026186411488787,
+   "u10_min_soaring": 11.026187727453195,
    "success": false,
-   "violation": 5.976417214057506e-06,
-   "period": 46.75309677694632,
-   "power_avg_w": 11.69036003164389,
-   "power_peak_w": 70.53441802130848,
-   "thrust_on_share": 0.9979296066252588,
-   "wh_per_hour": 11.69036003164389,
-   "speed_along_chi": 2.8218885555240267,
+   "violation": 9.072463308279488e-06,
+   "period": 48.717284996791165,
+   "power_avg_w": 11.686220943435165,
+   "power_peak_w": 65.06031469303775,
+   "thrust_on_share": 1.0,
+   "wh_per_hour": 11.686220943435165,
+   "speed_along_chi": 3.2014764739569292,
    "wh_per_km": null,
    "v_travel_min": null,
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.2716797271796357,
    "iterations": 400,
-   "runtime_s": 19.231411933898926
+   "runtime_s": 16.82109045982361
   },
   {
    "study": "motor",
@@ -413,21 +413,21 @@
    "cycle": "loiter",
    "ground_effect": true,
    "u10": 6.0,
-   "u10_min_soaring": 11.026186411488787,
+   "u10_min_soaring": 11.026187727453195,
    "success": true,
-   "violation": 2.9105473239865454e-11,
-   "period": 22.854856019908183,
-   "power_avg_w": 10.768050512371648,
-   "power_peak_w": 98.97672466414242,
+   "violation": 1.557444451183443e-11,
+   "period": 22.85351705266421,
+   "power_avg_w": 10.768051621355406,
+   "power_peak_w": 99.00744169006303,
    "thrust_on_share": 0.577639751552795,
-   "wh_per_hour": 10.768050512371648,
-   "speed_along_chi": 7.093814690506245,
+   "wh_per_hour": 10.768051621355406,
+   "speed_along_chi": 7.0933653419029845,
    "wh_per_km": null,
    "v_travel_min": null,
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.22739514046099835,
-   "iterations": 272,
-   "runtime_s": 38.50990128517151
+   "iterations": 289,
+   "runtime_s": 5.331223249435425
   },
   {
    "study": "motor",
@@ -435,21 +435,21 @@
    "cycle": "loiter",
    "ground_effect": true,
    "u10": 9.0,
-   "u10_min_soaring": 11.026186411488787,
+   "u10_min_soaring": 11.026187727453195,
    "success": true,
-   "violation": 3.769812240150827e-11,
-   "period": 10.422454097223927,
-   "power_avg_w": 7.5332505579358315,
-   "power_peak_w": 54.58684733265111,
+   "violation": 3.769687340060557e-11,
+   "period": 10.422454097388957,
+   "power_avg_w": 7.5332505579358156,
+   "power_peak_w": 54.586847338668015,
    "thrust_on_share": 0.7577639751552795,
-   "wh_per_hour": 7.5332505579358315,
-   "speed_along_chi": 8.123104521463757,
+   "wh_per_hour": 7.5332505579358156,
+   "speed_along_chi": 8.123104521309633,
    "wh_per_km": null,
    "v_travel_min": null,
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.19657175392532594,
    "iterations": 180,
-   "runtime_s": 66.64758682250977
+   "runtime_s": 11.228872537612915
   },
   {
    "study": "motor",
@@ -457,21 +457,21 @@
    "cycle": "loiter",
    "ground_effect": true,
    "u10": 11.03,
-   "u10_min_soaring": 11.026186411488787,
+   "u10_min_soaring": 11.026187727453195,
    "success": true,
-   "violation": 8.270768792062455e-11,
-   "period": 6.290462756643538,
-   "power_avg_w": 0.913747762964962,
-   "power_peak_w": 3.5362622063028453,
+   "violation": 8.27033372341468e-11,
+   "period": 6.290462759605644,
+   "power_avg_w": 0.9137477629657266,
+   "power_peak_w": 3.5362621925319986,
    "thrust_on_share": 0.5734989648033126,
-   "wh_per_hour": 0.913747762964962,
-   "speed_along_chi": 9.879650417730694,
+   "wh_per_hour": 0.9137477629657266,
+   "speed_along_chi": 9.879650419035153,
    "wh_per_km": null,
    "v_travel_min": null,
    "flap_glide_power_w": 13.42582739937157,
    "flap_glide_wh_per_km": 0.18059065283787257,
    "iterations": 270,
-   "runtime_s": 8.636415481567383
+   "runtime_s": 5.539040565490723
   },
   {
    "study": "motor",
@@ -493,7 +493,7 @@
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.47340154486594016,
    "iterations": 297,
-   "runtime_s": 20.365792512893677
+   "runtime_s": 13.936219453811646
   },
   {
    "study": "motor",
@@ -515,7 +515,7 @@
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.3847109637035462,
    "iterations": 400,
-   "runtime_s": 24.860764980316162
+   "runtime_s": 16.393682718276978
   },
   {
    "study": "motor",
@@ -537,7 +537,7 @@
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.3256488574786629,
    "iterations": 398,
-   "runtime_s": 12.412049055099487
+   "runtime_s": 7.7142863273620605
   },
   {
    "study": "motor",
@@ -559,7 +559,7 @@
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.28359494368920435,
    "iterations": 206,
-   "runtime_s": 6.346991300582886
+   "runtime_s": 3.779139995574951
   },
   {
    "study": "motor",
@@ -581,7 +581,7 @@
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.2752579689053853,
    "iterations": 80,
-   "runtime_s": 2.5521018505096436
+   "runtime_s": 1.4235937595367432
   },
   {
    "study": "motor",
@@ -589,21 +589,21 @@
    "cycle": "travel",
    "ground_effect": true,
    "u10": 0.0,
-   "u10_min_soaring": 9.521138305781701,
+   "u10_min_soaring": 9.52113919676345,
    "success": true,
-   "violation": 3.5238399829332664e-11,
-   "period": 17.959444569431756,
-   "power_avg_w": 17.513238327284252,
-   "power_peak_w": 17.72356424976584,
+   "violation": 5.551499521748622e-11,
+   "period": 17.576719351497857,
+   "power_avg_w": 17.552612695280352,
+   "power_peak_w": 17.552620850223764,
    "thrust_on_share": 1.0,
-   "wh_per_hour": 17.513238327284252,
-   "speed_along_chi": 7.279407253037194,
-   "wh_per_km": 0.6682945815699328,
+   "wh_per_hour": 17.552612695280352,
+   "speed_along_chi": 7.284814822704369,
+   "wh_per_km": 0.669299888515073,
    "v_travel_min": 6.019112066266164,
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.47340154486594016,
-   "iterations": 195,
-   "runtime_s": 21.60485601425171
+   "iterations": 252,
+   "runtime_s": 16.16764211654663
   },
   {
    "study": "motor",
@@ -611,21 +611,21 @@
    "cycle": "travel",
    "ground_effect": true,
    "u10": 3.0,
-   "u10_min_soaring": 9.521138305781701,
+   "u10_min_soaring": 9.52113919676345,
    "success": false,
-   "violation": 2.547820488120467e-06,
-   "period": 28.565007100372483,
-   "power_avg_w": 17.41040013537812,
-   "power_peak_w": 148.925112782453,
-   "thrust_on_share": 0.7701863354037267,
-   "wh_per_hour": 17.41040013537812,
-   "speed_along_chi": 7.774028492704766,
-   "wh_per_km": 0.6220998886697701,
+   "violation": 1.354800422209701e-06,
+   "period": 28.335303237336685,
+   "power_avg_w": 17.41010374480427,
+   "power_peak_w": 149.76420600658633,
+   "thrust_on_share": 0.7639751552795031,
+   "wh_per_hour": 17.41010374480427,
+   "speed_along_chi": 7.744062618214954,
+   "wh_per_km": 0.6244964907356407,
    "v_travel_min": 6.019112066266164,
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.3847109637035462,
    "iterations": 400,
-   "runtime_s": 28.395355701446533
+   "runtime_s": 17.189938068389893
   },
   {
    "study": "motor",
@@ -633,21 +633,21 @@
    "cycle": "travel",
    "ground_effect": true,
    "u10": 6.0,
-   "u10_min_soaring": 9.521138305781701,
+   "u10_min_soaring": 9.52113919676345,
    "success": true,
-   "violation": 2.4705966439331206e-12,
-   "period": 9.09545461644372,
-   "power_avg_w": 13.93787132713273,
-   "power_peak_w": 70.37420431010213,
-   "thrust_on_share": 0.6459627329192547,
-   "wh_per_hour": 13.93787132713273,
-   "speed_along_chi": 8.43391802896975,
-   "wh_per_km": 0.4590548438940042,
+   "violation": 6.037034587513812e-11,
+   "period": 12.468323065778101,
+   "power_avg_w": 14.721842563101314,
+   "power_peak_w": 154.3871352047001,
+   "thrust_on_share": 0.4886128364389234,
+   "wh_per_hour": 14.721842563101314,
+   "speed_along_chi": 6.019112066266165,
+   "wh_per_km": 0.6794026539049579,
    "v_travel_min": 6.019112066266164,
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.3256488574786629,
-   "iterations": 328,
-   "runtime_s": 12.207955837249756
+   "iterations": 321,
+   "runtime_s": 15.014503955841064
   },
   {
    "study": "motor",
@@ -655,21 +655,21 @@
    "cycle": "travel",
    "ground_effect": true,
    "u10": 9.0,
-   "u10_min_soaring": 9.521138305781701,
+   "u10_min_soaring": 9.52113919676345,
    "success": true,
-   "violation": 5.876021891282335e-12,
-   "period": 7.331124555120684,
-   "power_avg_w": 3.546119274956904,
-   "power_peak_w": 11.322290933975038,
-   "thrust_on_share": 0.7287784679089027,
-   "wh_per_hour": 3.546119274956904,
-   "speed_along_chi": 6.019112066266164,
-   "wh_per_km": 0.16365090416791642,
+   "violation": 4.125754133627566e-12,
+   "period": 7.425631820633409,
+   "power_avg_w": 3.29267651392728,
+   "power_peak_w": 12.663845349647524,
+   "thrust_on_share": 0.7308488612836439,
+   "wh_per_hour": 3.29267651392728,
+   "speed_along_chi": 11.337771582130996,
+   "wh_per_km": 0.08067126404463071,
    "v_travel_min": 6.019112066266164,
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.28359494368920435,
-   "iterations": 178,
-   "runtime_s": 22.500442504882812
+   "iterations": 183,
+   "runtime_s": 3.4264514446258545
   },
   {
    "study": "motor",
@@ -677,21 +677,21 @@
    "cycle": "travel",
    "ground_effect": true,
    "u10": 9.52,
-   "u10_min_soaring": 9.521138305781701,
+   "u10_min_soaring": 9.52113919676345,
    "success": true,
-   "violation": 4.731999514451246e-12,
-   "period": 7.261673141330828,
-   "power_avg_w": 0.006079974443822884,
-   "power_peak_w": 0.13983941220775162,
+   "violation": 9.522532762318292e-11,
+   "period": 7.261919134865447,
+   "power_avg_w": 0.006085181676988908,
+   "power_peak_w": 0.1399591785705433,
    "thrust_on_share": 0.008281573498964804,
-   "wh_per_hour": 0.006079974443822884,
-   "speed_along_chi": 11.867090774060358,
-   "wh_per_km": 0.00014231641285178655,
+   "wh_per_hour": 0.006085181676988908,
+   "speed_along_chi": 11.867054022969302,
+   "wh_per_km": 0.00014243874177502784,
    "v_travel_min": 6.019112066266164,
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.27751658875220353,
-   "iterations": 156,
-   "runtime_s": 5.322669744491577
+   "iterations": 154,
+   "runtime_s": 3.043473482131958
   },
   {
    "study": "motor",
@@ -713,7 +713,7 @@
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.47340154486594016,
    "iterations": 400,
-   "runtime_s": 24.00030207633972
+   "runtime_s": 16.30885410308838
   },
   {
    "study": "motor",
@@ -735,7 +735,7 @@
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.3847109637035462,
    "iterations": 400,
-   "runtime_s": 25.30703902244568
+   "runtime_s": 15.780388116836548
   },
   {
    "study": "motor",
@@ -757,7 +757,7 @@
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.3256488574786629,
    "iterations": 354,
-   "runtime_s": 25.211119413375854
+   "runtime_s": 15.003079175949097
   },
   {
    "study": "motor",
@@ -779,7 +779,7 @@
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.28359494368920435,
    "iterations": 209,
-   "runtime_s": 6.515672922134399
+   "runtime_s": 3.6389458179473877
   },
   {
    "study": "motor",
@@ -801,7 +801,7 @@
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.2752579689053853,
    "iterations": 176,
-   "runtime_s": 5.597398281097412
+   "runtime_s": 3.2623813152313232
   },
   {
    "study": "motor",
@@ -809,21 +809,21 @@
    "cycle": "loiter",
    "ground_effect": true,
    "u10": 0.0,
-   "u10_min_soaring": 9.521138305781701,
+   "u10_min_soaring": 9.52113919676345,
    "success": false,
-   "violation": 1.204370309151145e-07,
+   "violation": 1.8314832081701372e-08,
    "period": 60.0,
-   "power_avg_w": 17.66009361025192,
-   "power_peak_w": 17.77400028542726,
+   "power_avg_w": 17.65886284692424,
+   "power_peak_w": 17.704560078131554,
    "thrust_on_share": 1.0,
-   "wh_per_hour": 17.66009361025192,
-   "speed_along_chi": 0.09723051734982922,
+   "wh_per_hour": 17.65886284692424,
+   "speed_along_chi": 0.02760344137838704,
    "wh_per_km": null,
    "v_travel_min": null,
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.47340154486594016,
    "iterations": 400,
-   "runtime_s": 31.886783838272095
+   "runtime_s": 19.49596095085144
   },
   {
    "study": "motor",
@@ -831,21 +831,21 @@
    "cycle": "loiter",
    "ground_effect": true,
    "u10": 3.0,
-   "u10_min_soaring": 9.521138305781701,
+   "u10_min_soaring": 9.52113919676345,
    "success": false,
-   "violation": 6.950071766709254e-08,
-   "period": 36.733893042034815,
-   "power_avg_w": 17.49689762927156,
-   "power_peak_w": 117.75022550451959,
-   "thrust_on_share": 0.8757763975155279,
-   "wh_per_hour": 17.49689762927156,
-   "speed_along_chi": 3.276547448281306,
+   "violation": 2.1865153464336543e-07,
+   "period": 37.50393095922337,
+   "power_avg_w": 17.507579433582794,
+   "power_peak_w": 121.89159238637349,
+   "thrust_on_share": 0.8509316770186336,
+   "wh_per_hour": 17.507579433582794,
+   "speed_along_chi": 3.418223071302234,
    "wh_per_km": null,
    "v_travel_min": null,
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.3847109637035462,
    "iterations": 400,
-   "runtime_s": 30.774999856948853
+   "runtime_s": 17.41464138031006
   },
   {
    "study": "motor",
@@ -853,21 +853,21 @@
    "cycle": "loiter",
    "ground_effect": true,
    "u10": 6.0,
-   "u10_min_soaring": 9.521138305781701,
+   "u10_min_soaring": 9.52113919676345,
    "success": true,
-   "violation": 8.514711158369437e-11,
-   "period": 14.22541484179164,
-   "power_avg_w": 14.895842936083246,
-   "power_peak_w": 199.2343626472252,
+   "violation": 3.635122758360865e-11,
+   "period": 14.222646236517619,
+   "power_avg_w": 14.895835884921294,
+   "power_peak_w": 199.69618402149698,
    "thrust_on_share": 0.463768115942029,
-   "wh_per_hour": 14.895842936083246,
-   "speed_along_chi": 5.900878613677079,
+   "wh_per_hour": 14.895835884921294,
+   "speed_along_chi": 5.896448825266273,
    "wh_per_km": null,
    "v_travel_min": null,
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.3256488574786629,
-   "iterations": 212,
-   "runtime_s": 7.641885280609131
+   "iterations": 219,
+   "runtime_s": 4.583812236785889
   },
   {
    "study": "motor",
@@ -875,21 +875,21 @@
    "cycle": "loiter",
    "ground_effect": true,
    "u10": 9.0,
-   "u10_min_soaring": 9.521138305781701,
+   "u10_min_soaring": 9.52113919676345,
    "success": true,
-   "violation": 3.700573181220079e-11,
-   "period": 7.542923318258435,
-   "power_avg_w": 4.549320660247748,
-   "power_peak_w": 17.581431849064,
+   "violation": 3.702606277133924e-11,
+   "period": 7.5429233352638185,
+   "power_avg_w": 4.549320660225298,
+   "power_peak_w": 17.581433047148735,
    "thrust_on_share": 0.7267080745341615,
-   "wh_per_hour": 4.549320660247748,
-   "speed_along_chi": 8.511095118994557,
+   "wh_per_hour": 4.549320660225298,
+   "speed_along_chi": 8.511095147306877,
    "wh_per_km": null,
    "v_travel_min": null,
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.28359494368920435,
    "iterations": 219,
-   "runtime_s": 7.426889419555664
+   "runtime_s": 4.106756210327148
   },
   {
    "study": "motor",
@@ -897,21 +897,21 @@
    "cycle": "loiter",
    "ground_effect": true,
    "u10": 9.52,
-   "u10_min_soaring": 9.521138305781701,
+   "u10_min_soaring": 9.52113919676345,
    "success": true,
-   "violation": 4.557229593693535e-11,
-   "period": 7.376422856653696,
-   "power_avg_w": 1.486934521503887,
-   "power_peak_w": 7.1100817748011975,
+   "violation": 4.55713244917888e-11,
+   "period": 7.37642285653185,
+   "power_avg_w": 1.4869345215032392,
+   "power_peak_w": 7.110081780881134,
    "thrust_on_share": 0.463768115942029,
-   "wh_per_hour": 1.486934521503887,
-   "speed_along_chi": 9.085997570810878,
+   "wh_per_hour": 1.4869345215032392,
+   "speed_along_chi": 9.085997570987116,
    "wh_per_km": null,
    "v_travel_min": null,
    "flap_glide_power_w": 20.516090046419688,
    "flap_glide_wh_per_km": 0.27751658875220353,
    "iterations": 186,
-   "runtime_s": 6.300802946090698
+   "runtime_s": 3.7708652019500732
   },
   {
    "study": "clearance",
@@ -925,7 +925,7 @@
    "success": true,
    "period": 7.253464675174356,
    "z_min": 1.5000000000000027,
-   "runtime_s": 28.644866466522217
+   "runtime_s": 16.796425104141235
   },
   {
    "study": "clearance",
@@ -935,11 +935,11 @@
    "h_min": 1.5,
    "h_tip_min": 0.3,
    "ground_effect": true,
-   "u10": 14.504881684580582,
+   "u10": 14.504888326617811,
    "success": true,
-   "period": 7.183504136482728,
-   "z_min": 1.5000000000000004,
-   "runtime_s": 21.447609901428223
+   "period": 7.183522218152213,
+   "z_min": 1.5,
+   "runtime_s": 14.564036846160889
   },
   {
    "study": "clearance",
@@ -953,7 +953,7 @@
    "success": true,
    "period": 7.282401148448505,
    "z_min": 1.392490409444379,
-   "runtime_s": 22.734806299209595
+   "runtime_s": 15.22086477279663
   },
   {
    "study": "clearance",
@@ -963,11 +963,11 @@
    "h_min": 1.0,
    "h_tip_min": 0.3,
    "ground_effect": true,
-   "u10": 14.469086229365178,
+   "u10": 14.469089905638882,
    "success": true,
-   "period": 7.220637435973414,
-   "z_min": 1.286320042777633,
-   "runtime_s": 159.90058183670044
+   "period": 7.220641329239054,
+   "z_min": 1.2863651948712875,
+   "runtime_s": 46.86550951004028
   },
   {
    "study": "clearance",
@@ -981,7 +981,7 @@
    "success": true,
    "period": 7.241986199065579,
    "z_min": 1.094726498374444,
-   "runtime_s": 39.72222185134888
+   "runtime_s": 26.033883094787598
   },
   {
    "study": "clearance",
@@ -991,11 +991,11 @@
    "h_min": 1.0,
    "h_tip_min": 0.1,
    "ground_effect": true,
-   "u10": 13.725706603220063,
+   "u10": 13.725715565070525,
    "success": true,
-   "period": 7.121018952252882,
-   "z_min": 1.0000000000000013,
-   "runtime_s": 31.042869329452515
+   "period": 7.1210209285746275,
+   "z_min": 1.0,
+   "runtime_s": 20.52307391166687
   },
   {
    "study": "clearance",
@@ -1009,7 +1009,7 @@
    "success": true,
    "period": 7.241991065903656,
    "z_min": 1.0947269090346634,
-   "runtime_s": 38.00518321990967
+   "runtime_s": 22.756250619888306
   },
   {
    "study": "clearance",
@@ -1019,11 +1019,11 @@
    "h_min": 0.5,
    "h_tip_min": 0.1,
    "ground_effect": true,
-   "u10": 13.72028389563592,
+   "u10": 13.720292683890008,
    "success": true,
-   "period": 7.159523807472311,
-   "z_min": 0.9348748630353279,
-   "runtime_s": 31.536257028579712
+   "period": 7.159515373457346,
+   "z_min": 0.9348713586924313,
+   "runtime_s": 19.69796085357666
   },
   {
    "study": "clearance",
@@ -1037,7 +1037,7 @@
    "success": true,
    "period": 7.235794562239072,
    "z_min": 0.997510515386193,
-   "runtime_s": 28.908411979675293
+   "runtime_s": 17.535720109939575
   },
   {
    "study": "clearance",
@@ -1047,11 +1047,11 @@
    "h_min": 0.3,
    "h_tip_min": 0.05,
    "ground_effect": true,
-   "u10": 13.516162377143212,
+   "u10": 13.516171046569845,
    "success": true,
-   "period": 7.139882521374831,
-   "z_min": 0.8755382081515153,
-   "runtime_s": 26.192503452301025
+   "period": 7.139842665262142,
+   "z_min": 0.8755361426215347,
+   "runtime_s": 15.087035179138184
   },
   {
    "study": "clearance",
@@ -1065,7 +1065,7 @@
    "success": true,
    "period": 7.001216197258398,
    "z_min": 1.5000000000000022,
-   "runtime_s": 19.12004017829895
+   "runtime_s": 11.123593091964722
   },
   {
    "study": "clearance",
@@ -1075,11 +1075,11 @@
    "h_min": 1.5,
    "h_tip_min": null,
    "ground_effect": true,
-   "u10": 13.637274749584268,
+   "u10": 13.637274893756441,
    "success": true,
-   "period": 6.95260609208021,
+   "period": 6.952560619390869,
    "z_min": 1.5,
-   "runtime_s": 24.19930148124695
+   "runtime_s": 13.44440507888794
   },
   {
    "study": "clearance",
@@ -1093,7 +1093,7 @@
    "success": true,
    "period": 7.0014056881660025,
    "z_min": 1.5,
-   "runtime_s": 18.711867809295654
+   "runtime_s": 10.58670163154602
   },
   {
    "study": "clearance",
@@ -1103,11 +1103,11 @@
    "h_min": 1.5,
    "h_tip_min": null,
    "ground_effect": true,
-   "u10": 8.125425055180317,
+   "u10": 8.125425236770784,
    "success": true,
-   "period": 6.95266465926064,
+   "period": 6.952738032183122,
    "z_min": 1.5,
-   "runtime_s": 17.665081024169922
+   "runtime_s": 9.06010127067566
   },
   {
    "study": "clearance",
@@ -1121,7 +1121,7 @@
    "success": true,
    "period": 6.789586718920697,
    "z_min": 0.5000000000000001,
-   "runtime_s": 17.595491886138916
+   "runtime_s": 9.88068151473999
   },
   {
    "study": "clearance",
@@ -1131,11 +1131,11 @@
    "h_min": 0.5,
    "h_tip_min": null,
    "ground_effect": true,
-   "u10": 10.098455809908897,
+   "u10": 10.092196911815686,
    "success": true,
-   "period": 6.7426775584323595,
-   "z_min": 0.5000000000000001,
-   "runtime_s": 93.2325849533081
+   "period": 6.757372454129191,
+   "z_min": 0.5,
+   "runtime_s": 32.05472111701965
   },
   {
    "study": "clearance",
@@ -1149,7 +1149,7 @@
    "success": true,
    "period": 6.789431271094823,
    "z_min": 0.5000000000000003,
-   "runtime_s": 24.303184509277344
+   "runtime_s": 13.467080116271973
   },
   {
    "study": "clearance",
@@ -1159,11 +1159,11 @@
    "h_min": 0.5,
    "h_tip_min": null,
    "ground_effect": true,
-   "u10": 5.344763426067819,
+   "u10": 5.344780976450531,
    "success": true,
-   "period": 6.734609126202466,
-   "z_min": 0.5,
-   "runtime_s": 34.00442028045654
+   "period": 6.734311343723219,
+   "z_min": 0.5000000000000001,
+   "runtime_s": 13.575846433639526
   },
   {
    "study": "clearance",
@@ -1177,7 +1177,7 @@
    "success": true,
    "period": 6.623661449209537,
    "z_min": 0.1,
-   "runtime_s": 38.946900606155396
+   "runtime_s": 20.9948787689209
   },
   {
    "study": "clearance",
@@ -1187,11 +1187,11 @@
    "h_min": 0.1,
    "h_tip_min": null,
    "ground_effect": true,
-   "u10": 7.2041826442488075,
+   "u10": 7.204513395307794,
    "success": true,
-   "period": 6.568516502232946,
+   "period": 6.569233143523553,
    "z_min": 0.1,
-   "runtime_s": 64.58625555038452
+   "runtime_s": 37.73020577430725
   },
   {
    "study": "clearance",
@@ -1205,7 +1205,7 @@
    "success": true,
    "period": 6.637583463103963,
    "z_min": 0.1,
-   "runtime_s": 63.495169162750244
+   "runtime_s": 35.58268451690674
   },
   {
    "study": "clearance",
@@ -1215,11 +1215,11 @@
    "h_min": 0.1,
    "h_tip_min": null,
    "ground_effect": true,
-   "u10": 3.417285002576672,
+   "u10": 3.425608470579774,
    "success": true,
-   "period": 6.656851514426528,
+   "period": 6.53164178212702,
    "z_min": 0.1,
-   "runtime_s": 68.59925556182861
+   "runtime_s": 53.47122597694397
   },
   {
    "study": "clearance",
@@ -1233,7 +1233,7 @@
    "success": true,
    "period": 6.491322207265254,
    "z_min": 1.5,
-   "runtime_s": 17.659322261810303
+   "runtime_s": 9.576953887939453
   },
   {
    "study": "clearance",
@@ -1243,11 +1243,11 @@
    "h_min": 1.5,
    "h_tip_min": 0.3,
    "ground_effect": true,
-   "u10": 9.065486185317202,
+   "u10": 9.065487724576357,
    "success": true,
-   "period": 6.357387539912123,
-   "z_min": 1.5,
-   "runtime_s": 22.657099962234497
+   "period": 6.357390909044512,
+   "z_min": 1.5000000000000002,
+   "runtime_s": 12.856323480606079
   },
   {
    "study": "clearance",
@@ -1261,7 +1261,7 @@
    "success": true,
    "period": 6.502581876394514,
    "z_min": 1.3895799708296421,
-   "runtime_s": 66.465341091156
+   "runtime_s": 32.937947511672974
   },
   {
    "study": "clearance",
@@ -1271,11 +1271,11 @@
    "h_min": 1.0,
    "h_tip_min": 0.3,
    "ground_effect": true,
-   "u10": 9.034357256341824,
+   "u10": 9.034359246001063,
    "success": true,
-   "period": 6.379922587975927,
-   "z_min": 1.3104035835120036,
-   "runtime_s": 55.58560037612915
+   "period": 6.379928085186034,
+   "z_min": 1.3103998586875387,
+   "runtime_s": 26.616543769836426
   },
   {
    "study": "clearance",
@@ -1289,7 +1289,7 @@
    "success": true,
    "period": 6.440843035646317,
    "z_min": 1.1002502179990326,
-   "runtime_s": 26.72101879119873
+   "runtime_s": 14.511237144470215
   },
   {
    "study": "clearance",
@@ -1299,11 +1299,11 @@
    "h_min": 1.0,
    "h_tip_min": 0.1,
    "ground_effect": true,
-   "u10": 8.49612732108478,
+   "u10": 8.496129860625876,
    "success": true,
-   "period": 6.274858334904009,
+   "period": 6.274864111793772,
    "z_min": 1.0,
-   "runtime_s": 52.206435203552246
+   "runtime_s": 21.100154399871826
   },
   {
    "study": "clearance",
@@ -1317,7 +1317,7 @@
    "success": true,
    "period": 6.440843035646317,
    "z_min": 1.1002502179990326,
-   "runtime_s": 87.23467230796814
+   "runtime_s": 15.26530146598816
   },
   {
    "study": "clearance",
@@ -1327,11 +1327,11 @@
    "h_min": 0.5,
    "h_tip_min": 0.1,
    "ground_effect": true,
-   "u10": 8.491400240946307,
+   "u10": 8.491402316892042,
    "success": true,
-   "period": 6.285450450702596,
-   "z_min": 0.9647285359611141,
-   "runtime_s": 131.7394232749939
+   "period": 6.2854557753249365,
+   "z_min": 0.9647287215093645,
+   "runtime_s": 36.089261531829834
   },
   {
    "study": "clearance",
@@ -1345,7 +1345,7 @@
    "success": true,
    "period": 6.4355268531802405,
    "z_min": 0.9477196349489098,
-   "runtime_s": 186.6796474456787
+   "runtime_s": 61.727150440216064
   },
   {
    "study": "clearance",
@@ -1355,11 +1355,11 @@
    "h_min": 0.3,
    "h_tip_min": 0.05,
    "ground_effect": true,
-   "u10": 8.338736195065637,
+   "u10": 8.338645353685731,
    "success": true,
-   "period": 6.239475649869794,
-   "z_min": 0.9032483739215419,
-   "runtime_s": 93.34811782836914
+   "period": 6.238991329357314,
+   "z_min": 0.9078449897011946,
+   "runtime_s": 24.639830589294434
   },
   {
    "study": "clearance",
@@ -1373,7 +1373,7 @@
    "success": true,
    "period": 6.351204844579915,
    "z_min": 1.5,
-   "runtime_s": 95.36871266365051
+   "runtime_s": 43.65840744972229
   },
   {
    "study": "clearance",
@@ -1383,11 +1383,11 @@
    "h_min": 1.5,
    "h_tip_min": null,
    "ground_effect": true,
-   "u10": 8.707366654012935,
+   "u10": 8.707368768554634,
    "success": true,
-   "period": 6.2492149676940665,
+   "period": 6.249223239512852,
    "z_min": 1.5,
-   "runtime_s": 24.83468747138977
+   "runtime_s": 11.121543645858765
   },
   {
    "study": "clearance",
@@ -1401,7 +1401,7 @@
    "success": true,
    "period": 5.91029936149836,
    "z_min": 0.5,
-   "runtime_s": 29.472439765930176
+   "runtime_s": 14.232582569122314
   },
   {
    "study": "clearance",
@@ -1411,11 +1411,11 @@
    "h_min": 0.5,
    "h_tip_min": null,
    "ground_effect": true,
-   "u10": 6.145625261011767,
+   "u10": 6.145635471562647,
    "success": true,
-   "period": 5.644760825891643,
+   "period": 5.644741617213363,
    "z_min": 0.5,
-   "runtime_s": 45.84613847732544
+   "runtime_s": 20.049226999282837
   },
   {
    "study": "clearance",
@@ -1429,7 +1429,7 @@
    "success": true,
    "period": 5.449879101356628,
    "z_min": 0.1,
-   "runtime_s": 37.08448600769043
+   "runtime_s": 21.372281789779663
   },
   {
    "study": "clearance",
@@ -1439,11 +1439,11 @@
    "h_min": 0.1,
    "h_tip_min": null,
    "ground_effect": true,
-   "u10": 3.989575368158846,
+   "u10": 3.9895657364661896,
    "success": true,
-   "period": 5.1282535775357205,
+   "period": 5.129027111547801,
    "z_min": 0.1,
-   "runtime_s": 94.24512124061584
+   "runtime_s": 59.724798917770386
   },
   {
    "study": "wind_difference",
@@ -1461,25 +1461,25 @@
    "wind_high": 15.88725582333907,
    "wind_difference": 4.016436222761843,
    "period": 7.253464675174356,
-   "runtime_s": 32.766292572021484
+   "runtime_s": 17.538424491882324
   },
   {
    "study": "wind_difference",
    "aircraft": "sachs-bird",
    "roughness": "coare35",
-   "z0": 0.00075048497806268,
+   "z0": 0.000750486386332184,
    "h_min": 1.5,
    "h_tip_min": 0.3,
    "ground_effect": true,
-   "u10": 14.504881684580582,
+   "u10": 14.504888326617811,
    "success": true,
-   "z_low": 1.5000000000000004,
-   "z_high": 18.563856910463787,
-   "wind_low": 11.607502358344455,
-   "wind_high": 15.449687444076158,
-   "wind_difference": 3.8421850857317033,
-   "period": 7.183504136482728,
-   "runtime_s": 25.250661611557007
+   "z_low": 1.5,
+   "z_high": 18.56395333056894,
+   "wind_low": 11.607507101161072,
+   "wind_high": 15.449702637911942,
+   "wind_difference": 3.8421955367508698,
+   "period": 7.183522218152213,
+   "runtime_s": 13.434956312179565
   },
   {
    "study": "wind_difference",
@@ -1497,25 +1497,25 @@
    "wind_high": 7.976864281932702,
    "wind_difference": 3.17094677896514,
    "period": 6.623661449209537,
-   "runtime_s": 41.52702856063843
+   "runtime_s": 28.997198343276978
   },
   {
    "study": "wind_difference",
    "aircraft": "sachs-bird",
    "roughness": "coare35",
-   "z0": 4.768620421365338e-05,
+   "z0": 4.769378418056114e-05,
    "h_min": 0.1,
    "h_tip_min": null,
    "ground_effect": true,
-   "u10": 7.2041826442488075,
+   "u10": 7.204513395307794,
    "success": true,
    "z_low": 0.1,
-   "z_high": 11.804593990054212,
-   "wind_low": 4.496661284020833,
-   "wind_high": 7.301722528719093,
-   "wind_difference": 2.80506124469826,
-   "period": 6.568516502232946,
-   "runtime_s": 65.8501501083374
+   "z_high": 11.809330671570198,
+   "wind_low": 4.496832608150244,
+   "wind_high": 7.302294901410141,
+   "wind_difference": 2.8054622932598967,
+   "period": 6.569233143523553,
+   "runtime_s": 50.66436433792114
   },
   {
    "study": "wind_difference",
@@ -1533,7 +1533,7 @@
    "wind_high": 10.210786237644344,
    "wind_difference": 4.016462826495821,
    "period": 7.253464501234163,
-   "runtime_s": 21.744699954986572
+   "runtime_s": 18.55061912536621
   },
   {
    "study": "wind_difference",
@@ -1543,15 +1543,15 @@
    "h_min": 1.5,
    "h_tip_min": 0.3,
    "ground_effect": true,
-   "u10": 8.872022295953553,
+   "u10": 8.872028146885127,
    "success": true,
-   "z_low": 1.5,
-   "z_high": 18.56358850757578,
-   "wind_low": 5.974642969593271,
-   "wind_high": 9.816805973781248,
-   "wind_difference": 3.8421630041879773,
-   "period": 7.183444615491348,
-   "runtime_s": 22.06468439102173
+   "z_low": 1.5000000000000002,
+   "z_high": 18.563705316425875,
+   "wind_low": 5.974646909757761,
+   "wind_high": 9.816822057777777,
+   "wind_difference": 3.842175148020017,
+   "period": 7.18348170650151,
+   "runtime_s": 15.331154823303223
   },
   {
    "study": "wind_difference",
@@ -1569,25 +1569,25 @@
    "wind_high": 9.58736467382682,
    "wind_difference": 1.9228515784677684,
    "period": 6.502581876394514,
-   "runtime_s": 56.09883666038513
+   "runtime_s": 40.30444121360779
   },
   {
    "study": "wind_difference",
    "aircraft": "albatross-3m",
    "roughness": "coare35",
-   "z0": 0.00011101690251468165,
+   "z0": 0.00011101699830174769,
    "h_min": 1.0,
    "h_tip_min": 0.3,
    "ground_effect": true,
-   "u10": 9.034357256341824,
+   "u10": 9.034359246001063,
    "success": true,
-   "z_low": 1.3104035835120036,
-   "z_high": 13.508497866391266,
-   "wind_low": 7.425012332589325,
-   "wind_high": 9.27250932360624,
-   "wind_difference": 1.8474969910169152,
-   "period": 6.379922587975927,
-   "runtime_s": 45.91693091392517
+   "z_low": 1.3103998586875387,
+   "z_high": 13.508500103843371,
+   "wind_low": 7.425011595114506,
+   "wind_high": 9.272511514890937,
+   "wind_difference": 1.847499919776431,
+   "period": 6.379928085186034,
+   "runtime_s": 30.57025384902954
   },
   {
    "study": "wind_difference",
@@ -1605,26 +1605,26 @@
    "wind_high": 11.004168256327446,
    "wind_difference": 2.4310062152754615,
    "period": 5.850175819532501,
-   "runtime_s": 17.03939199447632
+   "runtime_s": 12.991262912750244
   },
   {
    "study": "wind_difference",
    "aircraft": "baseline-2m",
    "roughness": "coare35",
-   "z0": 0.00021018526157730698,
+   "z0": 0.0002101853312303599,
    "h_min": 1.0,
    "h_tip_min": 0.3,
    "ground_effect": true,
-   "u10": 10.606216464247078,
+   "u10": 10.606217337650865,
    "success": true,
-   "z_low": 1.0006636170106358,
-   "z_high": 11.307138271397326,
-   "wind_low": 8.33932335409578,
-   "wind_high": 10.727196194624971,
-   "wind_difference": 2.387872840529191,
-   "period": 5.753715626783423,
-   "runtime_s": 15.288833141326904
+   "z_low": 1.0006619611229397,
+   "z_high": 11.307153569893094,
+   "wind_low": 8.339322341464067,
+   "wind_high": 10.727198414118774,
+   "wind_difference": 2.3878760726547075,
+   "period": 5.753716972917634,
+   "runtime_s": 10.00643277168274
   }
  ],
- "runtime_s": 833.3646755218506
+ "runtime_s": 404.57506275177
 }
