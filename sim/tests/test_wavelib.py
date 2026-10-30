@@ -64,7 +64,21 @@ class TestCrestRide(unittest.TestCase):
 
     def test_no_ride_on_a_small_swell_with_the_low_bound(self):
         # 1.5 m swell, P64 low bound, calm: the baseline's sink at the wave speed exceeds the updraft
-        self.assertEqual(crest_entries("baseline-2m", "p64_low", 1.5, 10.0, "along", 0.0), [])
+        self.assertEqual(crest_entries("baseline-2m", "p64_low", 1.5, 10.0, "along", 0.0, motor=False), [])
+        es = crest_entries("baseline-2m", "p64_low", 1.5, 10.0, "along", 0.0)
+        self.assertEqual(len(es), 1)                         # the motor ride of least power instead
+        self.assertEqual(es[0]["kind"], "motor")
+        self.assertGreater(es[0]["power_avg_w"], 0.0)
+        self.assertGreater(es[0]["thrust"][0], 0.0)
+
+    def test_family_rides_on_the_crest_side(self):
+        r = crest_ride(by_name("albatross-3m"), "p63", 3.0, 10.0, "along", 0.0, 0.0)
+        F = np.asarray(r["family"])
+        self.assertGreater(len(F), 5)
+        self.assertTrue(np.all(np.diff(F[:, 0]) > 0))        # heights rise ...
+        self.assertTrue(np.all(np.diff(F[:, 1]) > 0))        # ... and the phase moves towards mid-face with them
+        self.assertTrue(np.all(F[:, 1] < np.pi / 2))         # the crest side
+        self.assertAlmostEqual(r["h"], F[-1, 0])
 
     def test_ride_balances_updraft_and_sink(self):
         ac = by_name("albatross-3m")
@@ -125,7 +139,31 @@ class TestWaveGuide(unittest.TestCase):
         self.assertAlmostEqual(float(cyc.theta_at(23.0) - cyc.theta_at(13.0)), -2 * np.pi, places=6)
 
 
+class TestCrestGuide(unittest.TestCase):
+    def test_member_at_the_aircraft_height_plus_the_climb(self):
+        from sim.mpc import CREST_CLIMB_M
+        e = [x for x in crest_entries("albatross-3m", "p63", 3.0, 10.0, "along", 0.0) if x["course_rel_deg"] == 0.0][0]
+        cyc = Cycle(e)
+        env = swell_env(0.0, 3.0, 10.0, "along", "p63")
+        F = np.asarray(e["ride"]["family"])
+        s = [0.0, 0.0, 4.0 + float(env.surface(0.0, 0.0, 0.0)[0]), 16.0, 0.0, 0.0]
+        gd = WaveCycleGuide(cyc, env, 0.0, s, 0.0, 6.0)
+        self.assertAlmostEqual(gd.target[0], 4.0 + CREST_CLIMB_M, places=6)
+        self.assertAlmostEqual(gd.theta_t, float(np.interp(4.0 + CREST_CLIMB_M, F[:, 0], F[:, 1])), places=6)
+        self.assertTrue(np.all(gd.nominal(np.linspace(0, 6, 5))[1] == 0.0))       # wings level
+        self.assertTrue(np.all(gd.nominal_thrust(np.linspace(0, 6, 5)) == 0.0))   # soaring
+
+
 class TestPilot(unittest.TestCase):
+    def test_falls_back_to_flat_flight_where_the_swell_does_not_pay(self):
+        es = crest_entries("albatross-3m", "p64_low", 1.5, 12.0, "against", 9.0)
+        self.assertEqual(es[0]["kind"], "motor")
+        flat = [dict(aircraft="albatross-3m", u10=9.0, success=True, kind="motor", power_avg_w=1.0, chi_deg=0.0,
+                     speed_along_chi=10.0)]
+        env = swell_env(9.0, 1.5, 12.0, "against", "p64_low")
+        self.assertIsNotNone(WavePilot(es, "p64_low").cycle("albatross-3m", env, 9.0, np.pi, 0.0))
+        self.assertIsNone(WavePilot(es, "p64_low", flat_entries=flat).cycle("albatross-3m", env, 9.0, np.pi, 0.0))
+
     def test_mirror_and_course(self):
         es = crest_entries("albatross-3m", "p63", 3.0, 10.0, "along", 6.0)
         pilot = WavePilot(es, "p63", policy="course")

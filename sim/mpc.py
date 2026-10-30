@@ -1563,7 +1563,7 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             suite="standard", profile_fit="two_param", actuators=None, n_limit=False,
             log_every_s=5.0, stop_on_tip=False, library_path=None, motor=False, w_energy=None, reflex=False,
             true_fold_switch=None, target=None, navigator=None, nav_kw=None, nav_hull=None, guide_sig=None,
-            plan_hook=None, wave_library=None):
+            plan_hook=None, wave_library=None, start_entry=None, planner_world=None):
     """Closed loop: true dynamics (rk4, dt), planner every replan_s in the chosen world model.
 
     world_model: "truth" | "flat" | "estimated". sensors: list of SurfaceSensor (used only for
@@ -1599,6 +1599,15 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     changes, the mode shares, the heights and the arrival time.
 
     plan_hook (default None): callable(t, plan, world, state, guide) called after every plan (diagnostics).
+
+    wave_library (default None; nothing changes then, nor over a sea without a swell): an object with
+    cycle(aircraft, world, u10, chi, psi_w) -> Cycle or None (sim.wavelib.WavePilot) that names a wave-synchronized
+    cycle; the first plan flies the flat library's cycle (or start_entry), and the change onto a wave cycle waits
+    for the wave phase at the aircraft to match the cycle's (WAVE_SWITCH_THETA, at most WAVE_SWITCH_MAX_WAIT_S).
+    start_entry (default None): a library entry (dict) to start on instead of the library's pick, flown until the
+    first change of cycle.
+    planner_world (default None): with world_model "truth", the planner (and the wave library's choice) plans in
+    this world instead of the true one (a sea known with an error, for the sensing requirement of stage 2).
 
     reflex (default False; nothing changes then; needs motor=True): the Reflex supervisor runs at
     every control step on the true state, in the world of the latest plan, and overrides the
@@ -1647,6 +1656,7 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                   2.0 * ac.v_stall, 0.0, psi0])
     psi_w = float(np.arctan2(env_true.wind.ey, env_true.wind.ex))
     chi = float(wrap(np.arctan2(u[1], u[0]) - psi_w))
+    cyc_start = None
     if library is not None:
         # start on the library cycle at its highest node (as the old tracker does)
         c0 = library.pick(ac.name, u10_est, chi)
@@ -1655,6 +1665,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             c0 = Cycle(steady_entry(pt0), mirror=False)
         elif pt0 is not None and pt0.entry is not None:      # the hull navigator's first cycle
             c0 = Cycle(pt0.entry, mirror=pt0.side < 0)
+        if start_entry is not None:
+            c0 = cyc_start = Cycle(start_entry)
         k0 = int(np.argmax(c0.z))
         s = np.array([0.0, 0.0, float(env_true.surface(0.0, 0.0, 0.0)[0]) + c0.z[k0], c0.V[k0],
                       c0.g[k0], psi_w + c0.psi[k0]])
@@ -1673,6 +1685,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     tau_prev, n_cyc, deltas, mdist = None, 0, [], []
     if world_model == "truth":
         w_truth = env_true if max_components is None else _Limited(env_true, max_components)
+        if planner_world is not None:
+            w_truth = planner_world
     w_flat = _flat_world(env_true, u10_est)
     from_deg = env_true.wind.from_deg
 
@@ -1794,7 +1808,9 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             guide = None
             if library is not None:
                 pt_ = getattr(nav_cmd, "point", None) if nav is not None else None
-                if pt_ is not None and pt_.steady is not None:    # a steady motor leg: its own reference
+                if start_entry is not None and cyc_prev is None:
+                    cyc = cyc_start                   # the start entry flies the first plan
+                elif pt_ is not None and pt_.steady is not None:    # a steady motor leg: its own reference
                     cyc = Cycle(steady_entry(pt_), mirror=False)
                 elif pt_ is not None and pt_.entry is not None:   # the hull navigator names the cycle
                     cyc = Cycle(pt_.entry, mirror=pt_.side < 0)
@@ -1804,6 +1820,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                         wc = wave_library.cycle(ac.name, world, u10_p, chi_p, psi_p)
                         if wc is not None and cyc_prev is not None:
                             cyc = wc                  # (the first plan flies the flat cycle: entry from flat flight)
+                        elif wc is None and cyc_start is not None and world_swell(world) is not None:
+                            cyc = cyc_start           # the swell does not pay: stay on the start's flat flight
                 changed = cyc_prev is not None and (cyc.d is not cyc_prev.d or cyc.mirror != cyc_prev.mirror)
                 tack = (nav is not None and changed and cyc_prev.d.get("kind") == "soaring"
                         and cyc.d.get("kind") == "soaring")
@@ -2986,6 +3004,9 @@ def main():
     ap.add_argument("--build-wave-library", action="store_true", help="the wave-cycle library (sim.wavelib)")
     ap.add_argument("--wave-loop-exp", action="store_true", help="the closed loop over swell (sim.wavelib)")
     ap.add_argument("--wave-only", default="", help="cases of --wave-loop-exp as 'aircraft,hs,dir,u10,preset' joined by ;")
+    ap.add_argument("--wave-t-end", type=float, default=None, help="flight time of --wave-loop-exp (default 600 s)")
+    ap.add_argument("--wave-sense-exp", action="store_true", help="the planner's sea known with an error (sim.wavelib)")
+    ap.add_argument("--wave-nav-exp", action="store_true", help="a navigation run over swell (sim.wavelib)")
     a = ap.parse_args()
     if a.wave_diagnosis:
         from sim.wavelib import diagnosis_main
@@ -2998,6 +3019,14 @@ def main():
     if a.wave_loop_exp:
         from sim.wavelib import wave_exp_main
         wave_exp_main(a)
+        return
+    if a.wave_sense_exp:
+        from sim.wavelib import wave_sense_main
+        wave_sense_main(a)
+        return
+    if a.wave_nav_exp:
+        from sim.wavelib import wave_nav_main
+        wave_nav_main(a)
         return
     if a.build_margin_library:
         build_margin_library(workers=a.workers)

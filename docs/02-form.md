@@ -351,6 +351,7 @@ Motor-assisted cycles in the library and a reflex (`python -m sim.mpc --motor-li
 - A stall threshold of 0.95 stall speeds removed the false firing and still rescued four constructed dives towards the water, since the height and wingtip tests act first (K-015).
 - Over waves the reflex made things worse: mpc.motorlib_wave_ended of mpc.motorlib_wave_runs wave runs ended early, mpc.motorlib_wave_ended_reflex of them with the reflex on; in one, full thrust past the vertical sped the aircraft up so it could not pull out (K-015).
 - So the reflex needs redesign (Q-068): a stall threshold below the planner's floor, a stall test that accounts for the load factor, an override that does not zoom (thrust and lift scaled to the attitude, no full thrust past the vertical), and a world that sees the waves; and the waves still need wave-synchronized cycles in the library (Q-060).
+- Why those wave runs ended (the crests the flat world did not see, the components the shortened true world left out, and loops after the reflex), and the planner that flies wave-synchronized cycles over swell, are in the section on flight over swell (docs/02-form.md#wave-loop).
 
 
 ## Candidate forms {#candidate-forms}
@@ -455,7 +456,144 @@ What it found:
 - Over a 1 m swell the waves do not help: only one case beats the flat sea, by dsopt.wave4_hs1_best_gain_ms, against flat minima of dsopt.wave4_flat_margin_baseline_ms and dsopt.wave4_flat_margin_albatross_ms with margins and dsopt.wave4_flat_none_baseline_ms and dsopt.wave4_flat_none_albatross_ms without; the others need more wind than the flat sea, because a cycle forced to repeat with the wave pays for that when the wave gives little, so for small waves the right answer is the better of a wave-synchronized and an unsynchronized cycle.
 
 What it means: a large swell can carry the drone with no wind, if it follows the wave phase; a small swell cannot, and the wind must do it.
-This is the bird's light-wind behaviour (P42, P74, P80), and it makes the wave-aware closed loop the next thing to show (Q-060).
+This is the bird's light-wind behaviour (P42, P74, P80), and it makes the wave-aware closed loop the next thing to show (Q-060); it is shown in the next section.
+
+## Flight over swell in the closed loop {#wave-loop}
+
+Open item Q-060 asks that the receding-horizon planner keep the drone in the air over waves and draw energy from them.
+This pass does that in a first stage with a narrow scope:
+
+- the planner knows the sea exactly (an oracle sea); estimating the sea from the sensors is the second stage (Q-064);
+- the sea is long-crested swell;
+- the aircraft are the albatross-like glider and the baseline;
+- the wave-coherent wind is the calibration of P63, with the low bound of P64 beside it (Q-058);
+- the margins are the library's standard set (lowest point 2 m above the local surface, the wingtip clearance of the library, 0.8 of the load limit, 0.9 of the bank limit, 1.2 stall speeds); the wingtip close to the water is left to Q-063;
+- the reflex is off (Q-068).
+
+The code is `sim/wavelib.py` with the changes to `sim/mpc.py` named below; the unit tests are `sim/tests/test_wavelib.py`.
+The commands are `python -m sim.mpc --wave-diagnosis` (key `wave_diagnosis` of `sim/out/mpc.json`), `--build-wave-library` (`sim/out/mpc_library_wave.json`), `--wave-loop-exp` (key `wave_loop_exp`), `--wave-sense-exp` (key `wave_sense_exp`) and `--wave-nav-exp` (key `wave_nav_exp`), each stamped with the commit and the files it used; `python -m sim.wave_keys` writes the record keys of all of them and the key tables below.
+
+### Why the earlier wave runs ended
+
+The motor-library experiment of the receding-horizon section flew a fully developed wind sea at 13 and 16 m/s for 180 s, and some of its wave runs ended early.
+Each of them was flown again with every plan logged (`--wave-diagnosis`); all wave.diag_runs reproduced their recorded end to the step (wave.diag_reproduced).
+
+What the planner knew and followed:
+
+- With the "flat" world (wave.diag_flat_world_runs of the runs) the rollouts saw a flat surface at the mean sea level and the log wind with no wave-coherent wind.
+- With the "truth" world they saw the surface and the wave wind of the 48 strongest components, not the whole sea.
+- The reference was the flat-sea motor library's cycle, with its height measured above the local surface (a terrain-following version of a flat cycle), and the wave-aware phase shift was off; nothing in the reference or the cost asked the planner to use the waves.
+
+Where and why they ended:
+
+- None ended on a stall or for lack of energy: the motor ran most of the time in every run (at least wave.diag_motor_share_min of it), so the waves were never the source of the energy.
+- wave.diag_crest_tip_runs ended with a wingtip touching the top of a crest, where the surface stood wave.diag_crest_eta_std_min to wave.diag_crest_eta_std_max standard deviations above the mean.
+- In the flat-world runs that ended on a wingtip, the last plans predicted the wingtip wave.diag_flat_plan_tip_min_m to wave.diag_flat_plan_tip_max_m above their flat surface, while against the true surface the same plans put it at wave.diag_flat_true_tip_min_m to wave.diag_flat_true_tip_max_m, in the water: the planner did not see the crest.
+- In the truth-world run that ended, the last plans predicted the wingtip wave.diag_truth_plan_tip_m clear of the 48-component surface but wave.diag_truth_true_tip_m against the whole sea, and on average wave.diag_truth_dead_mean of the 96 samples ended in contact: the shortened sea hid the crest.
+- wave.diag_looped_runs runs had looped (the flight path angle had turned through a full circle) before they ended, and they are exactly the runs whose reflex had fired, the zoom past the vertical that K-015 found (Q-068).
+
+The same planner over a regular 3 m swell of 10 s (wave.diag_swell_runs runs, calm and 6 m/s, with and without the old phase shift) flew all of them to the end (wave.diag_swell_complete), but with the motor on all the time (wave.diag_swell_motor_share_min), at wave.diag_swell_power_min_w to wave.diag_swell_power_max_w, wave.diag_swell_h_median_min_m to wave.diag_swell_h_median_max_m above the surface, and once as low as wave.diag_swell_h_min_m: it terrain-follows its flat cycle and takes nothing from the swell.
+
+So the planner needed three things: the true surface in its rollouts (the oracle sea of this stage), a reference that is synchronized with the waves, and a guide that keeps that reference on the right part of the wave.
+
+### The sea of the experiments
+
+`swell_env` builds the sea of the optimizer's wave mode inside `sim/seawind.py`: one regular long-crested deep-water component of amplitude Hs / 2 and period Tp, the COARE 3.5 log wind over the local surface, and the wave-coherent wind of the preset (P63: vertical amplitude lit.wave_induced_amp_w and the decays lit.wave_induced_decay_u and lit.wave_induced_decay_w; the low bound of P64: vertical amplitude 0.6), with the horizontal amplitude of the optimizer's presets (a new opt-in keyword `wave_amp` of `Environment`).
+A unit test requires the wind of this sea to equal the optimizer's wave wind to rounding; the surface for contact and for the height above the surface is the second-order one of the simulator-fitness section.
+Calm is flown at the wave mode's lower bound of the wind, 0.1 m/s.
+A regular wave has no wave groups; an irregular long-crested swell is the next sea to fly.
+
+### The wave library
+
+`--build-wave-library` writes two kinds of entries, each with its sea (aircraft, preset, Hs, Tp, the swell's direction relative to the wind, wind), its course relative to the swell, the wave phase at its start, its mean ground velocity, its average electric power (zero for a soaring entry) and its replay result.
+
+Cycles of the optimizer (`solve_wave_entry`): for each course a soaring cycle of the wave mode, the speed along the course maximised, with the folded propeller over the whole cycle, the standard margins, COARE 3.5, the geometric wingtip, the midpoints, the roll and lift-coefficient rates, n >= 0, the phase pinned on the wave, three phase slips around each start, and the dense replay check with mesh refinement (Q-059); where no soaring cycle passes, a motor cycle of least average power with a mean speed along the course of at least half the best-glide speed.
+The grid is Hs 3, 2 and 1.5 m, Tp 8, 10 and 12 s, the swell along, across and against the wind, u10 0, 3, 6 and 9 m/s, and courses of 0, 90 and 180 deg from the swell's travel (and -90 deg for the swell across the wind, where the two sides are not mirror images).
+The optimizer's cycles were solved only at Tp 10 s for Hs 3 and 2 m (the part kept complete); a slot costs about half a minute to four minutes of one core, so the rest of the grid has the crest rides only.
+
+Crest rides (`crest_ride`, `crest_entries`): steady flight in the wave frame on the forward face, the pelican's wave-slope soaring.
+The aircraft moves with the swell at the phase speed and along the crest at a chosen speed, wings level, so its phase and its height above the local surface stay constant and the wind it meets is constant; a ride exists where the forward face's updraft balances the sink at the airspeed this needs.
+At each along-crest speed the rides form a family over the height: at every height the phase on the crest side of the face where the updraft balances the sink, up to 10 m or the balance height at the phase of the largest surplus.
+The crest side is the phase-stable one: an aircraft that falls back towards the crest loses updraft, sinks and speeds up again.
+Each sea keeps the ride with the slowest along-crest speed that soars (the course nearest the swell's travel) and the fastest either way; where none soars, it keeps the steady ride with the motor of least electric power, at 2 m.
+A replay in the optimizer's dynamics holds each soaring ride over a crest period.
+
+<!-- wave_lib_keys begin -->
+| aircraft | wave wind | Hs | Tp | optimizer: soaring, motor (of them near zero power), missing slots | seas with a soaring crest ride, with a motor crest ride only, of |
+|---|---|---|---|---|---|
+| albatross | p63 | 1.5 | 8 | not solved | wave.lib_albatross_p63_hs1p5_tp8_crest_seas, wave.lib_albatross_p63_hs1p5_tp8_crest_motor_seas, wave.lib_albatross_p63_hs1p5_tp8_seas |
+| albatross | p63 | 1.5 | 10 | not solved | wave.lib_albatross_p63_hs1p5_tp10_crest_seas, wave.lib_albatross_p63_hs1p5_tp10_crest_motor_seas, wave.lib_albatross_p63_hs1p5_tp10_seas |
+| albatross | p63 | 1.5 | 12 | not solved | wave.lib_albatross_p63_hs1p5_tp12_crest_seas, wave.lib_albatross_p63_hs1p5_tp12_crest_motor_seas, wave.lib_albatross_p63_hs1p5_tp12_seas |
+| albatross | p63 | 2 | 8 | not solved | wave.lib_albatross_p63_hs2_tp8_crest_seas, wave.lib_albatross_p63_hs2_tp8_crest_motor_seas, wave.lib_albatross_p63_hs2_tp8_seas |
+| albatross | p63 | 2 | 10 | wave.lib_albatross_p63_hs2_tp10_soaring, wave.lib_albatross_p63_hs2_tp10_motor, wave.lib_albatross_p63_hs2_tp10_motor_near_zero, wave.lib_albatross_p63_hs2_tp10_missing | wave.lib_albatross_p63_hs2_tp10_crest_seas, wave.lib_albatross_p63_hs2_tp10_crest_motor_seas, wave.lib_albatross_p63_hs2_tp10_seas |
+| albatross | p63 | 2 | 12 | not solved | wave.lib_albatross_p63_hs2_tp12_crest_seas, wave.lib_albatross_p63_hs2_tp12_crest_motor_seas, wave.lib_albatross_p63_hs2_tp12_seas |
+| albatross | p63 | 3 | 8 | not solved | wave.lib_albatross_p63_hs3_tp8_crest_seas, wave.lib_albatross_p63_hs3_tp8_crest_motor_seas, wave.lib_albatross_p63_hs3_tp8_seas |
+| albatross | p63 | 3 | 10 | wave.lib_albatross_p63_hs3_tp10_soaring, wave.lib_albatross_p63_hs3_tp10_motor, wave.lib_albatross_p63_hs3_tp10_motor_near_zero, wave.lib_albatross_p63_hs3_tp10_missing | wave.lib_albatross_p63_hs3_tp10_crest_seas, wave.lib_albatross_p63_hs3_tp10_crest_motor_seas, wave.lib_albatross_p63_hs3_tp10_seas |
+| albatross | p63 | 3 | 12 | not solved | wave.lib_albatross_p63_hs3_tp12_crest_seas, wave.lib_albatross_p63_hs3_tp12_crest_motor_seas, wave.lib_albatross_p63_hs3_tp12_seas |
+| albatross | p64 | 1.5 | 8 | not solved | wave.lib_albatross_p64_hs1p5_tp8_crest_seas, wave.lib_albatross_p64_hs1p5_tp8_crest_motor_seas, wave.lib_albatross_p64_hs1p5_tp8_seas |
+| albatross | p64 | 1.5 | 10 | not solved | wave.lib_albatross_p64_hs1p5_tp10_crest_seas, wave.lib_albatross_p64_hs1p5_tp10_crest_motor_seas, wave.lib_albatross_p64_hs1p5_tp10_seas |
+| albatross | p64 | 1.5 | 12 | not solved | wave.lib_albatross_p64_hs1p5_tp12_crest_seas, wave.lib_albatross_p64_hs1p5_tp12_crest_motor_seas, wave.lib_albatross_p64_hs1p5_tp12_seas |
+| albatross | p64 | 2 | 8 | not solved | wave.lib_albatross_p64_hs2_tp8_crest_seas, wave.lib_albatross_p64_hs2_tp8_crest_motor_seas, wave.lib_albatross_p64_hs2_tp8_seas |
+| albatross | p64 | 2 | 10 | wave.lib_albatross_p64_hs2_tp10_soaring, wave.lib_albatross_p64_hs2_tp10_motor, wave.lib_albatross_p64_hs2_tp10_motor_near_zero, wave.lib_albatross_p64_hs2_tp10_missing | wave.lib_albatross_p64_hs2_tp10_crest_seas, wave.lib_albatross_p64_hs2_tp10_crest_motor_seas, wave.lib_albatross_p64_hs2_tp10_seas |
+| albatross | p64 | 2 | 12 | not solved | wave.lib_albatross_p64_hs2_tp12_crest_seas, wave.lib_albatross_p64_hs2_tp12_crest_motor_seas, wave.lib_albatross_p64_hs2_tp12_seas |
+| albatross | p64 | 3 | 8 | not solved | wave.lib_albatross_p64_hs3_tp8_crest_seas, wave.lib_albatross_p64_hs3_tp8_crest_motor_seas, wave.lib_albatross_p64_hs3_tp8_seas |
+| albatross | p64 | 3 | 10 | wave.lib_albatross_p64_hs3_tp10_soaring, wave.lib_albatross_p64_hs3_tp10_motor, wave.lib_albatross_p64_hs3_tp10_motor_near_zero, wave.lib_albatross_p64_hs3_tp10_missing | wave.lib_albatross_p64_hs3_tp10_crest_seas, wave.lib_albatross_p64_hs3_tp10_crest_motor_seas, wave.lib_albatross_p64_hs3_tp10_seas |
+| albatross | p64 | 3 | 12 | not solved | wave.lib_albatross_p64_hs3_tp12_crest_seas, wave.lib_albatross_p64_hs3_tp12_crest_motor_seas, wave.lib_albatross_p64_hs3_tp12_seas |
+| baseline | p63 | 1.5 | 8 | not solved | wave.lib_baseline_p63_hs1p5_tp8_crest_seas, wave.lib_baseline_p63_hs1p5_tp8_crest_motor_seas, wave.lib_baseline_p63_hs1p5_tp8_seas |
+| baseline | p63 | 1.5 | 10 | not solved | wave.lib_baseline_p63_hs1p5_tp10_crest_seas, wave.lib_baseline_p63_hs1p5_tp10_crest_motor_seas, wave.lib_baseline_p63_hs1p5_tp10_seas |
+| baseline | p63 | 1.5 | 12 | not solved | wave.lib_baseline_p63_hs1p5_tp12_crest_seas, wave.lib_baseline_p63_hs1p5_tp12_crest_motor_seas, wave.lib_baseline_p63_hs1p5_tp12_seas |
+| baseline | p63 | 2 | 8 | not solved | wave.lib_baseline_p63_hs2_tp8_crest_seas, wave.lib_baseline_p63_hs2_tp8_crest_motor_seas, wave.lib_baseline_p63_hs2_tp8_seas |
+| baseline | p63 | 2 | 10 | wave.lib_baseline_p63_hs2_tp10_soaring, wave.lib_baseline_p63_hs2_tp10_motor, wave.lib_baseline_p63_hs2_tp10_motor_near_zero, wave.lib_baseline_p63_hs2_tp10_missing | wave.lib_baseline_p63_hs2_tp10_crest_seas, wave.lib_baseline_p63_hs2_tp10_crest_motor_seas, wave.lib_baseline_p63_hs2_tp10_seas |
+| baseline | p63 | 2 | 12 | not solved | wave.lib_baseline_p63_hs2_tp12_crest_seas, wave.lib_baseline_p63_hs2_tp12_crest_motor_seas, wave.lib_baseline_p63_hs2_tp12_seas |
+| baseline | p63 | 3 | 8 | not solved | wave.lib_baseline_p63_hs3_tp8_crest_seas, wave.lib_baseline_p63_hs3_tp8_crest_motor_seas, wave.lib_baseline_p63_hs3_tp8_seas |
+| baseline | p63 | 3 | 10 | wave.lib_baseline_p63_hs3_tp10_soaring, wave.lib_baseline_p63_hs3_tp10_motor, wave.lib_baseline_p63_hs3_tp10_motor_near_zero, wave.lib_baseline_p63_hs3_tp10_missing | wave.lib_baseline_p63_hs3_tp10_crest_seas, wave.lib_baseline_p63_hs3_tp10_crest_motor_seas, wave.lib_baseline_p63_hs3_tp10_seas |
+| baseline | p63 | 3 | 12 | not solved | wave.lib_baseline_p63_hs3_tp12_crest_seas, wave.lib_baseline_p63_hs3_tp12_crest_motor_seas, wave.lib_baseline_p63_hs3_tp12_seas |
+| baseline | p64 | 1.5 | 8 | not solved | wave.lib_baseline_p64_hs1p5_tp8_crest_seas, wave.lib_baseline_p64_hs1p5_tp8_crest_motor_seas, wave.lib_baseline_p64_hs1p5_tp8_seas |
+| baseline | p64 | 1.5 | 10 | not solved | wave.lib_baseline_p64_hs1p5_tp10_crest_seas, wave.lib_baseline_p64_hs1p5_tp10_crest_motor_seas, wave.lib_baseline_p64_hs1p5_tp10_seas |
+| baseline | p64 | 1.5 | 12 | not solved | wave.lib_baseline_p64_hs1p5_tp12_crest_seas, wave.lib_baseline_p64_hs1p5_tp12_crest_motor_seas, wave.lib_baseline_p64_hs1p5_tp12_seas |
+| baseline | p64 | 2 | 8 | not solved | wave.lib_baseline_p64_hs2_tp8_crest_seas, wave.lib_baseline_p64_hs2_tp8_crest_motor_seas, wave.lib_baseline_p64_hs2_tp8_seas |
+| baseline | p64 | 2 | 10 | wave.lib_baseline_p64_hs2_tp10_soaring, wave.lib_baseline_p64_hs2_tp10_motor, wave.lib_baseline_p64_hs2_tp10_motor_near_zero, wave.lib_baseline_p64_hs2_tp10_missing | wave.lib_baseline_p64_hs2_tp10_crest_seas, wave.lib_baseline_p64_hs2_tp10_crest_motor_seas, wave.lib_baseline_p64_hs2_tp10_seas |
+| baseline | p64 | 2 | 12 | not solved | wave.lib_baseline_p64_hs2_tp12_crest_seas, wave.lib_baseline_p64_hs2_tp12_crest_motor_seas, wave.lib_baseline_p64_hs2_tp12_seas |
+| baseline | p64 | 3 | 8 | not solved | wave.lib_baseline_p64_hs3_tp8_crest_seas, wave.lib_baseline_p64_hs3_tp8_crest_motor_seas, wave.lib_baseline_p64_hs3_tp8_seas |
+| baseline | p64 | 3 | 10 | wave.lib_baseline_p64_hs3_tp10_soaring, wave.lib_baseline_p64_hs3_tp10_motor, wave.lib_baseline_p64_hs3_tp10_motor_near_zero, wave.lib_baseline_p64_hs3_tp10_missing | wave.lib_baseline_p64_hs3_tp10_crest_seas, wave.lib_baseline_p64_hs3_tp10_crest_motor_seas, wave.lib_baseline_p64_hs3_tp10_seas |
+| baseline | p64 | 3 | 12 | not solved | wave.lib_baseline_p64_hs3_tp12_crest_seas, wave.lib_baseline_p64_hs3_tp12_crest_motor_seas, wave.lib_baseline_p64_hs3_tp12_seas |
+<!-- wave_lib_keys end -->
+
+### The planner over waves
+
+The rollouts already fly the planner's world; with the oracle sea that world is the true sea, so the height and the wingtip are measured against the moving second-order surface and the rollouts meet the wave wind.
+What changed (`sim/mpc.py`):
+
+- A library entry may carry the wave phase at the aircraft per node; `Cycle.theta_at` continues it over the periods.
+- `WaveCycleGuide` replaces `CycleGuide` for such an entry: the match picks the cycle phase that best fits the height above the local surface, the airspeed, the flight path angle, the heading relative to the wind and the wave phase at the aircraft, so the time shift is the one that puts the cycle's wave phase on the sea's; the terminal cost and a running tracking cost (weight 5 per second) add the wave-phase error, so the plans keep the aircraft on the same part of the wave as the cycle.
+- For a crest ride the guide follows the member of its family 2 m above the aircraft's present height, so the reference is always reachable and leads the aircraft upwards where the face has a surplus; the airspeed tolerance is loose (5 m/s) and the phase tolerance tight (0.1 rad), since the speed must float to hold the phase.
+- The wave library comes in through `fly_mpc(wave_library=...)` (`WavePilot`): it reads the swell of the planner's world, matches the library's nearest sea and wind (a sea with the swell to the right of the wind flies the mirrored entries), and names an entry; a run starts in flat flight (the steady motor leg of the navigation section at 10 m, `start_entry`), and the change onto a wave entry, or between wave entries, waits until the wave phase at the aircraft is within 0.3 rad of the cycle's (at most 60 s), as the soaring tacks wait for theirs.
+- The pilot's policy "energy" takes soaring entries first (crest rides first, the slowest along-crest speed), else the entry of least power, and stays on the start's flat flight when that entry needs at least the flat library's least power at the wind.
+- The wave runs sample with three smooth perturbation modes; without them the planner could not find the coherent bank that turns onto a ride's heading, and it took minutes to turn.
+- Without a wave library, or over a sea without a swell, nothing changes (a unit test requires the same trajectory to the bit on a flat sea with and without one); the viewer's port of the planner does not have the wave guide.
+
+Found on the way, with short pilot flights over a 3 m swell of 10 s (not recorded):
+
+- Taking the wave entry at the first plan, without waiting for the phase, locked the aircraft onto the rear face, where it held the wave speed with the motor running.
+- A ride at 20 m, the first choice of height, could not be reached from the start at 5 to 15 m: there is no surplus to climb on the crest side of the face, so the plans held a compromise below it and slid back over the crest; hence the family and the 10 m top.
+- With the tight airspeed and loose phase tolerances of the cycles the aircraft drifted slowly backwards over the crest, each plan predicting the slip but paying more for a speed error than for the phase; the crest tolerances above hold it.
+- A heavy tracking weight (20 per second, terminal 50) dived the aircraft into the water at the start.
+
+### Closed loop over swell
+
+`--wave-loop-exp`: both aircraft over a regular swell of Hs 3 and 2 m at Tp 10 s, the swell along and against the wind, u10 0, 3, 6 and 9 m/s, with the wave wind of P63 and the low bound of P64, each for 10 minutes or until the run ends; calm runs once and stands for both directions.
+The oracle sea, the truth state and wind, the motor allowed at the middle energy weight (its cost in the planner), the actuators, the load-factor limit, the stop on a wingtip contact and no reflex, as the navigation runs; the start in flat flight along the swell's travel.
+A run counts when it flew the whole time inside the band of R-12 (heights above the local surface) and the margins of the navigation section (`flight_margins`).
+The power is the average electric power over the run (the same number as the energy per hour in Wh/h), and also from the entry onto the wave library on; the flat sea's figure is the flat motor library's least average power at the same wind (any course).
+
+<!-- wave_loop_keys begin -->
+<!-- wave_loop_keys end -->
+
+### Navigation over swell
+
+### What the planner needs to know of the sea (stage 2)
+
+### What failed, and what remains
 
 ## Wing sizing with measured airfoil data {#wing-sizing}
 
