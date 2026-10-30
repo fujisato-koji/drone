@@ -2,9 +2,9 @@ import unittest
 
 import numpy as np
 
-from sim.aircraft import BASELINE, derivatives
-from sim.mpc import (Cycle, CycleGuide, CycleLibrary, MPPIPlanner, derivatives_vec, fly_mpc,
-                     wrap)
+from sim.aircraft import BASELINE, G, Actuators, derivatives
+from sim.mpc import (Cycle, CycleGuide, CycleLibrary, MPPIPlanner, burst_stats, derivatives_vec,
+                     energy_weight, fly_mpc, wrap)
 from sim.seawind import Environment, WaveTrain, Wind
 
 
@@ -43,6 +43,99 @@ class TestMPC(unittest.TestCase):
                     planner_kw={"n_samples": 96, "dt": 0.1, "n_iter": 1})
         self.assertEqual(r["ended"], "complete")
         self.assertGreater(r["min_clear_surface"], 0.0)
+
+
+class TestMotor(unittest.TestCase):
+    def test_vectorized_dynamics_with_thrust_and_folded_drag_match(self):
+        env = wave_env()
+        rng = np.random.default_rng(1)
+        S = 12
+        s = np.stack([rng.uniform(-50, 50, S), rng.uniform(-50, 50, S), rng.uniform(0.5, 12, S),
+                      rng.uniform(8, 20, S), rng.uniform(-0.4, 0.4, S), rng.uniform(-3, 3, S)])
+        cl, mu = rng.uniform(0.0, 1.2, S), rng.uniform(-1.0, 1.0, S)
+        th = rng.uniform(0.0, 5.0, S)
+        th[0] = 0.0
+        dcd = 3e-4 / BASELINE.wing_area
+        dv = derivatives_vec(3.3, s, BASELINE, env, cl, mu, thrust=th, fold_dcd=dcd)
+        for i in range(S):
+            d = derivatives(3.3, s[:, i], BASELINE, env, cl[i], mu[i], thrust=th[i], fold_dcd=dcd)[0]
+            self.assertLess(np.max(np.abs(dv[:, i] - d)) / np.max(np.abs(d)), 1e-9)
+        # the folded propeller costs speed with the motor off
+        d0 = derivatives(3.3, s[:, 1], BASELINE, env, cl[1], mu[1])[0]
+        d1 = derivatives(3.3, s[:, 1], BASELINE, env, cl[1], mu[1], fold_dcd=dcd)[0]
+        self.assertLess(d1[3], d0[3])
+
+    def test_thrust_lag(self):
+        a = Actuators(BASELINE, rate_model="pb2v", thrust_tau=0.1)
+        a.step(0.5, 0.0, 0.01, 10.0, thrust=0.0)
+        self.assertEqual(a.T, 0.0)
+        for _ in range(10):
+            a.step(0.5, 0.0, 0.01, 10.0, thrust=5.0)
+        self.assertAlmostEqual(a.T, 5.0 * (1.0 - np.exp(-1.0)), places=9)   # one time constant
+
+    def test_motor_planner_shapes_and_nonnegative_thrust(self):
+        pl = MPPIPlanner(BASELINE, n_samples=16, dt=0.1, horizon_s=3.0, n_ctrl=6, motor=True)
+        self.assertEqual(pl._initial_plan().shape, (3, 6))
+        self.assertEqual(pl._candidates().shape, (6, 3, 6))
+        eps = np.random.default_rng(0).standard_normal((16, 3, 6)) * pl.sigma_t
+        Us = pl._clip(np.zeros((16, 3, 6)) + eps)
+        self.assertGreaterEqual(Us[:, 2].min(), 0.0)
+        self.assertLessEqual(Us[:, 2].max(), pl.t_max)
+        self.assertAlmostEqual(pl.sigma_t, 0.15 * pl.t_max)
+        off = MPPIPlanner(BASELINE, n_samples=16, dt=0.1, horizon_s=3.0, n_ctrl=6)
+        self.assertEqual(off._initial_plan().shape, (2, 6))
+        self.assertFalse(hasattr(off, "t_max"))
+
+    def test_thrust_gains_energy_and_costs_energy_weight(self):
+        env = Environment.flat(Wind(6.0, 270.0))
+        s0 = np.array([0.0, 0.0, 8.0, 10.0, 0.0, 0.0])
+        for w in (0.0, 1.0):
+            pl = MPPIPlanner(BASELINE, n_samples=2, dt=0.1, horizon_s=4.0, n_ctrl=5, motor=True,
+                             w_energy=w, w_e=1.0)
+            glide = np.array([[BASELINE.cl_best_ld] * 5, [0.0] * 5, [0.0] * 5])
+            burn = glide.copy()
+            burn[2] = 0.3 * pl.t_max
+            cost, path, dead = pl.rollout(env, 0.0, s0, np.stack([glide, burn]), (1.0, 0.0))
+            self.assertFalse(dead.any())
+            e = G * path[-1, 2] + 0.5 * path[-1, 3] ** 2
+            self.assertGreater(e[1], e[0])                     # the thrust adds energy
+            if w == 0.0:
+                self.assertLess(cost[1], cost[0])              # free electricity: worth it
+            else:
+                self.assertGreater(cost[1], cost[0])           # costly electricity: not here
+
+    def test_energy_weight_levels_increase(self):
+        w = [energy_weight(BASELINE, k) for k in ("free", "normal", "costly")]
+        self.assertTrue(w[0] < w[1] < w[2])
+
+    def test_burst_stats(self):
+        dt = 0.01
+        T = np.zeros(1000)
+        T[100:300] = 0.5 * BASELINE.mass * G      # 2 s
+        T[600:650] = 0.3 * BASELINE.mass * G      # 0.5 s
+        V = np.full(1000, 10.0)
+        pl = MPPIPlanner(BASELINE, motor=True)
+        m = burst_stats(BASELINE, pl, dt, T, V, np.full(1000, 5.0), np.linspace(0, 0.999, 1000),
+                        np.linspace(0, 0.999, 1000))
+        self.assertEqual(m["n_bursts"], 2)
+        self.assertAlmostEqual(m["thrust_on_share"], 0.25, places=9)
+        self.assertAlmostEqual(m["burst_len_median_s"], 1.25, places=9)
+        e = (200 * 0.5 + 50 * 0.3) * BASELINE.mass * G * 10.0 * dt / pl.eta
+        self.assertAlmostEqual(m["energy_j"], e, places=6)
+        self.assertAlmostEqual(m["avg_power_w"], e / 10.0, places=6)
+        self.assertEqual(m["burst_phase_hist8"], [1, 0, 0, 0, 1, 0, 0, 0])
+
+    def test_fly_mpc_motor_logs_and_off_has_no_motor_key(self):
+        env = Environment.flat(Wind(9.0, 270.0))
+        kw = {"n_samples": 32, "dt": 0.1, "n_iter": 1}
+        r = fly_mpc(BASELINE, env, "flat", [], 8.0, env.wind.to_deg - 20.0, 9.0, seed=1, planner_kw=kw,
+                    actuators=Actuators(BASELINE, rate_model="pb2v"), n_limit=True, motor=True,
+                    w_energy=0.01)
+        m = r["motor"]
+        self.assertAlmostEqual(m["energy_j"], m["avg_power_w"] * m["duration_s"], places=6)
+        self.assertGreater(m["energy_j"], 0.0)
+        r0 = fly_mpc(BASELINE, env, "flat", [], 3.0, env.wind.to_deg - 20.0, 9.0, seed=1, planner_kw=kw)
+        self.assertNotIn("motor", r0)
 
 
 def synthetic_cycle(mirror=False):

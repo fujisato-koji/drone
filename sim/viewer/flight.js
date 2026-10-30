@@ -15,7 +15,10 @@
   // pick the one-sided z derivative near the surface, as aircraft.wind_derivs does.
   // Optional nLimit (default false): reduce cl to the load-factor limit at the current airspeed
   // (sim.aircraft.n_limited_cl), as the MPC mode flies.
-  function derivatives(s, cl, mu, ac, windFn, t, nLimit) {
+  // Optional thrust (N, default 0): along the air-relative velocity, adds thrust / m to dV/dt.
+  // Optional foldDcd (default undefined, off): the folded-propeller drag, cd0 + foldDcd (1 - T / (T +
+  // 0.01 m g)), as sim.aircraft.derivatives (fold_dcd).
+  function derivatives(s, cl, mu, ac, windFn, t, nLimit, thrust, foldDcd) {
     var x = s[0], y = s[1], z = s[2], V = s[3], g = s[4], p = s[5];
     if (nLimit) cl = Math.min(cl, ac.n_max * ac.mass * G / (0.5 * ac.rho * V * V * ac.wing_area));
     var cg = Math.cos(g), sg = Math.sin(g), cp = Math.cos(p), sp = Math.sin(p);
@@ -39,8 +42,11 @@
     var dot = function (a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; };
     var k = ac.k_induced;
     var q = 0.5 * ac.rho * V * V * ac.wing_area;
-    var L = q * cl, D = q * (ac.cd0 + k * cl * cl), m = ac.mass;
+    var cd0 = ac.cd0;
+    if (foldDcd !== undefined) cd0 = cd0 + foldDcd * (1.0 - thrust / (thrust + 0.01 * ac.mass * G));
+    var L = q * cl, D = q * (cd0 + k * cl * cl), m = ac.mass;
     var dV = -D / m - G * sg - dot(aW, eV);
+    if (thrust) dV = dV + thrust / m;
     var dg = (L * Math.cos(mu) / m - G * cg - dot(aW, eg)) / V;
     var cgf = Math.max(Math.abs(cg), 0.05);   // floor near vertical flight
     var dp = (L * Math.sin(mu) / m - dot(aW, ep)) / (V * cgf);
@@ -48,12 +54,12 @@
   }
 
   // classical RK4 with the controls held over the step
-  function rk4(s, cl, mu, ac, windFn, t, dt, nLimit) {
+  function rk4(s, cl, mu, ac, windFn, t, dt, nLimit, thrust, foldDcd) {
     var add = function (a, b, c) { return a.map(function (v, i) { return v + c * b[i]; }); };
-    var k1 = derivatives(s, cl, mu, ac, windFn, t, nLimit);
-    var k2 = derivatives(add(s, k1, dt / 2), cl, mu, ac, windFn, t + dt / 2, nLimit);
-    var k3 = derivatives(add(s, k2, dt / 2), cl, mu, ac, windFn, t + dt / 2, nLimit);
-    var k4 = derivatives(add(s, k3, dt), cl, mu, ac, windFn, t + dt, nLimit);
+    var k1 = derivatives(s, cl, mu, ac, windFn, t, nLimit, thrust, foldDcd);
+    var k2 = derivatives(add(s, k1, dt / 2), cl, mu, ac, windFn, t + dt / 2, nLimit, thrust, foldDcd);
+    var k3 = derivatives(add(s, k2, dt / 2), cl, mu, ac, windFn, t + dt / 2, nLimit, thrust, foldDcd);
+    var k4 = derivatives(add(s, k3, dt), cl, mu, ac, windFn, t + dt, nLimit, thrust, foldDcd);
     return s.map(function (v, i) { return v + dt / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]); });
   }
 

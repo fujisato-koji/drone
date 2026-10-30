@@ -135,7 +135,7 @@ class Actuators:
     """
 
     def __init__(self, ac, tau=None, mu_rate_deg_s=None, cl_rate=None, rate_model="constant",
-                 delay_s=None, k_pb2v=None):
+                 delay_s=None, k_pb2v=None, thrust_tau=None):
         if rate_model not in ("constant", "pb2v"):
             raise ValueError("rate_model must be 'constant' or 'pb2v'")
         pb = rate_model == "pb2v"
@@ -150,11 +150,13 @@ class Actuators:
         self.k_pb2v = float(value("ctrl.roll_pb2v", 0.08) if k_pb2v is None else k_pb2v)
         self.delay = float((value("ctrl.actuator_delay_s", 0.05) if pb else 0.0)
                            if delay_s is None else delay_s)
+        self.thrust_tau = float(value("prop.thrust_tau_s", 0.1) if thrust_tau is None else thrust_tau)
         self.reset()
 
     def reset(self):
         self.cl = None
         self.mu = None
+        self.T = None       # actual motor thrust (N), set only when step() is given a thrust
         self.cmd_last = None
         self._q = None
         self.n_steps = 0
@@ -167,7 +169,16 @@ class Actuators:
             return self.k_pb2v * 2.0 * np.asarray(V, dtype=float) / self.ac.span
         return self.mu_rate
 
-    def step(self, cl_cmd, mu_cmd, dt, V=None):
+    def step(self, cl_cmd, mu_cmd, dt, V=None, thrust=None):
+        """thrust (N, optional): the motor command, which follows a first-order lag of time constant
+        prop.thrust_tau_s (default 0.1 s) with no delay and no rate limit; the actual thrust is then
+        in self.T (the return value stays (cl, mu)). The first call starts at the command."""
+        if thrust is not None:
+            if self.T is None:
+                self.T = float(thrust)
+            else:
+                a_t = 1.0 - np.exp(-dt / self.thrust_tau) if self.thrust_tau > 0 else 1.0
+                self.T += a_t * (float(thrust) - self.T)
         cl_cmd, mu_cmd = clip_controls(self.ac, cl_cmd, mu_cmd)
         self.n_steps += 1
         self.cmd_last = (float(cl_cmd), float(mu_cmd))
@@ -220,13 +231,16 @@ def ground_effect_phi(h, span, mu, psi=0.0, ex=0.0, ey=0.0):
     return ground_effect_factor(h * cn / span, mu + np.arctan(s_left))
 
 
-def derivatives(t, s, ac, env, cl, mu, n_limit=False, thrust=0.0, ground_effect=False):
+def derivatives(t, s, ac, env, cl, mu, n_limit=False, thrust=0.0, ground_effect=False,
+                fold_dcd=None):
     """Derivatives of the state. With n_limit, cl is first reduced to the load-factor limit at
     the current airspeed (n_limited_cl).
 
     thrust (N, default 0): along the air-relative velocity, adds thrust / m to dV/dt.
     ground_effect (default off): the induced drag is multiplied by ground_effect_phi at the
-    height above env.surface (lift unchanged)."""
+    height above env.surface (lift unchanged).
+    fold_dcd (default None): the folded-propeller drag, cd0 + fold_dcd (1 - T / (T + 0.01 m g)),
+    the smooth switch of sim.dsopt._drag (1 at T = 0, 1/2 at 1 % of the weight)."""
     x, y, z, V, g, p = s
     if n_limit:
         cl = n_limited_cl(ac, V, cl)
@@ -236,12 +250,15 @@ def derivatives(t, s, ac, env, cl, mu, n_limit=False, thrust=0.0, ground_effect=
     aW = dwdt + grad @ vg
     q = 0.5 * ac.rho * V * V * ac.wing_area
     L = q * cl
+    cd0 = ac.cd0
+    if fold_dcd is not None:
+        cd0 = cd0 + fold_dcd * (1.0 - thrust / (thrust + 0.01 * ac.mass * G))
     if ground_effect:
         eta, ex, ey = env.surface(x, y, t)
         K = float(ground_effect_phi(z - float(eta), ac.span, mu, p, float(ex), float(ey)))
-        D = q * (ac.cd0 + ac.k_induced * K * cl * cl)
+        D = q * (cd0 + ac.k_induced * K * cl * cl)
     else:
-        D = q * (ac.cd0 + ac.k_induced * cl * cl)
+        D = q * (cd0 + ac.k_induced * cl * cl)
     m = ac.mass
     dV = -D / m - G * np.sin(g) - aW @ eV
     if thrust:

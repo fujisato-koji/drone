@@ -18,6 +18,22 @@ Choices the spec left open (simplest thing taken):
 - Until the estimator has a fit (at least 40 samples spanning 4 s) the "estimated" model plans
   in the flat world.
 
+Motor as a third control (MPPIPlanner motor=True, fly_mpc motor=True; choices the spec left open):
+- Each knot carries the thrust T in [0, T_max] (T_max = prop.thrust_max_per_weight m g); the nominal
+  thrust of a library cycle is 0. The perturbation of T is Gaussian with sigma
+  ctrl.thrust_sigma_frac (0.15) T_max, independent per knot, clipped at 0 and T_max (so about half
+  of the perturbed knots are 0 and the rest a half-normal burst).
+- Rollouts and the closed loop fly with the thrust and with the folded-propeller drag
+  cd0 + Delta CD0 (1 - T / (T + 0.01 m g)). The motor follows the command through a first-order lag
+  prop.thrust_tau_s (0.1 s) in sim.aircraft.Actuators (no delay, no rate limit); without actuators
+  the commanded thrust is applied as it is.
+- The cost adds w_energy times the electric energy E = integral of T V / (eta_p eta_m) dt over the
+  horizon (per step T at the step midpoint, V at the step start, counted while the rollout is
+  alive), and keeps every other term. w_energy is in cost units per joule. The three named levels
+  (W_ENERGY_LEVELS, energy_weight) are multiples of the break-even weight w_e eta / m, the weight at
+  which a joule of electricity costs as much as the specific energy it can buy is worth.
+- A burst is a run of the actual thrust above 1 % of the weight (the half point of the drag switch).
+
 Estimates in the loop (state_source / wind_source = "estimate"; choices the spec left open):
 - A SensorSuite (default "standard") and the Estimator run at the integration step on the true
   state; the actual bank (after the actuators) feeds the sensor truth.
@@ -71,11 +87,13 @@ def wind_derivs_vec(world, x, y, z, t):
     return w[0], grad, (w[7] - w[8]) / (2 * _DT)
 
 
-def derivatives_vec(t, s, ac, world, cl, mu, n_limit=False, thrust=0.0, ground_effect=False):
+def derivatives_vec(t, s, ac, world, cl, mu, n_limit=False, thrust=0.0, ground_effect=False,
+                    fold_dcd=None):
     """s: (6, S) states; cl, mu: (S,). Returns (6, S) derivatives. With n_limit cl is first
     reduced to the load-factor limit at each state's airspeed (as sim.aircraft.n_limited_cl).
     thrust (N, scalar or (S,)) along the air-relative velocity; ground_effect multiplies the
-    induced drag by sim.aircraft.ground_effect_phi at the height above world.surface."""
+    induced drag by sim.aircraft.ground_effect_phi at the height above world.surface.
+    fold_dcd (None: off): the folded-propeller drag of sim.aircraft.derivatives."""
     x, y, z, V, g, p = s
     if n_limit:
         cl = np.minimum(cl, ac.n_max * ac.mass * G / (0.5 * ac.rho * V * V * ac.wing_area))
@@ -88,12 +106,15 @@ def derivatives_vec(t, s, ac, world, cl, mu, n_limit=False, thrust=0.0, ground_e
     aW = dwdt + np.einsum("sij,sj->si", grad, vg)
     q = 0.5 * ac.rho * V * V * ac.wing_area
     L = q * cl
+    cd0 = ac.cd0
+    if fold_dcd is not None:
+        cd0 = cd0 + fold_dcd * (1.0 - thrust / (thrust + 0.01 * ac.mass * G))
     if ground_effect:
         eta, ex, ey = world.surface(x, y, np.full(np.shape(x), float(t)))
-        D = q * (ac.cd0 + ac.k_induced * ground_effect_phi(z - eta, ac.span, mu, p, ex, ey)
+        D = q * (cd0 + ac.k_induced * ground_effect_phi(z - eta, ac.span, mu, p, ex, ey)
                  * cl * cl)
     else:
-        D = q * (ac.cd0 + ac.k_induced * cl * cl)
+        D = q * (cd0 + ac.k_induced * cl * cl)
     m = ac.mass
     dV = -D / m - G * sg_ - np.sum(aW * eV, axis=1)
     if np.any(thrust):
@@ -123,11 +144,18 @@ class Plan:
     cost: float
     ess: float                # effective sample size of the last iteration
     n_dead: int               # rollouts of the last iteration that ended in contact or stall
+    thrust_knots: np.ndarray = None   # (n_ctrl,) commanded thrust (N) with the motor, else None
 
     def controls(self, tau):
         """(cl, mu) at tau seconds from the plan time (piecewise linear, held after the end)."""
         return (float(np.interp(tau, self.knots_t, self.cl_knots)),
                 float(np.interp(tau, self.knots_t, self.mu_knots)))
+
+    def thrust(self, tau):
+        """Commanded thrust (N) at tau seconds from the plan time (0 without the motor)."""
+        if self.thrust_knots is None:
+            return 0.0
+        return float(np.interp(tau, self.knots_t, self.thrust_knots))
 
 
 class MPPIPlanner:
@@ -135,7 +163,7 @@ class MPPIPlanner:
                  sigma_cl=0.15, sigma_mu=0.25, replan_s=0.5, seed=1, n_iter=2, n_iter_cold=4,
                  w_e=1.0, w_p=0.5, h_clear=1.0, clearance="height", w_clear=200.0,
                  w_n=50.0, w_stall=300.0, w_smooth=2.0, c_contact=1e4, smooth_modes=0,
-                 smooth_gain=3.0, w_d=10.0, n_limit=False):
+                 smooth_gain=3.0, w_d=10.0, n_limit=False, motor=False, w_energy=None):
         self.ac = aircraft
         self.horizon_s, self.dt, self.n_samples, self.n_ctrl = horizon_s, dt, n_samples, n_ctrl
         self.lam, self.sigma_cl, self.sigma_mu, self.replan_s = lam, sigma_cl, sigma_mu, replan_s
@@ -145,6 +173,16 @@ class MPPIPlanner:
         self.c_contact = c_contact
         self.smooth_modes, self.smooth_gain = smooth_modes, smooth_gain
         self.w_d = w_d
+        self.motor = bool(motor)
+        self.nu = 3 if self.motor else 2         # controls per knot: cl, mu (and the thrust T)
+        if self.motor:
+            from sim.dsopt import folded_dcd, prop_efficiency, thrust_max
+            from sim.record import value
+            self.t_max = thrust_max(aircraft)
+            self.eta = prop_efficiency()
+            self.w_energy = float(energy_weight(aircraft, "normal") if w_energy is None else w_energy)
+            self.fold_dcd = folded_dcd(aircraft)
+            self.sigma_t = float(value("ctrl.thrust_sigma_frac", 0.15)) * self.t_max
         self.act = None             # an sim.aircraft.Actuators: rollouts fly through its model
         self.act_state = None       # (actual cl, actual mu, last cl command, last mu command)
         self.n_limit = n_limit      # rollouts fly the load-limited cl (the cost still sees the commanded n)
@@ -167,11 +205,11 @@ class MPPIPlanner:
     def _initial_plan(self):
         ac = self.ac
         cl0 = float(np.clip(1.0 * ac.cl_best_ld, ac.cl_min, ac.cl_max))
-        return np.stack([np.full(self.n_ctrl, cl0), np.zeros(self.n_ctrl)])
+        return np.stack([np.full(self.n_ctrl, cl0)] + [np.zeros(self.n_ctrl)] * (self.nu - 1))
 
     def _shift(self, U):
         tau = np.minimum(self.knots_t + self.replan_s, self.horizon_s)
-        return np.stack([np.interp(tau, self.knots_t, U[0]), np.interp(tau, self.knots_t, U[1])])
+        return np.stack([np.interp(tau, self.knots_t, U[k]) for k in range(self.nu)])
 
     def _candidates(self):
         """Constant-control plans always added to the samples: best L/D and a firm pull-up, each
@@ -181,13 +219,18 @@ class MPPIPlanner:
         out = []
         for cl in (ac.cl_best_ld, 0.8 * ac.cl_max):
             for mu in (0.0, -0.6, 0.6):
-                out.append(np.stack([np.full(self.n_ctrl, cl), np.full(self.n_ctrl, mu)]))
+                u = [np.full(self.n_ctrl, cl), np.full(self.n_ctrl, mu)]
+                if self.motor:
+                    u.append(np.zeros(self.n_ctrl))
+                out.append(np.stack(u))
         return np.array(out)
 
     def _clip(self, U):
         ac = self.ac
         U[..., 0, :] = np.clip(U[..., 0, :], ac.cl_min, ac.cl_max)
         U[..., 1, :] = np.clip(U[..., 1, :], -ac.mu_max, ac.mu_max)
+        if self.motor:
+            U[..., 2, :] = np.clip(U[..., 2, :], 0.0, self.t_max)
         return U
 
     def reset(self):
@@ -202,8 +245,8 @@ class MPPIPlanner:
         return h
 
     def rollout(self, world, t0, s0, Us, target_dir):
-        """Cost of each control plan in Us (S, 2, n_ctrl). Returns (costs (S,), paths (N+1,6,S),
-        dead (S,) bool)."""
+        """Cost of each control plan in Us (S, nu, n_ctrl), nu 2 (cl, mu) or 3 with the motor
+        (thrust T, N). Returns (costs (S,), paths (N+1,6,S), dead (S,) bool)."""
         ac, dt, N = self.ac, self.dt, self.nsteps
         S = Us.shape[0]
         i0, fr = self._idx, self._frac
@@ -211,6 +254,10 @@ class MPPIPlanner:
         mu_all = Us[:, 1, i0] * (1 - fr) + Us[:, 1, i0 + 1] * fr
         cl_all = np.clip(cl_all, ac.cl_min, ac.cl_max)
         mu_all = np.clip(mu_all, -ac.mu_max, ac.mu_max)
+        motor = self.motor
+        if motor:
+            T_all = np.clip(Us[:, 2, i0] * (1 - fr) + Us[:, 2, i0 + 1] * fr, 0.0, self.t_max)
+            fd = self.fold_dcd
         act = self.act
         if act is not None:
             # delayed commands on the half-step grid (before the delay: the last command sent)
@@ -227,6 +274,10 @@ class MPPIPlanner:
 
             def _act(x, cmd, lim):
                 return x + np.clip(a_lag * (cmd - x), -lim, lim)
+
+            if motor:
+                x_T = np.full(S, st[4] if len(st) > 4 else 0.0)
+                aT_lag = 1.0 - np.exp(-hd / act.thrust_tau) if act.thrust_tau > 0 else 1.0
         s = np.repeat(np.asarray(s0, float)[:, None], S, axis=1)
         e0 = G * s0[2] + 0.5 * s0[3] ** 2
         cost = np.zeros(S)
@@ -240,6 +291,8 @@ class MPPIPlanner:
             c1, c2, c3 = cl_all[:, 2 * i], cl_all[:, 2 * i + 1], cl_all[:, 2 * i + 2]
             m1, m2, m3 = mu_all[:, 2 * i], mu_all[:, 2 * i + 1], mu_all[:, 2 * i + 2]
             c3_cmd = c3
+            if motor:
+                T1, T2, T3 = T_all[:, 2 * i], T_all[:, 2 * i + 1], T_all[:, 2 * i + 2]
             if act is not None:
                 lim_mu = act.mu_rate_at(s[3]) * hd
                 lim_cl = act.cl_rate * hd
@@ -248,10 +301,26 @@ class MPPIPlanner:
                 c2, m2 = x_cl, x_mu
                 x_cl = _act(x_cl, c3, lim_cl); x_mu = _act(x_mu, m3, lim_mu)
                 c3, m3 = x_cl, x_mu
-            k1 = derivatives_vec(t, s, ac, world, c1, m1, self.n_limit)
-            k2 = derivatives_vec(t + dt / 2, s + dt / 2 * k1, ac, world, c2, m2, self.n_limit)
-            k3 = derivatives_vec(t + dt / 2, s + dt / 2 * k2, ac, world, c2, m2, self.n_limit)
-            k4 = derivatives_vec(t + dt, s + dt * k3, ac, world, c3, m3, self.n_limit)
+                if motor:
+                    T1 = x_T
+                    x_T = x_T + aT_lag * (T2 - x_T)
+                    T2 = x_T
+                    x_T = x_T + aT_lag * (T3 - x_T)
+                    T3 = x_T
+            if motor:
+                V0 = s[3]
+                k1 = derivatives_vec(t, s, ac, world, c1, m1, self.n_limit, thrust=T1, fold_dcd=fd)
+                k2 = derivatives_vec(t + dt / 2, s + dt / 2 * k1, ac, world, c2, m2, self.n_limit,
+                                     thrust=T2, fold_dcd=fd)
+                k3 = derivatives_vec(t + dt / 2, s + dt / 2 * k2, ac, world, c2, m2, self.n_limit,
+                                     thrust=T2, fold_dcd=fd)
+                k4 = derivatives_vec(t + dt, s + dt * k3, ac, world, c3, m3, self.n_limit,
+                                     thrust=T3, fold_dcd=fd)
+            else:
+                k1 = derivatives_vec(t, s, ac, world, c1, m1, self.n_limit)
+                k2 = derivatives_vec(t + dt / 2, s + dt / 2 * k1, ac, world, c2, m2, self.n_limit)
+                k3 = derivatives_vec(t + dt / 2, s + dt / 2 * k2, ac, world, c2, m2, self.n_limit)
+                k4 = derivatives_vec(t + dt, s + dt * k3, ac, world, c3, m3, self.n_limit)
             sn = s + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
             sn = np.where(dead[None, :], s, sn)       # frozen once dead
             bad = ~np.all(np.isfinite(sn), axis=0) | (sn[3] < 0.5 * ac.v_stall)
@@ -266,6 +335,8 @@ class MPPIPlanner:
                    + self.w_n * np.maximum(0.0, n - ac.n_max) ** 2
                    + self.w_stall * (np.maximum(0.0, vmin - V) / ac.v_stall) ** 2)
             cost += np.where(live, dt * pen, 0.0)
+            if motor:
+                cost += np.where(live, dt * self.w_energy * T2 * V0 / self.eta, 0.0)
             hit = live & (hc < 0.0)
             newly = hit | (bad & ~dead)
             t_dead = np.where(newly, (i + 1) * dt, t_dead)
@@ -287,7 +358,7 @@ class MPPIPlanner:
         return cost, path, dead
 
     def update(self, U, Us, cost, dead):
-        """The MPPI weighted update of the nominal U from the samples Us (S, 2, n_ctrl) with their
+        """The MPPI weighted update of the nominal U from the samples Us (S, nu, n_ctrl) with their
         costs and dead flags. Returns (new U, effective sample size, number dead)."""
         ok = ~dead
         scale = float(np.std(cost[ok])) if ok.sum() >= 2 else float(np.std(cost))
@@ -309,6 +380,8 @@ class MPPIPlanner:
         prev = None if cold else self._shift(self.U)
         if guide is not None:
             U = guide.nominal(self.knots_t)
+            if self.motor:
+                U = np.concatenate([U, np.zeros((1, self.n_ctrl))])    # library cycles carry no thrust
             n_it = self.n_iter
         else:
             U = self._initial_plan() if cold else prev
@@ -326,6 +399,9 @@ class MPPIPlanner:
                     z = self.rng.standard_normal((self.n_samples, 2, self.smooth_modes))
                     eps += (self.smooth_gain * sig[None, :, :] / np.sqrt(self.smooth_modes)
                             * (z @ self._basis))
+                if self.motor:   # thrust: Gaussian per knot; _clip makes U_T + eps non-negative
+                    eps = np.concatenate([eps, self.sigma_t * self.rng.standard_normal(
+                        (self.n_samples, 1, self.n_ctrl))], axis=1)
             eps[0] = 0.0
             Us = self._clip(U[None] + eps)
             cand = self._candidates()
@@ -342,7 +418,8 @@ class MPPIPlanner:
         return Plan(self.knots_t.copy(), cl_k, mu_k, times[:nfirst + 1],
                     np.interp(times[:nfirst + 1], self.knots_t, cl_k),
                     np.interp(times[:nfirst + 1], self.knots_t, mu_k),
-                    path[:, :, 0].copy(), times, float(cost[0]), ess, n_dead)
+                    path[:, :, 0].copy(), times, float(cost[0]), ess, n_dead,
+                    U[2].copy() if self.motor else None)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -687,7 +764,7 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             seed=1, planner_kw=None, dt=0.01, max_components=None, estimator=None, keep=False,
             library=None, wave_aware=True, state_source="truth", wind_source="truth",
             suite="standard", profile_fit="two_param", actuators=None, n_limit=False,
-            log_every_s=5.0, stop_on_tip=False, library_path=None):
+            log_every_s=5.0, stop_on_tip=False, library_path=None, motor=False, w_energy=None):
     """Closed loop: true dynamics (rk4, dt), planner every replan_s in the chosen world model.
 
     world_model: "truth" | "flat" | "estimated". sensors: list of SurfaceSensor (used only for
@@ -701,6 +778,12 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     sim.aircraft.Actuators or None (fly the actual controls); n_limit: load-factor limit in the
     flight model. The metrics then also hold max_n_cmd, max_n_flown, n_limit_bind_frac,
     actuator_bind and, with estimates, the time series "est_log".
+
+    motor (default False; nothing changes then): the thrust is a third control of the planner with
+    the energy weight w_energy (None: energy_weight(ac, "normal")); the true dynamics carry the thrust
+    and the folded-propeller drag. The metrics then also hold out["motor"]: electric energy and
+    average power, the share of time with thrust, the number and length of bursts and where in the
+    cycle they start (see burst_stats).
     """
     from sim.seasense import LocalWaveEstimator
     ac = aircraft
@@ -708,6 +791,10 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         library = CycleLibrary.from_keyword(library_path)   # a library file picked by keyword
     kw = dict(seed=seed)
     kw.update(planner_kw or {})
+    if motor:
+        kw["motor"] = True
+        if w_energy is not None:
+            kw["w_energy"] = w_energy
     pl = MPPIPlanner(ac, **kw)
     pl.n_limit = bool(n_limit)
     pl.act = actuators
@@ -762,6 +849,9 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     steps_per_plan = int(round(pl.replan_s / dt))
     t_ready = None
     mu_a, cl_a = 0.0, ac.cl_best_ld
+    TH, VA, HH, PHA, PHL = [], [], [], [], []       # motor logs per step
+    ph_ref = None                                   # (tau_s, period, low-point fraction, plan time)
+    T_a = 0.0
     for i in range(nsteps + 1):
         t = i * dt
         eta_t = float(env_true.surface(s[0], s[1], t)[0])
@@ -842,10 +932,13 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                 if tau_prev is not None and guide.tau0 < tau_prev - 0.5 * cyc.T:
                     n_cyc += 1
                 tau_prev = guide.tau0
+                ph_ref = (guide.tau_s, cyc.T, cyc.tau_low / cyc.T, t)
                 deltas.append(guide.delta)
                 mdist.append(guide.match_dist)
             if actuators is not None and actuators.cl is not None:
                 pl.act_state = (actuators.cl, actuators.mu) + actuators.cmd_last
+                if motor:
+                    pl.act_state = pl.act_state + (actuators.T,)
             plan = pl.plan(world, t, s_plan, u, guide=guide)
             t_plan = t
             cpu.append(time.process_time() - c0)
@@ -864,7 +957,19 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         q = 0.5 * ac.rho * s[3] ** 2 * ac.wing_area
         if n_limit:
             cl = n_limited_cl(ac, s[3], cl)       # commanded cl is held to the limit
-        cl_a, mu_a = (cl, mu) if actuators is None else actuators.step(cl, mu, dt, s[3])
+        if motor:
+            T_cmd = (float(np.clip(plan.thrust(t - t_plan), 0.0, pl.t_max)) if ready else 0.0)
+            cl_a, mu_a = ((cl, mu) if actuators is None
+                          else actuators.step(cl, mu, dt, s[3], thrust=T_cmd))
+            T_a = T_cmd if actuators is None else actuators.T
+            TH.append(T_a); VA.append(s[3]); HH.append(s[2] - eta_t)
+            if ph_ref is None:
+                PHA.append(np.nan); PHL.append(np.nan)
+            else:
+                ph = ((ph_ref[0] + t - ph_ref[3]) % ph_ref[1]) / ph_ref[1]
+                PHA.append(ph); PHL.append((ph - ph_ref[2]) % 1.0)
+        else:
+            cl_a, mu_a = (cl, mu) if actuators is None else actuators.step(cl, mu, dt, s[3])
         cl_f = n_limited_cl(ac, s[3], cl_a) if n_limit else cl_a
         T.append(t); ST.append(s.copy()); MU.append(mu_a); CL.append(cl_f)
         NN.append(q * cl_f / (ac.mass * G))
@@ -880,8 +985,12 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             break
         if use_est:
             prev_truth = (s.copy(), t, mu_a)
-        s = rk4_step(lambda tt, ss: derivatives(tt, ss, ac, env_true, cl_a, mu_a, n_limit)[0],
-                     t, s, dt)
+        if motor:
+            s = rk4_step(lambda tt, ss: derivatives(tt, ss, ac, env_true, cl_a, mu_a, n_limit,
+                                                    thrust=T_a, fold_dcd=pl.fold_dcd)[0], t, s, dt)
+        else:
+            s = rk4_step(lambda tt, ss: derivatives(tt, ss, ac, env_true, cl_a, mu_a, n_limit)[0],
+                         t, s, dt)
     if ended == "complete" and not np.all(np.isfinite(s)):
         ended = "non-finite"
     out = {"ended": ended, "survival_s": float(t if ended != "complete" else t_end)}
@@ -914,6 +1023,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     out["n_limit_bind_frac"] = float(np.mean(NBND)) if NBND else 0.0
     if actuators is not None:
         out["actuator_bind"] = actuators.bind_fractions()
+    if motor:
+        out["motor"] = burst_stats(ac, pl, dt, TH, VA, HH, PHA, PHL)
     if use_est:
         out["t_ready_s"] = t_ready
         out["prelude_s"] = n_prelude * dt
@@ -928,6 +1039,58 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     if keep:
         out["traj"] = {"t": np.array(T), "state": np.array(ST), "mu": np.array(MU),
                        "cl": np.array(CL)}
+        if motor:
+            out["traj"]["thrust"] = np.array(TH)
+    return out
+
+
+BURST_ON_FRAC = 0.01       # thrust above this share of the weight counts as running
+
+
+def burst_stats(ac, pl, dt, TH, VA, HH, PHA, PHL, max_listed=100):
+    """Electric energy, average power and the bursts of a motor run. The arrays hold one value per
+    integration step (actual thrust N, airspeed, true height above the surface, phase of the
+    library cycle as a fraction of its period and relative to its low point, NaN without a
+    library). Energy is the sum of T V dt / (eta_p eta_m); a burst is a run of steps with
+    T > BURST_ON_FRAC m g."""
+    T, V, H = np.asarray(TH, float), np.asarray(VA, float), np.asarray(HH, float)
+    PH, PL = np.asarray(PHA, float), np.asarray(PHL, float)
+    dur = len(T) * dt
+    e_j = float(np.sum(T * V) * dt / pl.eta)
+    on = T > BURST_ON_FRAC * ac.mass * G
+    edges = np.diff(np.concatenate([[0], on.astype(int), [0]]))
+    st, en = np.flatnonzero(edges == 1), np.flatnonzero(edges == -1)
+    ln = (en - st) * dt
+    out = {"w_energy": pl.w_energy, "t_max_n": pl.t_max, "eta_total": pl.eta, "duration_s": dur,
+           "energy_j": e_j, "energy_wh": e_j / 3600.0,
+           "avg_power_w": e_j / dur if dur > 0 else 0.0,
+           "wh_per_hour": e_j / 3600.0 / (dur / 3600.0) if dur > 0 else 0.0,
+           "thrust_on_share": float(on.mean()) if len(on) else 0.0,
+           "mean_thrust_frac_weight": float(T.mean() / (ac.mass * G)) if len(T) else 0.0,
+           "peak_thrust_frac_weight": float(T.max() / (ac.mass * G)) if len(T) else 0.0,
+           "n_bursts": int(len(st)), "burst_threshold_n": BURST_ON_FRAC * ac.mass * G,
+           "h_median_all_m": float(np.median(H)) if len(H) else None}
+    if len(st):
+        out["burst_len_median_s"] = float(np.median(ln))
+        out["burst_len_mean_s"] = float(np.mean(ln))
+        out["burst_len_max_s"] = float(np.max(ln))
+        out["burst_peak_thrust_frac"] = float(np.mean([T[a:b].max() for a, b in zip(st, en)])
+                                              / pl.t_max)
+        out["burst_h_start_median_m"] = float(np.median(H[st]))
+        out["burst_h_start_q25_q75_m"] = [float(np.quantile(H[st], 0.25)),
+                                          float(np.quantile(H[st], 0.75))]
+        ph, pr = PH[st], PL[st]
+        if np.all(np.isfinite(ph)):
+            out["burst_phase_hist8"] = np.histogram(ph, bins=8, range=(0.0, 1.0))[0].tolist()
+            for key, v in (("burst_phase", ph), ("burst_phase_rel_low", pr)):
+                z = np.mean(np.exp(2j * np.pi * v))
+                out[key + "_circ_mean"] = float((np.angle(z) / (2 * np.pi)) % 1.0)
+                out[key + "_concentration"] = float(abs(z))
+        out["bursts"] = [{"t_s": float(a * dt), "len_s": float((b - a) * dt), "h_m": float(H[a]),
+                          "phase": None if not np.isfinite(PH[a]) else float(PH[a]),
+                          "phase_rel_low": None if not np.isfinite(PL[a]) else float(PL[a]),
+                          "peak_n": float(T[a:b].max())}
+                         for a, b in list(zip(st, en))[:max_listed]]
     return out
 
 
@@ -986,6 +1149,18 @@ def run_tracker(ac, env, u10, t_end, bearing_compass):
 
 LIB_PKW = {"n_samples": 96, "dt": 0.1, "n_iter": 1, "n_ctrl": 24, "lam": 0.2,
            "sigma_cl": 0.08, "sigma_mu": 0.12, "clearance": "wingtip", "h_clear": 0.3}
+# w_energy (cost per joule of electric energy) of the motor option as three named levels, in
+# multiples of the break-even weight w_e eta_p eta_m / m (the cost of one electric joule equals the
+# worth of the mechanical specific energy it buys). Chosen from a pilot on a flat sea below the
+# soaring minimum: 0.03 gives near continuous thrust, 2 about what a steady flap-glide needs or less,
+# 4 sits just before the planner stops using the motor and the flight ends in contact.
+W_ENERGY_LEVELS = {"free": 0.03, "normal": 2.0, "costly": 4.0}
+
+
+def energy_weight(ac, level, w_e=1.0):
+    """w_energy (cost per electric joule) of a named level for this aircraft."""
+    from sim.dsopt import prop_efficiency
+    return W_ENERGY_LEVELS[level] * w_e * prop_efficiency() / ac.mass
 LIB_MODELS = ("lib-flatenv", "lib-flat", "lib-truth", "lib-truth-nophase", "lib-est-radar+fwd",
               "tracker")
 
@@ -1245,6 +1420,164 @@ def margin_main(a):
         fh.write(chr(10))
 
 
+BURST_LEVELS = ("free", "normal", "costly")
+BURST_CASES_A = (("baseline-2m", 11.0), ("baseline-2m", 9.0), ("baseline-2m", 6.0),
+                 ("albatross-3m", 9.0), ("albatross-3m", 6.0))
+BURST_MAX_COMPONENTS = 48        # wave components of the planner world "truth" (as the browser)
+FLAP_GLIDE_TRACK_DEG = 160.0     # as sim.formstudy: track 160 deg from the wind (power does not depend on it)
+
+
+def burst_jobs(part, t_end):
+    """job = (aircraft, u10, sea, planner world, level or None, t_end). part: "a", "b" or "ab"."""
+    jobs = []
+    if "a" in part:
+        jobs += [(n, u, "flat", "flat", lv, t_end) for n, u in BURST_CASES_A
+                 for lv in BURST_LEVELS + (None,)]
+    if "b" in part:
+        jobs += [(n, u, "waves", wm, lv, t_end) for n in ("baseline-2m", "albatross-3m")
+                 for u in (13.0, 16.0) for wm in ("flat", "truth") for lv in BURST_LEVELS + (None,)]
+    return jobs
+
+
+def run_burst_job(job):
+    """One closed-loop run of the burst experiment: margin library, actuators pb2v, n_limit,
+    stop_on_tip, truth state and wind, seed 1, the sea of the margin experiment (make_env). level
+    None: motor off (as the margin experiment)."""
+    from sim.aircraft import Actuators
+    from sim.aircraft_models import by_name
+    from sim.autonomy import make_env
+    name, u10, sea, wm, level, t_end = job
+    ac = by_name(name)
+    env = make_env(sea, u10)
+    t0 = time.time()
+    r = fly_mpc(ac, env, wm, [], t_end, env.wind.to_deg - 20.0, u10, seed=1,
+                planner_kw=dict(LIB_PKW), library=CycleLibrary.from_keyword("margin"),
+                state_source="truth", wind_source="truth",
+                max_components=BURST_MAX_COMPONENTS if wm == "truth" else None,
+                actuators=Actuators(ac, rate_model="pb2v"), n_limit=True, stop_on_tip=True,
+                wave_aware=False, motor=level is not None,
+                w_energy=None if level is None else energy_weight(ac, level))
+    r["wall_s"] = time.time() - t0
+    r = _no_nan(r)
+    m = r.get("motor")
+    if m is not None:
+        m["bursts"] = m.get("bursts", [])[:60]
+    return {"aircraft": name, "u10": u10, "sea": sea, "planner_world": wm,
+            "level": level or "off", "source": "this run", **r}
+
+
+def _margin_off_row(name, u10):
+    """The motor-off row of the margin experiment (sea, flat planner world, truth state) or None."""
+    path = os.path.join(os.path.dirname(__file__), "out", "mpc.json")
+    for r in json.load(open(path)).get("margin_exp", {}).get("results", []):
+        if (r["aircraft"], r["u10"], r["library"], r["case"][0]) == (name, u10, "margin", "c"):
+            keep = ("ended", "survival_s", "energy_per_min_last60", "min_clear_surface",
+                    "min_clear_wingtip", "wall_s")
+            return {"aircraft": name, "u10": u10, "sea": "waves", "planner_world": "flat",
+                    "level": "off", "source": "margin_exp case c", **{k: r.get(k) for k in keep}}
+    return None
+
+
+def burst_table(rows):
+    lines = ["| aircraft | u10 | sea / world | level | end (s) | avg power (W) | Wh per hour | "
+             "thrust on | bursts | median burst (s) | mean / peak thrust (% weight) | "
+             "burst start h (m), phase | dE/min last 60 s |", "|" + "---|" * 13]
+    for r in rows:
+        m = r.get("motor") or {}
+        lines.append("| %s | %g | %s / %s | %s | %s %.0f | %s | %s | %s | %s | %s | %s | %s, %s | %s |" % (
+            r["aircraft"], r["u10"], r["sea"], r["planner_world"], r["level"], r["ended"],
+            r["survival_s"], _fmt(m.get("avg_power_w"), "%.1f"), _fmt(m.get("wh_per_hour"), "%.1f"),
+            _fmt(m.get("thrust_on_share"), "%.2f"), m.get("n_bursts", "n/a"),
+            _fmt(m.get("burst_len_median_s"), "%.1f"),
+            "n/a" if not m else "%.1f / %.1f" % (100 * m["mean_thrust_frac_weight"],
+                                                 100 * m["peak_thrust_frac_weight"]),
+            _fmt(m.get("burst_h_start_median_m"), "%.1f"),
+            _fmt(m.get("burst_phase_circ_mean"), "%.2f"), _fmt(r.get("energy_per_min_last60"), "%.0f")))
+    return chr(10).join(lines)
+
+
+def burst_main(a):
+    from concurrent.futures import ProcessPoolExecutor
+
+    from sim import record
+    from sim.aircraft_models import by_name
+    from sim.patterns import flap_glide_cost
+    from sim.record import value
+    jobs = burst_jobs(a.burst_part, a.t_end)
+    ref_rows = []
+    keep_jobs = []
+    for j in jobs:      # motor-off rows of the margin experiment are taken where they exist
+        off = _margin_off_row(j[0], j[1]) if j[4] is None and j[2] == "waves" and j[3] == "flat" else None
+        if off is not None:
+            ref_rows.append(off)
+        else:
+            keep_jobs.append(j)
+    keep_jobs.sort(key=lambda j: -(j[3] == "truth") * 2 - (j[2] == "waves"))      # slow ones first
+    t0 = time.time()
+    with ProcessPoolExecutor(a.workers) as ex:
+        rows = list(ex.map(run_burst_job, keep_jobs, chunksize=1))
+    rows += ref_rows
+    levels = ("off",) + BURST_LEVELS
+    order = lambda r: (r["sea"] == "waves", r["aircraft"], r["u10"], r["planner_world"],
+                       levels.index(r["level"]))
+    d = json.load(open(a.out)) if os.path.exists(a.out) else {}
+    old = d.get("burst_exp", {}).get("results", [])
+    key = lambda r: (r["aircraft"], r["u10"], r["sea"], r["planner_world"], r["level"])
+    new_keys = {key(r) for r in rows}
+    rows = sorted([r for r in old if key(r) not in new_keys] + rows, key=order)
+    print(burst_table(rows))
+    runtime = time.time() - t0
+    print("runtime %.0f s" % runtime)
+    eff = (value("prop.prop_eff", 0.60), value("prop.motor_eff", 0.75))
+    fg = {}
+    for n in ("baseline-2m", "albatross-3m"):
+        f = flap_glide_cost(by_name(n), 9.0, FLAP_GLIDE_TRACK_DEG, prop_eff=eff[0], motor_eff=eff[1])
+        fg[n] = {"power_w": f["power_w"], "airspeed": f["airspeed"], "sink": f["sink"]}
+    d["burst_exp"] = {
+        "meta": {**record.meta("python -m sim.mpc --burst-exp --burst-part %s --t-end %g"
+                               % (a.burst_part, a.t_end),
+                               [__file__, LIB_MARGIN_PATH,
+                                os.path.join(os.path.dirname(__file__), "aircraft.py"),
+                                os.path.join(os.path.dirname(__file__), "dsopt.py")]),
+                 "planner_kw": LIB_PKW, "runtime_s_last_call": runtime, "t_end": a.t_end, "seed": 1,
+                 "state_source": "truth", "wind_source": "truth", "wave_aware": False,
+                 "actuators": "rate_model pb2v (record ctrl.*), thrust lag prop.thrust_tau_s",
+                 "n_limit": True, "stop_on_tip": True, "library": "margin",
+                 "sea": "make_env('flat', u10) for (a); make_env('waves', u10), the sea of the "
+                        "margin experiment, for (b)",
+                 "planner_world_truth": "world_model truth with the %d strongest wave components"
+                                        % BURST_MAX_COMPONENTS,
+                 "motor": {"t_max": "prop.thrust_max_per_weight m g", "eta": "prop.prop_eff * prop.motor_eff",
+                           "folded_drag": "prop.folded_drag_cda_m2 / S with the smooth switch, in "
+                                          "the planner and in the true dynamics",
+                           "thrust_sigma_frac": value("ctrl.thrust_sigma_frac", 0.15),
+                           "thrust_tau_s": value("prop.thrust_tau_s", 0.1),
+                           "perturbation": "Gaussian per knot, clipped to [0, T_max]",
+                           "burst": "actual thrust above %g of the weight" % BURST_ON_FRAC},
+                 "w_energy_levels": {
+                     "definition": "w_energy = k w_e eta / m (cost per electric joule), k = "
+                                   + ", ".join("%s %g" % kv for kv in W_ENERGY_LEVELS.items()),
+                     "values": {n: {lv: energy_weight(by_name(n), lv) for lv in BURST_LEVELS}
+                                for n in ("baseline-2m", "albatross-3m")},
+                     "how_chosen": "pilot on the flat sea below the soaring minimum (baseline u10 "
+                                   "6, 9, 11, albatross u10 9, 150 s): k 0.03 gives thrust on "
+                                   "all the time (about 15 to 28 W); k near 2 gives the planner's "
+                                   "working range; above k 4 to 5 the planner stops using the motor "
+                                   "before the horizon shows the contact and the flight ends"},
+                 "flap_glide": {"note": "steady flap-glide at best L/D with the same efficiencies "
+                                        "(patterns.flap_glide_cost), wind independent",
+                                "aircraft": fg},
+                 "motor_off_rows": "case c of margin_exp where it exists (sea, flat planner world); "
+                                   "the other motor-off rows are run here without the folded-propeller "
+                                   "drag (motor off means no motor in the aircraft)",
+                 "energy_trend": "(E_end - E_start)/(t_end - t_start) * 60 over the last 60 s "
+                                 "flown, E = g z + V^2/2 (J/kg per min)"},
+        "results": rows}
+    with open(a.out, "w", newline=chr(10)) as fh:
+        json.dump(_no_nan(d), fh, indent=1)
+        fh.write(chr(10))
+
+
 def _fmt(v, f):
     return "n/a" if v is None else f % v
 
@@ -1283,12 +1616,17 @@ def main():
     ap.add_argument("--est-exp2", action="store_true")
     ap.add_argument("--build-margin-library", action="store_true")
     ap.add_argument("--margin-exp", action="store_true")
+    ap.add_argument("--burst-exp", action="store_true")
+    ap.add_argument("--burst-part", default="ab", help="a, b or ab")
     a = ap.parse_args()
     if a.build_margin_library:
         build_margin_library(workers=a.workers)
         return
     if a.margin_exp:
         margin_main(a)
+        return
+    if a.burst_exp:
+        burst_main(a)
         return
     if a.build_library:
         build_library(workers=a.workers)

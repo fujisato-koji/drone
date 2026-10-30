@@ -13,8 +13,10 @@ import numpy as np
 
 from sim.aircraft import Actuators
 from sim.aircraft_models import by_name
+from sim.dsopt import folded_dcd, prop_efficiency, thrust_max
+from sim.record import value
 from sim.autonomy import make_env
-from sim.mpc import LIB_PKW, CycleGuide, CycleLibrary, MPPIPlanner, wrap
+from sim.mpc import LIB_PKW, W_ENERGY_LEVELS, CycleGuide, CycleLibrary, MPPIPlanner, energy_weight, wrap
 from sim.seawind import Environment, Wind
 
 VIEWER = Path(__file__).resolve().parents[1] / "viewer"
@@ -91,7 +93,7 @@ if (inp.run === 'rollout') {
   }
   out.worst = worst; out.nOrb = nOrb;
 } else if (inp.run === 'defaults') {
-  out.defaults = MPC.DEFAULTS;
+  out.defaults = MPC.DEFAULTS; out.motor = MPC.MOTOR; out.energyK = MPC.ENERGY_K;
 } else if (inp.run === 'loop') {
   // closed loop on the true dynamics: the planner every 0.5 s, actuators pb2v, load-factor limit
   const K = 0.4, w = inp.wind;
@@ -108,6 +110,9 @@ if (inp.run === 'rollout') {
   for (let i = 1; i < c0.z.length; i++) if (c0.z[i] > c0.z[k0]) k0 = i;
   let s = [0, 0, trueWorld.eta(0, 0, 0) + c0.z[k0], c0.V[k0], c0.g[k0], psiW + c0.psi[k0]];
   const dt = 0.01, n = Math.round(inp.T / dt), every = Math.round(0.5 / dt);
+  const motor = !!(inp.settings && inp.settings.motor);
+  const foldDcd = MPC.MOTOR.foldedCdaM2 / ac.wing_area, tMax = MPC.MOTOR.thrustMaxPerWeight * ac.mass * 9.81;
+  let eJ = 0, nOn = 0, tA = 0, nBurst = 0, wasOn = false;
   const ms = [], tau0 = [];
   let plan = null, tPlan = 0, ended = 'complete', hmin = Infinity, tipmin = Infinity, tEnd = inp.T, nmax = 0;
   const worldSpec = {kind: inp.model, wind: {ustar: w.ustar, z0: w.z0, ex: w.ex, ey: w.ey, karman: K},
@@ -123,7 +128,7 @@ if (inp.run === 'rollout') {
     if (plan === null || i % every === 0) {
       const t0 = process.hrtime.bigint();
       plan = ctl.plan({t: t, s: s.slice(), act: act.cl === null ? null :
-        {cl: act.cl, mu: act.mu, clCmd: act.cmdLast[0], muCmd: act.cmdLast[1]},
+        {cl: act.cl, mu: act.mu, clCmd: act.cmdLast[0], muCmd: act.cmdLast[1], T: act.T},
         world: worldSpec, u10: inp.u10, chiDeg: inp.chiDeg});
       ms.push(Number(process.hrtime.bigint() - t0) / 1e6);
       tPlan = t; tau0.push(plan.info.tau0);
@@ -131,11 +136,22 @@ if (inp.run === 'rollout') {
     let [cl, mu] = plan.controls(t - tPlan);
     cl = Math.min(Math.max(cl, ac.cl_min), ac.cl_max); mu = Math.min(Math.max(mu, -ac.mu_max), ac.mu_max);
     cl = MPC.nLimitedCl(ac, s[3], cl);
-    const [clA, muA] = act.step(cl, mu, dt, s[3]);
+    let clA, muA;
+    if (motor) {
+      const tCmd = Math.min(Math.max(MPC.planThrust(plan, t - tPlan), 0), tMax);
+      [clA, muA] = act.step(cl, mu, dt, s[3], tCmd);
+      tA = act.T;
+      eJ += tA * s[3] * dt / (MPC.MOTOR.propEff * MPC.MOTOR.motorEff);
+      const on = tA > 0.01 * ac.mass * 9.81;
+      if (on) nOn++;
+      if (on && !wasOn) nBurst++;
+      wasOn = on;
+    } else [clA, muA] = act.step(cl, mu, dt, s[3]);
     nmax = Math.max(nmax, 0.5 * ac.rho * s[3] * s[3] * ac.wing_area * Math.min(clA, MPC.nLimitedCl(ac, s[3], clA)) / (ac.mass * 9.81));
     if (i === n) break;
-    s = Flight.rk4(s, clA, muA, ac, windFn, t, dt, true);
+    s = motor ? Flight.rk4(s, clA, muA, ac, windFn, t, dt, true, tA, foldDcd) : Flight.rk4(s, clA, muA, ac, windFn, t, dt, true);
   }
+  out.eJ = eJ; out.onShare = nOn / (n + 1); out.nBurst = nBurst; out.avgPowerW = eJ / tEnd;
   out.ended = ended; out.tEnd = tEnd; out.hmin = hmin; out.tipmin = tipmin; out.nmax = nmax;
   out.ms = ms; out.tau0 = tau0;
 }
@@ -166,7 +182,7 @@ def ac_params(ac):
 def js_settings(pkw):
     names = {"n_samples": "nSamples", "dt": "dt", "n_iter": "nIter", "n_ctrl": "nCtrl", "lam": "lam",
              "sigma_cl": "sigmaCl", "sigma_mu": "sigmaMu", "clearance": "clearance",
-             "h_clear": "hClear"}
+             "h_clear": "hClear", "motor": "motor", "w_energy": "wEnergy"}
     return {names[k]: v for k, v in pkw.items()}
 
 
@@ -221,11 +237,13 @@ class TestMpcJs(unittest.TestCase):
         cls.psi_w = float(np.arctan2(cls.wind.ey, cls.wind.ex))
         cls.chi = np.radians(CHI_DEG)
 
-    def setup_case(self, kind, height_frac=0.45, stokes=False):
-        """Python planner, guide, state and the control sequences for one world."""
+    def setup_case(self, kind, height_frac=0.45, stokes=False, motor=False):
+        """Python planner, guide, state and the control sequences for one world. With motor the
+        planner carries the thrust (w_energy of the normal level) and the plans a third row."""
         ac = self.ac
         world = python_world(kind, self.wind, stokes)
-        pl = MPPIPlanner(ac, **LIB_PKW)
+        self.pkw = dict(LIB_PKW, motor=True, w_energy=energy_weight(ac, "normal")) if motor else dict(LIB_PKW)
+        pl = MPPIPlanner(ac, **self.pkw)
         pl.n_limit = True
         pl.act = Actuators(ac, rate_model="pb2v")
         cyc = self.pylib.pick(NAME, U10, self.chi)
@@ -234,7 +252,7 @@ class TestMpcJs(unittest.TestCase):
         eta = float(world.surface(0.0, 0.0, t)[0])
         # a state a little below the top of the cycle, so that the dive below touches the water
         s0 = np.array([5.0, -3.0, eta + height_frac * cyc.z[k], cyc.V[k], cyc.g[k] - 0.05, self.psi_w + cyc.psi[k]])
-        pl.act_state = (0.6, 0.15, 0.7, 0.2)
+        pl.act_state = (0.6, 0.15, 0.7, 0.2) + ((0.4,) if motor else ())
         guide = CycleGuide(cyc, world, t, s0, self.psi_w, pl.horizon_s, wave_aware=False, w_d=pl.w_d)
         pl.guide = guide
         nc = pl.n_ctrl
@@ -243,20 +261,25 @@ class TestMpcJs(unittest.TestCase):
         harsh = np.stack([np.full(nc, 0.0), np.where(np.arange(nc) % 2 == 0, 1.0, -1.0)])
         harsh[0] = 1.4 * ac.cl_max * np.linspace(0.5, 1.0, nc)       # above the limits: clipped
         dive = np.stack([np.full(nc, 0.05), np.full(nc, 0.3)])
+        if motor:
+            tm = pl.t_max
+            nominal, ramp = np.vstack([nominal, np.zeros(nc)]), np.vstack([ramp, np.linspace(0.0, 0.8 * tm, nc)])
+            harsh = np.vstack([harsh, np.where(np.arange(nc) % 3 == 0, 1.5 * tm, -0.3 * tm)])    # clipped to [0, tm]
+            dive = np.vstack([dive, np.full(nc, 0.3 * tm)])
         Us = np.stack([nominal, ramp, harsh, dive])
         return world, pl, guide, s0, t, Us
 
     def payload(self, kind, pl, world, s0, t, run, **kw):
         act = pl.act
-        d = {"run": run, "ac": ac_params(self.ac), "settings": js_settings(LIB_PKW),
+        d = {"run": run, "ac": ac_params(self.ac), "settings": js_settings(self.pkw),
              "actuators": self.lib["actuators"], "entries": self.entries, "u10": U10,
              "chi": float(self.chi), "world": js_world(kind, self.wind, world), "s": [float(v) for v in s0],
              "t": t, "actState": list(pl.act_state)}
         d.update(kw)
         return d
 
-    def rollout_parity(self, kind, stokes=False):
-        world, pl, guide, s0, t, Us = self.setup_case(kind, stokes=stokes)
+    def rollout_parity(self, kind, stokes=False, motor=False):
+        world, pl, guide, s0, t, Us = self.setup_case(kind, stokes=stokes, motor=motor)
         cost, path, dead = pl.rollout(world, t, s0, Us, np.array([1.0, 0.0]))
         js = run_node(self.payload(kind, pl, world, s0, t, "rollout", Us=Us.tolist()))
         self.assertEqual(js["dead"], [int(v) for v in dead])
@@ -266,8 +289,9 @@ class TestMpcJs(unittest.TestCase):
         ok_p, rel_p = close(jsp, pyp, 1e-6, 1e-9)
         ok_t, _ = close(js["tau0"], guide.tau0, 1e-12, 1e-12)
         ok_n, _ = close(js["nominal"], guide.nominal(pl.knots_t).ravel(), 1e-9, 1e-12)
-        print("\nrollout %s%s: dead %s, cost max rel diff %.2e, state max rel diff %.2e"
-              % (kind, " with the second-order surface" if stokes else "", [int(v) for v in dead], rel_c, rel_p))
+        print("\nrollout %s%s%s: dead %s, cost max rel diff %.2e, state max rel diff %.2e"
+              % (kind, " with the second-order surface" if stokes else "", " with the motor" if motor else "",
+                 [int(v) for v in dead], rel_c, rel_p))
         self.assertTrue(dead.any(), "the dive should touch the water")
         self.assertTrue(ok_t and ok_n, "cycle phase match / nominal controls differ")
         self.assertTrue(ok_c, "costs differ: %.3e" % rel_c)
@@ -281,6 +305,12 @@ class TestMpcJs(unittest.TestCase):
 
     def test_rollout_truth_world_second_order(self):
         self.rollout_parity("truth", stokes=True)
+
+    def test_rollout_flat_world_motor(self):
+        self.rollout_parity("flat", motor=True)
+
+    def test_rollout_truth_world_motor(self):
+        self.rollout_parity("truth", motor=True)
 
     def test_wind_derivs_one_pass(self):
         rng = np.random.default_rng(3)
@@ -323,16 +353,34 @@ class TestMpcJs(unittest.TestCase):
             self.assertEqual(d[jk], getattr(py, pk), jk)
         a = Actuators(self.ac, rate_model="pb2v")
         lib = self.lib["actuators"]
+        js = run_node({"run": "defaults", "ac": ac_params(self.ac), "settings": {},
+                       "actuators": self.lib["actuators"]})
+        m = js["motor"]
+        self.assertEqual(m["thrustMaxPerWeight"] * self.ac.mass * 9.81, thrust_max(self.ac))
+        self.assertAlmostEqual(m["propEff"] * m["motorEff"], prop_efficiency(), places=14)
+        self.assertEqual(m["foldedCdaM2"] / self.ac.wing_area, folded_dcd(self.ac))
+        self.assertEqual(m["thrustTauS"], a.thrust_tau)
+        self.assertEqual(m["sigmaFrac"], value("ctrl.thrust_sigma_frac", 0.15))
+        self.assertEqual(js["energyK"], W_ENERGY_LEVELS)
         self.assertEqual((lib["tau_s"], lib["cl_rate_per_s"], lib["k_pb2v"], lib["delay_s"]),
                          (a.tau, a.cl_rate, a.k_pb2v, a.delay))
 
     def test_mppi_update_parity(self):
-        world, pl, guide, s0, t, Us0 = self.setup_case("truth", 1.0)
+        self.update_parity(False)
+
+    def test_mppi_update_parity_motor(self):
+        self.update_parity(True)
+
+    def update_parity(self, motor):
+        world, pl, guide, s0, t, Us0 = self.setup_case("truth", 1.0, motor=motor)
         rng = np.random.default_rng(5)
         S, nc = pl.n_samples, pl.n_ctrl
         U = guide.nominal(pl.knots_t)
         sig = np.array([[pl.sigma_cl], [pl.sigma_mu]])
         eps = rng.standard_normal((S, 2, nc)) * sig * 3.0     # wide, so that some samples die and some do not
+        if motor:
+            U = np.vstack([U, np.zeros(nc)])
+            eps = np.concatenate([eps, rng.standard_normal((S, 1, nc)) * pl.sigma_t * 3.0], axis=1)
         eps[0] = 0.0
         Us = pl._clip(U[None] + eps)
         cost, _, dead = pl.rollout(world, t, s0, Us, np.array([1.0, 0.0]))
@@ -340,19 +388,28 @@ class TestMpcJs(unittest.TestCase):
         js = run_node(self.payload("truth", pl, world, s0, t, "update", U=U.tolist(), Us=Us.tolist(),
                                    cost=[float(c) for c in cost], dead=[int(d) for d in dead]))
         ok, rel = close(js["U"], U_py.ravel(), 1e-9, 1e-12)
-        print("\nMPPI update: dead %d of %d, ess %.2f, max rel diff %.2e" % (nd_py, S, ess_py, rel))
+        print("\nMPPI update%s: dead %d of %d, ess %.2f, max rel diff %.2e"
+              % (" with the motor" if motor else "", nd_py, S, ess_py, rel))
         self.assertTrue(0 < nd_py < S, "the test needs both dead and live samples")
         self.assertEqual(js["nDead"], nd_py)
         self.assertAlmostEqual(js["ess"], ess_py, delta=1e-9 * ess_py)
         self.assertTrue(ok, "updates differ: %.3e" % rel)
 
     def test_plan_with_injected_perturbations(self):
-        world, pl, guide, s0, t, Us0 = self.setup_case("truth", 1.0)
+        self.plan_parity(False)
+
+    def test_plan_with_injected_perturbations_motor(self):
+        self.plan_parity(True)
+
+    def plan_parity(self, motor):
+        world, pl, guide, s0, t, Us0 = self.setup_case("truth", 1.0, motor=motor)
         pl.guide = None
         rng = np.random.default_rng(7)
         S, nc = pl.n_samples, pl.n_ctrl
         sig = np.array([[pl.sigma_cl], [pl.sigma_mu]])
         eps = [rng.standard_normal((S, 2, nc)) * sig * 3.0 for _ in range(2)]   # the second call has a previous plan
+        if motor:
+            eps = [np.concatenate([e, rng.standard_normal((S, 1, nc)) * pl.sigma_t * 3.0], axis=1) for e in eps]
         out = []
         for e in eps:
             pl.eps_hook = lambda it, e=e: e
@@ -361,14 +418,16 @@ class TestMpcJs(unittest.TestCase):
         js = run_node(self.payload("truth", pl, world, s0, t, "plan", eps=[e.tolist() for e in eps]))
         for k in range(2):
             ok, rel = close(js["U"][k], out[k].ravel(), 1e-9, 1e-12)
-            print("\nplan %d with injected perturbations: max rel diff %.2e" % (k, rel))
+            print("\nplan %d with injected perturbations%s: max rel diff %.2e"
+                  % (k, " (motor)" if motor else "", rel))
             self.assertTrue(ok, "plan %d differs: %.3e" % (k, rel))
 
-    def loop(self, model, comps, T, max_components=48):
-        w = self.wind
-        payload = {"run": "loop", "ac": ac_params(self.ac), "settings": {}, "actuators": self.lib["actuators"],
-                   "entries": self.entries, "u10": U10, "chiDeg": CHI_DEG, "wind": wind_dict(w),
-                   "comps": comps, "model": model, "T": T, "maxComponents": max_components}
+    def loop(self, model, comps, T, max_components=48, name=NAME, u10=U10, settings=None):
+        w = Wind(u10, 270.0)
+        payload = {"run": "loop", "ac": ac_params(by_name(name)), "settings": settings or {},
+                   "actuators": self.lib["actuators"], "entries": self.lib["aircraft"][name], "u10": u10,
+                   "chiDeg": CHI_DEG, "wind": wind_dict(w), "comps": comps, "model": model, "T": T,
+                   "maxComponents": max_components}
         return run_node(payload)
 
     def test_closed_loop_flat_sea(self):
@@ -380,6 +439,19 @@ class TestMpcJs(unittest.TestCase):
                   % (model, r["ended"], r["tEnd"], r["hmin"], r["tipmin"], r["nmax"], len(ms), ms.mean(), ms.max()))
             self.assertEqual(r["ended"], "complete")
             self.assertGreater(r["hmin"], 0.0)
+
+    def test_closed_loop_motor_flat_sea(self):
+        """baseline-2m at u10 9 (below the soaring minimum of the library) on a flat sea with the motor
+        (normal level): flies 60 s, and the motor supplies the energy the sea does not."""
+        r = self.loop("flat", None, 60.0, name="baseline-2m", u10=9.0,
+                      settings={"motor": True, "energyLevel": "normal"})
+        print("\nclosed loop with the motor, baseline-2m u10 9, flat sea, 60 s: %s at %.1f s, min height %.2f m, "
+              "average power %.1f W, thrust on %.2f of the time, %d bursts"
+              % (r["ended"], r["tEnd"], r["hmin"], r["avgPowerW"], r["onShare"], r["nBurst"]))
+        self.assertEqual(r["ended"], "complete")
+        self.assertGreater(r["hmin"], 0.0)
+        self.assertGreater(r["avgPowerW"], 1.0)
+        self.assertLess(r["avgPowerW"], 40.0)
 
     def test_closed_loop_wave_sea_timing(self):
         """Informational: the 96 component sea of the Python margin experiment, truth world with
