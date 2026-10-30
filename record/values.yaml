@@ -1373,6 +1373,30 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
+  - key: wing.best_ld_glide
+    v: 25.1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.equal_mass_ar20_u10_ms
+    v: 12.99
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.equal_mass_ar25_u10_ms
+    v: 13.1
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.best_fat_pod_u10_ms
+    v: 14.95
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
   - key: env.charnock
     v: 0.0144
     unit: 1

@@ -793,3 +793,14 @@ items:
     raised_by: owner
     phase: design
     opened: 2026-10-30
+  - id: Q-067
+    kind: finding
+    text: "The wing-sizing study (docs/02-form.md#wing-sizing) fixed the mass by the wing's size, so the lighter slender wings ranked lower, while at equal mass they soar from less wind (K-014); and each design was solved from one start. Rerun with the wing loading as a variable (ballast or a heavier structure up to ds.mass_max_kg), several starts per design, the body drag area built up from pod, boom, tail and linkages, the taper offset of Nita and Scholz, and the objectives of the soaring minimum, the upwind progress, and the motor power below the minimum, since a heavier aircraft also costs more energy when the wind fails."
+    waits_for: assistant
+    affects:
+      - R-02
+      - ds.mass_max_kg
+      - Q-024
+    raised_by: checker
+    phase: design
+    opened: 2026-10-30

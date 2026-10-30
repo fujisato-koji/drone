@@ -263,6 +263,10 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | wing.re_floor | 80000 | 1 | calculated | docs/02-form.md#wing-sizing |
 | wing.rho_a_base_kg_m2 | 1.5 | kg/m2 | calculated | docs/02-form.md#wing-sizing |
 | wing.cda_par_base_m2 | 0.001 | m2 | calculated | docs/02-form.md#wing-sizing |
+| wing.best_ld_glide | 25.1 | 1 | calculated | docs/02-form.md#wing-sizing |
+| wing.equal_mass_ar20_u10_ms | 12.99 | m/s | calculated | docs/02-form.md#wing-sizing |
+| wing.equal_mass_ar25_u10_ms | 13.1 | m/s | calculated | docs/02-form.md#wing-sizing |
+| wing.best_fat_pod_u10_ms | 14.95 | m/s | calculated | docs/02-form.md#wing-sizing |
 | env.charnock | 0.0144 | 1 | assumed | Q-008 |
 | env.air_kinematic_viscosity | 1.46e-05 | m2/s | assumed | Q-008 |
 | env.jonswap_gamma | 3.3 | 1 | assumed | Q-008 |
