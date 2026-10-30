@@ -443,6 +443,23 @@ What it found:
 What it means: a large swell can carry the drone with no wind, if it follows the wave phase; a small swell cannot, and the wind must do it.
 This is the bird's light-wind behaviour (P42, P74, P80), and it makes the wave-aware closed loop the next thing to show (Q-060).
 
+## Navigation: the speed polar and the tactical layer {#navigation}
+
+The planner flies a cycle at the course it is given; which course to take towards a target is the navigation's job, and like a yacht the drone cannot sail straight into the wind (Q-066).
+Albatrosses keep headings about lit.albatross_preferred_heading_deg off the wind and route like yacht racers (P73), and can travel upwind (P43).
+
+The speed polar (`python -m sim.polar`, `sim/out/ds_polar.json`): the progress speed along each course relative to the wind, from the cycle optimizer with the control library's margins, COARE 3.5 and the roll and lift-coefficient rates, for the albatross-like glider, the baseline and the sealed hull at 9 to 20 m/s.
+
+- No form makes progress straight upwind at any wind; progress turns negative within about nav.no_progress_within_deg_min to nav.no_progress_within_deg_max of the wind's eye.
+- The best course for an upwind target is nav.best_upwind_course_off_wind_deg off the wind in every case; the progress towards a target straight upwind is then nav.albatross_upwind_vmg_u11_ms at 11 m/s to nav.albatross_upwind_vmg_u20_ms at 20 m/s for the albatross-like glider and nav.baseline_upwind_vmg_u13_ms to nav.baseline_upwind_vmg_u20_ms for the baseline.
+- Downwind the best course is straight or within 30 deg of it, so little gybing is needed.
+- With the margins the albatross-like glider soars from nav.albatross_polar_min_u10_ms and the baseline and the sealed hull from nav.baseline_polar_min_u10_ms; below that the planner's motor-assisted cycles take over.
+- The polar comes from single runs of a local optimizer on a 15 deg grid, and one row (the albatross-like glider at 11 m/s) is rough, so the angles are good to about the grid.
+
+The tactical layer (`sim/navigator.py`) chooses the course for the best progress towards the target from the polar, tacks or gybes when the other side gains more than a margin and the cost of a turn, tacks on headers when the wind direction swings, and reports when no course makes progress so that the strategic layer can wait on the water or use the motor.
+On a synthetic polar it reaches a target 10 km upwind at 94% of the ideal progress with a tack cost of 30 s, and with a wind swinging by 15 deg it arrives 27% sooner by tacking on headers than by tacking only at the laylines.
+Its connection to the planner and a closed-loop flight to a target 10 km upwind come next.
+
 ## Control modes {#control-modes}
 
 The owner asked for a state transition diagram as well as a flowchart (2026-10-29).

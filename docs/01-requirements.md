@@ -238,6 +238,15 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | mpc.burst_contact_seen_max_s | 12.3 | s | calculated | docs/02-form.md#receding-horizon |
 | mpc.burst_like_for_like_opt_min_w | 9.0 | W | calculated | docs/02-form.md#receding-horizon |
 | mpc.burst_like_for_like_opt_max_w | 9.5 | W | calculated | docs/02-form.md#receding-horizon |
+| nav.best_upwind_course_off_wind_deg | 60 | deg | calculated | docs/02-form.md#navigation |
+| nav.albatross_upwind_vmg_u11_ms | 3.75 | m/s | calculated | docs/02-form.md#navigation |
+| nav.albatross_upwind_vmg_u20_ms | 7.55 | m/s | calculated | docs/02-form.md#navigation |
+| nav.baseline_upwind_vmg_u13_ms | 3.0 | m/s | calculated | docs/02-form.md#navigation |
+| nav.baseline_upwind_vmg_u20_ms | 4.45 | m/s | calculated | docs/02-form.md#navigation |
+| nav.no_progress_within_deg_min | 15 | deg | calculated | docs/02-form.md#navigation |
+| nav.no_progress_within_deg_max | 30 | deg | calculated | docs/02-form.md#navigation |
+| nav.albatross_polar_min_u10_ms | 11 | m/s | calculated | docs/02-form.md#navigation |
+| nav.baseline_polar_min_u10_ms | 13 | m/s | calculated | docs/02-form.md#navigation |
 | env.charnock | 0.0144 | 1 | assumed | Q-008 |
 | env.air_kinematic_viscosity | 1.46e-05 | m2/s | assumed | Q-008 |
 | env.jonswap_gamma | 3.3 | 1 | assumed | Q-008 |
