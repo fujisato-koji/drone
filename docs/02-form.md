@@ -397,7 +397,7 @@ The home area:
 - The thresholds are the model's flat-sea soaring minima in neutral air; stability, the shear under swell (Q-061) and the waves (Q-060) move them, and 11 m/s comes from a study not yet in the record.
 - The swell is a lower bound from the total height, not ERA5's own partition, and the wave grid is 0.5 deg; the service has no peak period from 2024-11-19 to the end of 2024 at any point, and those hours are left out of the period medians (`missing_hours` in `sim/out/climate.json`).
 - No solar yield is credited in the battery figures, the cell figures carry no margin for ageing or reserve, and the darkest-day insolation is known for two places only; the Southern Ocean value at 50S is used for the whole region, including the darker point at 55S.
-- Two or three points stand for each region, and the run used commit ebbabcf with the working tree of this branch (the stamp is in `sim/out/climate.json`).
+- Two or three points stand for each region, and the results come from commit 15af168 with the changes of K-018 applied in the working tree (commit cc10dd1; the stamp is in `sim/out/climate.json`).
 
 ## Numbers from the literature for the form study {#literature-numbers}
 
