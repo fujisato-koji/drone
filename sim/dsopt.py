@@ -9,7 +9,8 @@ import time
 import numpy as np
 from scipy.optimize import minimize
 
-from sim.aircraft import G
+from sim.aircraft import G, ground_effect_phi
+from sim.record import value
 
 NS, NC = 6, 2
 U10_FLOOR_WAVE = 0.1  # lower bound of u10 in the wave mode (0.5 in the flat mode)
@@ -59,14 +60,52 @@ class Profile:
         return np.where(inside, dz / (zc * self.L), 0.0)
 
 
-def derivs(S, C, ac, U, Up):
-    """State derivative for states S (...,6), controls C (...,2), wind U and dU/dz."""
+def thrust_max(ac):
+    """T_max = value("prop.thrust_max_per_weight", 0.5) m g (N)."""
+    return value("prop.thrust_max_per_weight", 0.5) * ac.mass * G
+
+
+def prop_efficiency():
+    """eta_p eta_m: value("prop.prop_eff", 0.60) times value("prop.motor_eff", 0.75) (motor + ESC)."""
+    return value("prop.prop_eff", 0.60) * value("prop.motor_eff", 0.75)
+
+
+def folded_dcd(ac):
+    """Delta CD0 of the folded propeller, value("prop.folded_drag_cda_m2", 3.0e-4) / S."""
+    return value("prop.folded_drag_cda_m2", 3.0e-4) / ac.wing_area
+
+
+def folded_aircraft(ac):
+    """Copy of ac with the folded propeller drag in cd0 (the whole cycle, motor off)."""
+    from dataclasses import replace
+    return replace(ac, cd0=ac.cd0 + folded_dcd(ac))
+
+
+def _drag(ac, q, cl, mu, h, ge, th, psi=None, ex=0.0, ey=0.0):
+    """Drag. ge: induced drag times ground_effect_phi at the height h above the surface (slope
+    ex, ey, heading psi). th is not None (motor model): the propeller is folded unless it
+    thrusts, cd0 + Delta CD0 (1 - T / (T + 0.01 m g)), a smooth switch that is 1 at T = 0 and
+    1/2 at T = 1 % of the weight. Without both the expression is the original one."""
+    cd0 = ac.cd0
+    if th is not None:
+        cd0 = cd0 + folded_dcd(ac) * (1.0 - th / (th + 0.01 * ac.mass * G))
+    if ge:
+        K = ground_effect_phi(h, ac.span, mu, 0.0 if psi is None else psi, ex, ey)
+        return q * (cd0 + ac.k_induced * K * cl * cl)
+    return q * (cd0 + ac.k_induced * cl * cl)
+
+
+def derivs(S, C, ac, U, Up, ge=False, th=None):
+    """State derivative for states S (...,6), controls C (...,2), wind U and dU/dz.
+
+    ge: ground effect on the induced drag (flat sea, height z). th: thrust (N) along the
+    air-relative velocity, same shape as V (None: no motor)."""
     V, g, p = S[..., 3], S[..., 4], S[..., 5]
     cl, mu = C[..., 0], C[..., 1]
     cg, sg, cp, sp = np.cos(g), np.sin(g), np.cos(p), np.sin(p)
     q = 0.5 * ac.rho * V * V * ac.wing_area
     L = q * cl
-    D = q * (ac.cd0 + ac.k_induced * cl * cl)
+    D = _drag(ac, q, cl, mu, S[..., 2], ge, th, p)
     m = ac.mass
     dz = V * sg
     aw = Up * dz  # a_W along x
@@ -75,29 +114,37 @@ def derivs(S, C, ac, U, Up):
     out[..., 1] = V * cg * sp
     out[..., 2] = dz
     out[..., 3] = -D / m - G * sg - aw * cg * cp
+    if th is not None:
+        out[..., 3] = out[..., 3] + th / m
     out[..., 4] = (L * np.cos(mu) / m - G * cg + aw * sg * cp) / V
     out[..., 5] = (L * np.sin(mu) / m + aw * sp) / (V * cg)
     return out
 
 
-def dyn(S, C, ac, prof, u10):
+def dyn(S, C, ac, prof, u10, ge=False, th=None):
     z = S[..., 2]
-    return derivs(S, C, ac, u10 * prof.f(z), u10 * prof.fp(z))
+    return derivs(S, C, ac, u10 * prof.f(z), u10 * prof.fp(z), ge, th)
 
 
 _EPS = 1e-30
 
 
-def dyn_jac(A, ac, prof, u10):
-    """f and Jacobian by complex step. A (n,8)=[S,C]. Returns f (n,6), J (n,6,9) (last col: u10)."""
+def dyn_jac(A, ac, prof, u10, ge=False, th=None):
+    """f and Jacobian by complex step. A (n,8)=[S,C]. Returns f (n,6), J (n,6,9) (col 8: u10).
+    With th (n,) the thrust is one more column: J (n,6,10), col 9 = d f / d th."""
     n = A.shape[0]
-    P = np.repeat(A[None].astype(complex), 9, axis=0)  # (9,n,8)
-    u = np.full((9, n), u10, dtype=complex)
+    nc = 10 if th is not None else 9
+    P = np.repeat(A[None].astype(complex), nc, axis=0)  # (nc,n,8)
+    u = np.full((nc, n), u10, dtype=complex)
     for j in range(8):
         P[j, :, j] += 1j * _EPS
     u[8] += 1j * _EPS
-    F = derivs(P[..., :NS], P[..., NS:], ac, u * prof.f(P[..., 2]), u * prof.fp(P[..., 2]))
-    J = np.moveaxis(F.imag / _EPS, 0, -1)  # (n,6,9)
+    tt = None
+    if th is not None:
+        tt = np.repeat(np.asarray(th, dtype=complex)[None], nc, axis=0)
+        tt[9] += 1j * _EPS
+    F = derivs(P[..., :NS], P[..., NS:], ac, u * prof.f(P[..., 2]), u * prof.fp(P[..., 2]), ge, tt)
+    J = np.moveaxis(F.imag / _EPS, 0, -1)  # (n,6,nc)
     return F[8].real, J
 
 
@@ -237,14 +284,21 @@ def wave_wind_accel(S, wv, prof, tt, u10, phi0):
     return ((Wx, Wy, Wz), (Ax * dth + Hx * vgz, Ay * dth + Hy * vgz, Az * dth + Hz * vgz))
 
 
-def derivs_wave(S, C, ac, prof, wv, tt, u10, phi0):
-    """State derivative in the wave mode (z is the absolute height, wind acts in x, y and z)."""
+def derivs_wave(S, C, ac, prof, wv, tt, u10, phi0, ge=False, th=None):
+    """State derivative in the wave mode (z is the absolute height, wind acts in x, y and z).
+
+    ge: ground effect at the height above the local surface z - a cos(theta). th: thrust (N)."""
     V, g, p = S[..., 3], S[..., 4], S[..., 5]
     cl, mu = C[..., 0], C[..., 1]
     cg, sg, cp, sp = np.cos(g), np.sin(g), np.cos(p), np.sin(p)
     q = 0.5 * ac.rho * V * V * ac.wing_area
     L = q * cl
-    D = q * (ac.cd0 + ac.k_induced * cl * cl)
+    hs, ex, ey = None, 0.0, 0.0
+    if ge:
+        thw = wv.k * (wv.cw * S[..., 0] + wv.sw * S[..., 1]) - wv.om * tt + phi0
+        hs = S[..., 2] - wv.a * np.cos(thw)
+        ex, ey = -wv.a * wv.k * wv.cw * np.sin(thw), -wv.a * wv.k * wv.sw * np.sin(thw)
+    D = _drag(ac, q, cl, mu, hs, ge, th, p, ex, ey)
     m = ac.mass
     (Wx, Wy, Wz), (ax, ay, az) = wave_wind_accel(S, wv, prof, tt, u10, phi0)
     out = np.empty(S.shape, dtype=np.result_type(S, C, Wx, ax))
@@ -252,25 +306,34 @@ def derivs_wave(S, C, ac, prof, wv, tt, u10, phi0):
     out[..., 1] = V * cg * sp + Wy
     out[..., 2] = V * sg + Wz
     out[..., 3] = -D / m - G * sg - (ax * cg * cp + ay * cg * sp + az * sg)
+    if th is not None:
+        out[..., 3] = out[..., 3] + th / m
     out[..., 4] = (L * np.cos(mu) / m - G * cg + (ax * sg * cp + ay * sg * sp - az * cg)) / V
     out[..., 5] = (L * np.sin(mu) / m + ax * sp - ay * cp) / (V * cg)
     return out
 
 
-def dyn_jac_wave(A, tt, u10, phi0, ac, prof, wv):
+def dyn_jac_wave(A, tt, u10, phi0, ac, prof, wv, ge=False, th=None):
     """f and Jacobian by complex step. A (n,8), tt (n,). J (n,6,10): S, C, u10, phi0.
 
     The time derivative is -om * (phi0 column): t and phi0 enter only as phi0 - om t.
+    With th (n,) the thrust is one more column: J (n,6,11), col 10 = d f / d th.
     """
     n = A.shape[0]
-    P = np.repeat(A[None].astype(complex), 10, axis=0)
-    u = np.full((10, n), u10, dtype=complex)
-    ph = np.full((10, n), phi0, dtype=complex)
+    nc = 11 if th is not None else 10
+    P = np.repeat(A[None].astype(complex), nc, axis=0)
+    u = np.full((nc, n), u10, dtype=complex)
+    ph = np.full((nc, n), phi0, dtype=complex)
     for j in range(8):
         P[j, :, j] += 1j * _EPS
     u[8] += 1j * _EPS
     ph[9] += 1j * _EPS
-    F = derivs_wave(P[..., :NS], P[..., NS:], ac, prof, wv, np.broadcast_to(tt, (10, n)), u, ph)
+    tq = None
+    if th is not None:
+        tq = np.repeat(np.asarray(th, dtype=complex)[None], nc, axis=0)
+        tq[10] += 1j * _EPS
+    F = derivs_wave(P[..., :NS], P[..., NS:], ac, prof, wv, np.broadcast_to(tt, (nc, n)), u, ph,
+                    ge, tq)
     J = np.moveaxis(F.imag / _EPS, 0, -1)
     return F[8].real, J
 
@@ -280,19 +343,33 @@ class Collocation:
                  h_min=1.0, h_tip_min=0.3, v_factor=1.1, tip_model="abs", wave=None,
                  midpoints=False, rate_limits=False, n_min=None, n_frac=1.0, mu_frac=1.0,
                  bank_rate_max_deg_s=None, cl_rate_max_per_s=None, phase_pin="theta",
-                 rate_model="constant", roll_pb2v=None):
+                 rate_model="constant", roll_pb2v=None, ground_effect=False, motor=False,
+                 v_travel_min=None, folded_prop=False):
+        """folded_prop (motor=False only): an airframe with a folded propeller, Delta CD0 =
+        prop.folded_drag_cda_m2 / S added to cd0 over the whole cycle (with motor=True the smooth
+        switch of _drag applies instead). ground_effect: induced drag times ground_effect_phi (default off).
+        motor: thrust T in [0, T_max] per node as a third control (kept in extra variables after
+        the others, see thrust()); mode "min_power" (needs motor and u10) minimises the cycle
+        average electric power sum(w T V) / (eta_p eta_m) (trapezoid in the nodes); in a travel
+        cycle v_travel_min (m/s, default 0) bounds the mean speed along chi from below."""
         if rate_model not in ("constant", "pb2v"):
             raise ValueError(rate_model)
-        if mode not in ("min_wind", "max_speed"):
+        if mode not in ("min_wind", "max_speed", "min_power"):
             raise ValueError(mode)
+        if mode == "min_power" and not motor:
+            raise ValueError("min_power needs motor=True")
         if cycle not in ("travel", "loiter"):
             raise ValueError(cycle)
         if tip_model not in ("abs", "geometric"):
             raise ValueError(tip_model)
         if phase_pin not in ("theta", "gamma"):
             raise ValueError(phase_pin)
-        if mode == "max_speed" and u10 is None:
-            raise ValueError("max_speed needs u10")
+        if mode in ("max_speed", "min_power") and u10 is None:
+            raise ValueError(mode + " needs u10")
+        self.ge, self.motor = bool(ground_effect), bool(motor)
+        if folded_prop and not motor:
+            ac = folded_aircraft(ac)
+        self.v_travel_min = None if v_travel_min is None else float(v_travel_min)
         self.ac, self.prof, self.mode, self.cycle, self.N = ac, prof, mode, cycle, n
         self.u_fixed = u10
         self.chi, self.h_min, self.h_tip = chi, h_min, h_tip_min
@@ -323,12 +400,27 @@ class Collocation:
         self.iT, self.iU = n * 8, n * 8 + 1
         self.iP = n * 8 + 2 if self.wv is not None else None
         self.rowsc = 1.0 / np.tile([100.0, 100.0, 10.0, vs, 1.0, 1.0], n - 1)
+        self.iTh = None
+        if self.motor:  # thrust per node, scaled by m g (N), after all other variables
+            self.iTh = self.nv
+            self.sc = np.concatenate([self.sc, np.full(n, ac.mass * G)])
+            self.nv += n
+        self.eta = prop_efficiency()
         self._key, self._val = None, None
 
     # ---- packing
-    def pack(self, S, C, T, u10, phi0=0.0):
+    def pack(self, S, C, T, u10, phi0=0.0, thrust=None):
         tail = [T, u10] + ([phi0] if self.wv is not None else [])
-        return np.concatenate([S.ravel(), C.ravel(), tail]) / self.sc
+        parts = [S.ravel(), C.ravel(), tail]
+        if self.motor:
+            parts.append(np.zeros(self.N) if thrust is None else np.asarray(thrust, dtype=float))
+        return np.concatenate(parts) / self.sc
+
+    def thrust(self, x):
+        """Node thrust (N); zeros without the motor."""
+        if not self.motor:
+            return np.zeros(self.N)
+        return np.asarray(x[self.iTh:self.iTh + self.N]) * self.sc[self.iTh:self.iTh + self.N]
 
     def unpack(self, x):
         v = np.asarray(x) * self.sc
@@ -366,8 +458,11 @@ class Collocation:
         if self.wv is not None:
             lo, hi = np.append(lo, -100.0), np.append(hi, 100.0)
             lo[self.iU] = U10_FLOOR_WAVE  # a wave can carry the cycle with (almost) no mean wind
+        if self.motor:
+            lo = np.concatenate([lo, np.zeros(N)])
+            hi = np.concatenate([hi, np.full(N, thrust_max(ac))])
         lo[0], hi[0], lo[1], hi[1] = 0.0, 0.0, 0.0, 0.0  # x0 = y0 = 0
-        if self.mode == "max_speed":
+        if self.mode in ("max_speed", "min_power"):
             lo[self.iU] = hi[self.iU] = self.u_fixed
         return list(zip(lo / self.sc, hi / self.sc))
 
@@ -380,12 +475,14 @@ class Collocation:
         M = N - 1
         kk = np.arange(M)[:, None]
         A = np.concatenate([S, C], axis=1)
-        F, J = dyn_jac_wave(A, np.arange(N) * h, u, phi, ac, prof, wv)
+        Th = self.thrust(x) if self.motor else None
+        Thm = None if Th is None else 0.5 * (Th[:-1] + Th[1:])
+        F, J = dyn_jac_wave(A, np.arange(N) * h, u, phi, ac, prof, wv, self.ge, Th)
         Fk, Fk1 = F[:-1], F[1:]
         Sm = 0.5 * (S[:-1] + S[1:]) + h / 8.0 * (Fk - Fk1)
         Cm = 0.5 * (C[:-1] + C[1:])
         Fm, Jm = dyn_jac_wave(np.concatenate([Sm, Cm], axis=1), (np.arange(M) + 0.5) * h,
-                              u, phi, ac, prof, wv)
+                              u, phi, ac, prof, wv, self.ge, Thm)
         d = S[1:] - S[:-1] - h / 6.0 * (Fk + 4 * Fm + Fk1)
         I6 = np.eye(NS)
         Jk, Jk1 = J[:-1], J[1:]
@@ -410,6 +507,8 @@ class Collocation:
         dT = dh / (N - 1)
         Jac = np.zeros((M * NS, self.nv))
         dU, dP = dpar(8), dpar(9)
+        if self.motor:
+            dThk, dThk1 = self._thrust_blocks(h, Jk[:, :, 10], Jk1[:, :, 10], Jm[:, :, 10], Jms)
         for k in range(M):
             r = slice(k * NS, (k + 1) * NS)
             Jac[r, k * NS:(k + 1) * NS] = dSk[k]
@@ -419,6 +518,9 @@ class Collocation:
             Jac[r, self.iT] = dT[k]
             Jac[r, self.iU] = dU[k]
             Jac[r, self.iP] = dP[k]
+            if self.motor:
+                Jac[r, self.iTh + k] = dThk[k]
+                Jac[r, self.iTh + k + 1] = dThk1[k]
         # midpoint state Sm (Hermite-Simpson interpolation) and its physical Jacobian, for the
         # midpoint clearance constraints
         Jsm = np.zeros((M, NS, self.nv))
@@ -430,9 +532,20 @@ class Collocation:
             Jsm[k, :, self.iT] = dSm[k] / (N - 1)
             Jsm[k, :, self.iU] = h / 8.0 * (Jk[k, :, 8] - Jk1[k, :, 8])
             Jsm[k, :, self.iP] = h / 8.0 * (Jk[k, :, 9] - Jk1[k, :, 9])
+            if self.motor:
+                Jsm[k, :, self.iTh + k] = h / 8.0 * Jk[k, :, 10]
+                Jsm[k, :, self.iTh + k + 1] = -h / 8.0 * Jk1[k, :, 10]
         self._mid = (Sm, Jsm)
         Jac = Jac * self.sc[None, :] * self.rowsc[:, None]
         return d.ravel() * self.rowsc, Jac
+
+    @staticmethod
+    def _thrust_blocks(h, Jtk, Jtk1, Jtm, Jms):
+        """d(defect)/d(thrust at node k, k+1), physical units; the midpoint thrust is the node
+        average and enters the midpoint state through the Hermite-Simpson interpolation."""
+        dk = -h / 6.0 * (Jtk + 2 * Jtm + 4 * np.einsum("kij,kj->ki", Jms, h / 8.0 * Jtk))
+        dk1 = -h / 6.0 * (Jtk1 + 2 * Jtm + 4 * np.einsum("kij,kj->ki", Jms, -h / 8.0 * Jtk1))
+        return dk, dk1
 
     def _defects(self, x):
         key = x.tobytes()
@@ -445,11 +558,13 @@ class Collocation:
         N, ac, prof = self.N, self.ac, self.prof
         h = T / (N - 1)
         A = np.concatenate([S, C], axis=1)
-        F, J = dyn_jac(A, ac, prof, u)
+        Th = self.thrust(x) if self.motor else None
+        Thm = None if Th is None else 0.5 * (Th[:-1] + Th[1:])
+        F, J = dyn_jac(A, ac, prof, u, self.ge, Th)
         Fk, Fk1 = F[:-1], F[1:]
         Sm = 0.5 * (S[:-1] + S[1:]) + h / 8.0 * (Fk - Fk1)
         Cm = 0.5 * (C[:-1] + C[1:])
-        Fm, Jm = dyn_jac(np.concatenate([Sm, Cm], axis=1), ac, prof, u)
+        Fm, Jm = dyn_jac(np.concatenate([Sm, Cm], axis=1), ac, prof, u, self.ge, Thm)
         d = S[1:] - S[:-1] - h / 6.0 * (Fk + 4 * Fm + Fk1)
         M = N - 1
         I6 = np.eye(NS)
@@ -472,11 +587,16 @@ class Collocation:
                 Jsm[k, :, N * NS + (k + 1) * NC:N * NS + (k + 2) * NC] = -h / 8.0 * Jk1[k, :, NS:8]
                 Jsm[k, :, self.iT] = (Fk[k] - Fk1[k]) / 8.0 / (N - 1)
                 Jsm[k, :, self.iU] = h / 8.0 * (Jk[k, :, 8] - Jk1[k, :, 8])
+                if self.motor:
+                    Jsm[k, :, self.iTh + k] = h / 8.0 * Jk[k, :, 9]
+                    Jsm[k, :, self.iTh + k + 1] = -h / 8.0 * Jk1[k, :, 9]
             self._mid = (Sm, Jsm)
         dU = -h / 6.0 * (Jk[:, :, 8] + 4 * (Jmu + np.einsum("kij,kj->ki", Jms,
                                                               h / 8.0 * (Jk[:, :, 8] - Jk1[:, :, 8])))
                          + Jk1[:, :, 8])
         Jac = np.zeros((M * NS, self.nv))
+        if self.motor:
+            dThk, dThk1 = self._thrust_blocks(h, Jk[:, :, 9], Jk1[:, :, 9], Jm[:, :, 9], Jms)
         for k in range(M):
             r = slice(k * NS, (k + 1) * NS)
             Jac[r, k * NS:(k + 1) * NS] = dSk[k]
@@ -485,6 +605,9 @@ class Collocation:
             Jac[r, N * NS + (k + 1) * NC:N * NS + (k + 2) * NC] = dCk1[k]
             Jac[r, self.iT] = dT[k]
             Jac[r, self.iU] = dU[k]
+            if self.motor:
+                Jac[r, self.iTh + k] = dThk[k]
+                Jac[r, self.iTh + k + 1] = dThk1[k]
         Jac = Jac * self.sc[None, :] * self.rowsc[:, None]
         self._key, self._val = key, (d.ravel() * self.rowsc, Jac)
         return self._val
@@ -590,6 +713,16 @@ class Collocation:
             fr, Jr = self._rates(x)
             f.append(fr)
             J.append(Jr)
+        if self.mode == "min_power" and self.cycle == "travel" and self.v_travel_min is not None:
+            # progress along chi: (c x_end + s y_end - v_req T) / 100 >= 0 (linear in x_end, y_end, T)
+            c, s_ = np.cos(self.chi), np.sin(self.chi)
+            v = x * sc
+            ie, je = (N - 1) * NS, (N - 1) * NS + 1
+            Jv = np.zeros((1, self.nv))
+            Jv[0, ie], Jv[0, je] = c * sc[ie] / 100.0, s_ * sc[je] / 100.0
+            Jv[0, self.iT] = -self.v_travel_min * sc[self.iT] / 100.0
+            f.append(np.array([(c * v[ie] + s_ * v[je] - self.v_travel_min * v[self.iT]) / 100.0]))
+            J.append(Jv)
         return np.concatenate(f), np.vstack(J)
 
     def _n_mid(self, x):
@@ -698,7 +831,29 @@ class Collocation:
     def ineq_jac(self, x):
         return self._path(x)[1]
 
+    def power_weights(self):
+        """Trapezoid weights of the cycle average over the nodes (sum 1)."""
+        w = np.ones(self.N)
+        w[0] = w[-1] = 0.5
+        return w / (self.N - 1)
+
+    def avg_power(self, x):
+        """Cycle average electric power (W): mean of T V / (eta_p eta_m), trapezoid over the nodes."""
+        S = self.unpack(x)[0]
+        return float(np.sum(self.power_weights() * self.thrust(x) * S[:, 3]) / self.eta)
+
     def objective(self, x):
+        if self.mode == "min_power":
+            ac, N, sc = self.ac, self.N, self.sc
+            scale = ac.mass * G * 10.0 * self.eta
+            w = self.power_weights()
+            Th = self.thrust(x)
+            iv = np.arange(N) * NS + 3
+            V = x[iv] * sc[iv]
+            g = np.zeros(self.nv)
+            g[self.iTh:self.iTh + N] = w * V / scale * sc[self.iTh:self.iTh + N]
+            g[iv] = w * Th / scale * sc[iv]
+            return float(np.sum(w * Th * V) / scale), g
         if self.mode == "min_wind":
             g = np.zeros(self.nv)
             g[self.iU] = 1.0
@@ -750,6 +905,9 @@ class Collocation:
         cl = np.clip(2 * ac.mass * G * np.cos(g) / (ac.rho * V * V * ac.wing_area * np.cos(mu)),
                      ac.cl_min, ac.cl_max)
         u = rng.uniform(6.0, 12.0) if self.mode == "min_wind" else self.u_fixed
+        th0 = None
+        if self.motor:  # a thrust that would hold the glide at the best L/D
+            th0 = np.full(N, min(ac.mass * G / ac.best_ld, thrust_max(ac)))
         dx = V * np.cos(g) * np.cos(psi) + u * prof.f(z)
         dy = V * np.cos(g) * np.sin(psi)
         x = np.concatenate([[0.0], np.cumsum(0.5 * (dx[1:] + dx[:-1]) * np.diff(t))])
@@ -763,7 +921,7 @@ class Collocation:
         else:
             phi0 = 0.0
         S = np.stack([x, y, z, V, g, psi], axis=1)
-        return self.pack(S, np.stack([cl, mu], axis=1), T, u, phi0)
+        return self.pack(S, np.stack([cl, mu], axis=1), T, u, phi0, th0)
 
 
 def _summary(col, x, res, viol, ok, seed, runtime):
@@ -776,13 +934,18 @@ def _summary(col, x, res, viol, ok, seed, runtime):
     A = np.concatenate([S, C], axis=1)
     h = T / (N - 1)
     if col.wv is None:
-        F, _ = dyn_jac(A, ac, col.prof, u)
+        F, _ = dyn_jac(A, ac, col.prof, u, col.ge, col.thrust(x) if col.motor else None)
         zm = 0.5 * (S[:-1, 2] + S[1:, 2]) + h / 8 * (F[:-1, 2] - F[1:, 2])
     else:
-        F, _ = dyn_jac_wave(A, np.arange(N) * h, u, col.phi0(x), ac, col.prof, col.wv)
+        F, _ = dyn_jac_wave(A, np.arange(N) * h, u, col.phi0(x), ac, col.prof, col.wv, col.ge,
+                            col.thrust(x) if col.motor else None)
         zm = 0.5 * (S[:-1, 2] + S[1:, 2]) + h / 8 * (F[:-1, 2] - F[1:, 2])
     out = _summary_flat(col, x, res, viol, ok, seed, runtime, S, C, T, u, n, xe, ye, zm)
     out.update(control_stats(col, x))
+    if col.motor:
+        out.update(motor_stats(col, x))
+        if col.mode == "min_power":
+            out["objective"] = out["power_avg_w"]
     if col.wv is not None:
         out.update(_wave_extra(col, x, S, C, T, u, F))
     return out
@@ -803,11 +966,12 @@ def control_stats(col, x, sub=20):
     n = K * S[:, 3] ** 2 * C[:, 0]
     dmu, dcl = np.diff(C[:, 1]), np.diff(C[:, 0])
     phi = col.phi0(x) if wv is not None else 0.0
+    Th = col.thrust(x) if col.motor else None
 
-    def f(s, c, t):
+    def f(s, c, t, th=None):
         if wv is None:
-            return dyn(s, c, ac, col.prof, u)
-        return derivs_wave(s, c, ac, col.prof, wv, t, u, phi)
+            return dyn(s, c, ac, col.prof, u, col.ge, th)
+        return derivs_wave(s, c, ac, col.prof, wv, t, u, phi, col.ge, th)
 
     def height_tip(s, c, t):
         hh = s[:, 2]
@@ -831,10 +995,16 @@ def control_stats(col, x, sub=20):
         cm = C[:-1] + (C[1:] - C[:-1]) * (fr + 0.5 / sub)
         cn = C[:-1] + (C[1:] - C[:-1]) * (fr + 1.0 / sub)
         t0_ = kt + fr * dt
-        k1 = f(s, c, t0_)
-        k2 = f(s + 0.5 * hstep * k1, cm, t0_ + 0.5 * hstep)
-        k3 = f(s + 0.5 * hstep * k2, cm, t0_ + 0.5 * hstep)
-        k4 = f(s + hstep * k3, cn, t0_ + hstep)
+        if Th is None:
+            tc = tm_ = tn = None
+        else:
+            dTh = Th[1:] - Th[:-1]
+            tc, tm_, tn = (Th[:-1] + dTh * fr, Th[:-1] + dTh * (fr + 0.5 / sub),
+                           Th[:-1] + dTh * (fr + 1.0 / sub))
+        k1 = f(s, c, t0_, tc)
+        k2 = f(s + 0.5 * hstep * k1, cm, t0_ + 0.5 * hstep, tm_)
+        k3 = f(s + 0.5 * hstep * k2, cm, t0_ + 0.5 * hstep, tm_)
+        k4 = f(s + hstep * k3, cn, t0_ + hstep, tn)
         s = s + hstep / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4)
     Vm = np.minimum(S[1:, 3], S[:-1, 3])
     lim = (2.0 * col.k_roll * Vm / ac.span if col.rate_model == "pb2v"
@@ -850,6 +1020,24 @@ def control_stats(col, x, sub=20):
             "n_min_node": float(n.min()), "n_max_node": float(n.max()),
             "replay_h_min": float(min(hs)), "replay_tip_min": float(min(tips)),
             "replay_closure": float(np.abs(s - S[1:]).max())}
+
+
+def motor_stats(col, x, sub=20):
+    """Electric power of a motor cycle: average (the optimizer's trapezoid and a dense one on the
+    piecewise-linear thrust and V), peak, share of time with T > 1e-4 m g, Wh per hour (= the
+    average power in W), thrust range. V is linear between nodes in the dense sample."""
+    S = col.unpack(x)[0]
+    ac, N = col.ac, col.N
+    Th, V = col.thrust(x), S[:, 3]
+    fr = np.linspace(0.0, 1.0, sub + 1)[None, :]
+    Td = (Th[:-1, None] + (Th[1:] - Th[:-1])[:, None] * fr).ravel()
+    Vd = (V[:-1, None] + (V[1:] - V[:-1])[:, None] * fr).ravel()
+    pd = Td * Vd / col.eta
+    avg = col.avg_power(x)
+    return {"power_avg_w": avg, "power_avg_dense_w": float(pd.mean()),
+            "power_peak_w": float(pd.max()),
+            "thrust_on_share": float((Td > 1e-4 * ac.mass * G).mean()),
+            "wh_per_hour": avg, "thrust_max_n": float(Th.max()), "thrust_limit_n": thrust_max(ac)}
 
 
 def rotate_start(col, x, delta_deg):
@@ -921,7 +1109,9 @@ def _summary_flat(col, x, res, viol, ok, seed, runtime, S, C, T, u, n, xe, ye, z
             "cl_range": [float(C[:, 0].min()), float(C[:, 0].max())],
             "near_converged": bool(ok or viol < 1e-3),
             "seed": seed, "runtime_s": runtime, "iterations": int(res.nit), "n_nodes": N,
-            "objective": float(u if col.mode == "min_wind" else -res.fun * 10.0)}
+            "objective": float(u if col.mode == "min_wind" else
+                               (res.fun * ac.mass * G * 10.0 if col.mode == "min_power"
+                                else -res.fun * 10.0))}
 
 
 def _better_info(a, b, mode):
@@ -930,7 +1120,7 @@ def _better_info(a, b, mode):
         return True
     if a["success"] != b["success"]:
         return a["success"]
-    sgn = 1 if mode == "min_wind" else -1
+    sgn = 1 if mode in ("min_wind", "min_power") else -1
     if a["success"]:
         return a["objective"] * sgn < b["objective"] * sgn
     return a["violation"] < b["violation"]
@@ -941,9 +1131,11 @@ def solve(ac, prof, mode="min_wind", cycle="travel", n=40, u10=None, chi=np.pi /
           x0=None, return_x=False, verbose=False, stop_after=2, tip_model="abs", wave=None,
           midpoints=False, rate_limits=False, n_min=None, n_frac=1.0, mu_frac=1.0,
           bank_rate_max_deg_s=None, cl_rate_max_per_s=None, phase_pin="theta", m_search=(0,),
-          rate_model="constant", roll_pb2v=None):
+          rate_model="constant", roll_pb2v=None, ground_effect=False, motor=False,
+          v_travel_min=None, folded_prop=False):
     """Solve for the best converged cycle among the seeded initial guesses.
 
+    ground_effect, motor, v_travel_min and mode "min_power": see Collocation.
     midpoints (flat mode; the wave mode has WaveParams.midpoints), rate_limits, n_min, n_frac,
     mu_frac, the two rate keywords and phase_pin: see Collocation. m_search: offsets added to the
     integer m taken from each start (wave mode, a > 0); each start is solved once per offset and
@@ -955,7 +1147,8 @@ def solve(ac, prof, mode="min_wind", cycle="travel", n=40, u10=None, chi=np.pi /
     """
     col = Collocation(ac, prof, mode, cycle, n, u10, chi, h_min, h_tip_min, v_factor,
                       tip_model, wave, midpoints, rate_limits, n_min, n_frac, mu_frac,
-                      bank_rate_max_deg_s, cl_rate_max_per_s, phase_pin, rate_model, roll_pb2v)
+                      bank_rate_max_deg_s, cl_rate_max_per_s, phase_pin, rate_model, roll_pb2v,
+                      ground_effect, motor, v_travel_min, folded_prop)
     cons = [{"type": "eq", "fun": col.eq_fun, "jac": col.eq_jac},
             {"type": "ineq", "fun": col.ineq_fun, "jac": col.ineq_jac}]
     bnds = col.bounds()

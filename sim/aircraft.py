@@ -199,9 +199,34 @@ class Actuators:
         return {"mu_rate": self.n_mu_rate / n, "cl_rate": self.n_cl_rate / n}
 
 
-def derivatives(t, s, ac, env, cl, mu, n_limit=False):
+def ground_effect_factor(h_over_b, bank=0.0):
+    """Induced drag in ground effect over free air, K(hc/b, bank): model "image" of
+    sim.groundeffect (rolled elliptic lifting line over a plane, image method, tabulated).
+    hc/b: centre height over the surface along the surface normal, in spans; bank (rad) relative
+    to the surface. Complex-step safe. Kept in one function so the model can change."""
+    from sim.groundeffect import induced_drag_ratio
+    return induced_drag_ratio(h_over_b, bank)
+
+
+def ground_effect_phi(h, span, mu, psi=0.0, ex=0.0, ey=0.0):
+    """K for a centre height h above the local surface (vertical, m), bank mu (positive: left wing
+    down, lift toward the left of the heading psi) and surface slope (ex, ey) = grad eta.
+
+    Normal height h / sqrt(1 + ex^2 + ey^2); bank relative to the surface mu + atan(s_L) with s_L
+    the surface slope along the left wing direction (-sin psi, cos psi). Flat surface: h, mu.
+    The flight path angle is not used."""
+    cn = 1.0 / np.sqrt(1.0 + ex * ex + ey * ey)
+    s_left = -ex * np.sin(psi) + ey * np.cos(psi)
+    return ground_effect_factor(h * cn / span, mu + np.arctan(s_left))
+
+
+def derivatives(t, s, ac, env, cl, mu, n_limit=False, thrust=0.0, ground_effect=False):
     """Derivatives of the state. With n_limit, cl is first reduced to the load-factor limit at
-    the current airspeed (n_limited_cl)."""
+    the current airspeed (n_limited_cl).
+
+    thrust (N, default 0): along the air-relative velocity, adds thrust / m to dV/dt.
+    ground_effect (default off): the induced drag is multiplied by ground_effect_phi at the
+    height above env.surface (lift unchanged)."""
     x, y, z, V, g, p = s
     if n_limit:
         cl = n_limited_cl(ac, V, cl)
@@ -211,9 +236,16 @@ def derivatives(t, s, ac, env, cl, mu, n_limit=False):
     aW = dwdt + grad @ vg
     q = 0.5 * ac.rho * V * V * ac.wing_area
     L = q * cl
-    D = q * (ac.cd0 + ac.k_induced * cl * cl)
+    if ground_effect:
+        eta, ex, ey = env.surface(x, y, t)
+        K = float(ground_effect_phi(z - float(eta), ac.span, mu, p, float(ex), float(ey)))
+        D = q * (ac.cd0 + ac.k_induced * K * cl * cl)
+    else:
+        D = q * (ac.cd0 + ac.k_induced * cl * cl)
     m = ac.mass
     dV = -D / m - G * np.sin(g) - aW @ eV
+    if thrust:
+        dV = dV + thrust / m
     dg = (L * np.cos(mu) / m - G * np.cos(g) - aW @ eg) / V
     cg = max(abs(np.cos(g)), 0.05)  # floor near vertical flight
     dp = (L * np.sin(mu) / m - aW @ ep) / (V * cg)

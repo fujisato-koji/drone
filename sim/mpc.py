@@ -42,8 +42,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from sim.aircraft import (_DT, _H, _OFFS, G, clip_controls, derivatives, n_limited_cl,
-                          rk4_step)
+from sim.aircraft import (_DT, _H, _OFFS, G, clip_controls, derivatives, ground_effect_phi,
+                          n_limited_cl, rk4_step)
 from sim.seawind import Environment, Wind
 
 # ---------------------------------------------------------------------------------------------
@@ -71,9 +71,11 @@ def wind_derivs_vec(world, x, y, z, t):
     return w[0], grad, (w[7] - w[8]) / (2 * _DT)
 
 
-def derivatives_vec(t, s, ac, world, cl, mu, n_limit=False):
+def derivatives_vec(t, s, ac, world, cl, mu, n_limit=False, thrust=0.0, ground_effect=False):
     """s: (6, S) states; cl, mu: (S,). Returns (6, S) derivatives. With n_limit cl is first
-    reduced to the load-factor limit at each state's airspeed (as sim.aircraft.n_limited_cl)."""
+    reduced to the load-factor limit at each state's airspeed (as sim.aircraft.n_limited_cl).
+    thrust (N, scalar or (S,)) along the air-relative velocity; ground_effect multiplies the
+    induced drag by sim.aircraft.ground_effect_phi at the height above world.surface."""
     x, y, z, V, g, p = s
     if n_limit:
         cl = np.minimum(cl, ac.n_max * ac.mass * G / (0.5 * ac.rho * V * V * ac.wing_area))
@@ -86,9 +88,16 @@ def derivatives_vec(t, s, ac, world, cl, mu, n_limit=False):
     aW = dwdt + np.einsum("sij,sj->si", grad, vg)
     q = 0.5 * ac.rho * V * V * ac.wing_area
     L = q * cl
-    D = q * (ac.cd0 + ac.k_induced * cl * cl)
+    if ground_effect:
+        eta, ex, ey = world.surface(x, y, np.full(np.shape(x), float(t)))
+        D = q * (ac.cd0 + ac.k_induced * ground_effect_phi(z - eta, ac.span, mu, p, ex, ey)
+                 * cl * cl)
+    else:
+        D = q * (ac.cd0 + ac.k_induced * cl * cl)
     m = ac.mass
     dV = -D / m - G * sg_ - np.sum(aW * eV, axis=1)
+    if np.any(thrust):
+        dV = dV + thrust / m
     dg = (L * np.cos(mu) / m - G * cg_ - np.sum(aW * eg, axis=1)) / V
     cgf = np.maximum(np.abs(cg_), 0.05)
     dp = (L * np.sin(mu) / m - np.sum(aW * ep, axis=1)) / (V * cgf)
