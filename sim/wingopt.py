@@ -61,7 +61,7 @@ U10_C = (6.0, 9.0)
 CHI_C = 20.0                 # deg: the motor cycle's course (near downwind, as the ground-motor study; crosswind often fails to converge; the spec fixes none)
 N_NODES = 40
 SCALE_TOL = 0.05
-BALLAST_GRID = (0.0, 0.5, 1.0)   # kg, plus the mass limit
+BALLAST_GRID = (0.0, 0.5)   # kg, plus the mass limit (the run of the record; --ballast 0,0.5,1.0 adds 1.0)
 
 # Body drag build-up (P145, S7, S8; the choices the spec leaves are marked "assumed")
 POD_L, POD_D = 1.0, 0.07           # m
@@ -193,7 +193,9 @@ def body_drag(span, area, v, tail_airfoil=TAIL_AIRFOIL):
     """Parasite drag area (m2) of everything but the wing, at airspeed v (m/s), with the parts.
 
     Pod: turbulent flat plate at the pod's Reynolds number, Hoerner form factor, wetted area of a
-    body of revolution pi D L (1 - 2/FR)^(2/3) (1 + 1/FR^2) (Raymer). Boom: the same on a cylinder.
+    body of revolution pi D L (1 - 2/FR)^(2/3) (1 + 1/FR^2) (Torenbeek's fuselage wetted
+    area; the record's S7 gives the skin friction and the Hoerner form factor, not this formula, and the
+    textbook is not in the record). Boom: the same on a cylinder.
     Tails: planform from the volume coefficients on the mean chord (horizontal, VH) and the span
     (vertical, VV) at the arm TAIL_ARM_PER_SPAN * span, profile drag at cl 0 of the tail airfoil's
     fit at the tail's Reynolds number (extrapolated below the data); induced drag of the tails is
@@ -428,16 +430,31 @@ def solve_c(d: Design, u10, re_start, chi_deg=CHI_C, n=N_NODES, seed_sets=None, 
 
     diag = {}
 
-    def cycle(ac, label=None, x0=None):
+    def cycle(re_in, label=None, x0=None):
+        """Returns (info, x, col, label, re_used). The steady start is built at its own Reynolds
+        number (iterated to the level-flight airspeed) and solved with that aircraft; the other
+        starts use the polar at re_in."""
         sets = [m for m in MARGIN_SETS if (label is None or m[0] == label) and (margin_labels is None or m[0] in margin_labels)]
         for lab, mg in sets:
-            starts = [("warm", x0)] if x0 is not None else []
+            starts = [("warm", x0, re_in)] if x0 is not None else []
             if x0 is None and steady:
-                xs, sinfo, _ = steady_guess(ac, prof, u10, chi_deg, mg, n)
+                re_s = re_in
+                for _ in range(8):
+                    ac_s = build_aircraft(d, re_s)
+                    xs, sinfo, _ = steady_guess(ac_s, prof, u10, chi_deg, mg, n)
+                    re_n = re_of(sinfo["V"], chord)
+                    done = abs(re_n / re_s - 1.0) < 1e-3
+                    re_s = re_n
+                    if done:
+                        break
+                ac_s = build_aircraft(d, re_s)
+                xs, sinfo, _ = steady_guess(ac_s, prof, u10, chi_deg, mg, n)
+                sinfo["re"] = re_s
                 diag[lab] = sinfo
-                starts.append(("steady", xs))
-            starts += [] if x0 is not None else [("seeds", s_) for s_ in seed_sets]
-            for kind, st in starts:
+                starts.append(("steady", xs, re_s))
+            starts += [] if x0 is not None else [("seeds", s_, re_in) for s_ in seed_sets]
+            for kind, st, re_k in starts:
+                ac = build_aircraft(d, re_k)
                 kw2 = dict(x0=st) if kind != "seeds" else dict(seeds=st, x0=None)
                 info, x, col = solve(ac, prof, mode="min_power", cycle="travel", n=n, u10=u10,
                                      chi=np.radians(chi_deg), tip_model="geometric", midpoints=True,
@@ -446,17 +463,17 @@ def solve_c(d: Design, u10, re_start, chi_deg=CHI_C, n=N_NODES, seed_sets=None, 
                                      maxiter=maxiter, return_x=True, stop_after=1, **kw2, **mg)
                 if info["success"]:
                     diag.setdefault("start", kind)
-                    return info, np.asarray(x), col, lab
+                    return info, np.asarray(x), col, lab, re_k
         return None
 
     re, x0, label, last = re_start, None, None, None
     for _ in range(2):
-        r = cycle(build_aircraft(d, re), label, x0)
+        r = cycle(re, label, x0)
         if r is None and x0 is not None:
-            r = cycle(build_aircraft(d, re), label, None)
+            r = cycle(re, label, None)
         if r is None:
             break
-        info, x, col, label = r
+        info, x, col, label, re = r
         v = mean_airspeed(col, x)
         re_new = re_of(v, chord)
         last = (info, x, col, label, re, v)
@@ -598,6 +615,25 @@ FOLLOW_U10 = (6.0, 9.0, 13.0)
 FOLLOW_CHI = (20.0, 180.0)
 
 
+def _step(p, command):
+    """Stamp a post-run step in the result's meta block (the main stamp predates these steps)."""
+    from sim import record
+    here = os.path.dirname(__file__)
+    p["meta"].setdefault("steps", []).append(
+        record.meta(command, [__file__, os.path.join(here, "dsopt.py"), os.path.join(here, "aircraft.py")]))
+
+
+def stamp_step(path, command):
+    """python -c "from sim import wingopt; wingopt.stamp_step(path, command)": stamp a step whose
+    result was written by an earlier version of this file (the stamp is of the file as it is now)."""
+    with open(path) as fh:
+        p = json.load(fh)
+    _step(p, command)
+    with open(path, "w", newline="\n") as fh:
+        json.dump(p, fh, indent=1)
+        fh.write("\n")
+
+
 def evaluate_follow(job):
     """Worker: for one top design, h(180) at u10_B and the motor minimum power at 6, 9 and 13 m/s at
     chi 20 and 180 with the full library settings. Failures are kept as failures."""
@@ -626,6 +662,7 @@ def followup(path, top=4, workers=4):
     t0 = time.time()
     with ProcessPoolExecutor(workers) as ex:
         p["followup"] = list(ex.map(evaluate_follow, jobs, chunksize=1))
+    _step(p, "python -m sim.wingopt --followup")
     p["meta"]["followup"] = {"top_by_A": top, "u10": list(FOLLOW_U10), "chi_deg": list(FOLLOW_CHI),
                              "motor_seeds": [list(x) for x in MOTOR_SEEDS_FULL],
                              "motor_maxiter": MOTOR_MAXITER_FULL, "runtime_s": time.time() - t0}
@@ -659,6 +696,7 @@ def c9_all(path, workers=4):
     jobs = [(Design(**r["design"]), r["A"]["re_used"]) for r in pts]
     with ProcessPoolExecutor(workers) as ex:
         p["c9_full"] = list(ex.map(evaluate_c9, jobs, chunksize=1))
+    _step(p, "python -m sim.wingopt --c9-all")
     with open(path, "w", newline="\n") as fh:
         json.dump(p, fh, indent=1)
         fh.write("\n")
@@ -676,6 +714,7 @@ def c9_standard(path, workers=4):
             if r["key"] in light]
     with ProcessPoolExecutor(workers) as ex:
         p["c9_standard"] = list(ex.map(evaluate_c9, jobs, chunksize=1))
+    _step(p, "python -m sim.wingopt --c9-standard")
     with open(path, "w", newline="\n") as fh:
         json.dump(p, fh, indent=1)
         fh.write("\n")
@@ -706,6 +745,7 @@ def c9_steady(path, workers=4):
     jobs = [(Design(**r["design"]), r["A"]["re_used"]) for r in p["points"] if r.get("A", {}).get("success")]
     with ProcessPoolExecutor(workers) as ex:
         p["c9_steady"] = list(ex.map(evaluate_c9s, jobs, chunksize=1))
+    _step(p, "python -m sim.wingopt --c9-steady")
     with open(path, "w", newline="\n") as fh:
         json.dump(p, fh, indent=1)
         fh.write("\n")
@@ -713,22 +753,15 @@ def c9_steady(path, workers=4):
 
 
 def c9_best(entry, chi="chi20"):
-    """Best feasible 9 m/s motor cycle found at the standard margins for one c9_steady entry: the
-    solver's result or the steady level-flight start itself (a feasible periodic cycle, so an
-    upper bound on the minimum), whichever uses less power. Returns power_w, wh_per_km, progress,
-    source (None if neither exists)."""
+    """The optimizer's 9 m/s motor cycle at the standard margins for one c9_steady entry: power,
+    energy per kilometre, progress and which start solved it (steady, seeds or warm); None if it
+    failed."""
     c = entry.get(chi, {})
-    cands = []
-    if c.get("success"):
-        cands.append(("solver", c["power_w"], c["progress"]))
-    st = c.get("steady", {}).get("standard")
-    if st and st["thrust_ok"] and st["cl_ok"]:
-        cands.append(("steady", st["power_w"], st["progress"]))
-    if not cands:
+    if not c.get("success"):
         return None
-    src, pw, prog = min(cands, key=lambda t: t[1])
-    return {"source": src, "power_w": float(pw), "progress": float(prog),
-            "wh_per_km": float(pw / (3.6 * prog)) if prog > 0.1 else None}
+    prog = c["progress"]
+    return {"source": c.get("steady", {}).get("start", "?"), "power_w": float(c["power_w"]),
+            "progress": float(prog), "wh_per_km": float(c["power_w"] / (3.6 * prog)) if prog > 0.1 else None}
 
 
 def _row(r, c9=None):

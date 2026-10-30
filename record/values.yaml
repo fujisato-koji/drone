@@ -1469,12 +1469,6 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
-  - key: wing.start_scatter_ms
-    v: 0.9
-    unit: m/s
-    status: calculated
-    basis:
-      - docs/02-form.md#wing-sizing
   - key: wing.h180_ar20_sd7037_ms
     v: -6.32
     unit: m/s
@@ -1602,19 +1596,19 @@ items:
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front1_c9_w
-    v: 27.0
+    v: 30.3
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front1_wh_per_km
-    v: 0.4
+    v: 0.44
     unit: Wh/km
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front1_c9_chi180_w
-    v: 34.4
+    v: 35.7
     unit: W
     status: calculated
     basis:
@@ -1650,19 +1644,19 @@ items:
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front2_c9_w
-    v: 25.1
+    v: 28.2
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front2_wh_per_km
-    v: 0.39
+    v: 0.44
     unit: Wh/km
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front2_c9_chi180_w
-    v: 35.3
+    v: 35.9
     unit: W
     status: calculated
     basis:
@@ -1698,13 +1692,13 @@ items:
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front3_c9_w
-    v: 23.8
+    v: 26.6
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front3_wh_per_km
-    v: 0.4
+    v: 0.45
     unit: Wh/km
     status: calculated
     basis:
@@ -1746,13 +1740,13 @@ items:
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front4_c9_w
-    v: 15.5
+    v: 17.5
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front4_wh_per_km
-    v: 0.27
+    v: 0.3
     unit: Wh/km
     status: calculated
     basis:
@@ -1794,13 +1788,13 @@ items:
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front5_c9_w
-    v: 15.0
+    v: 17.0
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front5_wh_per_km
-    v: 0.25
+    v: 0.28
     unit: Wh/km
     status: calculated
     basis:
@@ -1842,13 +1836,13 @@ items:
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front6_c9_w
-    v: 10.8
+    v: 12.2
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front6_wh_per_km
-    v: 0.2
+    v: 0.23
     unit: Wh/km
     status: calculated
     basis:
@@ -1890,13 +1884,13 @@ items:
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front7_c9_w
-    v: 10.2
+    v: 11.4
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.front7_wh_per_km
-    v: 0.18
+    v: 0.21
     unit: Wh/km
     status: calculated
     basis:
@@ -1908,13 +1902,13 @@ items:
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.c9_chi20_min_w
-    v: 10.2
+    v: 11.4
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.c9_chi20_max_w
-    v: 32.0
+    v: 35.9
     unit: W
     status: calculated
     basis:
@@ -1926,20 +1920,32 @@ items:
     basis:
       - docs/02-form.md#wing-sizing
   - key: wing.c9_chi180_max_w
-    v: 36.8
+    v: 37.8
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
-  - key: wing.solver_over_steady_min
-    v: 1.11
-    unit: 1
+  - key: wing.start_repeat_ms
+    v: 0.1
+    unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing
-  - key: wing.solver_over_steady_max
-    v: 1.14
-    unit: 1
+  - key: wing.tail_quarter_gain_min_ms
+    v: 0.155
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.tail_quarter_gain_max_ms
+    v: 0.24
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wing-sizing
+  - key: wing.tail_half_gain_best_ms
+    v: 0.33
+    unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#wing-sizing

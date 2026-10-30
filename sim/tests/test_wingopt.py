@@ -107,7 +107,8 @@ class TestDesignModel(unittest.TestCase):
         bal = w.ballast_to_mass(3.0, 16.0, 1.5, 3.0)
         self.assertAlmostEqual(w.basics(w.Design(3.0, 16.0, ballast=bal))[0]["mass"], 3.0, 9)
         g = w.ballast_grid(3.0, 16.0)
-        self.assertEqual(g[:3], [0.0, 0.5, 1.0])
+        self.assertEqual(g[:2], [0.0, 0.5])
+        self.assertEqual(w.ballast_grid(3.0, 16.0, grid=(0.0, 0.5, 1.0))[:3], [0.0, 0.5, 1.0])
         self.assertLess(w.basics(w.Design(3.0, 16.0, ballast=round(g[-1], 4)))[0]["mass"], value("ds.mass_max_kg") + 1e-9)
         self.assertFalse(w.feasibility(w.Design(3.0, 16.0, ballast=2.0))[0])   # above the mass limit
 
@@ -133,6 +134,58 @@ class TestDesignModel(unittest.TestCase):
         self.assertTrue(r["replay_pass"])
         self.assertAlmostEqual(r["mass"], w.basics(w.Design(3.0, 20.0, ballast=0.5))[0]["mass"], 12)
         self.assertLessEqual(abs(r["re_used"] - r["history"][-1]["re"]), 1e-6)   # the aircraft solved is the one reported
+
+
+class _FakeCol:
+    def __init__(self, v):
+        self.v = v
+
+    def unpack(self, x):
+        S = np.zeros((5, 6))
+        S[:, 3] = self.v
+        return S, None, 8.0, None
+
+
+class TestSolveAReynoldsPasses(unittest.TestCase):
+    """The two-pass Reynolds iteration with stubbed dsopt solves."""
+
+    @staticmethod
+    def info(u10):
+        return {"success": True, "u10": u10, "period": 8.0, "n_max": 3.2, "replay_pass": True,
+                "outer_converged": True}
+
+    def run_a(self, results):
+        from unittest import mock
+        calls = []
+
+        def fake(ac, x0=None, **kw):
+            calls.append(ac)
+            r = results[len(calls) - 1]
+            if r is None:
+                return {"success": False}, None, None
+            return self.info(r[0]), np.zeros(3), _FakeCol(r[1])
+
+        with mock.patch("sim.dsopt.solve_min_wind", fake):
+            out = w.solve_a(w.Design(3.0, 16.0, ballast=0.5), seeds=(0,))
+        return out, calls
+
+    def test_failed_second_pass_keeps_the_first(self):
+        out, calls = self.run_a([(13.0, 20.0), None])
+        self.assertTrue(out["success"])
+        self.assertTrue(out["later_pass_failed"])
+        self.assertAlmostEqual(out["u10"], 13.0)
+        self.assertAlmostEqual(out["re_used"], out["history"][0]["re"], 6)
+        self.assertAlmostEqual(out["ld_max"], calls[0].best_ld, 12)   # the aircraft that was solved
+
+    def test_unconverged_second_pass_reports_its_own_aircraft(self):
+        out, calls = self.run_a([(13.0, 20.0), (12.5, 30.0)])
+        self.assertTrue(out["success"])
+        self.assertFalse(out["re_converged"])
+        self.assertAlmostEqual(out["u10"], 12.5)
+        self.assertAlmostEqual(out["re_used"], out["history"][1]["re"], 6)   # not the pass's new Reynolds number
+        self.assertNotAlmostEqual(out["re_used"], out["history"][1]["re_cycle"], 3)
+        self.assertAlmostEqual(out["ld_max"], calls[1].best_ld, 12)
+        self.assertAlmostEqual(out["cd0_eff"], calls[1].cd0, 12)
 
 
 class TestSteadyGuess(unittest.TestCase):

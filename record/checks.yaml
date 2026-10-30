@@ -207,3 +207,20 @@ items:
     by: checker
     date: 2026-10-30
     detail: "A separate checker, told to refute, worked on design/batch-env-wing-motor at c38add0 with its own point-mass model. Library: the baseline's 9 m/s motor cycle and the albatross-like glider's calm cycle replay and close, keep their margins (several exactly at the limit) and need 10.876 W and 20.928 W against 10.871 and 20.928 stored; but the calm cycle flies 49 deg off its course. Flat sea, reflex off: 180 s at 15.283 W and 0.447 Wh/km against the optimizer's 10.87 W and 0.551 Wh/km, COARE 3.5 confirmed; the fold is exercised only in the reflex-on run, where it follows the commanded state exactly; the per-kilometre ratio ranges 0.81 to 2.2 across rows. Reflex: 31 false stall firings confirmed at the prediction's end while flying well above stall, in reflex 18% of the time, a climb to 115 m and 4.26 to 4.42 times the energy, in two of nine flat rows; a threshold of 0.95 stall speeds removes them and still rescues four constructed dives; the override zooms the aircraft to 0.44 stall speeds and the stall test ignores the load factor. Waves: 6 of 16 runs ended early, not 8, 4 of them with the reflex on against 2 off, one by full thrust past the vertical. The document was corrected."
+  - id: K-016
+    target:
+      - wing.best_u10_min_ms
+      - wing.best_mass_kg
+      - wing.best_wing_loading_npm2
+      - wing.body_cda_min_m2
+      - wing.body_cda_max_m2
+      - wing.h180_ar20_sd7037_ms
+      - wing.front1_c9_w
+      - wing.c9_chi20_min_w
+      - wing.c9_chi20_max_w
+    tier: T2
+    method: independent_model
+    result: partial
+    by: checker
+    date: 2026-10-30
+    detail: "A separate checker, told to refute, worked on design/wing-loading (855b082) with its own steady-flight power from the polar coefficients, mass arithmetic, body drag build-up, the Nita and Scholz equations read from the paper, and its own point-mass replay. Confirmed: the soaring minima re-solve from other starts at the record's Reynolds numbers (AR 20 at the mass limit 12.870, AR 16 at the limit 13.009, AR 16 unballasted 15.308 against 15.224); the replays close and balance the energy (wind gain equals drag loss to 1e-7), with the load factor up to 0.8% over its margin and the speed 0.1% under its floor between nodes. Also confirmed: the masses, wing loadings and ballast to the limit to four decimals, with the ballast in the spar load and the mass limit binding; the body drag areas of 19.8 to 39.2 cm2 (tails 42 to 68% of the parts, the horizontal tail at 37k to 78k Reynolds number, below the fit); e 0.977 at aspect ratio 12; the solve_a fix on stubbed passes; and h(180) of -6.32 m/s for the best design, with 8.3 m/s of cross-track velocity left free. A 25% smaller tail lowers the minima by 0.15 to 0.24 m/s and half the tail by 0.33, more than the spread of the three best. Refuted: the motor power at 9 m/s is not bounded by the steady level flight. That flight was evaluated with the polar at the soaring cycle's Reynolds number; at its own Reynolds number its power equals the optimizer's to four digits for all 22 designs. The optimizer stops at that start after one iteration, and from random starts it reaches the same level flight at the speed floor. So the front's 20 deg powers and energies per kilometre were 11 to 14% low (27.0 against 30.3 W for the best design), and the ratio wing.solver_over_steady_* was an artefact. The document was corrected."
