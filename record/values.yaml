@@ -780,6 +780,34 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#energy-sources
+  - key: prop.prop_eff
+    v: 0.60
+    unit: 1
+    status: sourced
+    basis:
+      - P140
+      - P141
+  - key: prop.motor_eff
+    v: 0.75
+    unit: 1
+    status: sourced
+    basis:
+      - P49
+      - P142
+      - P143
+  - key: prop.folded_drag_cda_m2
+    v: 0.0003
+    unit: m2
+    status: sourced
+    basis:
+      - P145
+      - P146
+  - key: prop.thrust_max_per_weight
+    v: 0.5
+    unit: 1
+    status: assumed
+    basis:
+      - Q-055
   - key: env.charnock
     v: 0.0144
     unit: 1

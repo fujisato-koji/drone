@@ -459,7 +459,7 @@ items:
     license: unknown
     read: partial
     retrieved: 2026-10-29
-    note: AtlantikSolar avionics 6 W including Iridium; SunPower E60 23.7%, 590 g/m2; design load factor 4 with safety factor 1.8.
+    note: "AtlantikSolar avionics 6 W including Iridium; SunPower E60 23.7%, 590 g/m2; design load factor 4 with safety factor 1.8. Second reader on 2026-10-30: motor efficiency about 80.6% in level flight, minimum output power 39.7 W at 8.3 m/s including about 6 W of avionics, combined propulsion efficiency 0.62 assumed from Noth."
   - id: P50
     class: P
     title: INR-21700-P45B cell specification, version 0.2, E-One Moli Energy
@@ -1239,3 +1239,67 @@ items:
     read: partial
     retrieved: 2026-10-30
     note: "Altitude sensors under the wings, weighted more at the wingtips, attitude-corrected, spaced under a quarter of the shortest wave of interest (read through a summarising fetch)."
+  - id: P140
+    class: P
+    title: "Performance testing of Aero-naut CAM folding propellers, G. Dantsker, M. Caccamo, R. W. Deters and M. S. Selig, AIAA 2020-2762, with the UIUC propeller database volume 3"
+    url: "https://m-selig.ae.illinois.edu/pubs/DantskerCaccamoDetersSelig-2020-AIAA-Paper-2020-2762-CamPropsTesting.pdf"
+    license: "copyright authors, published by AIAA"
+    read: partial
+    retrieved: 2026-10-30
+    note: "40 folding propellers, peak efficiency 0.59 (9x4) to 0.84 (15x10); a second reader computed from the data files that at 0.4 to 1.0 N and 10 to 20 m/s the best reaches 0.72 and 24 of 40 reach 0.60, and at 1 to 2 N 27 of 39 reach 0.70."
+  - id: P141
+    class: P
+    title: "Propeller performance data at low Reynolds numbers, J. B. Brandt and M. S. Selig, AIAA 2011-1255"
+    url: "https://m-selig.ae.illinois.edu/pubs/"
+    license: "copyright authors, published by AIAA"
+    read: partial
+    retrieved: 2026-10-30
+    note: "Small fixed propellers peak near 0.65 for an efficient one down to near 0.28; the data cover non-folding two-bladed propellers."
+  - id: S5
+    class: S
+    title: "First-order DC electric motor model, M. Drela, MIT"
+    url: "https://web.mit.edu/drela/Public/web/qprop/motor1_theory.pdf"
+    license: unknown
+    read: full
+    retrieved: 2026-10-30
+    note: "Motor efficiency (1 - i0/i)(1 - i R/v) for a motor with Kv = Kq; a model, not a measurement."
+  - id: P142
+    class: P
+    title: "Design of solar powered airplanes for continuous flight, A. Noth, PhD thesis, ETH Zurich, 2008"
+    url: "https://www.research-collection.ethz.ch/handle/20.500.11850/14994"
+    license: InC-NC
+    read: partial
+    retrieved: 2026-10-30
+    note: "Sky-Sailor, 2.6 kg, 3.2 m: ESC 0.95, motor 0.85, gearbox 0.97, propeller 0.85 (simulated), total 66.6% close to flight; level flight 14.2 W electric at 8.3 m/s; brushless motors have a relatively bad efficiency at level flight."
+  - id: P143
+    class: P
+    title: "Electronic speed controller efficiency, Brown, MS thesis, University of Maryland, 2019"
+    url: "https://hdl.handle.net/1903/25410"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "ESC efficiency can be as low as 65% and generally decreases linearly with rms current."
+  - id: P144
+    class: P
+    title: "Flight testing of the UIUC-TUM Solar Flyer, G. Dantsker et al., AIAA 2020-0781 and the 2021 energy instrumentation paper"
+    url: "https://cs-people.bu.edu/rmancuso/files/papers/Continued_Solar_AIAAScitech20.pdf"
+    license: "copyright authors, published by AIAA"
+    read: partial
+    retrieved: 2026-10-30
+    note: "3.3 kg, 4 m span: about 20 W of propulsion power at 10 m/s in low wind, 30 to 50 W in crosswind; with the throttle off the propeller windmills."
+  - id: P145
+    class: P
+    title: "Drag of a folded propeller on an F5J glider, Zubalic, BSc thesis, University of Ljubljana, 2020"
+    url: "https://repozitorij.uni-lj.si/Dokument.php?id=134051"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "CFD scaled by a flight-measured total drag: the folded propeller adds almost 2% to the drag of a 4 m glider at 8 m/s (a drag area of about 2.2 cm2 by the reader)."
+  - id: P146
+    class: P
+    title: "Folded and windmilling propeller drag on the X-57 nacelle, B. Litherland and J. Derlaga, NASA NTRS 20200002658"
+    url: "https://ntrs.nasa.gov/citations/20200002658"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-30
+    note: "A folded propeller adds about 3% to the nacelle drag against 81% windmilling."

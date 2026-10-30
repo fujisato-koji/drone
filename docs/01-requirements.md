@@ -165,6 +165,10 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | dsopt.baseline_coare_dw_ms | 2.43 | m/s | calculated | docs/02-form.md#energy-sources |
 | dsopt.sachs_coare_dw_ratio | 0.27 | 1 | calculated | docs/02-form.md#energy-sources |
 | dsopt.sachs_z003_dw_ratio | 0.44 | 1 | calculated | docs/02-form.md#energy-sources |
+| prop.prop_eff | 0.6 | 1 | sourced | P140, P141 |
+| prop.motor_eff | 0.75 | 1 | sourced | P49, P142, P143 |
+| prop.folded_drag_cda_m2 | 0.0003 | m2 | sourced | P145, P146 |
+| prop.thrust_max_per_weight | 0.5 | 1 | assumed | Q-055 |
 | env.charnock | 0.0144 | 1 | assumed | Q-008 |
 | env.air_kinematic_viscosity | 1.46e-05 | m2/s | assumed | Q-008 |
 | env.jonswap_gamma | 3.3 | 1 | assumed | Q-008 |
