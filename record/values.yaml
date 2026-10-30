@@ -924,13 +924,13 @@ items:
     basis:
       - docs/02-form.md#ground-motor
   - key: motor.baseline_calm_w
-    v: 11.7
+    v: 12.42
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#ground-motor
   - key: motor.albatross_calm_w
-    v: 17.5
+    v: 17.55
     unit: W
     status: calculated
     basis:
@@ -942,19 +942,19 @@ items:
     basis:
       - docs/02-form.md#ground-motor
   - key: motor.albatross_u6_w
-    v: 13.9
+    v: 14.72
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#ground-motor
   - key: motor.baseline_u9_w
-    v: 5.9
+    v: 5.86
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#ground-motor
   - key: motor.albatross_u9_w
-    v: 3.6
+    v: 3.29
     unit: W
     status: calculated
     basis:
@@ -972,13 +972,13 @@ items:
     basis:
       - docs/02-form.md#ground-motor
   - key: motor.baseline_calm_day_wh
-    v: 281
+    v: 298
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#ground-motor
   - key: motor.albatross_calm_day_wh
-    v: 420
+    v: 421
     unit: Wh
     status: calculated
     basis:
