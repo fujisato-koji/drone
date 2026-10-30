@@ -328,6 +328,16 @@ With margins and real control limits (`python -m sim.mpc --build-margin-library`
 - On a flat sea with the estimated state and wind, every run touched the water within mpc.margin_flat_est_survival_min_s to mpc.margin_flat_est_survival_max_s, so the estimate is the next limit there.
 - Over waves every run touched the water, a wingtip or the centre, within mpc.margin_sea_survival_min_s to mpc.margin_sea_survival_max_s, with a planner that assumes a flat sea on the true or the estimated state and with a planner on the fitted waves; the planner needs the waves (item 1 of the list in the energy sources).
 
+The motor as a third control (`python -m sim.mpc --burst-exp`, `sim/out/mpc.json` key burst_exp):
+
+- The owner asked whether short bursts of the motor at the right moment could keep the drone up cheaply when soaring is not enough; the planner got the thrust as a third control, with a cost on the electric energy, a thrust lag of prop.thrust_tau_s and the folded-propeller drag while it is off.
+- On a flat sea below the soaring minimum, with the middle energy weight, the baseline flew the whole run at 11 m/s on mpc.burst_baseline_u11_normal_w and at 9 m/s on mpc.burst_baseline_u9_normal_w, and the albatross-like glider at 9 m/s on mpc.burst_albatross_u9_normal_w and at 6 m/s on mpc.burst_albatross_u6_normal_w, against motor.baseline_flapglide_w and motor.albatross_flapglide_w for a steady flap-glide.
+- The thrust was not a short burst but a low, cycle-modulated trickle, on for mpc.burst_on_share_min to mpc.burst_on_share_max of the time, starting mostly on the climb just after the low point; with energy almost free the motor ran all the time at mpc.burst_free_min_w to mpc.burst_free_max_w.
+- A heavier energy weight did not save gradually: the planner stopped using the motor and the flight ended, because a horizon of a few seconds sees the contact too late.
+- The optimizer's best motor-assisted cycles need far less (see ground effect and the motor: motor.baseline_u9_w at 9 m/s), so the planner wastes energy by searching for the thrust timing on the fly from cycles without thrust.
+- Over waves the thrust did not prevent wingtip contact unless it ran almost continuously; the planner lacks cycles that follow the waves, not power.
+- What follows: cycles with the optimal thrust timing in the library as the planner's seed, a separate reflex that gives a short strong burst when contact or stall is predicted a second or two ahead, and wave-synchronized cycles for the waves (Q-060).
+
 ## Candidate forms {#candidate-forms}
 
 The yardsticks are: the smallest U10 that sustains soaring; progress speed over the ground at the design wind; survival on the water (self-righting, sealing, take-off); solar area; mass; what one person can build and repair; cost.

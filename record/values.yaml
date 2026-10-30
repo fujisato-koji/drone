@@ -1127,6 +1127,66 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#viewer
+  - key: mpc.burst_baseline_u11_normal_w
+    v: 8.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_baseline_u9_normal_w
+    v: 12.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_albatross_u9_normal_w
+    v: 16.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_albatross_u6_normal_w
+    v: 27.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_on_share_min
+    v: 0.55
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_on_share_max
+    v: 0.9
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_free_min_w
+    v: 16
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_free_max_w
+    v: 40
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: ctrl.thrust_sigma_frac
+    v: 0.15
+    unit: 1
+    status: assumed
+    basis:
+      - Q-055
+  - key: prop.thrust_tau_s
+    v: 0.1
+    unit: s
+    status: assumed
+    basis:
+      - Q-055
   - key: env.charnock
     v: 0.0144
     unit: 1
