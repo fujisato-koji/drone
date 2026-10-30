@@ -772,3 +772,14 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-10-30
+  - id: Q-065
+    kind: question
+    text: "Can the receding-horizon planner run on board in real time? In the simulation the clock stops while it plans; on a PC in Python one replan took 0.15 s on average with a flat-sea world, 0.45 to 0.52 s with a fitted wave world and 2.4 s (7.5 s at most) with the true sea of 48 components (sim/out/mpc.json), against a replan interval of 0.5 s. Settled by a planner implementation sized for an on-board computer (compiled code, fewer samples, the cycle library as the seed), its measured time per replan, and the mass and power of that computer in the power budget (Q-012)."
+    waits_for: assistant
+    affects:
+      - Q-057
+      - Q-012
+      - R-08
+    raised_by: owner
+    phase: design
+    opened: 2026-10-30
