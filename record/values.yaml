@@ -5852,8 +5852,176 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p63_power_w
+    v: 6.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p63_power_after_w
+    v: 4.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p63_motor_share
+    v: 0.15
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p63_height_median_m
+    v: 9.4
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p63_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p64_aloft_s
+    v: 348.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p64_power_w
+    v: 15.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p64_power_after_w
+    v: 14.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p64_motor_share
+    v: 0.47
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p64_height_median_m
+    v: 5.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_calm_u0_p64_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p63_power_w
+    v: 32.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p63_power_after_w
+    v: 31.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p63_motor_share
+    v: 0.96
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p63_height_median_m
+    v: 2.9
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p63_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p64_power_w
+    v: 35.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p64_power_after_w
+    v: 36.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p64_motor_share
+    v: 0.93
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p64_height_median_m
+    v: 2.9
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u3_p64_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.loop_albatross_hs3_along_u6_p63_aloft_s
-    v: 20.0
+    v: 600.0
     unit: s
     status: calculated
     basis:
@@ -5865,25 +6033,25 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_albatross_hs3_along_u6_p63_power_w
-    v: 16.0
+    v: 3.9
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_albatross_hs3_along_u6_p63_power_after_w
-    v: 4.1
+    v: 3.5
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_albatross_hs3_along_u6_p63_motor_share
-    v: 0.79
+    v: 0.08
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_albatross_hs3_along_u6_p63_height_median_m
-    v: 11.0
+    v: 8.9
     unit: m
     status: calculated
     basis:
@@ -5891,6 +6059,2598 @@ items:
   - key: wave.loop_albatross_hs3_along_u6_p63_flat_power_w
     v: 20.9
     unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p64_power_w
+    v: 2.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p64_power_after_w
+    v: 2.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p64_motor_share
+    v: 0.06
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p64_height_median_m
+    v: 6.5
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u6_p64_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p63_power_w
+    v: 2.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p63_power_after_w
+    v: 2.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p63_motor_share
+    v: 0.03
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p63_height_median_m
+    v: 8.5
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p63_flat_power_w
+    v: 9.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p64_power_w
+    v: 8.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p64_power_after_w
+    v: 8.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p64_motor_share
+    v: 0.51
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p64_height_median_m
+    v: 4.4
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_along_u9_p64_flat_power_w
+    v: 9.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p63_power_w
+    v: 58.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p63_power_after_w
+    v: 59.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p63_motor_share
+    v: 0.99
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p63_height_median_m
+    v: 4.5
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p63_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p64_power_w
+    v: 6.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p64_power_after_w
+    v: 5.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p64_motor_share
+    v: 0.15
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p64_height_median_m
+    v: 7.1
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u3_p64_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p63_aloft_s
+    v: 152.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p63_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p63_power_w
+    v: 69.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p63_power_after_w
+    v: 74.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p63_motor_share
+    v: 0.95
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p63_height_median_m
+    v: 4.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p63_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p64_power_w
+    v: 3.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p64_power_after_w
+    v: 3.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p64_motor_share
+    v: 0.06
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p64_height_median_m
+    v: 11.9
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u6_p64_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p63_aloft_s
+    v: 59.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p63_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p63_power_w
+    v: 35.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p63_power_after_w
+    v: 34.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p63_motor_share
+    v: 0.87
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p63_height_median_m
+    v: 8.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p63_flat_power_w
+    v: 9.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p64_power_w
+    v: 21.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p64_power_after_w
+    v: 20.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p64_motor_share
+    v: 0.65
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p64_height_median_m
+    v: 9.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs3_against_u9_p64_flat_power_w
+    v: 9.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p63_power_w
+    v: 6.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p63_power_after_w
+    v: 5.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p63_motor_share
+    v: 0.21
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p63_height_median_m
+    v: 9.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p63_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p64_power_w
+    v: 10.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p64_power_after_w
+    v: 10.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p64_motor_share
+    v: 0.48
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p64_height_median_m
+    v: 5.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_calm_u0_p64_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p63_power_w
+    v: 22.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p63_power_after_w
+    v: 21.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p63_motor_share
+    v: 0.88
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p63_height_median_m
+    v: 2.9
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p63_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p64_power_w
+    v: 17.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p64_power_after_w
+    v: 17.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p64_motor_share
+    v: 0.78
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p64_height_median_m
+    v: 3.1
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u3_p64_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p63_power_w
+    v: 2.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p63_power_after_w
+    v: 2.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p63_motor_share
+    v: 0.03
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p63_height_median_m
+    v: 8.6
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p63_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p64_power_w
+    v: 8.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p64_power_after_w
+    v: 7.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p64_motor_share
+    v: 0.49
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p64_height_median_m
+    v: 5.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u6_p64_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p63_power_w
+    v: 6.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p63_power_after_w
+    v: 6.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p63_motor_share
+    v: 0.34
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p63_height_median_m
+    v: 5.8
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p63_flat_power_w
+    v: 9.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p64_power_w
+    v: 24.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p64_motor_share
+    v: 0.93
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p64_height_median_m
+    v: 6.8
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_along_u9_p64_flat_power_w
+    v: 9.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p63_power_w
+    v: 7.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p63_power_after_w
+    v: 7.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p63_motor_share
+    v: 0.2
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p63_height_median_m
+    v: 8.1
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p63_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p64_power_w
+    v: 3.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p64_power_after_w
+    v: 2.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p64_motor_share
+    v: 0.07
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p64_height_median_m
+    v: 5.6
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u3_p64_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p63_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p63_power_w
+    v: 5.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p63_power_after_w
+    v: 4.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p63_motor_share
+    v: 0.14
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p63_height_median_m
+    v: 13.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p63_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p64_power_w
+    v: 4.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p64_power_after_w
+    v: 3.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p64_motor_share
+    v: 0.1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p64_height_median_m
+    v: 6.4
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u6_p64_flat_power_w
+    v: 20.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p63_power_w
+    v: 7.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p63_power_after_w
+    v: 7.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p63_motor_share
+    v: 0.22
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p63_height_median_m
+    v: 10.1
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p63_flat_power_w
+    v: 9.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p64_power_w
+    v: 4.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p64_power_after_w
+    v: 3.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p64_motor_share
+    v: 0.09
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p64_height_median_m
+    v: 11.9
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_albatross_hs2_against_u9_p64_flat_power_w
+    v: 9.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p63_power_w
+    v: 3.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p63_power_after_w
+    v: 3.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p63_motor_share
+    v: 0.21
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p63_height_median_m
+    v: 11.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p63_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p64_aloft_s
+    v: 295.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p64_power_w
+    v: 13.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p64_power_after_w
+    v: 13.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p64_motor_share
+    v: 0.91
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p64_height_median_m
+    v: 5.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_calm_u0_p64_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p63_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p63_power_w
+    v: 27.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p63_power_after_w
+    v: 27.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p63_motor_share
+    v: 0.96
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p63_height_median_m
+    v: 3.9
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p63_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p64_aloft_s
+    v: 461.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p64_power_w
+    v: 9.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p64_power_after_w
+    v: 9.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p64_motor_share
+    v: 0.8
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p64_height_median_m
+    v: 4.6
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u3_p64_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p63_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p63_power_w
+    v: 2.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p63_power_after_w
+    v: 1.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p63_motor_share
+    v: 0.17
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p63_height_median_m
+    v: 9.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p63_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p64_power_w
+    v: 4.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p64_power_after_w
+    v: 3.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p64_motor_share
+    v: 0.56
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p64_height_median_m
+    v: 5.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u6_p64_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p63_power_w
+    v: 2.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p63_power_after_w
+    v: 2.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p63_motor_share
+    v: 0.27
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p63_height_median_m
+    v: 5.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p63_flat_power_w
+    v: 8.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p64_power_w
+    v: 6.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p64_power_after_w
+    v: 6.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p64_motor_share
+    v: 0.94
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p64_height_median_m
+    v: 4.4
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_along_u9_p64_flat_power_w
+    v: 8.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p63_aloft_s
+    v: 65.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p63_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p63_power_w
+    v: 18.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p63_power_after_w
+    v: 19.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p63_motor_share
+    v: 0.92
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p63_height_median_m
+    v: 5.5
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p63_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p64_power_w
+    v: 2.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p64_power_after_w
+    v: 1.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p64_motor_share
+    v: 0.12
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p64_height_median_m
+    v: 4.6
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u3_p64_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p63_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p63_power_w
+    v: 3.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p63_power_after_w
+    v: 2.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p63_motor_share
+    v: 0.34
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p63_height_median_m
+    v: 5.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p63_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p64_power_w
+    v: 2.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p64_power_after_w
+    v: 1.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p64_motor_share
+    v: 0.11
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p64_height_median_m
+    v: 6.5
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u6_p64_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p63_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p63_power_w
+    v: 3.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p63_power_after_w
+    v: 3.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p63_motor_share
+    v: 0.18
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p63_height_median_m
+    v: 11.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p63_flat_power_w
+    v: 8.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p64_power_w
+    v: 2.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p64_power_after_w
+    v: 1.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p64_motor_share
+    v: 0.09
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p64_height_median_m
+    v: 13.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs3_against_u9_p64_flat_power_w
+    v: 8.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p63_power_w
+    v: 7.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p63_power_after_w
+    v: 6.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p63_motor_share
+    v: 0.66
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p63_height_median_m
+    v: 5.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p63_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p64_power_w
+    v: 13.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p64_power_after_w
+    v: 13.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p64_motor_share
+    v: 0.98
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p64_height_median_m
+    v: 6.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_calm_u0_p64_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p63_power_w
+    v: 3.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p63_power_after_w
+    v: 2.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p63_motor_share
+    v: 0.26
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p63_height_median_m
+    v: 6.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p63_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p64_power_w
+    v: 8.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p64_power_after_w
+    v: 8.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p64_motor_share
+    v: 0.96
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p64_height_median_m
+    v: 6.2
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u3_p64_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p63_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p63_power_w
+    v: 3.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p63_power_after_w
+    v: 2.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p63_motor_share
+    v: 0.26
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p63_height_median_m
+    v: 5.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p63_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p64_power_w
+    v: 7.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p64_power_after_w
+    v: 6.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p64_motor_share
+    v: 0.96
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p64_height_median_m
+    v: 5.1
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u6_p64_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p63_power_w
+    v: 5.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p63_power_after_w
+    v: 5.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p63_motor_share
+    v: 0.87
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p63_height_median_m
+    v: 5.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p63_flat_power_w
+    v: 8.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p64_aloft_s
+    v: 239.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p64_power_w
+    v: 13.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p64_motor_share
+    v: 0.95
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p64_height_median_m
+    v: 7.8
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_along_u9_p64_flat_power_w
+    v: 8.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p63_power_w
+    v: 1.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p63_power_after_w
+    v: 1.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p63_motor_share
+    v: 0.1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p63_height_median_m
+    v: 5.5
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p63_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p64_aloft_s
+    v: 95.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p64_power_w
+    v: 12.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p64_motor_share
+    v: 0.76
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p64_height_median_m
+    v: 9.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u3_p64_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p63_power_w
+    v: 3.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p63_power_after_w
+    v: 3.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p63_motor_share
+    v: 0.27
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p63_height_median_m
+    v: 6.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p63_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p64_aloft_s
+    v: 552.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p64_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p64_power_w
+    v: 16.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p64_motor_share
+    v: 0.77
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p64_height_median_m
+    v: 7.2
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u6_p64_flat_power_w
+    v: 13.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p63_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p63_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p63_power_w
+    v: 3.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p63_power_after_w
+    v: 2.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p63_motor_share
+    v: 0.19
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p63_height_median_m
+    v: 9.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p63_flat_power_w
+    v: 8.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p64_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p64_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p64_power_w
+    v: 2.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p64_power_after_w
+    v: 1.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p64_motor_share
+    v: 0.11
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p64_height_median_m
+    v: 7.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_baseline_hs2_against_u9_p64_flat_power_w
+    v: 8.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_runs
+    v: 56
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_full
+    v: 47
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_counted
+    v: 35
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_counted_p63
+    v: 19
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_counted_p64
+    v: 16
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_flat_only
+    v: 4
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_flat_only_ended
+    v: 3
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_ended_early
+    v: 9
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_ratio_min
+    v: 0.095
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_ratio_median
+    v: 0.28
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_ratio_max
+    v: 2.84
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_power_min_w
+    v: 1.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_power_median_w
+    v: 3.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_motor_share_min
+    v: 0.031
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_motor_share_median
+    v: 0.21
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_low_motor_runs
+    v: 10
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_u3_power_max_w
+    v: 58.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p15_aloft_s
+    v: 300.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p15_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p15_power_after_w
+    v: 3.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p15_motor_share
+    v: 0.1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p15_height_median_m
+    v: 8.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p3_aloft_s
+    v: 300.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p3_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p3_power_after_w
+    v: 3.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p3_motor_share
+    v: 0.1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p3_height_median_m
+    v: 7.9
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p6_aloft_s
+    v: 300.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p6_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p6_power_after_w
+    v: 5.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p6_motor_share
+    v: 0.17
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p6_height_median_m
+    v: 5.6
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_1p2_aloft_s
+    v: 300.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_1p2_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_1p2_power_after_w
+    v: 16.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_1p2_motor_share
+    v: 0.74
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_1p2_height_median_m
+    v: 2.2
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_m0p6_aloft_s
+    v: 300.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_m0p6_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_m0p6_power_after_w
+    v: 8.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_m0p6_motor_share
+    v: 0.39
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_m0p6_height_median_m
+    v: 6.1
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p8_aloft_s
+    v: 300.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p8_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p8_power_after_w
+    v: 1.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p8_motor_share
+    v: 0.03
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p8_height_median_m
+    v: 18.8
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_1p2_aloft_s
+    v: 300.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_1p2_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_1p2_power_after_w
+    v: 3.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_1p2_motor_share
+    v: 0.1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_1p2_height_median_m
+    v: 8.9
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_none_aloft_s
+    v: 300.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_none_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_none_power_after_w
+    v: 3.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_none_motor_share
+    v: 0.1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_none_height_median_m
+    v: 8.9
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_arrival_s_across
+    v: 0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_counted_across
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_vmg_ms_across
+    v: -9.94
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_hull_ms_across
+    v: 11.43
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_hull_s_across
+    v: 420.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_energy_wh_across
+    v: 10.8
+    unit: Wh
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_motor_share_across
+    v: 0.89
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_height_median_m_across
+    v: 9.6
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_height_min_m_across
+    v: 0.6
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_height_max_m_across
+    v: 25.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_hull_points_across
+    v: 10
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_arrival_s_with
+    v: 0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_counted_with
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_vmg_ms_with
+    v: 15.23
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_hull_ms_with
+    v: 15.61
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_hull_s_with
+    v: 409.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_energy_wh_with
+    v: 0.4
+    unit: Wh
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_motor_share_with
+    v: 0.11
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_height_median_m_with
+    v: 8.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_height_min_m_with
+    v: 5.2
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_height_max_m_with
+    v: 16.9
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_hull_points_with
+    v: 10
+    unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop

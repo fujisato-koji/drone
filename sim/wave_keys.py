@@ -16,6 +16,8 @@ Key names:
   aloft_s, counted, power_after_w, motor_share and height_median_m (see the loop fields).
 - wave.nav_<field>_<across|with>: the navigation runs over swell, by where the target lies relative to the
   swell's travel; the fields are those of sim.nav_keys (arrival_s is 0 when the run did not count).
+- wave.loop_<field> (loop_summary): the counts, the power ratios against the flat sea and the motor shares of
+  the closed-loop runs over swell.
 - wave.loop_<aircraft>_hs<H>_<along|against|calm>_u<U>_<p63|p64>_<field>: the closed-loop runs, fields aloft_s,
   counted (1 when the run flew the whole time inside the band and the margins), power_w (average electric power
   over the run, W, the same number as the energy per hour in Wh/h), power_after_w (the same from the entry onto
@@ -156,6 +158,33 @@ def loop_values(rows):
     return out
 
 
+def loop_summary(rows):
+    """Summary keys of the closed-loop runs over swell."""
+    full = [r for r in rows if r["ended"] == "complete"]
+    cnt = [r for r in rows if r["margins"]["counts"]]
+    ent = [r for r in rows if (r.get("entry") or {}).get("kind")]
+    flat_only = [r for r in rows if not (r.get("entry") or {}).get("kind")]
+    rat = sorted((r["after_entry"]["avg_power_w"] / r["flat"]["power_avg_w"]) for r in cnt
+                 if r.get("after_entry") and r.get("flat") and r["flat"]["power_avg_w"] > 0)
+    share = sorted(r["motor"]["thrust_on_share"] for r in cnt)
+    pw = sorted(r["after_entry"]["avg_power_w"] for r in cnt if r.get("after_entry"))
+    low = [r for r in cnt if r["motor"]["thrust_on_share"] <= 0.1]
+    out = {"loop_runs": (len(rows), "1"), "loop_full": (len(full), "1"), "loop_counted": (len(cnt), "1"),
+           "loop_counted_p63": (sum(r["preset"] == "p63" for r in cnt), "1"),
+           "loop_counted_p64": (sum(r["preset"] == "p64_low" for r in cnt), "1"),
+           "loop_flat_only": (len(flat_only), "1"),
+           "loop_flat_only_ended": (sum(r["ended"] != "complete" for r in flat_only), "1"),
+           "loop_ended_early": (len(rows) - len(full), "1"),
+           "loop_ratio_min": (round(rat[0], 3), "1"), "loop_ratio_median": (round(rat[len(rat) // 2], 2), "1"),
+           "loop_ratio_max": (round(rat[-1], 2), "1"),
+           "loop_power_min_w": (round(pw[0], 1), "W"), "loop_power_median_w": (round(pw[len(pw) // 2], 1), "W"),
+           "loop_motor_share_min": (round(share[0], 3), "1"),
+           "loop_motor_share_median": (round(share[len(share) // 2], 2), "1"),
+           "loop_low_motor_runs": (len(low), "1"),
+           "loop_u3_power_max_w": (round(max(r["motor"]["avg_power_w"] for r in rows if r["u10"] == 3.0), 1), "W")}
+    return out
+
+
 def sense_id(r):
     e = r.get("planner_sea_error")
     if e is None:
@@ -204,6 +233,7 @@ def values_block():
         parts.append(lib_values(lib))
     if "wave_loop_exp" in d:
         parts.append(loop_values(d["wave_loop_exp"]["results"]))
+        parts.append(loop_summary(d["wave_loop_exp"]["results"]))
     if "wave_sense_exp" in d:
         parts.append(sense_values(d["wave_sense_exp"]["results"]))
     if "wave_nav_exp" in d:
