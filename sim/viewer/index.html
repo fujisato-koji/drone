@@ -922,7 +922,7 @@ function navCycleKey() {
 function navRequestFields(req) {
   const pt = NV.cmd.point;
   if (pt.steady) req.entry = NAV.steadyEntry(pt); else req.cycle = navCycleKey();
-  req.guideSig = [3.0, null, 0.25, 0.1];   // the heading is held to 0.1 rad (sim.mpc.NAV_GUIDE_SIG)
+  req.guideSig = [3.0, 3.0, 0.15, 0.1];   // the heading is held to 0.1 rad (sim.mpc.NAV_GUIDE_SIG)
 }
 // the sector of directions the soaring cycles alone can fetch the destination from: two laylines
 function navLaylines() {
@@ -1167,7 +1167,7 @@ function launch() {
     const A = libActuators();
     FL.act = new MPC.Actuators(ac, { rateModel: A.rate_model, tau: A.tau_s, clRate: A.cl_rate_per_s, kPb2v: A.k_pb2v, delay: A.delay_s });
     MP.worker.postMessage({ type: 'init', ac: ac, entries: lib,
-      settings: FL.motor ? { motor: true, energyLevel: $('flPw').value, thrustSampling: 'sustained', foldSwitch: 'state', thrustUpdate: useNav ? 'raw' : 'clipped' } : {}, actuators: A });
+      settings: FL.motor ? { motor: true, energyLevel: $('flPw').value, thrustSampling: 'sustained', foldSwitch: 'state', thrustUpdate: useNav ? 'raw' : 'clipped', hCeil: useNav ? 28.5 : null } : {}, actuators: A });
   }
   FL.s = [p.x, p.y, fSurface(p.x, p.y, T) + zr, V, gam, psi];
   FL.cl = 0; FL.mu = 0; FL.acc = 0; FL.el = 0; FL.trail = []; FL.splash = null; FL.started = true; FL.on = true;

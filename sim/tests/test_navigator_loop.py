@@ -28,22 +28,40 @@ class TestNavigatorLoop(unittest.TestCase):
 
     def test_upwind_on_a_steady_motor_leg(self):
         r = self.fly("upwind", 1000.0, 200.0)
-        self.assertEqual(r["ended"], "arrived", r["nav"]["end_distance_m"])
-        self.assertGreater(r["nav"]["mean_vmg_ms"], 6.0)               # the hull: 8.9 m/s at 16 m/s wind
-        self.assertEqual(set(r["nav"]["kind_time_s"]), {"motor"})
-        self.assertGreater(r["min_clear_surface"], 5.0)                 # flown at 10 m
+        nv = r["nav"]
+        self.assertTrue(nv["counts_as_arrived"], nv["end_distance_m"])
+        self.assertGreater(nv["mean_vmg_ms"], 6.5)                      # the hull: 8.9 m/s at 16 m/s wind
+        self.assertEqual(set(nv["kind_time_s"]), {"motor"})
+        self.assertLess(abs(nv["height_median_m"] - 10.0), 2.0)         # the powered leg flies at its reference height
+        self.assertLess(nv["height_max_m"], 30.0)
 
     def test_across_the_wind_on_a_steady_motor_leg(self):
         r = self.fly("across", 1500.0, 200.0)
-        self.assertEqual(r["ended"], "arrived")
+        self.assertTrue(r["nav"]["counts_as_arrived"])
         self.assertGreater(r["nav"]["mean_vmg_ms"], 9.0)
+        self.assertLess(abs(r["nav"]["height_median_m"] - 10.0), 2.0)
 
     def test_soaring_leg_leaves_the_propeller_folded_most_of_the_time(self):
         """The thrust update uses the unclipped perturbations; with the clipped ones the motor ran all the
         time on a cycle that sustains itself (share 0.99 of the time over the 1 % of the weight)."""
         r = self.fly("downwind", 1500.0, 100.0)
-        self.assertEqual(r["ended"], "arrived")
+        self.assertTrue(r["nav"]["counts_as_arrived"])
         self.assertLess(r["motor"]["thrust_on_share"], 0.5)
+
+    def test_downwind_arrives_without_a_loop_a_stall_or_a_margin_violation(self):
+        """The downwind final approach used to change from a soaring cycle to a steady motor leg: two loops,
+        3.9 m/s against a stall speed of 10.1 m/s for 10.5 s, a wingtip at 0.18 m, and it was logged as arrived."""
+        r = self.fly("downwind", 5000.0, 400.0)
+        nv = r["nav"]
+        self.assertTrue(nv["arrived"])
+        self.assertEqual(nv["loop_s"], 0.0)
+        self.assertEqual(nv["below_stall_s"], 0.0)
+        self.assertGreaterEqual(nv["airspeed_min_ms"], nv["stall_speed_ms"])
+        self.assertGreaterEqual(nv["wingtip_min_m"], 0.3)
+        self.assertGreaterEqual(nv["height_min_m"], 1.0)           # ds.clearance_min_m
+        self.assertLessEqual(nv["height_max_m"], 30.0)             # ds.altitude_band_max_m
+        self.assertTrue(nv["counts_as_arrived"])
+        self.assertEqual(set(nv["kind_time_s"]), {"soaring"})       # no change of kind
 
 
 if __name__ == "__main__":

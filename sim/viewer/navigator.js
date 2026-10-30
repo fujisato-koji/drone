@@ -114,6 +114,7 @@
         var sp = Math.max(hypot(pts[k].vx, pts[k].vy), 1e-9);
         miss[k] = dist * Math.abs(d[0] * pts[k].vy - d[1] * pts[k].vx) / sp;
       }
+      if (prefer !== undefined && prefer !== null && miss[prefer] !== undefined && miss[prefer] <= radius) return { index: prefer, a: a[prefer] };
       var on = ok.filter(function (q) { return miss[q] <= 0.7 * radius; });
       if (!on.length) {
         kk = argminKey(ok, function (q) { return [miss[q], pts[q].kind !== 'soaring' ? 1 : 0]; });
@@ -270,7 +271,8 @@
     if (this.steady !== null) {
       var off = sg !== null && dist * Math.abs(dn[0] * pts[sg.index].vy - dn[1] * pts[sg.index].vx) /
         Math.max(hypot(pts[sg.index].vx, pts[sg.index].vy), 1e-9) > 0.7 * this.arrivalRadius;
-      if (sg === null || pts[sg.index].kind === 'motor' || off || this.leg === 'steady') {
+      var soaringLeg = this.leg !== null && this.leg !== 'steady';
+      if (sg === null || pts[sg.index].kind === 'motor' || this.leg === 'steady' || (off && !soaringLeg)) {
         var rs = this._steadyCommand(psi, dn, dist, e, E, t);
         if (rs !== null) return rs;
       }
@@ -420,7 +422,7 @@
       t.push(tt); x.push(pt.vx * tt); y.push(pt.vy * tt); z.push(st.height); V.push(st.V); g.push(0);
       psi.push(ps); cl.push(st.cl); mu.push(0); th.push(st.thrust);
     }
-    return { aircraft: 'steady', u10: 0, chi_deg: Math.round(Math.abs(ps * 180 / Math.PI) * 10) / 10, margin_set: 'steady', success: true, kind: 'motor', period: STEADY_PERIOD_S,
+    return { aircraft: 'steady', u10: 0, chi_deg: Math.round(Math.abs(ps * 180 / Math.PI) * 10) / 10, margin_set: 'steady', steady: true, success: true, kind: 'motor', period: STEADY_PERIOD_S,
       t: t, x: x, y: y, z: z, V: V, gamma: g, psi: psi, cl: cl, mu: mu, thrust: th, power_avg_w: pt.power };
   }
 

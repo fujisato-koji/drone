@@ -54,11 +54,13 @@ Motor library, sustained thrust sampling, state fold, reflex (choices the spec l
 Navigation in the closed loop (fly_mpc target / navigator / nav_hull; choices the spec left open):
 - The tactical layer is sim.navigator.HullNavigator on the velocity hull of the library entries (the
   mean ground velocity of each cycle, not its course speed: see the notes in sim.navigator). It is called
-  every value("nav.update_s", 5.0) s with the true position and wind and names the library cycle to fly
-  (entry and side), not a course; fly_mpc builds the Cycle from it. A change of cycle drops the phase
-  hint. The Polar based Navigator is still accepted (navigator=True with nav_polar) and picks the cycle
-  by course.
-- Arrival: the target within NAV_ARRIVAL_M (100 m), tested at every integration step.
+  every NAV_UPDATE_S (5 s) with the true position and wind and names what to fly: a library cycle (entry and
+  side) or, where no soaring pair makes progress, a steady motor leg (sim.navigator.SteadyModel) that
+  fly_mpc turns into the planner's reference (steady_entry). A change of cycle drops the phase hint.
+  The old speed-polar navigator (course speed times a cosine) is gone.
+- Arrival: the target within NAV_ARRIVAL_M (200 m), tested at every integration step. The run record
+  holds the median, minimum and maximum height and the margins; a run outside the height band of R-12
+  (ds.clearance_min_m to ds.altitude_band_max_m) or with a margin broken is not "arrived" (nav_valid).
 - nav_exp (run_nav_job): flat COARE 3.5 sea, truth state and wind, motor on at the middle weight, the
   settings of the motor library experiment; the prediction is sail_hull on the same hull.
 - Library: the upwind-side courses (extend_motor_library) and straight upwind motor cycles
@@ -211,8 +213,10 @@ class MPPIPlanner:
                  w_e=1.0, w_p=0.5, h_clear=1.0, clearance="height", w_clear=200.0,
                  w_n=50.0, w_stall=300.0, w_smooth=2.0, c_contact=1e4, smooth_modes=0,
                  smooth_gain=3.0, w_d=10.0, n_limit=False, motor=False, w_energy=None,
-                 thrust_sampling="basic", fold_switch="smooth", thrust_update="clipped"):
+                 thrust_sampling="basic", fold_switch="smooth", thrust_update="clipped", h_ceil=None,
+                 w_ceil=200.0):
         self.ac = aircraft
+        self.h_ceil, self.w_ceil = h_ceil, float(w_ceil)    # h_ceil (m): a soft ceiling, cost w_ceil (excess in m)^2 per s; None: off
         if thrust_update not in ("clipped", "raw"):
             raise ValueError(thrust_update)
         self.thrust_update = thrust_update
@@ -300,7 +304,9 @@ class MPPIPlanner:
         eT = self.sigma_t * self.rng.standard_normal((S, 1, n))
         if self.thrust_sampling == "sustained":
             hold = self.rng.random(S) < P_HOLD
-            lvl = np.abs(self.rng.standard_normal(S)) * self.sigma_hold
+            lvl = self.rng.standard_normal(S) * self.sigma_hold
+            if self.thrust_update != "raw":
+                lvl = np.abs(lvl)        # one-sided; with "raw" symmetric about the nominal
             a, b = self.rng.integers(0, n, S), self.rng.integers(0, n, S)
             lo, hi = np.minimum(a, b), np.maximum(a, b)
             k = np.arange(n)[None, :]
@@ -308,11 +314,11 @@ class MPPIPlanner:
             eT = np.where(hold[:, None, None], (lvl[:, None] * win)[:, None, :], eT)
         return eT
 
-    def _clip(self, U):
+    def _clip(self, U, thrust=True):
         ac = self.ac
         U[..., 0, :] = np.clip(U[..., 0, :], ac.cl_min, ac.cl_max)
         U[..., 1, :] = np.clip(U[..., 1, :], -ac.mu_max, ac.mu_max)
-        if self.motor:
+        if self.motor and thrust:
             U[..., 2, :] = np.clip(U[..., 2, :], 0.0, self.t_max)
         return U
 
@@ -425,6 +431,8 @@ class MPPIPlanner:
             pen = (self.w_clear * (np.maximum(0.0, self.h_clear - hc) / self.h_clear) ** 2
                    + self.w_n * np.maximum(0.0, n - ac.n_max) ** 2
                    + self.w_stall * (np.maximum(0.0, vmin - V) / ac.v_stall) ** 2)
+            if self.h_ceil is not None:
+                pen = pen + self.w_ceil * np.maximum(0.0, hc - self.h_ceil) ** 2
             cost += np.where(live, dt * pen, 0.0)
             if motor:
                 cost += np.where(live, dt * self.w_energy * T2 * V0 / self.eta, 0.0)
@@ -448,7 +456,7 @@ class MPPIPlanner:
                          0.0)
         return cost, path, dead
 
-    def update(self, U, Us, cost, dead):
+    def update(self, U, Us, cost, dead, clip_thrust=True):
         """The MPPI weighted update of the nominal U from the samples Us (S, nu, n_ctrl) with their
         costs and dead flags. Returns (new U, effective sample size, number dead)."""
         ok = ~dead
@@ -457,7 +465,8 @@ class MPPIPlanner:
         w = np.exp(-(cost - cost.min()) / (self.lam * scale))
         w /= w.sum()
         ess = float(1.0 / np.sum(w ** 2))
-        return self._clip(U + np.tensordot(w, Us - U[None], axes=(0, 0))), ess, int(dead.sum())
+        return (self._clip(U + np.tensordot(w, Us - U[None], axes=(0, 0)), clip_thrust), ess,
+                int(dead.sum()))
 
     # -- one planning call ---------------------------------------------------------------------
     def plan(self, world, t, state, target_dir, guide=None):
@@ -505,15 +514,17 @@ class MPPIPlanner:
             cost, _, dead = self.rollout(world, t, s0, Us, target_dir)
             if Uraw is not None:
                 # thrust_update "raw": the thrust row of the update uses the perturbed values before the
-                # clip at zero. The clipped values are all >= 0, so their weighted mean is above the
-                # nominal even when no sample is better (a thrust that is never asked for).
+                # clip at zero, the held samples are symmetric about the nominal, and the nominal stays
+                # unclipped inside (only the applied command and the rollouts clip it). The clipped values
+                # are all >= 0, so their weighted mean is above the nominal even when no sample is better
+                # (a thrust that is never asked for).
                 Uu = Us.copy()
                 keep = np.ones(Us.shape[0], bool)
                 keep[1:1 + len(cand)] = False
                 if guide is not None and prev is not None:
                     keep[1 + len(cand)] = False
                 Uu[keep, 2, :] = Uraw[keep, 2, :]
-                U, ess, n_dead = self.update(U, Uu, cost, dead)
+                U, ess, n_dead = self.update(U, Uu, cost, dead, clip_thrust=False)
             else:
                 U, ess, n_dead = self.update(U, Us, cost, dead)
         self.U = U
@@ -525,7 +536,7 @@ class MPPIPlanner:
                     np.interp(times[:nfirst + 1], self.knots_t, cl_k),
                     np.interp(times[:nfirst + 1], self.knots_t, mu_k),
                     path[:, :, 0].copy(), times, float(cost[0]), ess, n_dead,
-                    U[2].copy() if self.motor else None)
+                    np.clip(U[2], 0.0, self.t_max) if self.motor else None)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -609,7 +620,8 @@ def _solve_margin_entry(job):
     the dense-replay figures of dsopt.control_stats."""
     from sim.aircraft_models import by_name
     from sim.dsopt import control_stats, profile_for, solve
-    name, u10, chi_deg, n = job
+    name, u10, chi_deg, n = job[:4]
+    seeds = job[4] if len(job) > 4 else (0, 1, 2)      # optional: other start seeds for a cycle that failed
     ac = by_name(name)
     prof = profile_for(u10, "log", roughness="coare35")
     tried = []
@@ -618,9 +630,9 @@ def _solve_margin_entry(job):
         info, x, col = solve(ac, prof, mode="max_speed", cycle="travel", n=n, u10=u10,
                              chi=np.radians(chi_deg), tip_model="geometric", midpoints=True,
                              rate_limits=True, rate_model="pb2v", n_min=0.0, h_min=h_min,
-                             n_frac=n_frac, mu_frac=mu_frac, v_factor=v_factor,
+                             n_frac=n_frac, mu_frac=mu_frac, v_factor=v_factor, seeds=seeds,
                              return_x=True, stop_after=1)
-        tried.append({"margins": label, "success": bool(info["success"]),
+        tried.append({"margins": label, "seeds": list(seeds), "success": bool(info["success"]),
                       "violation": float(info["violation"]), "runtime_s": time.time() - t0})
         if info["success"]:
             S, C, T, _ = col.unpack(x)
@@ -742,7 +754,7 @@ def _solve_motor_entry_raw(job):
 def _solve_soaring_entry(job):
     """A soaring cycle of the motor library: the margin-library solve (mode max_speed), with the
     kind and a zero thrust schedule added."""
-    name, u10, chi_deg, n = job
+    name, u10, chi_deg, n = job[:4]
     if u10 < 1.0:      # no log profile at a calm: no soaring cycle
         return {"aircraft": name, "u10": float(u10), "u10_requested": float(u10),
                 "chi_deg": float(chi_deg), "success": False, "missing": True, "kind": "soaring",
@@ -938,6 +950,34 @@ def extend_motor_library(chis=NAV_CHI_DEG, u10s=NAV_U10, workers=6, path=LIB_MOT
         fh.write("\n")
     filter_motor_library(path)
     return entries
+
+
+LIBRARY_GAPS = (("albatross-3m", 24.0, 135.0),)     # soaring cycles that converged but failed the dense replay
+GAP_SEEDS = ((3, 4, 5), (6, 7, 8), (9, 10, 11), (12, 13, 14))
+
+
+def fill_library_gaps(gaps=LIBRARY_GAPS, path=LIB_MOTOR_PATH, n=40):
+    """Re-solve soaring cycles that failed the dense replay with other start seeds; the first that passes
+    replay_failures replaces the failed entry (the others stay holes). Returns the list of filled ones."""
+    from sim.aircraft_models import by_name
+    with open(path) as fh:
+        d = json.load(fh)
+    filled = []
+    for name, u10, chi in gaps:
+        for seeds in GAP_SEEDS:
+            e = _solve_soaring_entry((name, u10, chi, n, seeds))
+            if e["success"] and not replay_failures(e, by_name(name)):
+                d["entries"] = [x for x in d["entries"] if (x["aircraft"], x["u10"], x["chi_deg"]) != (name, u10, chi)] + [e]
+                filled.append((name, u10, chi, seeds))
+                break
+    d["entries"].sort(key=lambda e: (e["aircraft"], e["u10"], e["chi_deg"]))
+    d["meta"]["gap_fill"] = {"tdr_run": "python -m sim.mpc --fill-library-gaps", "gaps": [list(g) for g in gaps],
+                             "filled": [list(f) for f in filled]}
+    with open(path, "w", newline=chr(10)) as fh:
+        json.dump(d, fh, indent=1)
+        fh.write(chr(10))
+    filter_motor_library(path)
+    return filled
 
 
 NAV_UPWIND_H_MIN = 10.0     # m; the steady upwind motor cycle flies this high: at the 2 m margin the planner cannot hold it
@@ -1148,33 +1188,6 @@ class CycleLibrary:
         return Cycle(e, mirror=chi_rad < 0.0)
 
 
-def polar_from_library(lib, name):
-    """Polar (sim.navigator.Polar) of one aircraft from the library entries: the speed along the
-    course of each entry (speed_along_chi, soaring or motor-assisted) at its wind and course; NaN where
-    the library has no entry or the speed is at most sim.navigator.MIN_PROGRESS. Winds with fewer than
-    two courses are left out; the course axis is the courses the library has."""
-    from sim.navigator import MIN_PROGRESS, Polar
-    es = [e for e in lib.entries if e["aircraft"] == name]
-    chis = sorted({e["chi_deg"] for e in es})
-    winds = sorted({e["u10"] for e in es if sum(1 for x in es if x["u10"] == e["u10"]) >= 2})
-    tab = np.full((len(winds), len(chis)), np.nan)
-    for e in es:
-        if e["u10"] in winds and e["speed_along_chi"] > MIN_PROGRESS:
-            tab[winds.index(e["u10"]), chis.index(e["chi_deg"])] = e["speed_along_chi"]
-    return Polar(winds, chis, tab)
-
-
-def nav_polar(lib, name, u10):
-    """(polar, source) for the closed-loop navigator: the optimizer's speed polar
-    (sim/out/ds_polar.json) where it has a progress speed at this wind for the aircraft, else the
-    polar of the library entries (polar_from_library)."""
-    from sim.navigator import polar_from_ds
-    ds = polar_from_ds(name)
-    if ds is not None and np.any(np.isfinite(ds.speed(np.arange(0.0, 181.0, 5.0), u10))):
-        return ds, "ds_polar"
-    return polar_from_library(lib, name), "library"
-
-
 def dominant_wave(world):
     """(a, k, dx, dy, phase, omega) of the largest component (longest wavelength on ties) of a
     world that is an Environment (or has .c), else None."""
@@ -1184,6 +1197,10 @@ def dominant_wave(world):
     i = int(np.lexsort((c["k"], -np.round(c["a"], 3)))[0])
     return (float(c["a"][i]), float(c["k"][i]), float(c["dx"][i]), float(c["dy"][i]),
             float(c["phase"][i]), float(c["omega"][i]))
+
+
+STEADY_SIG_H = 0.5         # m; height tolerance of the match to a steady reference
+STEADY_W_D = 200.0         # terminal weight of the match to a steady reference
 
 
 class CycleGuide:
@@ -1242,6 +1259,15 @@ class CycleGuide:
         self.target = cycle.state(te)
         self.dE_c = float(cycle.energy(te) - cycle.energy(self.tau_s))
         self.E0 = G * self.h0 + 0.5 * V * V
+        if cycle.d.get("steady"):
+            # tight about the reference height (the shear makes level flight unstable, so a loose tolerance lets the
+            # aircraft wander upwards) and a heavier terminal weight
+            self.sig = (min(self.sig[0], STEADY_SIG_H), self.sig[1], self.sig[2], self.sig[3])
+            self.w_d = max(self.w_d, STEADY_W_D)
+            # a steady reference holds an energy level, not an energy gain: the shortfall is measured against the
+            # reference energy, so that sinking back to the reference height from above is not penalised (with
+            # the gain measured from the present energy the planner stayed where it had climbed to)
+            self.dE_c = float(cycle.energy(te) - self.E0)
 
     def nominal(self, knots_t):
         cl, mu = self.cycle.controls(self.tau_s + np.asarray(knots_t))
@@ -1400,7 +1426,7 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             library=None, wave_aware=True, state_source="truth", wind_source="truth",
             suite="standard", profile_fit="two_param", actuators=None, n_limit=False,
             log_every_s=5.0, stop_on_tip=False, library_path=None, motor=False, w_energy=None, reflex=False,
-            true_fold_switch=None, target=None, navigator=None, nav_polar=None, nav_kw=None, nav_hull=None, guide_sig=None):
+            true_fold_switch=None, target=None, navigator=None, nav_kw=None, nav_hull=None, guide_sig=None):
     """Closed loop: true dynamics (rk4, dt), planner every replan_s in the chosen world model.
 
     world_model: "truth" | "flat" | "estimated". sensors: list of SurfaceSensor (used only for
@@ -1421,21 +1447,19 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     average power, the share of time with thrust, the number and length of bursts and where in the
     cycle they start (see burst_stats).
 
-    target / navigator (default None; nothing changes then; needs a library): with target = (x, y)
-    (metres, x east, y north, from the start at the origin) and navigator=True (or a
-    sim.navigator.Navigator) the tactical layer chooses the course. Every nav.update_s (5 s) the
-    Navigator gets the position, the wind (truth for now: u10_est and the true wind direction) and
-    the target and returns the course; the planner then flies the library cycle of that course
-    relative to the wind (CycleLibrary.pick, mirrored for the port side). target_bearing_deg is
-    ignored. nav_polar: the sim.navigator.Polar, or nav_hull: the sim.navigator.HullSource of the
-    aircraft (the hull navigator, which names the cycle to fly itself; one of them is needed when
-    navigator is True); nav_kw: Navigator
-    keywords (default arrival_radius NAV_ARRIVAL_M). guide_sig: the match tolerances of CycleGuide
-    (h, V, gamma, heading); the navigator needs a tight heading (NAV_GUIDE_SIG), because the cycle's mean
-    cross-track velocity is set by its mean heading, which the loose default does not hold. A change of cycle (course or side) drops the
-    phase hint, so CycleGuide matches the phase of the new cycle to the state. The run ends "arrived"
-    when the target is within the arrival radius. The metrics then also hold out["nav"]: the
-    track (every NAV_TRACK_S), the commands, the tacks, the mode shares and the arrival time.
+    target / navigator / nav_hull (default None; nothing changes then; need a library): with target = (x, y)
+    (metres, x east, y north, from the start at the origin), navigator=True and nav_hull = the
+    sim.navigator.HullSource of the aircraft, the tactical layer (HullNavigator, keywords in nav_kw, default
+    arrival_radius NAV_ARRIVAL_M) is called every NAV_UPDATE_S (5 s; every NAV_FAST_UPDATE_S in the final
+    approach) with the position, the wind (truth for now: u10_est and the true wind direction) and the
+    target, and names what to fly: a library cycle (entry and side) or a steady motor leg (nav_kw
+    steady=SteadyModel), which fly_mpc turns into the planner's reference (steady_entry). target_bearing_deg
+    is ignored. guide_sig: the match tolerances of CycleGuide (h, V, gamma, heading); the navigator needs a
+    tight heading (NAV_GUIDE_SIG), because the cycle's mean cross-track velocity is set by its mean heading,
+    which the loose default does not hold. A change of cycle drops the phase hint, so CycleGuide matches the
+    phase of the new cycle to the state. The run ends "arrived" when the target is within the arrival
+    radius. The metrics then also hold out["nav"]: the track (every NAV_TRACK_S), the commands, the leg
+    changes, the mode shares, the heights and the arrival time.
 
     reflex (default False; nothing changes then; needs motor=True): the Reflex supervisor runs at
     every control step on the true state, in the world of the latest plan, and overrides the
@@ -1464,20 +1488,16 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         sn.reset()
     nav, nav_log, nav_track, nav_next, nav_cmd = None, [], [], 0.0, None
     if navigator:
-        from sim.navigator import Navigator
-        from sim.record import value as _value
         if target is None or library is None:
             raise ValueError("navigator needs a target and a library")
         nav = navigator if hasattr(navigator, "step") else None
-        if nav is None and nav_hull is not None:
+        if nav is None:
+            if nav_hull is None:
+                raise ValueError("navigator=True needs nav_hull")
             from sim.navigator import HullNavigator
             nav = HullNavigator(nav_hull, **dict({"arrival_radius": NAV_ARRIVAL_M}, **(nav_kw or {})))
-        if nav is None:
-            if nav_polar is None:
-                raise ValueError("navigator=True needs nav_polar or nav_hull")
-            nav = Navigator(nav_polar, **dict({"arrival_radius": NAV_ARRIVAL_M}, **(nav_kw or {})))
         nav.reset()
-        nav_update_s = float(_value("nav.update_s", 5.0))
+        nav_update_s = NAV_UPDATE_S
         target = np.asarray(target, float)
         nav_cmd = nav.step(0.0, (0.0, 0.0), u10_est, env_true.wind.from_deg, target)
         target_bearing_deg = nav_cmd.bearing
@@ -1539,7 +1559,7 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     fold_state = (pl.fold_switch if true_fold_switch is None else true_fold_switch) == "state" if motor else False
     rf = Reflex(ac, pl.t_max, pl.fold_dcd, n_limit, pl.fold_switch) if reflex else None
     rf_events, rf_cur, world = [], None, None
-    cyc_prev = None
+    cyc_prev, switch_wait_t = None, None
     for i in range(nsteps + 1):
         t = i * dt
         eta_t = float(env_true.surface(s[0], s[1], t)[0])
@@ -1640,6 +1660,21 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                     cyc = Cycle(pt_.entry, mirror=pt_.side < 0)
                 else:
                     cyc = library.pick(ac.name, u10_p, chi_p)
+                if (nav is not None and cyc_prev is not None and cyc_prev.d.get("kind") == "soaring"
+                        and cyc.d.get("kind") == "soaring" and (cyc.d is not cyc_prev.d or cyc.mirror != cyc_prev.mirror)):
+                    # a change between soaring cycles (a tack or a gybe) waits for the phase where the new cycle
+                    # matches the aircraft's present state; at any other phase the mirrored heading and bank are a
+                    # jump (airspeed 5 m/s against a stall speed of 10 m/s and a zoom to 33 m were seen)
+                    probe = CycleGuide(cyc, world, t, s_plan, psi_p, pl.horizon_s, wave_aware=wave_aware,
+                                       w_d=pl.w_d, sig=guide_sig)
+                    if switch_wait_t is None:
+                        switch_wait_t = t
+                    if probe.match_dist > SWITCH_MATCH_MAX and t - switch_wait_t < SWITCH_MAX_WAIT_S:
+                        cyc = cyc_prev       # keep flying the old cycle until the phases line up
+                    else:
+                        switch_wait_t = None
+                else:
+                    switch_wait_t = None
                 if cyc_prev is not None and (cyc.d is not cyc_prev.d or cyc.mirror != cyc_prev.mirror):
                     tau_prev = None          # another cycle: its phase is matched afresh
                 cyc_prev = cyc
@@ -1656,6 +1691,12 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                 pl.act_state = (actuators.cl, actuators.mu) + actuators.cmd_last
                 if motor:
                     pl.act_state = pl.act_state + (actuators.T,)
+            elif actuators is not None and motor and guide is not None:
+                # the very first plan: the actuators have not moved yet and start at their first command, so the
+                # planner assumes the cycle's own controls and thrust (not zero thrust, which sank the nominal
+                # and kicked the aircraft off a steady reference at the start)
+                c0_, m0_ = (float(v) for v in guide.nominal(pl.knots_t)[:, 0])
+                pl.act_state = (c0_, m0_, c0_, m0_, float(guide.nominal_thrust(pl.knots_t)[0]))
             plan = pl.plan(world, t, s_plan, u, guide=guide)
             t_plan = t
             cpu.append(time.process_time() - c0)
@@ -1786,6 +1827,7 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     if nav is not None:
         nav_track.append([float(t), float(s[0]), float(s[1])])
         out["nav"] = nav_summary(nav, nav_log, nav_track, target, ended == "arrived", float(t), nav_update_s)
+        out["nav"].update(flight_margins(ac, env_true, np.asarray(T), np.asarray(ST), np.asarray(MU), out))
     if keep:
         out["traj"] = {"t": np.array(T), "state": np.array(ST), "mu": np.array(MU),
                        "cl": np.array(CL)}
@@ -1809,7 +1851,7 @@ def steady_entry(pt):
         t = [P * i / (n - 1) for i in range(n)]
         psi = float(np.arctan2(st["heading"][1], st["heading"][0]))
         st["_entry"] = {"aircraft": "steady", "u10": 0.0, "chi_deg": round(abs(float(np.degrees(psi))), 1),
-                        "margin_set": "steady", "success": True, "kind": "motor",
+                        "margin_set": "steady", "steady": True, "success": True, "kind": "motor",
                         "period": P, "t": t, "x": [pt.vx * v for v in t], "y": [pt.vy * v for v in t],
                         "z": [st["height"]] * n, "V": [st["V"]] * n, "gamma": [0.0] * n, "psi": [psi] * n,
                         "cl": [st["cl"]] * n, "mu": [0.0] * n, "thrust": [st["thrust"]] * n,
@@ -1817,6 +1859,9 @@ def steady_entry(pt):
     return st["_entry"]
 
 
+SWITCH_MATCH_MAX = 2.0     # a change between soaring cycles waits for a state match (CycleGuide.match_dist) below this ...
+SWITCH_MAX_WAIT_S = 15.0   # ... for at most this long
+NAV_UPDATE_S = 5.0          # the navigator is called this often (s)
 NAV_FAST_UPDATE_S = 1.0     # the navigator is called this often in the final approach (mode direct)
 NAV_TRACK_S = 5.0          # spacing of the logged track points
 
@@ -1847,6 +1892,38 @@ def nav_summary(nav, log, track, target, arrived, t_end, update_s):
             "track": track, "commands": [[c["t"], c["bearing"], c["chi"], c["side"], c["mode"],
                                           c["vmg"], c["tacked"], c.get("kind", ""), c.get("cycle")]
                                          for c in log]}
+
+
+NAV_TIP_MARGIN_M = 0.3      # wingtip clearance the planner keeps (h_clear); a run under it broke a margin
+
+
+def flight_margins(ac, env, T, ST, MU, out):
+    """Heights and margins of a navigated run, from the recorded trajectory (every 10th step): the median,
+    minimum and maximum height above the surface, the lowest wingtip, the lowest airspeed against the stall
+    speed, the time with cos(gamma) < 0 (a loop) and below the stall speed. in_band: the heights stay inside
+    R-12's band (ds.clearance_min_m to ds.altitude_band_max_m); margins_ok: no loop, no flight below the stall
+    speed, wingtip at least NAV_TIP_MARGIN_M, load factor within n_max. valid = in_band and margins_ok: a run
+    that is not valid does not count as arrived."""
+    from sim.record import value
+    k = max(1, len(T) // 4000)
+    t, st, mu = T[::k], ST[::k], MU[::k]
+    eta = np.array([float(env.surface(x, y, tt)[0]) for x, y, tt in zip(st[:, 0], st[:, 1], t)])
+    h = st[:, 2] - eta
+    tip = wingtip_height(ac, st[:, 2], eta, st[:, 4], mu)
+    dt = float(T[1] - T[0]) * k if len(T) > 1 else 0.0
+    lo, hi = float(value("ds.clearance_min_m")), float(value("ds.altitude_band_max_m"))
+    loop_s = float(np.sum(np.cos(st[:, 4]) <= 0.0) * dt)
+    stall_s = float(np.sum(st[:, 3] < ac.v_stall) * dt)
+    m = {"height_median_m": float(np.median(h)), "height_min_m": float(h.min()), "height_max_m": float(h.max()),
+         "wingtip_min_m": float(tip.min()), "airspeed_min_ms": float(st[:, 3].min()),
+         "stall_speed_ms": float(ac.v_stall), "loop_s": loop_s, "below_stall_s": stall_s,
+         "max_n_flown": out.get("max_n_flown"), "band_m": [lo, hi]}
+    m["in_band"] = bool(h.min() >= lo and h.max() <= hi)
+    m["margins_ok"] = bool(loop_s == 0.0 and stall_s == 0.0 and tip.min() >= NAV_TIP_MARGIN_M
+                           and (out.get("max_n_flown") or 0.0) <= ac.n_max)
+    m["valid"] = bool(m["in_band"] and m["margins_ok"])
+    m["counts_as_arrived"] = bool(out.get("ended") == "arrived" and m["valid"])
+    return m
 
 
 BURST_ON_FRAC = 0.01       # thrust above this share of the weight counts as running
@@ -2557,9 +2634,11 @@ NAV_CASES = (       # (aircraft, u10, direction of the target from the start)
     ("albatross-3m", 16.0, "upwind"), ("albatross-3m", 16.0, "across"), ("albatross-3m", 16.0, "downwind"),
     ("baseline-2m", 16.0, "upwind"), ("baseline-2m", 16.0, "across"),
     ("albatross-3m", 9.0, "upwind"))
-NAV_PKW = dict(MOTOR_EXP_PKW, thrust_update="raw")      # raw: the unbiased thrust update (see MPPIPlanner)
+NAV_PKW = dict(MOTOR_EXP_PKW, thrust_update="raw", h_ceil=28.5)      # raw: the unbiased thrust update (see MPPIPlanner)
 STEADY_HEIGHT_REF = 10.0                  # sim.navigator.STEADY_HEIGHT_M
-NAV_GUIDE_SIG = (3.0, None, 0.25, 0.1)     # heading tolerance 0.1 rad instead of 0.6 (see fly_mpc guide_sig)
+NAV_GUIDE_SIG = (3.0, 3.0, 0.15, 0.1)     # (h m, V m/s, gamma rad, heading rad) of the match; the default is (3, 0.25 mean V, 0.25, 0.6)
+#   heading 0.1 rad: the mean cross velocity of a cycle is set by its mean heading; V 3 m/s: with the loose V tolerance
+#   the planner let the airspeed fall to 8.5 m/s (stall 10.1) at the top of a soaring zoom when it held the heading
 
 
 def nav_target(direction, dist):
@@ -2611,20 +2690,22 @@ def run_nav_job(job):
 
 
 def nav_exp_table(rows):
-    lines = ["| aircraft | u10 | target | result | time (s) | legs | VMG (m/s) | hull plan: kind, VMG, "
-             "kinematic time (s), legs, VMG | energy (Wh) | Wh/km made good | thrust on |",
-             "|" + "---|" * 11]
+    lines = ["| aircraft | u10 | target | result | VMG (m/s) | hull plan: kind, speed made good (m/s), kinematic "
+             "time (s) | energy (Wh) | motor on | height median / max (m) |",
+             "|" + "---|" * 9]
     for r in rows:
         nv, m, p = r.get("nav") or {}, r.get("motor") or {}, r["predicted"]
-        km = (nv.get("start_distance_m", 0) - nv.get("end_distance_m", 0)) / 1000.0
-        lines.append("| %s | %g | %s %g km | %s | %s | %s | %s | %s, %s, %s, %s, %s | %s | %s | %s |" % (
-            r["aircraft"], r["u10"], r["direction"], r["distance_m"] / 1000.0,
-            r["ended"], _fmt(nv.get("arrival_time_s"), "%.0f"), nv.get("n_tacks", "n/a"),
+        if nv.get("counts_as_arrived"):
+            res = "arrived %.0f s" % nv["arrival_time_s"]
+        elif nv.get("arrived"):
+            res = "reached, not counted (%s)" % ("band" if not nv.get("in_band") else "margin")
+        else:
+            res = r["ended"]
+        lines.append("| %s | %g | %s %g km | %s | %s | %s, %s, %s | %s | %s | %s / %s |" % (
+            r["aircraft"], r["u10"], r["direction"], r["distance_m"] / 1000.0, res,
             _fmt(nv.get("mean_vmg_ms"), "%.2f"), p["plan_kind"] or "none", _fmt(p["plan_vmg_ms"], "%.2f"),
-            _fmt(p["time_s"], "%.0f"), p["n_legs"], _fmt(p["mean_vmg_ms"], "%.2f"),
-            _fmt(m.get("energy_wh"), "%.1f"),
-            _fmt(m["energy_wh"] / km if km > 0.05 and m.get("energy_wh") is not None else None, "%.2f"),
-            _fmt(m.get("thrust_on_share"), "%.2f")))
+            _fmt(p["time_s"], "%.0f"), _fmt(m.get("energy_wh"), "%.1f"), _fmt(m.get("thrust_on_share"), "%.2f"),
+            _fmt(nv.get("height_median_m"), "%.1f"), _fmt(nv.get("height_max_m"), "%.1f")))
     return chr(10).join(lines)
 
 
@@ -2659,7 +2740,7 @@ def nav_exp_main(a):
                  "actuators": "rate_model pb2v", "n_limit": True, "stop_on_tip": True,
                  "navigator": "sim.navigator.HullNavigator on the velocity hull of the library entries "
                               "(HullSource, nearest library wind), arrival radius %g m, called every %g s "
-                              "(nav.update_s)" % (NAV_ARRIVAL_M, value("nav.update_s", 5.0)),
+                              "(NAV_UPDATE_S)" % (NAV_ARRIVAL_M, NAV_UPDATE_S),
                  "steady_leg": "where no soaring pair makes progress the motor leg is a steady level flight at "
                                "%g m aimed by the wind triangle at the airspeed of least electric energy per "
                                "metre (sim.navigator.SteadyModel), the planner's reference; the hull's 180 deg "
@@ -2715,6 +2796,7 @@ def main():
     ap.add_argument("--build-motor-library", action="store_true")
     ap.add_argument("--extend-motor-library", action="store_true")
     ap.add_argument("--extend-motor-upwind", action="store_true")
+    ap.add_argument("--fill-library-gaps", action="store_true")
     ap.add_argument("--nav-exp", action="store_true")
     ap.add_argument("--nav-dist", type=float, default=10000.0)
     ap.add_argument("--nav-key", default="nav_exp", help="key of sim/out/mpc.json the nav experiment writes")
@@ -2729,6 +2811,9 @@ def main():
         return
     if a.build_motor_library:
         build_motor_library(workers=a.workers)
+        return
+    if a.fill_library_gaps:
+        print(fill_library_gaps())
         return
     if a.extend_motor_upwind:
         extend_motor_upwind(workers=a.workers)

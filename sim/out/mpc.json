@@ -14547,7 +14547,8 @@
    "n_limit": true,
    "stop_on_tip": true,
    "planner_world_truth": "48 strongest wave components",
-   "comparison": "burst_exp: the normal-level row of the same aircraft, wind, sea and world (Charnock true wind, margin library, no sustained sampling); optimizer: the library entry at chi 20 deg of the nearest library wind (same margins, no ground effect, smooth fold, speed along chi from the optimizer; power in W is the average electric power)"
+   "comparison": "burst_exp: the normal-level row of the same aircraft, wind, sea and world (Charnock true wind, margin library, no sustained sampling); optimizer: the library entry at chi 20 deg of the nearest library wind (same margins, no ground effect, smooth fold, speed along chi from the optimizer; power in W is the average electric power)",
+   "library_note": "computed on the motor library of commit 8fa68be, before the upwind-side courses (120 to 180 deg), the calm-entry rotation and the raised-height upwind motor cycles were added; the experiment was not rerun on the current library file (about 40 flights of 180 s, hours of wall time)"
   },
   "results": [
    {

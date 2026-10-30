@@ -241,7 +241,7 @@ for (let i = 0; i <= n; i++) {
     plan = ctl.plan({t: t, s: s.slice(), act: act.cl === null ? null :
       {cl: act.cl, mu: act.mu, clCmd: act.cmdLast[0], muCmd: act.cmdLast[1], T: act.T},
       world: {kind: 'flat', wind: {ustar: w.ustar, z0: w.z0, ex: w.ex, ey: w.ey, karman: K}, comps: null, stokes: false, maxComponents: 48},
-      u10: inp.u10, chiDeg: 20, cycle: ck, entry: cmd.point.steady ? NAV.steadyEntry(cmd.point) : undefined, guideSig: [3.0, null, 0.25, 0.1]});
+      u10: inp.u10, chiDeg: 20, cycle: ck, entry: cmd.point.steady ? NAV.steadyEntry(cmd.point) : undefined, guideSig: [3.0, 3.0, 0.15, 0.1]});
     tPlan = t;
   }
   let [cl, mu] = plan.controls(t - tPlan);
