@@ -169,6 +169,17 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | prop.motor_eff | 0.75 | 1 | sourced | P49, P142, P143 |
 | prop.folded_drag_cda_m2 | 0.0003 | m2 | sourced | P145, P146 |
 | prop.thrust_max_per_weight | 0.5 | 1 | assumed | Q-055 |
+| env.breaking_crest_length_frac | 0.25 | 1 | assumed | Q-064 |
+| env.breaking_lifetime_s | 2.0 | s | assumed | Q-064 |
+| env.breaking_lift_max_frac | 0.3 | 1 | assumed | Q-064 |
+| env.breaking_lee_deficit_factor | 1.2 | 1 | sourced | P92, P93 |
+| env.swell_jet_height_m | 8.0 | m | sourced | P100 |
+| env.swell_jet_max_ratio | 1.1 | 1 | assumed | Q-061 |
+| env.swell_jet_shear_frac | 0.25 | 1 | sourced | P65 |
+| env.turb_lu_per_height | 2.4 | 1 | sourced | P132 |
+| env.turb_lw_per_height | 0.58 | 1 | sourced | P132 |
+| env.wave_wind_critical_floor | 0.1 | 1 | assumed | Q-064 |
+| env.z0t_m | 0.0001 | m | assumed | Q-061 |
 | env.charnock | 0.0144 | 1 | assumed | Q-008 |
 | env.air_kinematic_viscosity | 1.46e-05 | m2/s | assumed | Q-008 |
 | env.jonswap_gamma | 3.3 | 1 | assumed | Q-008 |

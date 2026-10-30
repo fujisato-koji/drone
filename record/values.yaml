@@ -808,6 +808,73 @@ items:
     status: assumed
     basis:
       - Q-055
+  - key: env.breaking_crest_length_frac
+    v: 0.25
+    unit: 1
+    status: assumed
+    basis:
+      - Q-064
+  - key: env.breaking_lifetime_s
+    v: 2.0
+    unit: s
+    status: assumed
+    basis:
+      - Q-064
+  - key: env.breaking_lift_max_frac
+    v: 0.3
+    unit: 1
+    status: assumed
+    basis:
+      - Q-064
+  - key: env.breaking_lee_deficit_factor
+    v: 1.2
+    unit: 1
+    status: sourced
+    basis:
+      - P92
+      - P93
+  - key: env.swell_jet_height_m
+    v: 8.0
+    unit: m
+    status: sourced
+    basis:
+      - P100
+  - key: env.swell_jet_max_ratio
+    v: 1.1
+    unit: 1
+    status: assumed
+    basis:
+      - Q-061
+  - key: env.swell_jet_shear_frac
+    v: 0.25
+    unit: 1
+    status: sourced
+    basis:
+      - P65
+  - key: env.turb_lu_per_height
+    v: 2.4
+    unit: 1
+    status: sourced
+    basis:
+      - P132
+  - key: env.turb_lw_per_height
+    v: 0.58
+    unit: 1
+    status: sourced
+    basis:
+      - P132
+  - key: env.wave_wind_critical_floor
+    v: 0.1
+    unit: 1
+    status: assumed
+    basis:
+      - Q-064
+  - key: env.z0t_m
+    v: 0.0001
+    unit: m
+    status: assumed
+    basis:
+      - Q-061
   - key: env.charnock
     v: 0.0144
     unit: 1
