@@ -936,7 +936,7 @@ items:
     basis:
       - docs/02-form.md#ground-motor
   - key: motor.baseline_u6_w
-    v: 10.7
+    v: 10.98
     unit: W
     status: calculated
     basis:
@@ -1014,7 +1014,7 @@ items:
     basis:
       - docs/02-form.md#simulator-fitness
   - key: env.swell_jet_shear_factor_min
-    v: 1.71
+    v: 1.43
     unit: 1
     status: calculated
     basis:

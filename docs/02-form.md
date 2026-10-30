@@ -133,10 +133,10 @@ What was added on 2026-10-30 (`sim/seawind.py`, opt-in; `python -m sim.seawind_f
 
 - Second-order crests in the surface used by the contact check and the wind: they match the short-crested crest distribution of Forristall (S4) to env.crest_stokes2_over_forristall_1e2 at a probability of 1e-2, where the linear surface gives env.crest_linear_over_forristall_1e2.
 - Breaking of dominant waves with the probability of Banner et al. (P125), lifting the crest towards a Stokes corner (P126) by at most env.breaking_lift_max_frac of the local amplitude and slowing the air in its lee (P92, P93); the marked share of the surface is only about env.breaking_marked_over_whitecap_u10 of the whitecap cover at 10 m/s (P127), since it counts only dominant waves.
-- The wave-coherent wind evaluated at each height, so it changes sign at the critical height as measured and simulated (P128, P129), with the amplitudes and decays of P63 and a floor near the critical height.
+- The wave-coherent wind evaluated at each height when the critical-height floor is on, so it changes sign at the critical height as measured and simulated (P128, P129), with the amplitudes and decays of P63; the floor turns the zero crossing into a small jump of about 0.05 m/s, which a flight model's central differences would see as a spike of shear (Q-064); without the floor the P63 preset keeps the wind speed at the height 1/k and does not change sign.
 - Turbulence with length scales that shrink near the water, fitted to the marine spectral peaks (P132): the vertical scale is env.turb_lw_at_1m_height_law_m at 1 m.
-- Stability by the functions of P95: at an Obukhov length of +50 m, stable air over a cold sea, the shear from 1 to 15 m is env.stability_l50_shear_factor times neutral and over a 1.5 to 19 m cycle env.stability_l50_cycle_shear_factor; at -50 m it is env.stability_lm50_shear_factor.
-- A swell profile with the shear below the knee as measured in the Baltic (P65, P100), giving env.swell_jet_shear_factor_min to env.swell_jet_shear_factor_max times the neutral shear from 1 to 15 m; below 1.2 m nothing is measured.
+- Stability by the functions of P95: at an Obukhov length of +50 m, stable air over a cold sea, the shear from 1 to 15 m at 9 m/s is env.stability_l50_shear_factor times neutral and over a 1.5 to 19 m cycle env.stability_l50_cycle_shear_factor; at -50 m it is env.stability_lm50_shear_factor; an independent profile reproduces all three (K-012).
+- A swell profile with the shear below the knee as measured in the Baltic (P65, P100), giving env.swell_jet_shear_factor_min to env.swell_jet_shear_factor_max times the neutral shear from 1 to 15 m, the lower end for swell four times faster than the wind; below 1.2 m nothing is measured.
 - The cycle optimizer still uses its own log or knee profile, so stability and the swell jet do not enter the minimum winds yet (Q-061).
 
 What remains to add, in order: stability and the swell jet in the cycle optimizer's profile (Q-061); flights in the full near-water sea, with the second-order surface in every contact check; and the wingtip sensors of the next section in the closed loop.
@@ -191,16 +191,16 @@ Two things the birds have and the point mass lacked: the drag saving near the wa
 Ground effect (`sim/groundeffect.py`):
 
 - The commonly printed McCormick formula omits a factor of pi and understates the effect near the water (P119); the model uses the image method for a rolled wing with elliptic loading, tabulated over the height of its centre above the local surface and its bank relative to the surface, which reproduces Wieselsberger's formula (P118) within 1% and an independent reader's values within 0.4%.
-- Banking at a fixed centre height changes little, but at a fixed wingtip clearance a steep bank removes most of the saving, which is the case of the low turn (P47 says the same).
+- Banking at a fixed centre height increases the saving (at half a span above the water the ratio falls from about 0.91 level to about 0.83 at 60 deg), but at a fixed wingtip clearance a steep bank removes most of it, which is the case of the low turn (P47 says the same).
 - Birds save about 15 to 30% of their flight power in ground effect (P119, P121, P122, P123); it reduces the drag and is not an energy source (P47).
 - In the cycle optimizer (`formstudy`, `sim/out/dsopt_ground_motor.json`) it lowers the minimum wind of the Sachs albatross model from dsopt.ge_sachs_off_u10_ms to dsopt.ge_sachs_on_u10_ms, of the albatross-like glider from dsopt.ge_albatross_off_u10_ms to dsopt.ge_albatross_on_u10_ms and of the baseline from dsopt.ge_baseline_off_u10_ms to dsopt.ge_baseline_on_u10_ms; even the impossible bound without a wingtip constraint moves only from dsopt.ge_sachs_notip01_off_u10_ms to dsopt.ge_sachs_notip01_on_u10_ms.
 - So ground effect is real but small here, and it is not what separates the model from the birds.
 
 The motor:
 
-- A thrust control with the propulsion values of the sources: a propeller efficiency of prop.prop_eff and a motor and controller efficiency of prop.motor_eff (P140 to P144, P49), and a folded-propeller drag area of prop.folded_drag_cda_m2 when it is off (P145, P146).
-- The optimizer's minimum-power mode finds the cycle that needs the least average electric power at a given wind, flying across the wind and holding at least half the best-glide speed along the track.
-- In calm air the baseline needs motor.baseline_calm_w and the albatross-like glider motor.albatross_calm_w with ground effect; at 6 m/s motor.baseline_u6_w and motor.albatross_u6_w; at 9 m/s motor.baseline_u9_w and motor.albatross_u9_w; at its soaring minimum nothing; a steady flap-glide needs motor.baseline_flapglide_w and motor.albatross_flapglide_w at every wind.
+- A thrust control with the propulsion values of the sources: a propeller efficiency of prop.prop_eff and a motor and controller efficiency of prop.motor_eff (P140 to P144, P49), and a folded-propeller drag area of prop.folded_drag_cda_m2 when it is off (P145, P146); the smooth switch between the two keeps about a fifth of that drag while the motor runs.
+- The optimizer's minimum-power mode finds the cycle that needs the least average electric power at a given wind, on a track 20 deg off downwind as the control library uses, holding at least half the best-glide speed along it; in calm air the best "cycle" is level flight at the speed floor, so the saving against a steady flap-glide at the best-glide speed comes from the slower speed and from ground effect (K-012).
+- In calm air the baseline needs motor.baseline_calm_w and the albatross-like glider motor.albatross_calm_w with ground effect; at 6 m/s about motor.baseline_u6_w (without ground effect, the converged run) and motor.albatross_u6_w; at 9 m/s motor.baseline_u9_w and motor.albatross_u9_w; at its soaring minimum nothing; a steady flap-glide needs motor.baseline_flapglide_w and motor.albatross_flapglide_w at every wind. These are single local runs, and some low-wind rows stopped at the iteration limit with a small violation.
 - A calm day of motor flight therefore costs about motor.baseline_calm_day_wh or motor.albatross_calm_day_wh, far beyond what the solar film yields (Q-012), so the drone cannot motor through a calm day; it has to soar, rest on the water, or carry the energy (Q-055).
 
 ### Structural model (`sim/structure.py`) {#structural-model}
@@ -413,7 +413,7 @@ What it means for the design:
 The second pass (`python -m sim.dsopt --wave-study4`, `sim/out/dsopt_wave4.json`) fixed what K-008 and K-011 found and asked the question again with the calibrated wave wind:
 
 - every cycle is replayed densely and counts only if it closes and keeps its height and wingtip between nodes; long cycles are re-solved on a finer mesh until they do;
-- the wave wind uses the amplitudes and decays of P63, and the low bound of P64 for the vertical part;
+- the wave wind uses the vertical amplitude and the decays of P63 (the horizontal amplitude stays 1.0 against P63's 0.95, which K-012 found changes nothing at the floor), and the low bound of P64 for the vertical part;
 - roll and lift-coefficient rates, the load-factor floor and COARE 3.5 are in, and each case runs with the control margins (lowest point 2 m, 0.8 of the load limit) and without them;
 - the phase is pinned on the wave and several phase slips and rotated starts are tried.
 
@@ -421,8 +421,9 @@ Of dsopt.wave4_cases_planned cases, dsopt.wave4_cases_run ran within the time; t
 
 What it found:
 
-- Over a 3 m swell both candidates sustain a cycle with no wind at all, with and without the margins: dsopt.wave4_floor_cases cases in all, every case run with the wave wind of P63 and dsopt.wave4_p64_floor_cases of dsopt.wave4_p64_cases_run with the low bound of P64 (the one miss looks like a local optimum, since the same case along the wave reaches it); the baseline's cycles last dsopt.wave4_baseline_floor_period_min_s to dsopt.wave4_baseline_floor_period_max_s and turn low on the forward face or the crest.
-- The albatross-like glider's cycles over 3 m swell sit at the period bound of dsopt.wave4_period_bound_s and are not natural periods, so their existence is shown but not their shape.
+- Over a 3 m swell both candidates sustain a cycle with no wind at all, with and without the margins: dsopt.wave4_floor_cases cases in all, every case run with the wave wind of P63 and dsopt.wave4_p64_floor_cases of dsopt.wave4_p64_cases_run with the low bound of P64 (the one miss looks like a local optimum, since the same case along the wave reaches it); the baseline's cycles last dsopt.wave4_baseline_floor_period_min_s to dsopt.wave4_baseline_floor_period_max_s and turn low mostly on the forward face or the crest, in two cases on the rear face.
+- They are wave-slope soaring: an independent replay (K-012) closes them, keeps their margins, and finds the energy coming from the updraft of the forward face, about 1.2 m/s at 2 m above a 3 m swell with P63 and 0.65 m/s with the low bound, against a sink of 0.40 m/s; one cycle rides a single wave at about the wave speed.
+- Three of the albatross-like glider's seven cycles over 3 m swell sit at the period bound of dsopt.wave4_period_bound_s and are not natural periods, so for those their existence is shown but not their shape.
 - Over a 1 m swell the waves do not help: only one case beats the flat sea, by dsopt.wave4_hs1_best_gain_ms, against flat minima of dsopt.wave4_flat_margin_baseline_ms and dsopt.wave4_flat_margin_albatross_ms with margins and dsopt.wave4_flat_none_baseline_ms and dsopt.wave4_flat_none_albatross_ms without; the others need more wind than the flat sea, because a cycle forced to repeat with the wave pays for that when the wave gives little, so for small waves the right answer is the better of a wave-synchronized and an unsynchronized cycle.
 
 What it means: a large swell can carry the drone with no wind, if it follows the wave phase; a small swell cannot, and the wind must do it.

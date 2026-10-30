@@ -190,7 +190,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | dsopt.ge_sachs_notip01_on_u10_ms | 7.204 | m/s | calculated | docs/02-form.md#ground-motor |
 | motor.baseline_calm_w | 11.7 | W | calculated | docs/02-form.md#ground-motor |
 | motor.albatross_calm_w | 17.5 | W | calculated | docs/02-form.md#ground-motor |
-| motor.baseline_u6_w | 10.7 | W | calculated | docs/02-form.md#ground-motor |
+| motor.baseline_u6_w | 10.98 | W | calculated | docs/02-form.md#ground-motor |
 | motor.albatross_u6_w | 13.9 | W | calculated | docs/02-form.md#ground-motor |
 | motor.baseline_u9_w | 5.9 | W | calculated | docs/02-form.md#ground-motor |
 | motor.albatross_u9_w | 3.6 | W | calculated | docs/02-form.md#ground-motor |
@@ -203,7 +203,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | env.stability_l50_shear_factor | 1.37 | 1 | calculated | docs/02-form.md#simulator-fitness |
 | env.stability_l50_cycle_shear_factor | 1.52 | 1 | calculated | docs/02-form.md#simulator-fitness |
 | env.stability_lm50_shear_factor | 0.85 | 1 | calculated | docs/02-form.md#simulator-fitness |
-| env.swell_jet_shear_factor_min | 1.71 | 1 | calculated | docs/02-form.md#simulator-fitness |
+| env.swell_jet_shear_factor_min | 1.43 | 1 | calculated | docs/02-form.md#simulator-fitness |
 | env.swell_jet_shear_factor_max | 1.97 | 1 | calculated | docs/02-form.md#simulator-fitness |
 | env.turb_lw_at_1m_height_law_m | 0.76 | m | calculated | docs/02-form.md#simulator-fitness |
 | env.breaking_marked_over_whitecap_u10 | 0.015 | 1 | calculated | docs/02-form.md#simulator-fitness |
