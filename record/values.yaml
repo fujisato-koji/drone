@@ -1158,7 +1158,7 @@ items:
     basis:
       - docs/02-form.md#receding-horizon
   - key: mpc.burst_on_share_max
-    v: 0.9
+    v: 0.92
     unit: 1
     status: calculated
     basis:
@@ -1187,6 +1187,42 @@ items:
     status: assumed
     basis:
       - Q-055
+  - key: mpc.burst_costly_baseline_u11_w
+    v: 6.42
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_costly_albatross_u9_w
+    v: 13.78
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_contact_seen_min_s
+    v: 5.8
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_contact_seen_max_s
+    v: 12.3
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_like_for_like_opt_min_w
+    v: 9.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.burst_like_for_like_opt_max_w
+    v: 9.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
   - key: env.charnock
     v: 0.0144
     unit: 1
