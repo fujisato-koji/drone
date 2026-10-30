@@ -129,7 +129,17 @@ The answer on 2026-10-30 is that it can compare strategies but cannot yet verify
 - Ground effect: being added to the flight model; no measurement covers a banked wing over waves.
 - Sensors: the altimeters return the point under the beam axis and a forward scanner looks ahead; nothing measures the height under the low wingtip, and footprint, spray and the limits of prediction are only partly modelled.
 
-What to add before such flight can be checked, in order: crest geometry with second-order terms and breaking crests in the contact check and the flight; the wave-coherent wind and the trough shelter below 1 m from published large-eddy simulations; turbulence scaled with height near the water; stability and the swell profile (Q-061); and a sensor model for the height under the wingtip.
+What was added on 2026-10-30 (`sim/seawind.py`, opt-in; `python -m sim.seawind_fitness`, `sim/out/seawind_fitness.json`):
+
+- Second-order crests in the surface used by the contact check and the wind: they match the short-crested crest distribution of Forristall (S4) to env.crest_stokes2_over_forristall_1e2 at a probability of 1e-2, where the linear surface gives env.crest_linear_over_forristall_1e2.
+- Breaking of dominant waves with the probability of Banner et al. (P125), lifting the crest towards a Stokes corner (P126) by at most env.breaking_lift_max_frac of the local amplitude and slowing the air in its lee (P92, P93); the marked share of the surface is only about env.breaking_marked_over_whitecap_u10 of the whitecap cover at 10 m/s (P127), since it counts only dominant waves.
+- The wave-coherent wind evaluated at each height, so it changes sign at the critical height as measured and simulated (P128, P129), with the amplitudes and decays of P63 and a floor near the critical height.
+- Turbulence with length scales that shrink near the water, fitted to the marine spectral peaks (P132): the vertical scale is env.turb_lw_at_1m_height_law_m at 1 m.
+- Stability by the functions of P95: at an Obukhov length of +50 m, stable air over a cold sea, the shear from 1 to 15 m is env.stability_l50_shear_factor times neutral and over a 1.5 to 19 m cycle env.stability_l50_cycle_shear_factor; at -50 m it is env.stability_lm50_shear_factor.
+- A swell profile with the shear below the knee as measured in the Baltic (P65, P100), giving env.swell_jet_shear_factor_min to env.swell_jet_shear_factor_max times the neutral shear from 1 to 15 m; below 1.2 m nothing is measured.
+- The cycle optimizer still uses its own log or knee profile, so stability and the swell jet do not enter the minimum winds yet (Q-061).
+
+What remains to add, in order: stability and the swell jet in the cycle optimizer's profile (Q-061); flights in the full near-water sea, with the second-order surface in every contact check; and the wingtip sensors of the next section in the closed loop.
 After that, only a flight test can close it: low turns over a lake or a calm sea with RTK and a laser altimeter logging the height and the wind.
 
 ### Viewer (`sim/viewer/index.html`) {#viewer}
@@ -173,6 +183,25 @@ What it costs, on a flat sea with the corrected settings (`python -m sim.dsopt -
 The figures for the albatross-like glider are single runs of a local optimizer and move by up to about 0.8 m/s with the starting guess, while the Sachs model's are stable to a few hundredths (K-011).
 
 So the controls are not the limit of soaring; the margins a real controller needs are, and they hit the baseline harder than the albatross-like glider, whose higher lift-to-drag ratio leaves room for them.
+
+### Ground effect and the motor {#ground-motor}
+
+Two things the birds have and the point mass lacked: the drag saving near the water, and flapping, for which the drone has a motor.
+
+Ground effect (`sim/groundeffect.py`):
+
+- The commonly printed McCormick formula omits a factor of pi and understates the effect near the water (P119); the model uses the image method for a rolled wing with elliptic loading, tabulated over the height of its centre above the local surface and its bank relative to the surface, which reproduces Wieselsberger's formula (P118) within 1% and an independent reader's values within 0.4%.
+- Banking at a fixed centre height changes little, but at a fixed wingtip clearance a steep bank removes most of the saving, which is the case of the low turn (P47 says the same).
+- Birds save about 15 to 30% of their flight power in ground effect (P119, P121, P122, P123); it reduces the drag and is not an energy source (P47).
+- In the cycle optimizer (`formstudy`, `sim/out/dsopt_ground_motor.json`) it lowers the minimum wind of the Sachs albatross model from dsopt.ge_sachs_off_u10_ms to dsopt.ge_sachs_on_u10_ms, of the albatross-like glider from dsopt.ge_albatross_off_u10_ms to dsopt.ge_albatross_on_u10_ms and of the baseline from dsopt.ge_baseline_off_u10_ms to dsopt.ge_baseline_on_u10_ms; even the impossible bound without a wingtip constraint moves only from dsopt.ge_sachs_notip01_off_u10_ms to dsopt.ge_sachs_notip01_on_u10_ms.
+- So ground effect is real but small here, and it is not what separates the model from the birds.
+
+The motor:
+
+- A thrust control with the propulsion values of the sources: a propeller efficiency of prop.prop_eff and a motor and controller efficiency of prop.motor_eff (P140 to P144, P49), and a folded-propeller drag area of prop.folded_drag_cda_m2 when it is off (P145, P146).
+- The optimizer's minimum-power mode finds the cycle that needs the least average electric power at a given wind, flying across the wind and holding at least half the best-glide speed along the track.
+- In calm air the baseline needs motor.baseline_calm_w and the albatross-like glider motor.albatross_calm_w with ground effect; at 6 m/s motor.baseline_u6_w and motor.albatross_u6_w; at 9 m/s motor.baseline_u9_w and motor.albatross_u9_w; at its soaring minimum nothing; a steady flap-glide needs motor.baseline_flapglide_w and motor.albatross_flapglide_w at every wind.
+- A calm day of motor flight therefore costs about motor.baseline_calm_day_wh or motor.albatross_calm_day_wh, far beyond what the solar film yields (Q-012), so the drone cannot motor through a calm day; it has to soar, rest on the water, or carry the energy (Q-055).
 
 ### Structural model (`sim/structure.py`) {#structural-model}
 

@@ -875,6 +875,168 @@ items:
     status: assumed
     basis:
       - Q-061
+  - key: dsopt.ge_sachs_off_u10_ms
+    v: 14.875
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: dsopt.ge_sachs_on_u10_ms
+    v: 14.505
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: dsopt.ge_albatross_off_u10_ms
+    v: 9.286
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: dsopt.ge_albatross_on_u10_ms
+    v: 9.034
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: dsopt.ge_baseline_off_u10_ms
+    v: 10.822
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: dsopt.ge_baseline_on_u10_ms
+    v: 10.606
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: dsopt.ge_sachs_notip01_off_u10_ms
+    v: 7.814
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: dsopt.ge_sachs_notip01_on_u10_ms
+    v: 7.204
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: motor.baseline_calm_w
+    v: 11.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: motor.albatross_calm_w
+    v: 17.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: motor.baseline_u6_w
+    v: 10.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: motor.albatross_u6_w
+    v: 13.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: motor.baseline_u9_w
+    v: 5.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: motor.albatross_u9_w
+    v: 3.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: motor.baseline_flapglide_w
+    v: 13.4
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: motor.albatross_flapglide_w
+    v: 20.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: motor.baseline_calm_day_wh
+    v: 281
+    unit: Wh
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: motor.albatross_calm_day_wh
+    v: 420
+    unit: Wh
+    status: calculated
+    basis:
+      - docs/02-form.md#ground-motor
+  - key: env.crest_stokes2_over_forristall_1e2
+    v: 1.005
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#simulator-fitness
+  - key: env.crest_linear_over_forristall_1e2
+    v: 0.935
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#simulator-fitness
+  - key: env.stability_l50_shear_factor
+    v: 1.37
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#simulator-fitness
+  - key: env.stability_l50_cycle_shear_factor
+    v: 1.52
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#simulator-fitness
+  - key: env.stability_lm50_shear_factor
+    v: 0.85
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#simulator-fitness
+  - key: env.swell_jet_shear_factor_min
+    v: 1.71
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#simulator-fitness
+  - key: env.swell_jet_shear_factor_max
+    v: 1.97
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#simulator-fitness
+  - key: env.turb_lw_at_1m_height_law_m
+    v: 0.76
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#simulator-fitness
+  - key: env.breaking_marked_over_whitecap_u10
+    v: 0.015
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#simulator-fitness
   - key: env.charnock
     v: 0.0144
     unit: 1
