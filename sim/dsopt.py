@@ -91,8 +91,12 @@ def _drag(ac, q, cl, mu, h, ge, th, psi=None, ex=0.0, ey=0.0):
         cd0 = cd0 + folded_dcd(ac) * (1.0 - th / (th + 0.01 * ac.mass * G))
     if ge:
         K = ground_effect_phi(h, ac.span, mu, 0.0 if psi is None else psi, ex, ey)
-        return q * (cd0 + ac.k_induced * K * cl * cl)
-    return q * (cd0 + ac.k_induced * cl * cl)
+        D = q * (cd0 + ac.k_induced * K * cl * cl)
+    else:
+        D = q * (cd0 + ac.k_induced * cl * cl)
+    if ac.has_polar:   # profile-drag terms cdp1 CL + cdp2 CL^2 + cdp8 CL^8 (exact in the complex step)
+        D = D + q * ac.profile_extra(cl)
+    return D
 
 
 def derivs(S, C, ac, U, Up, ge=False, th=None):
