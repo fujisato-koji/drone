@@ -195,3 +195,15 @@ items:
     by: checker
     date: 2026-10-30
     detail: "A separate checker, told to refute, worked on design/wing-sizing at 63b237b with its own polar, mass arithmetic, spar derivation and Cartesian point-mass model. The drag polar matches the formulas at 20 points and the dynamics use it (replay closes to 1e-4 m); L/D 27.5 is right at the cycle-mean Reynolds number but 25.1 at the design's own glide speed; on the Bubble Dancer geometry the polar is 4 to 6% pessimistic against Drela's calculation, and measured 3 m sailplanes glide at 18 to 25. The mass arithmetic and the fixed point reproduce (1.872 kg), and the spar factor 2/(9 pi) is right for a uniform-load moment shape and conservative for an elliptic one, but the spar is under 1% of the mass. The best design's 13.22 m/s re-solves bit-identically and its replay balances the energy and keeps the margins (heights 3 mm under 2 m and n 0.5% over between nodes). Refuted: that slender wings lose because of their chord (at equal mass, with ballast, aspect ratios 20 and 25 soar from 12.99 and 13.10 m/s, better than aspect ratio 12; they rank lower because they are lighter) and that a heavier skin helps only through the Reynolds number (half of it is the rate limits loosening at higher speed). Also: single-start solves move by up to 0.9 m/s with more starts, the Nita and Scholz taper offset is omitted (e 0.973 against 0.977), and the body drag area of 10 cm^2 may be low. The document was corrected."
+  - id: K-015
+    target:
+      - mpc.motorlib_baseline_u9_w
+      - mpc.motorlib_albatross_calm_w
+      - mpc.reflex_baseline_u9_count
+      - mpc.motorlib_wave_ended
+    tier: T2
+    method: independent_model
+    result: partial
+    by: checker
+    date: 2026-10-30
+    detail: "A separate checker, told to refute, worked on design/batch-env-wing-motor at c38add0 with its own point-mass model. Library: the baseline's 9 m/s motor cycle and the albatross-like glider's calm cycle replay and close, keep their margins (several exactly at the limit) and need 10.876 W and 20.928 W against 10.871 and 20.928 stored; but the calm cycle flies 49 deg off its course. Flat sea, reflex off: 180 s at 15.283 W and 0.447 Wh/km against the optimizer's 10.87 W and 0.551 Wh/km, COARE 3.5 confirmed; the fold is exercised only in the reflex-on run, where it follows the commanded state exactly; the per-kilometre ratio ranges 0.81 to 2.2 across rows. Reflex: 31 false stall firings confirmed at the prediction's end while flying well above stall, in reflex 18% of the time, a climb to 115 m and 4.26 to 4.42 times the energy, in two of nine flat rows; a threshold of 0.95 stall speeds removes them and still rescues four constructed dives; the override zooms the aircraft to 0.44 stall speeds and the stall test ignores the load factor. Waves: 6 of 16 runs ended early, not 8, 4 of them with the reflex on against 2 off, one by full thrust past the vertical. The document was corrected."

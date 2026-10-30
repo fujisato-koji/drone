@@ -279,10 +279,13 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | mpc.motorlib_power_ratio_max | 2.5 | 1 | calculated | docs/02-form.md#receding-horizon |
 | mpc.motorlib_run_s | 180 | s | calculated | docs/02-form.md#receding-horizon |
 | mpc.reflex_baseline_u9_count | 31 | 1 | calculated | docs/02-form.md#receding-horizon |
-| mpc.reflex_energy_factor_min | 4 | 1 | calculated | docs/02-form.md#receding-horizon |
-| mpc.reflex_energy_factor_max | 5 | 1 | calculated | docs/02-form.md#receding-horizon |
-| mpc.motorlib_wave_ended | 8 | 1 | calculated | docs/02-form.md#receding-horizon |
+| mpc.reflex_energy_factor_min | 4.26 | 1 | calculated | docs/02-form.md#receding-horizon |
+| mpc.reflex_energy_factor_max | 4.42 | 1 | calculated | docs/02-form.md#receding-horizon |
+| mpc.motorlib_wave_ended | 6 | 1 | calculated | docs/02-form.md#receding-horizon |
 | mpc.motorlib_wave_runs | 16 | 1 | calculated | docs/02-form.md#receding-horizon |
+| mpc.motorlib_per_km_ratio_min | 0.81 | 1 | calculated | docs/02-form.md#receding-horizon |
+| mpc.motorlib_per_km_ratio_max | 2.2 | 1 | calculated | docs/02-form.md#receding-horizon |
+| mpc.motorlib_wave_ended_reflex | 4 | 1 | calculated | docs/02-form.md#receding-horizon |
 | env.charnock | 0.0144 | 1 | assumed | Q-008 |
 | env.air_kinematic_viscosity | 1.46e-05 | m2/s | assumed | Q-008 |
 | env.jonswap_gamma | 3.3 | 1 | assumed | Q-008 |

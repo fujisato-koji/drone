@@ -804,3 +804,13 @@ items:
     raised_by: checker
     phase: design
     opened: 2026-10-30
+  - id: Q-068
+    kind: finding
+    text: "The reflex layer of the planner (docs/02-form.md#receding-horizon) fires falsely on its stall test at the end of its prediction and, over waves, made flights end sooner (K-015). Redesign it: a stall threshold below the planner's own speed floor (0.95 stall speeds removed the false firings and kept four constructed rescues), a stall test that accounts for the load factor, an override that scales thrust and lift with the attitude instead of full thrust, a fixed lift coefficient and wings level (which zooms the aircraft and fails past the vertical), and a prediction in a world that sees the waves; also check that steady library cycles fly along their course."
+    waits_for: assistant
+    affects:
+      - Q-060
+      - Q-055
+    raised_by: checker
+    phase: design
+    opened: 2026-10-30

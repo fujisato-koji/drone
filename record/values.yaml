@@ -1470,25 +1470,43 @@ items:
     basis:
       - docs/02-form.md#receding-horizon
   - key: mpc.reflex_energy_factor_min
-    v: 4
+    v: 4.26
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#receding-horizon
   - key: mpc.reflex_energy_factor_max
-    v: 5
+    v: 4.42
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#receding-horizon
   - key: mpc.motorlib_wave_ended
-    v: 8
+    v: 6
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#receding-horizon
   - key: mpc.motorlib_wave_runs
     v: 16
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_per_km_ratio_min
+    v: 0.81
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_per_km_ratio_max
+    v: 2.2
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: mpc.motorlib_wave_ended_reflex
+    v: 4
     unit: 1
     status: calculated
     basis:
