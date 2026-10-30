@@ -905,5 +905,199 @@ def wind_difference_study(path=WINDDIFF_PATH):
     return out
 
 
+GROUND_MOTOR_PATH = os.path.join("sim", "out", "dsopt_ground_motor.json")
+GM_CLEARANCE_FLOORS = ((1.5, 0.3), (1.0, 0.3), (1.0, 0.1), (0.5, 0.1), (0.3, 0.05),
+                       (1.5, None), (0.5, None), (0.1, None))
+# wind_difference_study cases: (name, roughness, z0, h_min, tip, v_factor)
+GM_WINDDIFF_CASES = (("sachs-bird", "coare35", None, 1.5, 0.3, 0.0),
+                     ("sachs-bird", "coare35", None, 0.1, None, 0.0),
+                     ("sachs-bird", "fixed_z0", 0.03, 1.5, 0.3, 0.0),
+                     ("albatross-3m", "coare35", None, 1.0, 0.3, 1.1),
+                     ("baseline-2m", "coare35", None, 1.0, 0.3, 1.1))
+GM_MOTOR_SETTINGS = dict(h_min=1.0, h_tip_min=0.3, v_factor=1.1, tip_model="geometric",
+                         midpoints=True, rate_limits=True, rate_model="pb2v", roll_pb2v=0.08,
+                         cl_rate_max_per_s=1.0, n_min=0.0)
+
+
+def _gm_min_wind(name, rough, z0f, h_min, tip, vf, ge, n=40):
+    from sim.dsopt import sachs_albatross, solve_min_wind
+    ac = sachs_albatross()[0] if name == "sachs-bird" else by_name(name)
+    info = solve_min_wind(ac, "self_consistent" if z0f is None else "fixed8", rough, z0f,
+                          u10_ref=10.0, kind="log", cycle="travel", n=n, h_min=h_min,
+                          h_tip_min=-50.0 if tip is None else tip, seeds=(1, 0, 2, 3),
+                          stop_after=2, tip_model="geometric", v_factor=vf, midpoints=True,
+                          ground_effect=ge)
+    return ac, info
+
+
+def ground_clearance_task(job):
+    """One clearance_study case (the same call) with ground_effect on or off."""
+    name, rough, z0f, h_min, tip, ge = job
+    t0 = time.time()
+    _, info = _gm_min_wind(name, rough, z0f, h_min, tip, 1.1 if name == "albatross-3m" else 0.0, ge)
+    return {"study": "clearance", "aircraft": name, "roughness": rough, "z0": z0f, "h_min": h_min,
+            "h_tip_min": tip, "ground_effect": ge, "u10": info["u10"],
+            "success": bool(info["success"]), "period": info["period"], "z_min": info["z_min"],
+            "runtime_s": time.time() - t0}
+
+
+def ground_winddiff_task(job):
+    """One wind_difference_study case with ground_effect on or off."""
+    from sim.seawind import Wind
+    case, ge = job
+    name, rough, z0f, h_min, tip, vf = case
+    t0 = time.time()
+    ac, info = _gm_min_wind(name, rough, z0f, h_min, tip, vf, ge)
+    u = info["u10"]
+    z0 = z0f if z0f is not None else Wind(u, 270.0, roughness="coare35").z0
+    speed = lambda z: u * np.log(z / z0) / np.log(10.0 / z0)
+    lo, hi = speed(info["z_min"]), speed(info["z_max"])
+    return {"study": "wind_difference", "aircraft": name, "roughness": rough, "z0": z0,
+            "h_min": h_min, "h_tip_min": tip, "ground_effect": ge, "u10": u,
+            "success": bool(info["success"]), "z_low": info["z_min"], "z_high": info["z_max"],
+            "wind_low": lo, "wind_high": hi, "wind_difference": hi - lo, "period": info["period"],
+            "runtime_s": time.time() - t0}
+
+
+def motor_task(job):
+    """Average electric power against u10 for one (aircraft, cycle, ground effect).
+
+    u10 = 0, 3, 6, 9, the soaring minimum of the same settings (min_wind, same ground_effect)
+    (the table row at u_min shows whether the power is 0 there). Travel: chi = 20 deg (the library's), mean speed along chi at least
+    0.5 v_best_ld. Compared with patterns.flap_glide_cost at the same wind (same efficiencies, track 160 deg from
+    the wind source, i.e. 20 deg from straight downwind; loiter has no track, same power)."""
+    from sim.dsopt import profile_for, solve, solve_min_wind
+    from sim.patterns import flap_glide_cost
+    name, cycle, ge, n, seeds, maxiter = job
+    ac = by_name(name)
+    kw = GM_MOTOR_SETTINGS
+    # the soaring minimum of the airframe that carries the motor: folded propeller drag included
+    umin = solve_min_wind(ac, "self_consistent", "coare35", None, u10_ref=10.0, cycle="travel",
+                          n=n, seeds=(0, 1, 2), stop_after=2, ground_effect=ge, folded_prop=True,
+                          **kw)
+    u_min = float(umin["u10"])
+    vreq = 0.5 * ac.v_best_ld if cycle == "travel" else None
+    rows = []
+    for u10 in (0.0, 3.0, 6.0, 9.0, round(u_min, 2)):
+        t1 = time.time()
+        prof = profile_for(max(u10, 1.0), roughness="coare35")
+        info = solve(ac, prof, "min_power", cycle, n, u10=u10, chi=np.radians(20.0),
+                     seeds=seeds, stop_after=1, motor=True, ground_effect=ge, v_travel_min=vreq,
+                     maxiter=maxiter, **kw)
+        from sim.record import value
+        fg = flap_glide_cost(ac, u10, 160.0, prop_eff=value("prop.prop_eff", 0.60),
+                             motor_eff=value("prop.motor_eff", 0.75))
+        vchi = info["speed_along_chi"]
+        rows.append({"study": "motor", "aircraft": name, "cycle": cycle, "ground_effect": ge,
+                     "u10": u10, "u10_min_soaring": u_min, "success": bool(info["success"]),
+                     "violation": info["violation"], "period": info["period"],
+                     "power_avg_w": info["power_avg_w"], "power_peak_w": info["power_peak_w"],
+                     "thrust_on_share": info["thrust_on_share"], "wh_per_hour": info["wh_per_hour"],
+                     "speed_along_chi": vchi,
+                     "wh_per_km": (info["power_avg_w"] / (3.6 * vchi)
+                                   if cycle == "travel" and vchi > 0.05 else None),
+                     "v_travel_min": vreq, "flap_glide_power_w": fg["power_w"],
+                     "flap_glide_wh_per_km": fg["wh_per_km"], "iterations": info["iterations"],
+                     "runtime_s": time.time() - t1})
+        print("motor %s %s ge=%s u10=%.2f ok=%s P=%.2f W (%.0f s)" % (
+            name, cycle, ge, u10, info["success"], info["power_avg_w"], time.time() - t1),
+            flush=True)
+    return rows
+
+
+def _gm_fmt(v, f="%.2f"):
+    return "n/a" if v is None else f % v
+
+
+def ground_motor_tables(rows):
+    lines = ["", "### A. u10_min with and without ground effect (m/s)"]
+    a = [r for r in rows if r["study"] in ("clearance", "wind_difference")]
+    for st in ("clearance", "wind_difference"):
+        body = []
+        keys = dict.fromkeys((r["aircraft"], r["roughness"], r["h_min"], r["h_tip_min"])
+                             for r in a if r["study"] == st)
+        for k in keys:
+            pair = {r["ground_effect"]: r for r in a if r["study"] == st and
+                    (r["aircraft"], r["roughness"], r["h_min"], r["h_tip_min"]) == k}
+            off, on = pair.get(False), pair.get(True)
+            if not off or not on:
+                continue
+            extra = ([_gm_fmt(off["wind_difference"]), _gm_fmt(on["wind_difference"])]
+                     if st == "wind_difference" else [])
+            body.append([k[0], k[1], str(k[2]), str(k[3]), "%.3f" % off["u10"], "%.3f" % on["u10"],
+                         "%+.3f" % (on["u10"] - off["u10"])] + extra +
+                        ["yes" if off["success"] and on["success"] else "NO"])
+        head = ["aircraft", "rough", "h_min", "tip", "off", "on", "diff"]
+        if st == "wind_difference":
+            head += ["dW off", "dW on"]
+        lines += ["", "#### " + st, "", _md(head + ["conv"], body)]
+    m = [r for r in rows if r["study"] == "motor"]
+    lines += ["", "### B. average electric power (W) against u10"]
+    for nm in dict.fromkeys(r["aircraft"] for r in m):
+        for cyc in ("travel", "loiter"):
+            sel = [r for r in m if r["aircraft"] == nm and r["cycle"] == cyc]
+            if not sel:
+                continue
+            body = []
+            for r in sorted(sel, key=lambda r: (r["ground_effect"], r["u10"])):
+                body.append(["on" if r["ground_effect"] else "off", "%.2f" % r["u10"],
+                             "%.2f" % r["power_avg_w"], "%.0f" % r["power_peak_w"],
+                             "%.2f" % r["thrust_on_share"], _gm_fmt(r["wh_per_km"]),
+                             "%.1f" % r["flap_glide_power_w"], _gm_fmt(r["flap_glide_wh_per_km"]),
+                             "yes" if r["success"] else "no (viol %.0e)" % r["violation"]])
+            umins = "/".join("%.2f" % next(r["u10_min_soaring"] for r in sel
+                                           if r["ground_effect"] == g) for g in (False, True))
+            lines += ["", "#### %s, %s (u10_min soaring off/on: %s)" % (nm, cyc, umins), "",
+                      _md(["ground", "u10", "P avg", "P peak", "T>0", "Wh/km", "flap-glide W",
+                           "flap-glide Wh/km", "conv"], body)]
+    return "\n".join(lines)
+
+
+def ground_motor_study(path=GROUND_MOTOR_PATH, workers=4, n_motor=24, seeds=(0, 1),
+                       maxiter=400):
+    """Study A (ground effect on u10_min, clearance and wind difference cases) and study B (motor).
+
+    Writes path (rows, settings, meta) and prints markdown tables."""
+    from multiprocessing import Pool
+    from sim import record
+    t_start = time.time()
+    bjobs = [(nm, cyc, ge, n_motor, seeds, maxiter) for nm in ("baseline-2m", "albatross-3m")
+             for cyc in ("travel", "loiter") for ge in (False, True)]
+    cjobs = []
+    for name in ("sachs-bird", "albatross-3m"):
+        for h_min, tip in GM_CLEARANCE_FLOORS:
+            roughs = [("coare35", None)]
+            if name == "sachs-bird" and tip is None:
+                roughs.append(("fixed_z0", 0.03))
+            for rough, z0 in roughs:
+                for ge in (False, True):
+                    cjobs.append((name, rough, z0, h_min, tip, ge))
+    wjobs = [(c, ge) for c in GM_WINDDIFF_CASES for ge in (False, True)]
+    with Pool(workers) as pool:
+        b = pool.map_async(motor_task, bjobs, chunksize=1)
+        c = pool.map_async(ground_clearance_task, cjobs, chunksize=1)
+        w = pool.map_async(ground_winddiff_task, wjobs, chunksize=1)
+        rows = [r for x in b.get() for r in x] + c.get() + w.get()
+    paths = ["sim/formstudy.py", "sim/dsopt.py", "sim/aircraft.py", "sim/aircraft_models.py",
+             "sim/seawind.py", "sim/patterns.py", "sim/groundeffect.py", "record/values.yaml"]
+    out = {"meta": record.meta("python -c \"from sim import formstudy; "
+                               "formstudy.ground_motor_study()\"", paths),
+           "settings": {"ground_effect": "model image (sim.groundeffect): rolled elliptic lifting line, image "
+                                         "method, Trefftz plane drag, tabulated K(hc/b, bank)",
+                        "motor": {**GM_MOTOR_SETTINGS, "n_nodes": n_motor, "seeds": list(seeds),
+                                  "maxiter": maxiter, "chi_deg": 20.0,
+                                  "travel_speed_min": "0.5 v_best_ld along chi",
+                                  "thrust_max": "0.5 m g", "prop_eff": 0.60, "motor_eff": 0.75,
+                                  "folded_drag_cda_m2": 3.0e-4,
+                                  "roughness": "coare35 at u10 (>= 1 m/s)"}},
+           "rows": rows, "runtime_s": time.time() - t_start}
+    with open(path, "w", newline="\n") as fh:
+        json.dump(out, fh, indent=1)
+        fh.write("\n")
+    print(ground_motor_tables(rows))
+    print("runtime %.0f s" % out["runtime_s"])
+    return out
+
+
 if __name__ == "__main__":
     run()
