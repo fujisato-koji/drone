@@ -84,7 +84,7 @@ def main():
         fh.write(s)
     with open(DOC, encoding="utf-8", newline="") as fh:
         t = fh.read()
-    b, e = "<!-- tdr:keys nav_exp -->\n", "<!-- tdr:keys end -->"
+    b, e = "<!-- nav_keys begin -->" + chr(10), "<!-- nav_keys end -->"
     i, j = t.index(b) + len(b), t.index(e)
     t = t[:i] + table_text() + t[j:]
     with open(DOC, "w", encoding="utf-8", newline="\n") as fh:
