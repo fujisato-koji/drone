@@ -36,7 +36,14 @@
   ],
   "motor_maxiter": 400,
   "albatross_wing_loading_npm2": 143.37692307692308,
-  "re_data_max": 300000.0
+  "re_data_max": 300000.0,
+  "steps": [
+   {
+    "tdr_run": "python -m sim.wingopt --heavy-structure",
+    "commit": "dde4fa0",
+    "stamp": "sha-e0957cce840e"
+   }
+  ]
  },
  "rows": [
   {
@@ -2018,6 +2025,323 @@
     }
    },
    "runtime_s": 190.2533314228058
+  }
+ ],
+ "structure": [
+  {
+   "key": "b3-ar16|SD7037|t0.45|base|cdabu|bal1.390|heavy",
+   "mass": 3.0,
+   "ar": 16.0,
+   "caps_record": {
+    "deflection_ratio_stress_sized": 0.5461589065253037,
+    "stiffness_factor": 3.6410593768353583,
+    "caps_stiff_kg": 0.133166035488744,
+    "caps_stress_kg": 0.036573431440298516
+   },
+   "caps_ud": {
+    "deflection_ratio_stress_sized": 0.15929634773654716,
+    "stiffness_factor": 1.0619756515769812,
+    "caps_stiff_kg": 0.038840093684217064,
+    "caps_stress_kg": 0.036573431440298516
+   },
+   "tube_catalogue": {
+    "fits": true,
+    "od_mm": 20.00000000000001,
+    "wall_mm": 1.0,
+    "tube_kg": 0.2757690031321125,
+    "margin": 0.4416228990548068,
+    "deflection_ratio": 0.13547495003338353,
+    "limiting": "stress",
+    "cap_model_kg": 0.036573431440298516
+   },
+   "tube_free": {
+    "fits": true,
+    "od_mm": 20.599999999999934,
+    "wall_mm": 0.8,
+    "tube_kg": 0.22990426366382313,
+    "margin": 0.26574504374624275,
+    "deflection_ratio": 0.1498053113018785,
+    "limiting": "stiffness",
+    "cap_model_kg": 0.036573431440298516
+   }
+  },
+  {
+   "key": "b3-ar16|SD7037|t0.45|base|cdabu|bal2.377|heavy",
+   "mass": 3.9999999999999996,
+   "ar": 16.0,
+   "caps_record": {
+    "deflection_ratio_stress_sized": 0.5461589065253037,
+    "stiffness_factor": 3.6410593768353583,
+    "caps_stiff_kg": 0.17755471398499198,
+    "caps_stress_kg": 0.048764575253731346
+   },
+   "caps_ud": {
+    "deflection_ratio_stress_sized": 0.15929634773654716,
+    "stiffness_factor": 1.0619756515769812,
+    "caps_stiff_kg": 0.051786791578956076,
+    "caps_stress_kg": 0.048764575253731346
+   },
+   "tube_catalogue": {
+    "fits": true,
+    "od_mm": 20.00000000000001,
+    "wall_mm": 1.5,
+    "tube_kg": 0.40276788615347964,
+    "margin": 0.5028061986153194,
+    "deflection_ratio": 0.12995939888748395,
+    "limiting": "stiffness",
+    "cap_model_kg": 0.048764575253731346
+   },
+   "tube_free": {
+    "fits": true,
+    "od_mm": 20.699999999999935,
+    "wall_mm": 1.1,
+    "tube_kg": 0.31292524776464836,
+    "margin": 0.26193525566546616,
+    "deflection_ratio": 0.14953169219388127,
+    "limiting": "stress",
+    "cap_model_kg": 0.048764575253731346
+   }
+  },
+  {
+   "key": "b3-ar16|SD7037|t0.45|base|cdabu|bal4.353|heavy",
+   "mass": 6.0,
+   "ar": 16.0,
+   "caps_record": {
+    "deflection_ratio_stress_sized": 0.5461589065253037,
+    "stiffness_factor": 3.6410593768353583,
+    "caps_stiff_kg": 0.266332070977488,
+    "caps_stress_kg": 0.07314686288059703
+   },
+   "caps_ud": {
+    "deflection_ratio_stress_sized": 0.15929634773654716,
+    "stiffness_factor": 1.0619756515769812,
+    "caps_stiff_kg": 0.07768018736843413,
+    "caps_stress_kg": 0.07314686288059703
+   },
+   "tube_catalogue": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 112.41 N m, max od 20.9 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.07314686288059703
+   },
+   "tube_free": {
+    "fits": true,
+    "od_mm": 20.799999999999933,
+    "wall_mm": 1.8000000000000003,
+    "tube_kg": 0.49638420563779984,
+    "margin": 0.25527797566018373,
+    "deflection_ratio": 0.14960200817557864,
+    "limiting": "stress",
+    "cap_model_kg": 0.07314686288059703
+   }
+  },
+  {
+   "key": "b3-ar16|SD7037|t0.45|base|cdabu|bal6.329|heavy",
+   "mass": 8.0,
+   "ar": 16.0,
+   "caps_record": {
+    "deflection_ratio_stress_sized": 0.5461589065253037,
+    "stiffness_factor": 3.6410593768353583,
+    "caps_stiff_kg": 0.355109427969984,
+    "caps_stress_kg": 0.0975291505074627
+   },
+   "caps_ud": {
+    "deflection_ratio_stress_sized": 0.15929634773654716,
+    "stiffness_factor": 1.0619756515769812,
+    "caps_stiff_kg": 0.10357358315791217,
+    "caps_stress_kg": 0.0975291505074627
+   },
+   "tube_catalogue": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 149.89 N m, max od 20.9 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.0975291505074627
+   },
+   "tube_free": {
+    "fits": true,
+    "od_mm": 20.89999999999993,
+    "wall_mm": 2.7,
+    "tube_kg": 0.7132257270479967,
+    "margin": 0.2512289703685444,
+    "deflection_ratio": 0.14936800823867769,
+    "limiting": "stress",
+    "cap_model_kg": 0.0975291505074627
+   }
+  },
+  {
+   "key": "b3-ar16|SD7037|t0.45|base|cdabu|bal8.304|heavy",
+   "mass": 9.999999999999998,
+   "ar": 16.0,
+   "caps_record": {
+    "deflection_ratio_stress_sized": 0.5461589065253037,
+    "stiffness_factor": 3.6410593768353583,
+    "caps_stiff_kg": 0.44388678496247996,
+    "caps_stress_kg": 0.12191143813432836
+   },
+   "caps_ud": {
+    "deflection_ratio_stress_sized": 0.15929634773654716,
+    "stiffness_factor": 1.0619756515769812,
+    "caps_stiff_kg": 0.1294669789473902,
+    "caps_stress_kg": 0.12191143813432836
+   },
+   "tube_catalogue": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 187.36 N m, max od 20.9 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.12191143813432836
+   },
+   "tube_free": {
+    "fits": true,
+    "od_mm": 20.89999999999993,
+    "wall_mm": 4.2,
+    "tube_kg": 1.0180230462992768,
+    "margin": 0.25149426571898337,
+    "deflection_ratio": 0.14933634477910315,
+    "limiting": "stiffness",
+    "cap_model_kg": 0.12191143813432836
+   }
+  },
+  {
+   "key": "b3-ar20|SD7037|t0.45|base|cdabu|bal1.549|heavy",
+   "mass": 3.0000000000000004,
+   "ar": 20.0,
+   "caps_record": {
+    "deflection_ratio_stress_sized": 0.6826986331566302,
+    "stiffness_factor": 4.551324221044201,
+    "caps_stiff_kg": 0.20807193045116268,
+    "caps_stress_kg": 0.04571678930037315
+   },
+   "caps_ud": {
+    "deflection_ratio_stress_sized": 0.19912043467068383,
+    "stiffness_factor": 1.3274695644712255,
+    "caps_stiff_kg": 0.06068764638158913,
+    "caps_stress_kg": 0.04571678930037315
+   },
+   "tube_catalogue": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 56.21 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.04571678930037315
+   },
+   "tube_free": {
+    "fits": true,
+    "od_mm": 16.699999999999957,
+    "wall_mm": 1.9,
+    "tube_kg": 0.4081381246355247,
+    "margin": 0.5715964566193605,
+    "deflection_ratio": 0.14882748924832154,
+    "limiting": "stress",
+    "cap_model_kg": 0.04571678930037315
+   }
+  },
+  {
+   "key": "b3-ar20|SD7037|t0.45|base|cdabu|bal2.534|heavy",
+   "mass": 4.0,
+   "ar": 20.0,
+   "caps_record": {
+    "deflection_ratio_stress_sized": 0.6826986331566302,
+    "stiffness_factor": 4.551324221044201,
+    "caps_stiff_kg": 0.2774292406015502,
+    "caps_stress_kg": 0.06095571906716419
+   },
+   "caps_ud": {
+    "deflection_ratio_stress_sized": 0.19912043467068383,
+    "stiffness_factor": 1.3274695644712255,
+    "caps_stiff_kg": 0.08091686184211883,
+    "caps_stress_kg": 0.06095571906716419
+   },
+   "tube_catalogue": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 74.94 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.06095571906716419
+   },
+   "tube_free": {
+    "fits": true,
+    "od_mm": 16.699999999999957,
+    "wall_mm": 3.2,
+    "tube_kg": 0.6270116281740633,
+    "margin": 0.5655113040424751,
+    "deflection_ratio": 0.14940598266281982,
+    "limiting": "stiffness",
+    "cap_model_kg": 0.06095571906716419
+   }
+  },
+  {
+   "key": "b3-ar20|SD7037|t0.45|base|cdabu|bal4.504|heavy",
+   "mass": 6.000000000000001,
+   "ar": 20.0,
+   "caps_record": {
+    "deflection_ratio_stress_sized": 0.6826986331566302,
+    "stiffness_factor": 4.551324221044201,
+    "caps_stiff_kg": 0.41614386090232536,
+    "caps_stress_kg": 0.0914335786007463
+   },
+   "caps_ud": {
+    "deflection_ratio_stress_sized": 0.19912043467068383,
+    "stiffness_factor": 1.3274695644712255,
+    "caps_stiff_kg": 0.12137529276317827,
+    "caps_stress_kg": 0.0914335786007463
+   },
+   "tube_catalogue": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 112.41 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.0914335786007463
+   },
+   "tube_free": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 112.41 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.0914335786007463
+   }
+  },
+  {
+   "key": "b3-ar20|SD7037|t0.45|base|cdabu|bal6.473|heavy",
+   "mass": 8.0,
+   "ar": 20.0,
+   "caps_record": {
+    "deflection_ratio_stress_sized": 0.6826986331566302,
+    "stiffness_factor": 4.551324221044201,
+    "caps_stiff_kg": 0.5548584812031004,
+    "caps_stress_kg": 0.12191143813432838
+   },
+   "caps_ud": {
+    "deflection_ratio_stress_sized": 0.19912043467068383,
+    "stiffness_factor": 1.3274695644712255,
+    "caps_stiff_kg": 0.16183372368423765,
+    "caps_stress_kg": 0.12191143813432838
+   },
+   "tube_catalogue": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 149.89 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.12191143813432838
+   },
+   "tube_free": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 149.89 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.12191143813432838
+   }
+  },
+  {
+   "key": "b3-ar20|SD7037|t0.45|base|cdabu|bal8.443|heavy",
+   "mass": 9.999999999999998,
+   "ar": 20.0,
+   "caps_record": {
+    "deflection_ratio_stress_sized": 0.6826986331566302,
+    "stiffness_factor": 4.551324221044201,
+    "caps_stiff_kg": 0.6935731015038754,
+    "caps_stress_kg": 0.15238929766791046
+   },
+   "caps_ud": {
+    "deflection_ratio_stress_sized": 0.19912043467068383,
+    "stiffness_factor": 1.3274695644712255,
+    "caps_stiff_kg": 0.20229215460529704,
+    "caps_stress_kg": 0.15238929766791046
+   },
+   "tube_catalogue": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 187.36 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.15238929766791046
+   },
+   "tube_free": {
+    "fits": false,
+    "reason": "No tube fits: root ultimate moment 187.36 N m, max od 16.8 mm, sigma_allow 300 MPa, deflection limit 0.15",
+    "cap_model_kg": 0.15238929766791046
+   }
   }
  ]
 }

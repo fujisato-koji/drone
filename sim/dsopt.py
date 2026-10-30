@@ -175,7 +175,7 @@ class WingShape:
     Each half wing is two straight panels of the flat span b: the inner panel from the root to the
     break at the fraction eta of the half span s = b/2, at inner_deg to the wing's reference plane
     (positive tip up), and the outer panel from the break to the tip at outer_deg. Plain dihedral
-    is inner = outer; the bent-up outer panel only (polyhedral, or a reversed gull) is inner 0.
+    is inner = outer; the bent-up outer panel only (a polyhedral wing; a gull is not modelled) is inner 0.
     At a bank |mu| and a flight-path angle gamma the depths below the centre are
         break  d_b = s cos(gamma) eta sin(|mu| - G_i)
         tip    d_t = s cos(gamma) (eta sin(|mu| - G_i) + (1 - eta) sin(|mu| - G_o))

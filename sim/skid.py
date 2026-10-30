@@ -327,46 +327,160 @@ def aircraft_masses(name):
     return mass, mm["m_wing"], span, area, 0.45 * croot, w.SPAR["tc"]
 
 
+ARC_BAND_M = 0.01   # the skim arc: the tip within this height of its lowest point
+
+
+def arc_stats(row, band=ARC_BAND_M, sub=20):
+    """The skim arc of a skim_study cycle, from a dense RK4 replay of every interval from its node
+    with the piecewise-linear controls: the time the tip is within band of its lowest point and,
+    over that time, the bank, the load factor, the centre's height, the speed of the low tip over
+    the water and its crab angle to the heading (the angle between the air velocity's horizontal
+    direction and the tip's velocity over the water: the centre's ground velocity plus the yaw
+    rate times the tip's horizontal offset (b/2) cos(mu) towards the turn), the rate at which a
+    roll-out at ctrl.roll_pb2v lifts the tip (k V cos(bank)), and the lift of the low tip by the
+    bending of a wing that just meets spar.deflection_limit at the limit load (the tip deflection
+    at ds.n_limit scaled with the load factor, times cos(bank))."""
+    from sim.dsopt import _tip_heights, dyn
+    from sim.formstudy import skim_collocation
+    col, x = skim_collocation(row)
+    S, C, T, u = col.unpack(x)
+    ac, N = col.ac, col.N
+    dt = T / (N - 1)
+    f = lambda s_, c_: dyn(s_, c_, ac, col.prof, u)
+    ss, cc = [], []
+    for k in range(N - 1):
+        s_ = S[k].copy()
+        for j in range(sub):
+            fr = j / sub
+            c0 = C[k] + (C[k + 1] - C[k]) * fr
+            ss.append(s_.copy())
+            cc.append(c0)
+            h = dt / sub
+            cm = C[k] + (C[k + 1] - C[k]) * (fr + 0.5 / sub)
+            cn = C[k] + (C[k + 1] - C[k]) * (fr + 1.0 / sub)
+            k1 = f(s_, c0)
+            k2 = f(s_ + 0.5 * h * k1, cm)
+            k3 = f(s_ + 0.5 * h * k2, cm)
+            k4 = f(s_ + h * k3, cn)
+            s_ = s_ + h / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4)
+    ss, cc = np.array(ss), np.array(cc)
+    tip = _tip_heights(col, ss[:, 2], cc[:, 1], ss[:, 4])
+    arc = tip < tip.min() + band
+    V, g, p, z = ss[:, 3], ss[:, 4], ss[:, 5], ss[:, 2]
+    mu = cc[:, 1]
+    U = u * col.prof.f(z)
+    ax, ay = V * np.cos(g) * np.cos(p), V * np.cos(g) * np.sin(p)
+    gx, gy = ax + U, ay
+    psid = f(ss, cc)[:, 5]
+    s = 0.5 * ac.span
+    rx, ry = np.sign(mu) * -np.sin(p) * s * np.cos(mu), np.sign(mu) * np.cos(p) * s * np.cos(mu)
+    tx, ty = gx - psid * ry, gy + psid * rx
+    crab = np.degrees(np.abs(np.arctan2(ax * ty - ay * tx, ax * tx + ay * ty)))
+    n = 0.5 * ac.rho * ac.wing_area * V * V * cc[:, 0] / (ac.mass * G)
+    bank = np.degrees(np.abs(mu))
+    bend = value("spar.deflection_limit", 0.15) * s * n / value("ds.n_limit", 4.0) * np.cos(np.abs(mu))
+    rise = value("ctrl.roll_pb2v", 0.08) * V * np.cos(np.abs(mu))
+    iz = int(np.argmin(np.where(arc, z, np.inf)))
+    a = lambda q: (float(q[arc].min()), float(q[arc].max()))
+    return {"arc_s": float(arc.sum() * dt / sub), "period_s": float(T), "bank_deg": a(bank), "n": a(n),
+            "z_m": a(z), "bank_at_zmin_deg": float(bank[iz]), "water_speed_ms": a(np.hypot(tx, ty)),
+            "crab_deg": a(crab), "airspeed_ms": a(V), "roll_rise_ms": a(rise), "bend_lift_m": a(bend)}
+
+
+def dihedral_clbeta(ar, dihedral_deg, taper=0.45):
+    """Strip-theory rolling moment due to sideslip of a straight tapered wing with dihedral Gamma,
+    C_l_beta = -(a Gamma / 6)(1 + 2 lambda)/(1 + lambda) per radian, with the lift slope of
+    roll_damping."""
+    a = roll_damping(ar, taper)[1]
+    return float(-a * np.radians(dihedral_deg) / 6.0 * (1.0 + 2.0 * taper) / (1.0 + taper))
+
+
+def depth_froude(v, d):
+    return float(v / np.sqrt(G * d))
+
+
+def skimmer_check():
+    """The blade model on the black skimmer's bill at 10 m/s: the recorded immersion
+    (lit.skimmer_bill_immersion_m), the bill's largest thickness (lit.skimmer_lower_beak_thickness_max_mm)
+    and the record's rake (skid.blade_rake_deg)."""
+    d = value("lit.skimmer_bill_immersion_m", 0.04)
+    return blade(d, 10.0, t=value("lit.skimmer_lower_beak_thickness_max_mm", 3.3) * 1e-3,
+                 rake_deg=par("blade_rake_deg"), depth=d)
+
+
 def study(path=OUT_PATH, skim_path=SKIM_PATH):
+    """Forces, moments, the reflex budget and the skim-arc statistics of the skid-touch cells
+    (sim/out/skid.json). The forces are at the largest speed of the tip over the water on the arc;
+    the blade is taken either fixed at the heading, where the crab angle of the arc is its
+    incidence, or trailing in the water flow (castering), where only skid.misalignment_deg
+    remains; the reflex budget is at the bank limit, where the roll lifts the tip slowest, with
+    the arc's lowest load factor."""
     from sim import record
     cells = _cells(skim_path)
+    with open(skim_path) as fh:
+        rows = json.load(fh)["rows"]
     res = {}
     for name, c in cells.items():
         mass, m_wing, span, area, ctip, tc = aircraft_masses(name)
         inert = inertia(m_wing, span)
-        v, vw, bank = c["V_at_tip_ms"], c["water_speed_at_tip_ms"], c["bank_at_tip_deg"]
+        arc = arc_stats(c)
+        v, bank = c["V_at_tip_ms"], c["bank_at_tip_deg"]
+        vw = arc["water_speed_ms"][1]
         auth = authority(mass, span, area, v, inert["ixx"], inert["izz"])
         cl = mass * G * c["n_max"] / (0.5 * RHO_AIR * v * v * area)   # the low turn sits at n_max
         alpha = np.degrees(cl / auth["lift_slope"])
+        cb = dihedral_clbeta(span * span / area, 10.0)
+        qsb = 0.5 * RHO_AIR * v * v * area * span
         forces = {}
         for d in DEPTHS_M:
             b0 = blade(d, vw)
             b5 = blade(d, vw, beta_deg=par("misalignment_deg"))
             fb = dict(b0, side=b5["side"], side_roll=b5["side"] * np.sin(np.radians(bank)))
+            fixed = {}
+            for lab, crab in (("min", arc["crab_deg"][0]), ("max", arc["crab_deg"][1])):
+                bf = blade(d, vw, beta_deg=crab)
+                fixed[lab] = dict(bf, side_roll=bf["side"] * np.sin(np.radians(bank)), crab_deg=crab)
             row = {"blade": fb, "ski": ski(d, vw), "bare tip": bare_tip(d, vw, ctip, tc, bank, alpha),
                    "float": tip_float(d, vw)}
             forces["%g" % d] = {k: dict(f, effects=contact_effects(f, span, mass, v, inert["ixx"],
                                                                     inert["izz"], auth))
                                 for k, f in row.items()}
+            forces["%g" % d]["fixed blade"] = {lab: dict(f, effects=contact_effects(f, span, mass, v, inert["ixx"],
+                                                                                    inert["izz"], auth))
+                                               for lab, f in fixed.items()}
+            beta = forces["%g" % d]["blade"]["effects"]["sideslip_steady_deg"]
+            roll_dih = abs(cb) * np.radians(beta) * qsb
+            forces["%g" % d]["dihedral 10 deg roll"] = {"clbeta_per_rad": cb, "sideslip_deg": beta, "roll_nm": float(roll_dih),
+                                                        "over_aileron": float(roll_dih / auth["roll_moment_max_nm"])}
+            forces["%g" % d]["froude"] = depth_froude(vw, d)
         budget, starts = [], []
         lat = par("sense_process_s") + value("ctrl.actuator_delay_s", 0.05)
+        n_arc = arc["n"][0]
         for w in RISE_RATES_MS:
             for delta in DELTAS_M:
                 for delay in (None,) + DELAYS_S + (lat,):
-                    r = reflex_budget(bank, v, span, c["n_max"], delta, w, delay)
+                    r = reflex_budget(bank, v, span, n_arc, delta, w, delay)
                     budget.append(dict(r, rise_rate_ms=w, delta_m=delta, delay_s=delay,
                                        wet_sensor=delay == lat))
                 for dmax in DEPTH_LIMITS_M:
-                    ls = latest_start(bank, v, span, c["n_max"], delta, w, dmax, lat)
+                    ls = latest_start(bank, v, span, n_arc, delta, w, dmax, lat)
                     starts.append(dict(ls, rise_rate_ms=w, delta_m=delta, depth_max_m=dmax, latency_s=lat))
         res[name] = {"cell": {k: c[k] for k in ("h_min", "h_tip_min", "u10", "V_at_tip_ms", "water_speed_at_tip_ms",
                                                 "bank_at_tip_deg", "tip_curvature_ms2", "time_within_0p1_s", "n_max")},
+                     "arc": arc, "force_water_speed_ms": vw,
                      "mass": mass, "m_wing": m_wing, "span": span, "area": area, "tip_chord": ctip,
                      "alpha_low_turn_deg": float(alpha), "inertia": inert, "authority": auth,
                      "weight_n": mass * G, "forces": forces, "budget": budget, "latest_start": starts}
+    dih = next((r for r in rows if r["aircraft"] == "ar20-sd7037-limit" and r.get("lever") == "dihedral 10 deg"
+                and r["h_tip_min"] == 0.0 and r["success"]), None)
+    sk = skimmer_check()
     out = {"meta": record.meta("python -m sim.skid", ["sim/skid.py", "sim/out/skim_study.json", "record/values.yaml"]),
            "air_drag_area_m2": {k: air_drag_area(k) for k in ("blade", "ski", "float")},
-           "skid_mass_kg": {k: par(k + "_mass_kg") for k in ("blade", "ski", "float")}, "aircraft": res}
+           "skid_mass_kg": {k: par(k + "_mass_kg") for k in ("blade", "ski", "float")}, "aircraft": res,
+           "arc_ar20l_dihedral10": None if dih is None else arc_stats(dih),
+           "skimmer_check": sk,
+           "skimmer_tow_froude": [depth_froude(v_, value("lit.skimmer_bill_immersion_m", 0.04))
+                                  for v_ in (value("lit.skimmer_tow_speed_min_ms", 1.8), value("lit.skimmer_tow_speed_max_ms", 6.8))]}
     with open(path, "w", newline="\n") as fh:
         json.dump(out, fh, indent=1)
         fh.write("\n")

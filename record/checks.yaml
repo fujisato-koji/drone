@@ -224,3 +224,28 @@ items:
     by: checker
     date: 2026-10-30
     detail: "A separate checker, told to refute, worked on design/wing-loading (855b082) with its own steady-flight power from the polar coefficients, mass arithmetic, body drag build-up, the Nita and Scholz equations read from the paper, and its own point-mass replay. Confirmed: the soaring minima re-solve from other starts at the record's Reynolds numbers (AR 20 at the mass limit 12.870, AR 16 at the limit 13.009, AR 16 unballasted 15.308 against 15.224); the replays close and balance the energy (wind gain equals drag loss to 1e-7), with the load factor up to 0.8% over its margin and the speed 0.1% under its floor between nodes. Also confirmed: the masses, wing loadings and ballast to the limit to four decimals, with the ballast in the spar load and the mass limit binding; the body drag areas of 19.8 to 39.2 cm2 (tails 42 to 68% of the parts, the horizontal tail at 37k to 78k Reynolds number, below the fit); e 0.977 at aspect ratio 12; the solve_a fix on stubbed passes; and h(180) of -6.32 m/s for the best design, with 8.3 m/s of cross-track velocity left free. A 25% smaller tail lowers the minima by 0.15 to 0.24 m/s and half the tail by 0.33, more than the spread of the three best. Refuted: the motor power at 9 m/s is not bounded by the steady level flight. That flight was evaluated with the polar at the soaring cycle's Reynolds number; at its own Reynolds number its power equals the optimizer's to four digits for all 22 designs. The optimizer stops at that start after one iteration, and from random starts it reaches the same level flight at the speed floor. So the front's 20 deg powers and energies per kilometre were 11 to 14% low (27.0 against 30.3 W for the best design), and the ratio wing.solver_over_steady_* was an artefact. The document was corrected."
+  - id: K-018
+    target:
+      - skim.ar20l_h20_c030_u10_ms
+      - skim.ar20l_h10_c030_u10_ms
+      - skim.ar20l_h03_c000_u10_ms
+      - skim.alb_h03_c000_u10_ms
+      - skim.ar20l_dih10_h03_c000_u10_ms
+      - skim.ar20l_std_u16_h180_ms
+      - skim.ar20l_skid_u16_h180_ms
+      - skim.ar20l_skiddih10_u16_h180_ms
+      - skim.alb_skiddih10_u16_h180_ms
+      - skid.ar20l_blade_d20_roll_over_aileron
+      - skid.ar20l_roll_moment_max_nm
+      - skid.ar20l_w10_dl10_trigger_1cm_m
+      - skid.blade_skimmer_check_10ms_n
+      - heavy.ar20_m06_u10_ms
+      - heavy.ar20_m03_p20_w
+      - heavy.ar20_stress_caps_deflection
+      - heavy.ar20_stiff_caps_factor
+    tier: T2
+    method: independent_model
+    result: partial
+    by: checker
+    date: 2026-10-31
+    detail: "Re-solved six skim cells from seeds 20 to 25 (12.855, 12.071, 11.382, 9.112, 10.317 and 10.983 with 10 deg dihedral, all as recorded) and replayed them with independent point-mass equations, own COARE 3.5 roughness and DOP853: closure within 2e-4, single shooting closes, wind gain equals drag loss, load factor within 0.3 percent of its limit, tip within 1 cm below the clearance between nodes, skim 1.39 s of 7.40 s. On the arc the bank sweeps 50 to 62 deg, the load factor is 1.6 to 2.8 and the tip moves over the water at a crab angle of 18 to 30 deg to the heading, so the blade's 5 deg misalignment does not hold; a fixed blade passes the ailerons' authority near 1 cm. The albatross-like glider's h(180) of 0.16 m/s reproduces (0.11 to 0.17 from five starts, 0.10 to 0.14 with a 1.5 cm clearance). The best wing's h(180) used the Reynolds number of the fastest course; at its own it is -6.15, -3.51 and -2.89 m/s at 16 m/s. Reflex kinematics, WingShape geometry and lift share, the induced drag (within 1 percent of a Trefftz optimum), heavy soaring minima (12.31, 12.26) and level-flight power (within 0.6 percent) agree. The spar factors hold only for the pultruded tube modulus of 35 GPa, and the tube result depends on the catalogue's 1 mm diameter steps and 2 mm walls. Dihedral's roll due to the skid's sideslip and the wing's bending are not modelled. The document was corrected."

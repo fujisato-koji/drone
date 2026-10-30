@@ -1051,10 +1051,10 @@ items:
     class: P
     title: "The significance of ground effect to the aerodynamic cost of flight and energetics of the black skimmer, P. C. Withers and P. L. Timko, Journal of Experimental Biology 70, 13, 1977"
     url: "https://doi.org/10.1242/jeb.70.1.13"
-    license: unknown
-    read: full
+    license: "All rights reserved (The Company of Biologists)"
+    read: partial
     retrieved: 2026-10-30
-    note: "Minimum aerodynamic power falls from 4.4 W to 3.7 W at a height of 7 cm (about 16%). The abstract also gives a skimming speed of 10.3 m/s and the drag of the lower mandible in the water estimated at 1e-4 N against an aerodynamic drag of 0.4 N; a second reading on 2026-10-30 reached only the abstract; P157 measured about three orders of magnitude more."
+    note: "Abstract only (the full text was not reached): skimming at 10.3 m/s, flapping at 9.1 m/s; the drag of the lower mandible in the water estimated at 1e-4 N against an aerodynamic drag of 0.4 N; power computed after Tucker 1973 with and without ground effect. The earlier note of a minimum aerodynamic power falling from 4.4 W to 3.7 W at a height of 7 cm (about 16%) is not in the abstract and was not checked again (K-018). P157 measured about three orders of magnitude more bill drag."
   - id: P122
     class: P
     title: "Induced drag savings from ground effect and formation flight in brown pelicans, F. R. Hainsworth, Journal of Experimental Biology 135, 431, 1988"
@@ -1422,7 +1422,7 @@ items:
     license: CC BY
     read: partial
     retrieved: 2026-10-30
-    note: "A resin cast of a black skimmer's bill towed in a flume with 0.04 m of the lower mandible immersed at 1.8 to 6.8 m/s: drag 0.05 to 0.72 N; the conservative fit 0.019 V^1.26 gives about 0.35 N at 10 m/s; the printed central fit 0.286 V^1.52 does not match the measured range (likely 0.0286); spray drag coefficient of the order 0.24 on the thickness squared for Fr of 3 or more; hydrodynamic drag about 20% of the cost of skimming flight; observed foraging speed about 10 m/s. Equations and tables are images and were not read."
+    note: "A resin cast of a black skimmer's bill towed in a flume with 0.04 m of the lower mandible immersed, at 1.8 to 6.8 m/s: drag 0.05 to 0.72 N. The 0.35 N at 10 m/s is the paper's extrapolation of its lower 75% confidence line, 0.019 V^1.26; the printed central fit 0.286 V^1.52 does not match the measured range and is probably a misprint for 0.0286, which gives about 0.95 N at 10 m/s. Spray drag coefficient of the order 0.24 on the thickness squared for Fr of 3 or more; the hydrodynamic drag is about 20% of the costs of skimming flight, called total costs in the Results and aerodynamic costs in the Discussion; observed foraging speed about 10 m/s. Equations and tables are images and were not read."
   - id: P158
     class: P
     title: "Wind gradient exploitation during foraging flights by black skimmers, J. Mendez and T. L. Hedrick, Journal of Experimental Biology 227, jeb246855, 2024"
@@ -1430,7 +1430,7 @@ items:
     license: CC BY 4.0
     read: partial
     retrieved: 2026-10-30
-    note: "Skimming defined as 0.20 m or lower, mean skimming height 0.1 m; skimming tracks of 10.7 s (sd 6.0) over 57 m; airspeed 6.7 m/s (sd 1.9) over all tracks; the wind gradient pays less than 2.5% of the flight cost; nothing on bill drag or strikes. Table 3 not read."
+    note: "Skimming defined as 0.20 m or lower, mean skimming height 0.1 m; track durations of 10.7 s (sd 6.0) over 57 m are for all 70 tracked flights, not for the skims alone; airspeed 6.7 m/s (sd 1.9) over all tracks; the wind gradient pays less than 2.5% of the flight cost; nothing on bill drag or strikes. Table 3 not read."
   - id: P159
     class: P
     title: "Discovery of riblets in a bird beak (Rynchops) for low fluid drag, S. Martin and B. Bhushan, Philosophical Transactions of the Royal Society A 374, 20160134, 2016"
@@ -1438,7 +1438,7 @@ items:
     license: All rights reserved
     read: full
     retrieved: 2026-10-30
-    note: "Lower beak 80 to 100 mm long, 5 to 15 mm wide, 0.5 to 3.3 mm thick (Table 1); riblets about 2 mm apart and 0.15 mm high cut the pressure drop by 5 to 9% in channel tests at 2 to 5 m/s."
+    note: "Lower beak 80 to 100 mm long, 5 to 15 mm wide, 0.5 to 3.3 mm thick (Table 1); riblets about 2 mm apart and 0.15 mm high cut the pressure drop in channel tests by 5 and 9% for the 0 and 45 deg orientations at a Reynolds number of about 4200, and by 6 and 12% at 5500."
   - id: P160
     class: P
     title: "Spray drag of surface-piercing struts, R. B. Chapman, NUC TP 251, Naval Undersea Research and Development Center, 1971"
@@ -1446,7 +1446,7 @@ items:
     license: unknown
     read: excerpt
     retrieved: 2026-10-30
-    note: "Abstract and a search excerpt of the report: spray drag is mainly the friction of the spray sheet on the strut above the waterline; Hoerner's relation D = 0.24 q t^2 for a sharp forebody and 0.12 q t^2 for blunter ones; spray rails reduce it. The PDF could not be opened."
+    note: "Not reachable (DTIC returned 403 or maintenance); search excerpts of its abstract agree: spray drag is mainly the friction of the spray sheet on the strut above the waterline; Hoerner's relation D = 0.24 q t^2 for a thickness-to-forebody ratio up to 0.4 and 0.12 q t^2 for blunter shapes; spray rails reduce it."
   - id: P161
     class: P
     title: "Wave effects on the hydroelastic response of a surface-piercing hydrofoil, part 1, Y. L. Young et al., Journal of Fluid Mechanics 963, A37, 2023"
@@ -1457,12 +1457,12 @@ items:
     note: "Surface-piercing foil, chord 0.279 m: lift coefficients rise with the immersed aspect ratio, the loss at ventilation is more severe at higher Froude number, and ventilation sets in near 15 deg at an immersed aspect ratio of 1 and a depth Froude number of 1.5. Numeric lift values are in figures not read."
   - id: P162
     class: P
-    title: "Ventilation of surface-piercing hydrofoils, Aguiar Ferreira et al., Journal of Fluid Mechanics 1028, A25, 2026 (arXiv 2503.18015); the title is a description, the paper's own title was not recorded"
+    title: "On the ventilation of surface-piercing hydrofoils under steady-state conditions, Aguiar Ferreira, Navas Rodriguez, Jacobi, Fiscaletti, Greidanus and Westerweel, Journal of Fluid Mechanics 1028, A25, 2026 (arXiv 2503.18015)"
     url: "https://doi.org/10.1017/jfm.2026.11126"
     license: CC BY 4.0
     read: partial
     retrieved: 2026-10-30
-    note: "Froude numbers 0.5 to 2.5, aspect ratios 1.0 and 1.5: the inception angle is mostly above 15 deg, peaking above 25 deg near Fr 1.25."
+    note: "Froude numbers 0.5 to 2.5, aspect ratios 1.0 and 1.5: for an aspect ratio of 1.0 the ventilation onset rises from about 15 deg at Fr 0.5 to above 25 deg at Fr 1.25."
   - id: P163
     class: P
     title: "14 CFR 25.535 Auxiliary float loads, eCFR"

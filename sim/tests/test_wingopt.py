@@ -232,6 +232,12 @@ class TestHeavy(unittest.TestCase):
         self.assertTrue(light["fits"])
         self.assertLessEqual(light["deflection_ratio"], value("spar.deflection_limit") + 1e-12)
         self.assertFalse(heavy["fits"])
+        self.assertTrue(w.spar_tube_check(w.heavy_design(16.0, 10.0), free=True)["fits"])   # K-018: a catalogue artefact
+
+    def test_caps_factor_scales_with_the_modulus(self):
+        d = w.heavy_design(20.0, 3.0)
+        a, b = w.cap_stiffness(d), w.cap_stiffness(d, modulus=4.0 * value("spar.carbon_modulus"))
+        self.assertAlmostEqual(b["deflection_ratio_stress_sized"], a["deflection_ratio_stress_sized"] / 4.0, 9)
 
 
 if __name__ == "__main__":

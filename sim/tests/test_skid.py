@@ -49,5 +49,36 @@ class TestDynamics(unittest.TestCase):
         self.assertAlmostEqual(ls["trigger_gap_m"], max(0.0, -1.0 * (ls["start_s"] - 0.06)), 12)
 
 
+class TestArcAndChecks(unittest.TestCase):
+    """K-018: the skim arc, the dihedral roll and the skimmer check."""
+
+    def test_dihedral_clbeta_strip_theory(self):
+        cb = s.dihedral_clbeta(20.0, 10.0, taper=0.45)
+        a = s.roll_damping(20.0, 0.45)[1]
+        self.assertAlmostEqual(cb, -a * np.radians(10.0) / 6.0 * 1.9 / 1.45, 12)
+        self.assertEqual(s.dihedral_clbeta(20.0, 0.0), 0.0)
+
+    def test_skimmer_check_uses_the_record(self):
+        from sim.record import value
+        d = value("lit.skimmer_bill_immersion_m")
+        f = s.skimmer_check()
+        self.assertAlmostEqual(f["drag"], s.blade(d, 10.0, t=value("lit.skimmer_lower_beak_thickness_max_mm") * 1e-3,
+                                                  rake_deg=value("skid.blade_rake_deg"), depth=d)["drag"], 12)
+        self.assertAlmostEqual(s.depth_froude(6.8, 0.04), 6.8 / np.sqrt(9.80665 * 0.04), 2)
+
+    def test_arc_of_a_skid_touch_cycle(self):
+        import json
+        rows = json.load(open(s.SKIM_PATH))["rows"]
+        r = next(r for r in rows if r["aircraft"] == "albatross-3m" and not r.get("lever") and r["h_tip_min"] == 0.0
+                 and r["h_min"] == 1.0)
+        a = s.arc_stats(r)
+        self.assertGreater(a["arc_s"], 0.3)
+        self.assertLess(a["bank_deg"][1], 62.0 + 0.5)            # the bank limit of the margins
+        self.assertLess(a["bank_deg"][0], a["bank_deg"][1])
+        self.assertGreater(a["crab_deg"][0], 5.0)                # the tip does not move along the heading
+        self.assertGreater(a["water_speed_ms"][1], a["water_speed_ms"][0])
+        self.assertGreater(a["bend_lift_m"][0], 0.0)
+
+
 if __name__ == "__main__":
     unittest.main()
