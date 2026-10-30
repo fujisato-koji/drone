@@ -25,6 +25,9 @@ Constants (record keys in comments): see the module-level names below.
   stand-in behind steep crests (see the Environment docstring).
 
 Changes:
+- 2026-10-31 (Q-060), opt-in: Environment(wave_amp=(u, w)) multiplies the wave-coherent wind by
+  these amplitudes (after any wave_wind preset), so that a sea can carry the presets of the cycle
+  optimizer (sim.dsopt.wave_preset_params: horizontal 1.0, vertical lit.wave_induced_amp_w or 0.6).
 - 2026-10-30 (Q-064, Q-061), all opt-in with defaults that reproduce the earlier numbers:
   Environment(surface_model="stokes2", breaking="stats", turbulence_profile="height",
   swell_profile="jet", critical_floor=..., wave_wind="p63"), Wind(stability_L=...,
@@ -591,7 +594,7 @@ class Environment:
                  shelter=False, shelter_slope=None, shelter_factor=None,
                  surface_model="linear", interaction_n=64, breaking="none",
                  turbulence_profile="fixed", swell_profile="knee",
-                 critical_floor=None, wave_wind=None):
+                 critical_floor=None, wave_wind=None, wave_amp=None):
         self.wind = wind
         if wave_wind not in (None, "p63"):
             raise ValueError("unknown wave_wind " + str(wave_wind))
@@ -633,6 +636,10 @@ class Environment:
         if wave_wind == "p63":
             self._amp = (float(WAVE_AMP_PRESET[0]), float(WAVE_AMP_PRESET[1]))
             self.decay = (float(DECAY_MEASURED[0]), float(DECAY_MEASURED[1]))
+        self.wave_amp = None
+        if wave_amp is not None:   # explicit amplitudes (u, w) of the wave-coherent wind
+            self.wave_amp = (float(wave_amp[0]), float(wave_amp[1]))
+            self._amp = self.wave_amp
         if turbulence not in (None, "iso"):
             raise ValueError("unknown turbulence " + str(turbulence))
         self.turbulence = turbulence
@@ -1246,6 +1253,8 @@ class Environment:
             o["critical_floor"] = self.critical_floor
         if self.wave_wind is not None:
             o["wave_wind"] = {"preset": self.wave_wind, "amp": list(self._amp), "decay": list(self.decay)}
+        if self.wave_amp is not None:
+            o["wave_amp"] = {"amp": list(self._amp), "decay": list(self.decay)}
         if self.turbulence_profile != "fixed":
             o["turbulence_profile"] = self.turbulence_profile
         if self.swell_profile != "knee":

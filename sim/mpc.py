@@ -433,6 +433,8 @@ class MPPIPlanner:
                    + self.w_stall * (np.maximum(0.0, vmin - V) / ac.v_stall) ** 2)
             if self.h_ceil is not None:
                 pen = pen + self.w_ceil * np.maximum(0.0, hc - self.h_ceil) ** 2
+            if self.guide is not None and getattr(self.guide, "w_run", 0.0) > 0.0:
+                pen = pen + self.guide.running_cost(world, t + dt, s)    # tracking of a wave cycle (WaveCycleGuide)
             cost += np.where(live, dt * pen, 0.0)
             if motor:
                 cost += np.where(live, dt * self.w_energy * T2 * V0 / self.eta, 0.0)
@@ -1126,6 +1128,19 @@ class Cycle:
         self.v_mean = float(np.mean(self.V))
         self.i_low = int(np.argmin(self.z))
         self.tau_low = float(self.t[self.i_low])
+        # wave-synchronized cycle (sim.wavelib): the wave phase at the aircraft per node, unwrapped; over a period it
+        # advances by its last minus its first value (-2 pi m). A mirrored cycle flies the mirrored sea, so the
+        # phase is unchanged.
+        self.wave = "theta" in d
+        if self.wave:
+            self.theta = np.unwrap(a("theta"))
+            self.dtheta = float(self.theta[-1] - self.theta[0])
+
+    def theta_at(self, tau):
+        """Wave phase at the aircraft at cycle phase tau (wave cycles only), continued over the periods."""
+        tau = np.asarray(tau, float)
+        k = np.floor(tau / self.T)
+        return np.interp(np.mod(tau, self.T), self.t, self.theta) + k * self.dtheta
 
     def _p(self, tau, arr):
         return np.interp(np.mod(tau, self.T), self.t, arr)
@@ -1288,6 +1303,126 @@ class CycleGuide:
         return self.w_d * d2 + planner.w_e * deficit
 
 
+WAVE_GUIDE_SIG = (2.0, 2.0, 0.15, 0.15)    # (h m, V m/s, gamma rad, heading rad) of the match to a wave cycle
+WAVE_SIG_THETA = 0.3                       # rad; wave-phase tolerance of the match and of the terminal cost
+WAVE_CREST_SIG = (2.0, 5.0, 0.15, 0.15)    # the same for a crest ride: the airspeed floats to hold the phase ...
+WAVE_CREST_SIG_THETA = 0.1                 # ... which is held tighter (a looser phase drifted back over the crest)
+WAVE_W_RUN = 5.0                           # weight per second of the running tracking cost of a wave cycle
+CREST_CLIMB_M = 2.0                        # m; a crest ride is followed at the family member this far above the aircraft
+
+
+def world_swell(world):
+    """(k, omega, dx, dy, phase, a) of the dominant wave component of a world, or None without waves."""
+    w = dominant_wave(world)
+    if w is None:
+        return None
+    a, k, dx, dy, ph, om = w
+    return (k, om, dx, dy, ph, a)
+
+
+class WaveCycleGuide:
+    """A wave-synchronized library cycle (sim.wavelib) locked to the wave phase at the aircraft.
+
+    The cycle's nodes carry the wave phase theta at the aircraft. The match picks the cycle phase tau that best fits
+    the aircraft's height above the local surface, airspeed, flight path angle, heading relative to the wind AND the
+    wave phase of the world's dominant component at the aircraft (tolerance sig_theta); so the time shift is the one
+    that aligns the cycle's wave phase with the sea's. The terminal cost adds the wave-phase error at the end of the
+    horizon to the CycleGuide terms, so the plans keep the aircraft on the same part of the wave as the cycle.
+    Same interface as CycleGuide (nominal, nominal_thrust, terminal_cost, tau0, tau_s, match_dist, delta)."""
+
+    def __init__(self, cycle, world, t, s, psi_w, horizon, w_d=10.0, sig=None, sig_theta=None,
+                 tau_hint=None, hint_window=0.2, w_run=0.0):
+        self.cycle, self.psi_w, self.H, self.w_d = cycle, psi_w, horizon, w_d
+        self.w_run, self.t_plan = float(w_run), float(t)
+        crest = bool(cycle.d.get("crest"))
+        sg = (WAVE_CREST_SIG if crest else WAVE_GUIDE_SIG) if sig is None else sig
+        self.sig = (sg[0], sg[1] or 0.25 * cycle.v_mean, sg[2], sg[3])
+        self.sig_theta = float((WAVE_CREST_SIG_THETA if crest else WAVE_SIG_THETA) if sig_theta is None
+                               else sig_theta)
+        sw = world_swell(world)
+        if sw is None or not cycle.wave:
+            raise ValueError("WaveCycleGuide needs a wave cycle and a world with waves")
+        self.k, self.om, self.dx, self.dy, self.ph, _ = sw
+        x, y, z, V, g, psi = (float(v) for v in s)
+        self.h0 = z - float(world.surface(x, y, t)[0])
+        # a crest ride with its family of rides over the height (sim.wavelib.crest_ride): the member at the
+        # aircraft's height plus CREST_CLIMB_M (clipped to the family); it is steady, so it replaces the cycle
+        self.member = None
+        fam = (cycle.d.get("ride") or {}).get("family") if cycle.d.get("crest") else None
+        if fam:
+            F = np.asarray(fam, float)
+            hm = float(np.clip(self.h0 + CREST_CLIMB_M, F[0, 0], F[-1, 0]))
+            r = [float(np.interp(hm, F[:, 0], F[:, j])) for j in range(6)]
+            sgn = -1.0 if cycle.mirror else 1.0
+            self.member = (r[0], r[2], r[3], float(wrap(sgn * r[4])), r[1], r[5])   # h, V, gamma, psi, theta, cl
+        th_a = self.theta_world(x, y, t)
+        T = cycle.T
+        taus = np.linspace(0.0, T, 160, endpoint=False)
+        st = np.array([self._state(tau) for tau in taus])
+        dist = (((st[:, 0] - self.h0) / self.sig[0]) ** 2 + ((st[:, 1] - V) / self.sig[1]) ** 2
+                + ((st[:, 2] - g) / self.sig[2]) ** 2 + (wrap(st[:, 3] - wrap(psi - psi_w)) / self.sig[3]) ** 2
+                + (wrap(self._theta(taus) - th_a) / self.sig_theta) ** 2)
+        if tau_hint is not None:
+            far = np.abs(wrap((taus - tau_hint) * 2 * np.pi / T)) > hint_window * 2 * np.pi
+            dist = np.where(far, np.inf, dist)
+        i = int(np.argmin(dist))
+        self.tau0 = float(taus[i])
+        self.match_dist = float(dist[i])
+        self.theta_err0 = float(wrap(th_a - self._theta(self.tau0)))     # aircraft minus cycle
+        self.match_state = self.match_dist - (self.theta_err0 / self.sig_theta) ** 2
+        self.delta, self.theta_low, self._theta0 = 0.0, None, None
+        self.tau_s = self.tau0
+        te = self.tau_s + horizon
+        self.target = self._state(te)
+        self.theta_t = float(self._theta(te))
+        self.dE_c = 0.0 if self.member else float(cycle.energy(te) - cycle.energy(self.tau_s))
+        self.E0 = G * self.h0 + 0.5 * V * V
+
+    def _state(self, tau):
+        return self.member[:4] if self.member else self.cycle.state(tau)
+
+    def _theta(self, tau):
+        if self.member:
+            return np.full(np.shape(tau), self.member[4]) if np.ndim(tau) else self.member[4]
+        return self.cycle.theta_at(tau)
+
+    def theta_world(self, x, y, t):
+        return self.k * (self.dx * np.asarray(x) + self.dy * np.asarray(y)) - self.om * t + self.ph
+
+    def nominal(self, knots_t):
+        if self.member:
+            n = np.size(knots_t)
+            return np.stack([np.full(n, self.member[5]), np.zeros(n)])
+        cl, mu = self.cycle.controls(self.tau_s + np.asarray(knots_t))
+        return np.stack([cl, mu])
+
+    def nominal_thrust(self, knots_t):
+        if self.member:
+            return np.zeros(np.size(knots_t))
+        return self.cycle.thrust_at(self.tau_s + np.asarray(knots_t))
+
+    def _d2(self, world, t, s, ref, theta_ref):
+        x, y, z, V, g, psi = s
+        h = z - np.asarray(world.surface(x, y, np.full(np.shape(x), float(t)))[0])
+        ht, Vt, gt, pt = ref
+        d2 = (((h - ht) / self.sig[0]) ** 2 + ((V - Vt) / self.sig[1]) ** 2
+              + ((g - gt) / self.sig[2]) ** 2 + (wrap(psi - self.psi_w - pt) / self.sig[3]) ** 2
+              + (wrap(self.theta_world(x, y, t) - theta_ref) / self.sig_theta) ** 2)
+        return d2, h
+
+    def running_cost(self, world, t, s):
+        """w_run times the squared distance from the cycle at the same time (cost per second; 0 when w_run is 0)."""
+        tau = self.tau_s + (t - self.t_plan)
+        d2, _ = self._d2(world, t, s, self._state(tau), float(self._theta(tau)))
+        return self.w_run * d2
+
+    def terminal_cost(self, world, t_end, s, planner):
+        d2, h = self._d2(world, t_end, s, self.target, self.theta_t)
+        V = s[3]
+        deficit = np.maximum(0.0, self.dE_c - (G * h + 0.5 * V * V - self.E0))
+        return self.w_d * d2 + planner.w_e * deficit
+
+
 # ---------------------------------------------------------------------------------------------
 # reflex layer (a supervisor over the planner's commands, every control step)
 # ---------------------------------------------------------------------------------------------
@@ -1427,7 +1562,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             library=None, wave_aware=True, state_source="truth", wind_source="truth",
             suite="standard", profile_fit="two_param", actuators=None, n_limit=False,
             log_every_s=5.0, stop_on_tip=False, library_path=None, motor=False, w_energy=None, reflex=False,
-            true_fold_switch=None, target=None, navigator=None, nav_kw=None, nav_hull=None, guide_sig=None):
+            true_fold_switch=None, target=None, navigator=None, nav_kw=None, nav_hull=None, guide_sig=None,
+            plan_hook=None, wave_library=None):
     """Closed loop: true dynamics (rk4, dt), planner every replan_s in the chosen world model.
 
     world_model: "truth" | "flat" | "estimated". sensors: list of SurfaceSensor (used only for
@@ -1461,6 +1597,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     phase of the new cycle to the state. The run ends "arrived" when the target is within the arrival
     radius. The metrics then also hold out["nav"]: the track (every NAV_TRACK_S), the commands, the leg
     changes, the mode shares, the heights and the arrival time.
+
+    plan_hook (default None): callable(t, plan, world, state, guide) called after every plan (diagnostics).
 
     reflex (default False; nothing changes then; needs motor=True): the Reflex supervisor runs at
     every control step on the true state, in the world of the latest plan, and overrides the
@@ -1561,6 +1699,7 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     rf = Reflex(ac, pl.t_max, pl.fold_dcd, n_limit, pl.fold_switch) if reflex else None
     rf_events, rf_cur, world = [], None, None
     cyc_prev, switch_wait_t = None, None
+    wave_switches = []
     for i in range(nsteps + 1):
         t = i * dt
         eta_t = float(env_true.surface(s[0], s[1], t)[0])
@@ -1661,16 +1800,29 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                     cyc = Cycle(pt_.entry, mirror=pt_.side < 0)
                 else:
                     cyc = library.pick(ac.name, u10_p, chi_p)
-                if (nav is not None and cyc_prev is not None and cyc_prev.d.get("kind") == "soaring"
-                        and cyc.d.get("kind") == "soaring" and (cyc.d is not cyc_prev.d or cyc.mirror != cyc_prev.mirror)):
+                    if wave_library is not None:      # a wave-synchronized cycle where the sea has a swell
+                        wc = wave_library.cycle(ac.name, world, u10_p, chi_p, psi_p)
+                        if wc is not None and cyc_prev is not None:
+                            cyc = wc                  # (the first plan flies the flat cycle: entry from flat flight)
+                changed = cyc_prev is not None and (cyc.d is not cyc_prev.d or cyc.mirror != cyc_prev.mirror)
+                tack = (nav is not None and changed and cyc_prev.d.get("kind") == "soaring"
+                        and cyc.d.get("kind") == "soaring")
+                wave_in = changed and cyc.wave
+                if tack or wave_in:
                     # a change between soaring cycles (a tack or a gybe) waits for the phase where the new cycle
                     # matches the aircraft's present state; at any other phase the mirrored heading and bank are a
-                    # jump (airspeed 5 m/s against a stall speed of 10 m/s and a zoom to 33 m were seen)
-                    probe = CycleGuide(cyc, world, t, s_plan, psi_p, pl.horizon_s, wave_aware=wave_aware,
-                                       w_d=pl.w_d, sig=guide_sig)
+                    # jump (airspeed 5 m/s against a stall speed of 10 m/s and a zoom to 33 m were seen). A change
+                    # onto a wave cycle (from flat flight or another wave cycle) waits likewise, its match including
+                    # the wave phase at the aircraft.
+                    probe = _guide_for(cyc, world, t, s_plan, psi_p, pl, wave_aware, guide_sig, wave_library, None)
                     if switch_wait_t is None:
                         switch_wait_t = t
-                    if probe.match_dist > SWITCH_MATCH_MAX and t - switch_wait_t < SWITCH_MAX_WAIT_S:
+                    if wave_in:     # onto a wave cycle: the wave phase must match, the rest the planner can fix
+                        far = abs(probe.theta_err0) > WAVE_SWITCH_THETA
+                        wait_max = WAVE_SWITCH_MAX_WAIT_S
+                    else:
+                        far, wait_max = probe.match_dist > SWITCH_MATCH_MAX, SWITCH_MAX_WAIT_S
+                    if far and t - switch_wait_t < wait_max:
                         cyc = cyc_prev       # keep flying the old cycle until the phases line up
                     else:
                         switch_wait_t = None
@@ -1678,10 +1830,12 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                     switch_wait_t = None
                 if cyc_prev is not None and (cyc.d is not cyc_prev.d or cyc.mirror != cyc_prev.mirror):
                     tau_prev = None          # another cycle: its phase is matched afresh
+                    if cyc.wave:
+                        wave_switches.append([float(t), cyc.d.get("course_rel_deg"), bool(cyc.d.get("crest")),
+                                              cyc.d.get("kind")])
                 cyc_prev = cyc
-                guide = CycleGuide(cyc, world, t, s_plan, psi_p, pl.horizon_s,
-                                  wave_aware=wave_aware, w_d=pl.w_d, sig=guide_sig,
-                                  tau_hint=None if tau_prev is None else tau_prev + pl.replan_s)
+                guide = _guide_for(cyc, world, t, s_plan, psi_p, pl, wave_aware, guide_sig, wave_library,
+                                   None if tau_prev is None else tau_prev + pl.replan_s)
                 if tau_prev is not None and guide.tau0 < tau_prev - 0.5 * cyc.T:
                     n_cyc += 1
                 tau_prev = guide.tau0
@@ -1692,8 +1846,9 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                 pl.act_state = (actuators.cl, actuators.mu) + actuators.cmd_last
                 if motor:
                     pl.act_state = pl.act_state + (actuators.T,)
-            elif nav is not None and actuators is not None and motor and guide is not None:
-                # (only with a navigator, so that the motor library and burst experiments are unchanged)
+            elif ((nav is not None or (wave_library is not None and world_swell(world) is not None))
+                  and actuators is not None and motor and guide is not None):
+                # (only with a navigator or a wave library over a swell, so that the motor library and burst experiments are unchanged)
                 # the very first plan: the actuators have not moved yet and start at their first command, so the
                 # planner assumes the cycle's own controls and thrust (not zero thrust, which sank the nominal
                 # and kicked the aircraft off a steady reference at the start)
@@ -1701,6 +1856,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                 pl.act_state = (c0_, m0_, c0_, m0_, float(guide.nominal_thrust(pl.knots_t)[0]))
             plan = pl.plan(world, t, s_plan, u, guide=guide)
             t_plan = t
+            if plan_hook is not None:
+                plan_hook(t, plan, world, s_plan, guide)
             cpu.append(time.process_time() - c0)
             ess.append(plan.ess)
             ndead.append(plan.n_dead)
@@ -1780,6 +1937,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     out["n_replans"] = len(cpu)
     if library is not None:
         out["cycles"] = n_cyc
+        if wave_library is not None:
+            out["wave_switches"] = wave_switches
         out["phase_shift_mean_abs_s"] = float(np.mean(np.abs(deltas))) if deltas else 0.0
         out["match_dist_mean"] = float(np.mean(mdist)) if mdist else None
     out["ess_mean"] = float(np.mean(ess)) if ess else 0.0
@@ -1863,6 +2022,22 @@ def steady_entry(pt):
 
 SWITCH_MATCH_MAX = 2.0     # a change between soaring cycles waits for a state match (CycleGuide.match_dist) below this ...
 SWITCH_MAX_WAIT_S = 15.0   # ... for at most this long
+WAVE_SWITCH_MAX_WAIT_S = 60.0   # a change onto a wave cycle waits at most this long for its match: ...
+WAVE_SWITCH_THETA = 0.3         # ... the wave phase at the aircraft within this of the cycle's (rad); the rest of the
+#                                 state (height, airspeed, heading) the planner brings to the cycle afterwards
+
+
+def _guide_for(cyc, world, t, s, psi, pl, wave_aware, guide_sig, wave_library, tau_hint):
+    """The guide of a cycle: WaveCycleGuide for a wave-synchronized cycle (sig and sig_theta from the wave library's
+    pilot if it has them), else CycleGuide."""
+    if cyc.wave:
+        return WaveCycleGuide(cyc, world, t, s, psi, pl.horizon_s,
+                              w_d=getattr(wave_library, "w_d", None) or pl.w_d,
+                              sig=getattr(wave_library, "sig", None),
+                              sig_theta=getattr(wave_library, "sig_theta", None), tau_hint=tau_hint,
+                              w_run=getattr(wave_library, "w_run", WAVE_W_RUN))
+    return CycleGuide(cyc, world, t, s, psi, pl.horizon_s, wave_aware=wave_aware, w_d=pl.w_d, sig=guide_sig,
+                      tau_hint=tau_hint)
 NAV_UPDATE_S = 5.0          # the navigator is called this often (s)
 NAV_FAST_UPDATE_S = 1.0     # the navigator is called this often in the final approach (mode direct)
 NAV_TRACK_S = 5.0          # spacing of the logged track points
@@ -2807,7 +2982,23 @@ def main():
     ap.add_argument("--burst-exp", action="store_true")
     ap.add_argument("--motor-lib-exp", action="store_true")
     ap.add_argument("--burst-part", default="ab", help="a, b or ab")
+    ap.add_argument("--wave-diagnosis", action="store_true", help="why the earlier wave runs ended (sim.wavelib)")
+    ap.add_argument("--build-wave-library", action="store_true", help="the wave-cycle library (sim.wavelib)")
+    ap.add_argument("--wave-loop-exp", action="store_true", help="the closed loop over swell (sim.wavelib)")
+    ap.add_argument("--wave-only", default="", help="cases of --wave-loop-exp as 'aircraft,hs,dir,u10,preset' joined by ;")
     a = ap.parse_args()
+    if a.wave_diagnosis:
+        from sim.wavelib import diagnosis_main
+        diagnosis_main(a.out, a.workers)
+        return
+    if a.build_wave_library:
+        from sim.wavelib import build_wave_library
+        build_wave_library(workers=a.workers)
+        return
+    if a.wave_loop_exp:
+        from sim.wavelib import wave_exp_main
+        wave_exp_main(a)
+        return
     if a.build_margin_library:
         build_margin_library(workers=a.workers)
         return

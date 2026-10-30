@@ -127557,5 +127557,502 @@
     }
    }
   ]
+ },
+ "wave_diagnosis": {
+  "meta": {
+   "tdr_run": "python -m sim.mpc --wave-diagnosis --workers 3",
+   "commit": "ebbabcf",
+   "stamp": "sha-0a4d6ea920b6",
+   "runtime_s": 881.4878606796265,
+   "workers": 3,
+   "wind_sea": "the wave runs of motor_library_exp that ended early, rerun with its settings (run_motor_job: fully developed COARE 3.5 sea of seed 1, motor library, wave_aware False, 180 s) with every plan logged (PlanLog) and the trajectory kept",
+   "swell": "the same planner (flat-sea motor library picked at 20 deg off downwind, truth world) over one regular swell component, Hs 3 m, Tp 10 s, along the wind, P63 wave wind, second-order surface, 300 s, wave_aware False and True",
+   "plans_last5s": "the plans of the last 5 s: lowest wingtip of the nominal plan in the planner's world and against the true surface, mean number of dead samples (of 96)",
+   "end": "state at the last step against the true surface; eta_over_std is the surface elevation there in units of its standard deviation over the last minute at that point"
+  },
+  "results": [
+   {
+    "kind": "wind_sea",
+    "aircraft": "albatross-3m",
+    "u10": 16.0,
+    "planner_world": "truth",
+    "reflex": "on",
+    "wave_aware": false,
+    "t_end": 180.0,
+    "ended": "tip contact",
+    "survival_s": 174.87,
+    "wall_s": 880.564790725708,
+    "end": {
+     "t_s": 174.86,
+     "h_m": 0.9450599735799177,
+     "tip_m": 0.006214523824162432,
+     "bank_deg": 38.7620877963628,
+     "v_over_stall": 2.1882474807989762,
+     "gamma_deg": 358.5846085570372,
+     "load_factor": 1.0873217962668156,
+     "thrust_frac_weight": 0.03662705229772787,
+     "eta_m": 0.24701592295588776,
+     "eta_over_std": 0.12742628844029727,
+     "surface_rising": true,
+     "slope": 0.06238590154488719,
+     "h_min_last10_m": 0.9450599735799177,
+     "h_mean_last10_m": 4.793611219690844
+    },
+    "sea_std_m": 1.7406904510834165,
+    "h_median_m": 23.96797223921978,
+    "h_min_m": 0.9450599735799177,
+    "motor": {
+     "avg_power_w": 33.430159004250214,
+     "thrust_on_share": 0.9476182306856522,
+     "mean_thrust_frac_weight": 0.03490806466915084
+    },
+    "reflex_n": 2,
+    "plans_last5s": {
+     "n": 10,
+     "tip_world_min_m": 0.9896467725918656,
+     "tip_true_min_m": -0.7347162362436812,
+     "n_dead_mean": 79.5
+    },
+    "plans_all": {
+     "share_true_contact_predicted_world_clear": 0.04,
+     "h_ref_median_m": 22.61216851432216
+    },
+    "recorded_survival_s": 174.87,
+    "recorded_ended": "tip contact"
+   },
+   {
+    "kind": "swell",
+    "aircraft": "albatross-3m",
+    "u10": 6.0,
+    "planner_world": "truth",
+    "reflex": "off",
+    "wave_aware": false,
+    "t_end": 300.0,
+    "ended": "complete",
+    "survival_s": 300.0,
+    "wall_s": 358.18931221961975,
+    "end": {
+     "t_s": 300.0,
+     "h_m": 27.620194992974493,
+     "tip_m": 27.612705248457523,
+     "bank_deg": 0.2861497930265734,
+     "v_over_stall": 1.1797582443359034,
+     "gamma_deg": 1.1873064840454082,
+     "load_factor": 0.986038037984604,
+     "thrust_frac_weight": 0.02500059450354532,
+     "eta_m": 1.457758417959088,
+     "eta_over_std": 1.3712626894199311,
+     "surface_rising": true,
+     "slope": 0.02145170068980882,
+     "h_min_last10_m": 27.588509167699602,
+     "h_mean_last10_m": 28.337059757112275
+    },
+    "sea_std_m": 1.0598405988826058,
+    "h_median_m": 23.307833721587226,
+    "h_min_m": 14.823300000000001,
+    "motor": {
+     "avg_power_w": 23.359498596415982,
+     "thrust_on_share": 1.0,
+     "mean_thrust_frac_weight": 0.029601218285518514
+    },
+    "reflex_n": null,
+    "plans_last5s": {
+     "n": 11,
+     "tip_world_min_m": 26.813715650879452,
+     "tip_true_min_m": 26.76847603588835,
+     "n_dead_mean": 0.7272727272727273
+    },
+    "plans_all": {
+     "share_true_contact_predicted_world_clear": 0.0,
+     "h_ref_median_m": 14.823284998526647
+    }
+   },
+   {
+    "kind": "swell",
+    "aircraft": "albatross-3m",
+    "u10": 6.0,
+    "planner_world": "truth",
+    "reflex": "off",
+    "wave_aware": true,
+    "t_end": 300.0,
+    "ended": "complete",
+    "survival_s": 300.0,
+    "wall_s": 358.0497188568115,
+    "end": {
+     "t_s": 300.0,
+     "h_m": 29.04263486475793,
+     "tip_m": 29.032030486476398,
+     "bank_deg": 0.4051186273669531,
+     "v_over_stall": 1.2031471789234551,
+     "gamma_deg": 0.9681933361478361,
+     "load_factor": 1.0181050063874766,
+     "thrust_frac_weight": 0.027526893698262365,
+     "eta_m": -1.3351237542546939,
+     "eta_over_std": -1.2566916553523841,
+     "surface_rising": false,
+     "slope": 0.022293215624903953,
+     "h_min_last10_m": 27.333181004786315,
+     "h_mean_last10_m": 28.063053786318548
+    },
+    "sea_std_m": 1.0600503728460622,
+    "h_median_m": 23.312574932568904,
+    "h_min_m": 14.823300000000001,
+    "motor": {
+     "avg_power_w": 23.371390523547092,
+     "thrust_on_share": 1.0,
+     "mean_thrust_frac_weight": 0.02961906430503594
+    },
+    "reflex_n": null,
+    "plans_last5s": {
+     "n": 11,
+     "tip_world_min_m": 27.59837769421503,
+     "tip_true_min_m": 27.5705392960048,
+     "n_dead_mean": 0.7272727272727273
+    },
+    "plans_all": {
+     "share_true_contact_predicted_world_clear": 0.0,
+     "h_ref_median_m": 14.822772500843065
+    }
+   },
+   {
+    "kind": "swell",
+    "aircraft": "albatross-3m",
+    "u10": 0.1,
+    "planner_world": "truth",
+    "reflex": "off",
+    "wave_aware": false,
+    "t_end": 300.0,
+    "ended": "complete",
+    "survival_s": 300.0,
+    "wall_s": 155.53816652297974,
+    "end": {
+     "t_s": 300.0,
+     "h_m": 16.63890967337332,
+     "tip_m": 16.63102439995718,
+     "bank_deg": 0.3012265371209639,
+     "v_over_stall": 1.1940026857330002,
+     "gamma_deg": 0.807177301416366,
+     "load_factor": 0.9998380857474312,
+     "thrust_frac_weight": 0.0293540445355943,
+     "eta_m": -0.5096978264911171,
+     "eta_over_std": -0.4810984023794529,
+     "surface_rising": false,
+     "slope": 0.0550962078003671,
+     "h_min_last10_m": 16.63890967337332,
+     "h_mean_last10_m": 18.49466391614124
+    },
+    "sea_std_m": 1.056662601825247,
+    "h_median_m": 11.82143313739084,
+    "h_min_m": 0.534223356506594,
+    "motor": {
+     "avg_power_w": 24.145426918197337,
+     "thrust_on_share": 1.0,
+     "mean_thrust_frac_weight": 0.03061513565531745
+    },
+    "reflex_n": null,
+    "plans_last5s": {
+     "n": 11,
+     "tip_world_min_m": 14.677875251464817,
+     "tip_true_min_m": 14.646362456178052,
+     "n_dead_mean": 0.7272727272727273
+    },
+    "plans_all": {
+     "share_true_contact_predicted_world_clear": 0.0,
+     "h_ref_median_m": 6.10811
+    }
+   },
+   {
+    "kind": "swell",
+    "aircraft": "albatross-3m",
+    "u10": 0.1,
+    "planner_world": "truth",
+    "reflex": "off",
+    "wave_aware": true,
+    "t_end": 300.0,
+    "ended": "complete",
+    "survival_s": 300.0,
+    "wall_s": 155.7639241218567,
+    "end": {
+     "t_s": 300.0,
+     "h_m": 14.786744416165996,
+     "tip_m": 14.777775500399478,
+     "bank_deg": 0.34263072997676486,
+     "v_over_stall": 1.1947369181444347,
+     "gamma_deg": 0.8900631244610915,
+     "load_factor": 1.0018636373782366,
+     "thrust_frac_weight": 0.028382266413080733,
+     "eta_m": -1.2366936889299074,
+     "eta_over_std": -1.164583643102441,
+     "surface_rising": false,
+     "slope": 0.02973540162127924,
+     "h_min_last10_m": 14.786744416165996,
+     "h_mean_last10_m": 16.684131507375767
+    },
+    "sea_std_m": 1.0539644795196281,
+    "h_median_m": 11.909064540758648,
+    "h_min_m": 0.5335197772247215,
+    "motor": {
+     "avg_power_w": 24.174328907322266,
+     "thrust_on_share": 1.0,
+     "mean_thrust_frac_weight": 0.030650844992193345
+    },
+    "reflex_n": null,
+    "plans_last5s": {
+     "n": 11,
+     "tip_world_min_m": 13.984530684713022,
+     "tip_true_min_m": 13.939309053254854,
+     "n_dead_mean": 0.6363636363636364
+    },
+    "plans_all": {
+     "share_true_contact_predicted_world_clear": 0.0,
+     "h_ref_median_m": 6.107766750100243
+    }
+   },
+   {
+    "kind": "wind_sea",
+    "aircraft": "albatross-3m",
+    "u10": 13.0,
+    "planner_world": "flat",
+    "reflex": "off",
+    "wave_aware": false,
+    "t_end": 180.0,
+    "ended": "tip contact",
+    "survival_s": 79.99,
+    "wall_s": 37.7956702709198,
+    "end": {
+     "t_s": 79.98,
+     "h_m": 0.9885836121663674,
+     "tip_m": 0.006823076251172955,
+     "bank_deg": 40.988459990447744,
+     "v_over_stall": 2.4499773945568415,
+     "gamma_deg": -3.744168916200667,
+     "load_factor": 2.8288834025264267,
+     "thrust_frac_weight": 0.01497143754981902,
+     "eta_m": 1.979831341947606,
+     "eta_over_std": 1.7043284656501336,
+     "surface_rising": false,
+     "slope": 0.06210105573963405,
+     "h_min_last10_m": 0.9885836121663674,
+     "h_mean_last10_m": 10.905737028393286
+    },
+    "sea_std_m": 0.8108767193222338,
+    "h_median_m": 12.454369366223132,
+    "h_min_m": 0.9885836121663674,
+    "motor": {
+     "avg_power_w": 24.27713467496048,
+     "thrust_on_share": 0.9892486560820103,
+     "mean_thrust_frac_weight": 0.01904018228672289
+    },
+    "reflex_n": null,
+    "plans_last5s": {
+     "n": 10,
+     "tip_world_min_m": 1.5463472146593906,
+     "tip_true_min_m": -0.32573454639570354,
+     "n_dead_mean": 30.6
+    },
+    "plans_all": {
+     "share_true_contact_predicted_world_clear": 0.03125,
+     "h_ref_median_m": 12.265870588345377
+    },
+    "recorded_survival_s": 79.99,
+    "recorded_ended": "tip contact"
+   },
+   {
+    "kind": "wind_sea",
+    "aircraft": "albatross-3m",
+    "u10": 13.0,
+    "planner_world": "flat",
+    "reflex": "on",
+    "wave_aware": false,
+    "t_end": 180.0,
+    "ended": "tip contact",
+    "survival_s": 79.99,
+    "wall_s": 84.86666560173035,
+    "end": {
+     "t_s": 79.98,
+     "h_m": 0.9885836121663674,
+     "tip_m": 0.006823076251172955,
+     "bank_deg": 40.988459990447744,
+     "v_over_stall": 2.4499773945568415,
+     "gamma_deg": -3.744168916200667,
+     "load_factor": 2.8288834025264267,
+     "thrust_frac_weight": 0.01497143754981902,
+     "eta_m": 1.979831341947606,
+     "eta_over_std": 1.7043284656501336,
+     "surface_rising": false,
+     "slope": 0.06210105573963405,
+     "h_min_last10_m": 0.9885836121663674,
+     "h_mean_last10_m": 10.905737028393286
+    },
+    "sea_std_m": 0.8108767193222338,
+    "h_median_m": 12.454369366223132,
+    "h_min_m": 0.9885836121663674,
+    "motor": {
+     "avg_power_w": 24.27713467496048,
+     "thrust_on_share": 0.9892486560820103,
+     "mean_thrust_frac_weight": 0.01904018228672289
+    },
+    "reflex_n": 0,
+    "plans_last5s": {
+     "n": 10,
+     "tip_world_min_m": 1.5463472146593906,
+     "tip_true_min_m": -0.32573454639570354,
+     "n_dead_mean": 30.6
+    },
+    "plans_all": {
+     "share_true_contact_predicted_world_clear": 0.03125,
+     "h_ref_median_m": 12.265870588345377
+    },
+    "recorded_survival_s": 79.99,
+    "recorded_ended": "tip contact"
+   },
+   {
+    "kind": "wind_sea",
+    "aircraft": "albatross-3m",
+    "u10": 16.0,
+    "planner_world": "flat",
+    "reflex": "on",
+    "wave_aware": false,
+    "t_end": 180.0,
+    "ended": "tip contact",
+    "survival_s": 172.49,
+    "wall_s": 168.43945264816284,
+    "end": {
+     "t_s": 172.48,
+     "h_m": 1.0029460515979656,
+     "tip_m": 7.22159279160639e-05,
+     "bank_deg": 42.14957242787758,
+     "v_over_stall": 2.7994294991730224,
+     "gamma_deg": 355.066911912609,
+     "load_factor": 1.7371377373675476,
+     "thrust_frac_weight": 0.10337477970511669,
+     "eta_m": 3.424469389364477,
+     "eta_over_std": 2.1778864493979864,
+     "surface_rising": false,
+     "slope": 0.08855492797723,
+     "h_min_last10_m": 1.0029460515979656,
+     "h_mean_last10_m": 29.081905339989692
+    },
+    "sea_std_m": 1.652278433031694,
+    "h_median_m": 22.145356574495214,
+    "h_min_m": 1.0029460515979656,
+    "motor": {
+     "avg_power_w": 30.967850780280507,
+     "thrust_on_share": 0.9544321409936808,
+     "mean_thrust_frac_weight": 0.030801880263099695
+    },
+    "reflex_n": 3,
+    "plans_last5s": {
+     "n": 10,
+     "tip_world_min_m": 1.1791906465276458,
+     "tip_true_min_m": -1.8808275441514066,
+     "n_dead_mean": 68.9
+    },
+    "plans_all": {
+     "share_true_contact_predicted_world_clear": 0.043478260869565216,
+     "h_ref_median_m": 22.57546120705969
+    },
+    "recorded_survival_s": 172.49,
+    "recorded_ended": "tip contact"
+   },
+   {
+    "kind": "wind_sea",
+    "aircraft": "baseline-2m",
+    "u10": 13.0,
+    "planner_world": "flat",
+    "reflex": "on",
+    "wave_aware": false,
+    "t_end": 180.0,
+    "ended": "contact",
+    "survival_s": 54.33,
+    "wall_s": 52.10648798942566,
+    "end": {
+     "t_s": 54.32,
+     "h_m": 0.09589796205764212,
+     "tip_m": 0.09589796204429125,
+     "bank_deg": -8.299591496025777e-10,
+     "v_over_stall": 4.125785324326948,
+     "gamma_deg": 697.1714277845766,
+     "load_factor": 3.221383701478823,
+     "thrust_frac_weight": 0.49999997938717705,
+     "eta_m": 0.7109292037732711,
+     "eta_over_std": 0.4447243901998664,
+     "surface_rising": false,
+     "slope": 0.17776700615269955,
+     "h_min_last10_m": 0.09589796205764212,
+     "h_mean_last10_m": 29.247589342186256
+    },
+    "sea_std_m": 0.8012126876168641,
+    "h_median_m": 13.113187707042364,
+    "h_min_m": 0.09589796205764212,
+    "motor": {
+     "avg_power_w": 57.158661172793835,
+     "thrust_on_share": 0.9289526964844469,
+     "mean_thrust_frac_weight": 0.1106726164491494
+    },
+    "reflex_n": 7,
+    "plans_last5s": {
+     "n": 10,
+     "tip_world_min_m": -1.794760276714527,
+     "tip_true_min_m": -3.1426718844498707,
+     "n_dead_mean": 67.0
+    },
+    "plans_all": {
+     "share_true_contact_predicted_world_clear": 0.05504587155963303,
+     "h_ref_median_m": 11.769989975536248
+    },
+    "recorded_survival_s": 54.33,
+    "recorded_ended": "contact"
+   },
+   {
+    "kind": "wind_sea",
+    "aircraft": "baseline-2m",
+    "u10": 16.0,
+    "planner_world": "flat",
+    "reflex": "off",
+    "wave_aware": false,
+    "t_end": 180.0,
+    "ended": "tip contact",
+    "survival_s": 103.2,
+    "wall_s": 44.858643770217896,
+    "end": {
+     "t_s": 103.19,
+     "h_m": 0.4629939812794497,
+     "tip_m": 0.015605515530451586,
+     "bank_deg": 27.295065062076887,
+     "v_over_stall": 2.6282312094133244,
+     "gamma_deg": -12.680293518192112,
+     "load_factor": 1.97051842207763,
+     "thrust_frac_weight": 0.019892917168969158,
+     "eta_m": 3.467374612107539,
+     "eta_over_std": 2.1368056205637815,
+     "surface_rising": false,
+     "slope": 0.07751759047122804,
+     "h_min_last10_m": 0.4629939812794497,
+     "h_mean_last10_m": 10.267725422247246
+    },
+    "sea_std_m": 1.3939810598101365,
+    "h_median_m": 11.435686816587266,
+    "h_min_m": 0.4629939812794497,
+    "motor": {
+     "avg_power_w": 11.078934791997604,
+     "thrust_on_share": 0.9885658914728682,
+     "mean_thrust_frac_weight": 0.019672841732665553
+    },
+    "reflex_n": null,
+    "plans_last5s": {
+     "n": 10,
+     "tip_world_min_m": 1.0862783059948904,
+     "tip_true_min_m": -2.201622154232631,
+     "n_dead_mean": 39.4
+    },
+    "plans_all": {
+     "share_true_contact_predicted_world_clear": 0.057971014492753624,
+     "h_ref_median_m": 11.450615217484396
+    },
+    "recorded_survival_s": 103.2,
+    "recorded_ended": "tip contact"
+   }
+  ]
  }
 }
