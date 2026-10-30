@@ -715,6 +715,8 @@ What failed in this pass:
 - The steady powered leg, which the navigation layer falls back on, is not safe or useful over a swell: it holds a constant height above the local surface, so its reference rides with the surface, and over a 2 to 3 m swell it touched the water in wave.loop_flat_only_ended of the closed-loop runs and lost the navigation run across the swell.
 - The optimizer did not converge in part of its slots (each aircraft and wave wind has 33 of them per sea, three or four courses at each of ten winds and directions): wave.lib_albatross_p63_hs3_tp10_missing and wave.lib_baseline_p63_hs3_tp10_missing with the P63 wave wind over the 3 m swell, and wave.lib_albatross_p64_hs3_tp10_missing and wave.lib_baseline_p64_hs3_tp10_missing with the low bound, and more over the 2 m swell (the table above); the failures gather on the baseline with the low bound and at the highest wind of the grid, where the cycle is nearest the flat-sea one, and those seas keep their crest rides only.
 
+This pass is a new claim and has had no independent check: the crest ride and its family, the wave guide's phase lock and the closed-loop results all wait for a checker told to refute them, as the flat cycles waited for K-007 to K-009 and the planner for K-013 and K-015.
+
 What remains, in order:
 
 - The sea from the sensors instead of the oracle (Q-064), with the accuracy above as the target.
