@@ -437,7 +437,7 @@ function mpcFactory() {
     this.motor = !!opt.motor;
     this.hCeil = opt.hCeil !== undefined && opt.hCeil !== null ? opt.hCeil : null;   // soft ceiling (m), null: off
     this.wCeil = opt.wCeil !== undefined ? opt.wCeil : 200.0;
-    this.thrustUpdate = opt.thrustUpdate || 'clipped';   // 'raw': the unbiased thrust update (sim.mpc MPPIPlanner)
+    this.thrustUpdate = opt.thrustUpdate || 'clipped';   // 'raw': the update on the unclipped, symmetric perturbations; the signed nominal is unbiased, the applied (clipped) thrust is not (sim.mpc MPPIPlanner)
     if (this.thrustUpdate !== 'clipped' && this.thrustUpdate !== 'raw') throw new Error('thrustUpdate');
     if ((this.thrustSampling !== 'basic' && this.thrustSampling !== 'sustained') ||
         (this.foldSwitch !== 'smooth' && this.foldSwitch !== 'state')) throw new Error('thrustSampling / foldSwitch');

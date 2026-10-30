@@ -224,3 +224,22 @@ items:
     by: checker
     date: 2026-10-30
     detail: "A separate checker, told to refute, worked on design/wing-loading (855b082) with its own steady-flight power from the polar coefficients, mass arithmetic, body drag build-up, the Nita and Scholz equations read from the paper, and its own point-mass replay. Confirmed: the soaring minima re-solve from other starts at the record's Reynolds numbers (AR 20 at the mass limit 12.870, AR 16 at the limit 13.009, AR 16 unballasted 15.308 against 15.224); the replays close and balance the energy (wind gain equals drag loss to 1e-7), with the load factor up to 0.8% over its margin and the speed 0.1% under its floor between nodes. Also confirmed: the masses, wing loadings and ballast to the limit to four decimals, with the ballast in the spar load and the mass limit binding; the body drag areas of 19.8 to 39.2 cm2 (tails 42 to 68% of the parts, the horizontal tail at 37k to 78k Reynolds number, below the fit); e 0.977 at aspect ratio 12; the solve_a fix on stubbed passes; and h(180) of -6.32 m/s for the best design, with 8.3 m/s of cross-track velocity left free. A 25% smaller tail lowers the minima by 0.15 to 0.24 m/s and half the tail by 0.33, more than the spread of the three best. Refuted: the motor power at 9 m/s is not bounded by the steady level flight. That flight was evaluated with the polar at the soaring cycle's Reynolds number; at its own Reynolds number its power equals the optimizer's to four digits for all 22 designs. The optimizer stops at that start after one iteration, and from random starts it reaches the same level flight at the speed floor. So the front's 20 deg powers and energies per kilometre were 11 to 14% low (27.0 against 30.3 W for the best design), and the ratio wing.solver_over_steady_* was an artefact. The document was corrected."
+  - id: K-017
+    target:
+      - nav.albatross_upwind_support_max_ms
+      - nav.no_progress_within_deg_min
+      - nav.albatross_hull_min_downwind_u16_ms
+      - nav.albatross_steady_upwind_u16_ms
+      - nav.albatross_steady_upwind_u16_j_per_m
+      - nav.run5_albatross_u16_upwind_energy_wh
+      - nav.run5_albatross_u16_upwind_height_median_m
+      - nav.run10_albatross_u13_across_energy_wh
+      - nav.run5_albatross_u16_downwind_counted
+      - nav.run5_albatross_u16_downwind_motor_share
+      - nav.thrust_bias_raw_sustained_applied_pct
+    tier: T2
+    method: independent_model
+    result: partial
+    by: checker
+    date: 2026-10-31
+    detail: "A separate checker, told to refute, worked in two rounds with its own code: the uncommitted state on 6404d4c, then c861395. Round 1 confirmed the support reading of the polar (consistent at 13 to 20 m/s with every cycle on the downwind side, the 120 deg cycle at 16 m/s flying 21.63 m/s 54 deg off its course, every library soaring cycle drifting downwind, so no soaring mix holds a line across the wind), the steady leg (8.92 m/s at 10.757 J/m, no limit binding) and the library changes (calm entries on course, own replays closing). It refuted: the albatross 11 m/s row as a support function; the no-progress range; the wing study's upwind VMG; powered legs said to fly at 10 m that flew at median heights of 16 to 35 m, two above R-12, which explained the 82 to 92 %; a downwind run on soaring cycles that ended on a powered leg with two loops, 3.9 m/s against a stall speed of 10.1 m/s and a 0.18 m wingtip, logged as arrived; the raw thrust update as unbiased (the one-sided held samples and the clip of the nominal); and many prose numbers (N-01). All of these were corrected. Round 2 reruns albatross 16 m/s upwind 5 km, 13 m/s across 10 km and 16 m/s downwind 5 km, all identical to the record. Median heights are 10.75 and 10.01 m, and the energy per metre is 1.024 and 0.999 times the steady leg's at 0.94 to 0.97 of its speed. Downwind it stays on soaring cycles with no loop or stall, airspeed at least 12.1 m/s, wingtip 0.51 m, height 1.81 to 29.83 m, motor share 0.048. counts_as_arrived matches a full-resolution recomputation. The new raw update keeps the signed nominal near zero (own test +0.02 and +0.69 %) while the applied thrust stays near 2 % of the weight when thrust does not matter. The generated keys and table match the runs, tdr check passes, and 311 tests pass. Left: sim/polar.py still computes an upwind VMG as progress times a cosine, the remaining motor share is called real without a test, three code comments still say unbiased, and one interval in the prose is wrong. The four remaining items were corrected."

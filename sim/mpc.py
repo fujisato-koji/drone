@@ -1692,7 +1692,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                 pl.act_state = (actuators.cl, actuators.mu) + actuators.cmd_last
                 if motor:
                     pl.act_state = pl.act_state + (actuators.T,)
-            elif actuators is not None and motor and guide is not None:
+            elif nav is not None and actuators is not None and motor and guide is not None:
+                # (only with a navigator, so that the motor library and burst experiments are unchanged)
                 # the very first plan: the actuators have not moved yet and start at their first command, so the
                 # planner assumes the cycle's own controls and thrust (not zero thrust, which sank the nominal
                 # and kicked the aircraft off a steady reference at the start)
@@ -1899,7 +1900,7 @@ NAV_TIP_MARGIN_M = 0.3      # wingtip clearance the planner keeps (h_clear); a r
 
 
 def flight_margins(ac, env, T, ST, MU, out):
-    """Heights and margins of a navigated run, from the recorded trajectory (every 10th step): the median,
+    """Heights and margins of a navigated run, from the recorded trajectory (every len(T)//4000-th step, at most 4000 points): the median,
     minimum and maximum height above the surface, the lowest wingtip, the lowest airspeed against the stall
     speed, the time with cos(gamma) < 0 (a loop) and below the stall speed. in_band: the heights stay inside
     R-12's band (ds.clearance_min_m to ds.altitude_band_max_m); margins_ok: no loop, no flight below the stall
@@ -2635,7 +2636,7 @@ NAV_CASES = (       # (aircraft, u10, direction of the target from the start)
     ("albatross-3m", 16.0, "upwind"), ("albatross-3m", 16.0, "across"), ("albatross-3m", 16.0, "downwind"),
     ("baseline-2m", 16.0, "upwind"), ("baseline-2m", 16.0, "across"),
     ("albatross-3m", 9.0, "upwind"))
-NAV_PKW = dict(MOTOR_EXP_PKW, thrust_update="raw", h_ceil=28.5)      # raw: the unbiased thrust update (see MPPIPlanner)
+NAV_PKW = dict(MOTOR_EXP_PKW, thrust_update="raw", h_ceil=28.5)      # raw: the update on the unclipped, symmetric perturbations; the signed nominal is unbiased, the applied (clipped) thrust is not (see MPPIPlanner)
 STEADY_HEIGHT_REF = 10.0                  # sim.navigator.STEADY_HEIGHT_M
 NAV_GUIDE_SIG = (3.0, 3.0, 0.15, 0.1)     # (h m, V m/s, gamma rad, heading rad) of the match; the default is (3, 0.25 mean V, 0.25, 0.6)
 #   heading 0.1 rad: the mean cross velocity of a cycle is set by its mean heading; V 3 m/s: with the loose V tolerance
@@ -2746,7 +2747,7 @@ def nav_exp_main(a):
                                "%g m aimed by the wind triangle at the airspeed of least electric energy per "
                                "metre (sim.navigator.SteadyModel), the planner's reference; the hull's 180 deg "
                                "motor cycles stay as points" % STEADY_HEIGHT_REF,
-                 "planner": "MOTOR_EXP_PKW plus thrust_update raw (the unbiased thrust update), guide heading "
+                 "planner": "MOTOR_EXP_PKW plus thrust_update raw (the update on the unclipped, symmetric perturbations; the signed nominal is unbiased, the applied (clipped) thrust is not), guide heading "
                             "tolerance %g rad (NAV_GUIDE_SIG)" % NAV_GUIDE_SIG[3],
                  "prediction": "sim.navigator.sail_hull on the same hull and navigator, tack pause 30 s",
                  "t_end": "2 x the predicted arrival time + 600 s, at most 7200 s",

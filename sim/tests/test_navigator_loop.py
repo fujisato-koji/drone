@@ -63,6 +63,34 @@ class TestNavigatorLoop(unittest.TestCase):
         self.assertTrue(nv["counts_as_arrived"])
         self.assertEqual(set(nv["kind_time_s"]), {"soaring"})       # no change of kind
 
+    def test_first_plan_actuator_state_only_with_a_navigator(self):
+        """The first plan assumes the cycle's own controls and thrust only when a navigator is flying."""
+        import sim.mpc as M
+        seen = []
+        orig = M.MPPIPlanner.plan
+
+        def spy(self, *a, **k):
+            seen.append(self.act_state)
+            raise StopIteration
+        M.MPPIPlanner.plan = spy
+        try:
+            ac = by_name("albatross-3m")
+            env = _make_env_coare("flat", 16.0)
+            common = dict(planner_kw=dict(NAV_PKW), library=self.lib, actuators=Actuators(ac, rate_model="pb2v"),
+                          n_limit=True, motor=True, w_energy=energy_weight(ac, "normal"))
+            for nav in (False, True):
+                kw = dict(target=nav_target("upwind", 1000.0), navigator=True,
+                          nav_hull=HullSource.from_entries(self.lib.entries, "albatross-3m"),
+                          nav_kw={"steady": SteadyModel.from_aircraft(ac)}) if nav else {}
+                try:
+                    fly_mpc(ac, env, "flat", [], 5.0, 0.0, 16.0, seed=1, **common, **kw)
+                except StopIteration:
+                    pass
+        finally:
+            M.MPPIPlanner.plan = orig
+        self.assertIsNone(seen[0])
+        self.assertEqual(len(seen[1]), 5)
+
 
 if __name__ == "__main__":
     unittest.main()

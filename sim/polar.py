@@ -39,11 +39,10 @@ def _margin_sets():
 def _entry(info, label, ms, chi_deg, runs):
     """Case record from a dsopt info dict (progress = mean speed along the course)."""
     prog = float(info["speed_along_chi"])
-    c = float(np.cos(np.radians(chi_deg)))
     return {"chi_deg": chi_deg, "converged": True, "margin_set": label,
             "margins": dict(zip(KEYS, ms)), "progress": prog,
             "ground_speed": float(info["ground_speed"]), "period": float(info["period"]),
-            "n_max": float(info["n_max"]), "vmg_downwind": prog * c, "vmg_upwind": -prog * c,
+            "n_max": float(info["n_max"]),
             "z_min": float(info["z_min"]), "runs": runs}
 
 
@@ -137,30 +136,11 @@ def sweep_row(name, u10, courses=COURSES, n=N_NODES):
     return {"aircraft": name, "u10": u10, "cases": rows}
 
 
-def tacking(cases):
-    """Best upwind and downwind courses of one row, as a sailor's tacking and gybing angles.
-    Upwind VMG = progress * cos(180 - course), downwind VMG = progress * cos(course); only
-    converged cases with positive VMG count. Returns {"upwind": {...}|None, "downwind": ...}."""
-    out = {}
-    for key, fn in (("upwind", lambda c: np.cos(np.radians(180.0 - c["chi_deg"]))),
-                    ("downwind", lambda c: np.cos(np.radians(c["chi_deg"])))):
-        best = None
-        for c in cases:
-            if not c.get("converged"):
-                continue
-            v = c["progress"] * fn(c)
-            if v > 0 and (best is None or v > best["vmg"]):
-                best = {"course_deg": c["chi_deg"], "vmg": float(v), "progress": c["progress"]}
-        out[key] = best
-    return out
-
-
 def _job(args):
     name, u10 = args
     t0 = time.time()
     row = sweep_row(name, u10)
     row["runtime_s"] = time.time() - t0
-    row["best"] = tacking(row["cases"])
     print(f"done {name} {u10:g} m/s in {row['runtime_s']:.0f} s", file=sys.stderr, flush=True)
     return row
 
@@ -178,14 +158,7 @@ def tables(rows):
             cells = [f"{c['progress']:.1f}" + ("*" if c["margin_set"] == "light" else "")
                      if c.get("converged") else "no cycle" for c in r["cases"]]
             lines.append(f"| {r['u10']:g} | " + " | ".join(cells) + " |")
-        lines += ["", "(* lighter margins)", "",
-                  "| u10 | upwind course | upwind VMG | downwind course | downwind VMG |",
-                  "|---|---|---|---|---|"]
-        for r in rs:
-            u, d = r["best"]["upwind"], r["best"]["downwind"]
-            f = lambda b, k, fmt: (fmt % b[k]) if b else "none"
-            lines.append(f"| {r['u10']:g} | {f(u, 'course_deg', '%g')} | {f(u, 'vmg', '%.2f')} | "
-                         f"{f(d, 'course_deg', '%g')} | {f(d, 'vmg', '%.2f')} |")
+        lines += ["", "(* lighter margins)"]
         lines.append("")
     return "\n".join(lines)
 
