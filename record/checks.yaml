@@ -245,6 +245,31 @@ items:
     detail: "A separate checker, told to refute, worked in two rounds with its own code: the uncommitted state on 6404d4c, then c861395. Round 1 confirmed the support reading of the polar (consistent at 13 to 20 m/s with every cycle on the downwind side, the 120 deg cycle at 16 m/s flying 21.63 m/s 54 deg off its course, every library soaring cycle drifting downwind, so no soaring mix holds a line across the wind), the steady leg (8.92 m/s at 10.757 J/m, no limit binding) and the library changes (calm entries on course, own replays closing). It refuted: the albatross 11 m/s row as a support function; the no-progress range; the wing study's upwind VMG; powered legs said to fly at 10 m that flew at median heights of 16 to 35 m, two above R-12, which explained the 82 to 92 %; a downwind run on soaring cycles that ended on a powered leg with two loops, 3.9 m/s against a stall speed of 10.1 m/s and a 0.18 m wingtip, logged as arrived; the raw thrust update as unbiased (the one-sided held samples and the clip of the nominal); and many prose numbers (N-01). All of these were corrected. Round 2 reruns albatross 16 m/s upwind 5 km, 13 m/s across 10 km and 16 m/s downwind 5 km, all identical to the record. Median heights are 10.75 and 10.01 m, and the energy per metre is 1.024 and 0.999 times the steady leg's at 0.94 to 0.97 of its speed. Downwind it stays on soaring cycles with no loop or stall, airspeed at least 12.1 m/s, wingtip 0.51 m, height 1.81 to 29.83 m, motor share 0.048. counts_as_arrived matches a full-resolution recomputation. The new raw update keeps the signed nominal near zero (own test +0.02 and +0.69 %) while the applied thrust stays near 2 % of the weight when thrust does not matter. The generated keys and table match the runs, tdr check passes, and 311 tests pass. Left: sim/polar.py still computes an upwind VMG as progress times a cosine, the remaining motor share is called real without a test, three code comments still say unbiased, and one interval in the prose is wrong. The four remaining items were corrected."
   - id: K-018
     target:
+      - skim.ar20l_h20_c030_u10_ms
+      - skim.ar20l_h10_c030_u10_ms
+      - skim.ar20l_h03_c000_u10_ms
+      - skim.alb_h03_c000_u10_ms
+      - skim.ar20l_dih10_h03_c000_u10_ms
+      - skim.ar20l_std_u16_h180_ms
+      - skim.ar20l_skid_u16_h180_ms
+      - skim.ar20l_skiddih10_u16_h180_ms
+      - skim.alb_skiddih10_u16_h180_ms
+      - skid.ar20l_blade_d20_roll_over_aileron
+      - skid.ar20l_roll_moment_max_nm
+      - skid.ar20l_w10_dl10_trigger_1cm_m
+      - skid.blade_skimmer_check_10ms_n
+      - heavy.ar20_m06_u10_ms
+      - heavy.ar20_m03_p20_w
+      - heavy.ar20_stress_caps_deflection
+      - heavy.ar20_stiff_caps_factor
+    tier: T2
+    method: independent_model
+    result: partial
+    by: checker
+    date: 2026-10-31
+    detail: "Re-solved six skim cells from seeds 20 to 25 (12.855, 12.071, 11.382, 9.112, 10.317 and 10.983 with 10 deg dihedral, all as recorded) and replayed them with independent point-mass equations, own COARE 3.5 roughness and DOP853: closure within 2e-4, single shooting closes, wind gain equals drag loss, load factor within 0.3 percent of its limit, tip within 1 cm below the clearance between nodes, skim 1.39 s of 7.40 s. On the arc the bank sweeps 50 to 62 deg, the load factor is 1.6 to 2.8 and the tip moves over the water at a crab angle of 18 to 30 deg to the heading, so the blade's 5 deg misalignment does not hold; a fixed blade passes the ailerons' authority near 1 cm. The albatross-like glider's h(180) of 0.16 m/s reproduces (0.11 to 0.17 from five starts, 0.10 to 0.14 with a 1.5 cm clearance). The best wing's h(180) used the Reynolds number of the fastest course; at its own it is -6.15, -3.51 and -2.89 m/s at 16 m/s. Reflex kinematics, WingShape geometry and lift share, the induced drag (within 1 percent of a Trefftz optimum), heavy soaring minima (12.31, 12.26) and level-flight power (within 0.6 percent) agree. The spar factors hold only for the pultruded tube modulus of 35 GPa, and the tube result depends on the catalogue's 1 mm diameter steps and 2 mm walls. Dihedral's roll due to the skid's sideslip and the wing's bending are not modelled. The document was corrected."
+  - id: K-019
+    target:
       - climate.so_year_below_dsmin_share
       - climate.np_year_below_best_share
       - climate.so_spell_dsmin_p99_h

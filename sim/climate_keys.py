@@ -6,8 +6,8 @@ their climate_keys markers (the values show in the generated value table of docs
 prose of the docs cites the keys, never the numbers).
 
 Key names, with region r in so (Southern Ocean), np (North Pacific), home (the home operating area,
-private:loc-01), season s in djf, mam, jja, son, year, threshold t in u6, dsmin (ds.min_u10_ms), skim11
-(11 m/s) and best (wing.best_u10_min_ms), and aircraft a in albatross (the albatross-like glider, spells
+private:loc-01), season s in djf, mam, jja, son, year, threshold t in u6, dsmin (ds.min_u10_ms), skim
+(skim.ar20l_dih10_h03_c000_u10_ms) and best (wing.best_u10_min_ms), and aircraft a in albatross (the albatross-like glider, spells
 below dsmin) and best (the best wing of the wing sizing, spells below best):
 
 - climate.<r>_<s>_u10_{mean,p10,p50,p90}_ms and climate.<r>_<s>_below_<t>_share; climate.<r>_year_u10_std_ms
@@ -35,8 +35,9 @@ BASIS = "docs/02-form.md#wind-climate"
 REGIONS = ("so", "np", "home")
 REGION_NAME = {"so": "Southern Ocean", "np": "North Pacific", "home": "home area"}
 SEASONS = ("djf", "mam", "jja", "son", "year")
-THRESHOLDS = ("u6", "dsmin", "skim11", "best")
-THR_NAME = {"u6": "6 m/s", "dsmin": "ds.min_u10_ms", "skim11": "11 m/s", "best": "wing.best_u10_min_ms"}
+THRESHOLDS = ("u6", "dsmin", "skim", "best")
+THR_NAME = {"u6": "6 m/s", "dsmin": "ds.min_u10_ms", "skim": "skim.ar20l_dih10_h03_c000_u10_ms",
+            "best": "wing.best_u10_min_ms"}
 AIRCRAFT = (("albatross", "dsmin"), ("best", "best"))
 AC_NAME = {"albatross": "albatross-like glider", "best": "best wing"}
 

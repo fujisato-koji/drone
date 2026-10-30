@@ -90,9 +90,9 @@ REGIONS = ("so", "np", "home")
 SEASONS = {"djf": (12, 1, 2), "mam": (3, 4, 5), "jja": (6, 7, 8), "son": (9, 10, 11),
            "year": tuple(range(1, 13))}
 
-# The fourth threshold is not a record value: 11 m/s is the best soaring minimum the skim study found
-# with a skid and dihedral, on its own branch (not yet in the record); it is used here as a plain number.
-SKIM_U10_MS = 11.0
+# The skim study's best soaring minimum: the best wing (AR 20, SD7037, ballast to the mass limit) with
+# 10 deg dihedral, the 0.3 m floor and the skid touching the water (docs/02-form.md#wingtip-skim).
+SKIM_KEY = "skim.ar20l_dih10_h03_c000_u10_ms"
 CALM_U10_MS = 6.0
 SPELL_PCTS = (50, 90, 99)
 HOURS_PER_YEAR = 8766.0
@@ -100,8 +100,8 @@ HS_LEVELS_M = (2.0, 3.0)
 
 
 def thresholds() -> dict:
-    """Name -> u10 threshold (m/s): u6, dsmin (ds.min_u10_ms), skim11, best (wing.best_u10_min_ms)."""
-    return {"u6": CALM_U10_MS, "dsmin": record.value("ds.min_u10_ms"), "skim11": SKIM_U10_MS,
+    """Name -> u10 threshold (m/s): u6, dsmin (ds.min_u10_ms), skim (SKIM_KEY), best (wing.best_u10_min_ms)."""
+    return {"u6": CALM_U10_MS, "dsmin": record.value("ds.min_u10_ms"), "skim": record.value(SKIM_KEY),
             "best": record.value("wing.best_u10_min_ms")}
 
 
@@ -286,7 +286,7 @@ def prepare(point, cache, private_dir):
         hs = d["waves"]["wave_height"]
         s.update(hs=hs, tp=d["waves"]["wave_peak_period"], tm=d["waves"]["wave_period"],
                  swell=swell_lower_bound(hs, u))
-        # hours without a value are left out of each statistic (the peak period ends 2024-11-18, K-018)
+        # hours without a value are left out of each statistic (the peak period ends 2024-11-18, K-019)
         s["missing_hours"].update(hs=int(np.isnan(hs).sum()), tp=int(np.isnan(s["tp"]).sum()))
     if not point["private"]:
         s["grid"] = {"wind": d.get("wind_grid"), "waves": d.get("waves_grid")}
@@ -300,7 +300,7 @@ def _pct(x, p):
 
 
 def _r(x):
-    """A finite float or None; the analysis keeps full precision and sim.climate_keys rounds once (K-018)."""
+    """A finite float or None; the analysis keeps full precision and sim.climate_keys rounds once (K-019)."""
     return None if x is None or not np.isfinite(x) else float(x)
 
 
@@ -349,7 +349,7 @@ def spell_table(series, thr, merge_break=None) -> dict:
         for h in (24, 72):
             row[f"hours_share_in_ge{h}h"] = _share(float(x[x >= h].sum()), tot) if tot else None
         # how often a spell longer than the percentile spell comes, per point and year of the series
-        # (the season's spells over all the years), and the spell a random weak hour lies in (K-018)
+        # (the season's spells over all the years), and the spell a random weak hour lies in (K-019)
         for p in (90, 99):
             lim = row[f"p{p}_h"]
             row[f"per_year_longer_than_p{p}"] = (float((x > lim).sum()) / point_years
@@ -468,7 +468,7 @@ def analyse(cache, private_dir) -> dict:
            "period": {"start": START_DATE, "end": END_DATE, "step": "1 h, UTC"},
            "inputs": {"thresholds_ms": thresholds(), "threshold_keys": {
                "u6": "plain 6 m/s", "dsmin": "ds.min_u10_ms", "best": "wing.best_u10_min_ms",
-               "skim11": "plain 11 m/s, the skim study's best with skid and dihedral (its branch)"},
+               "skim": SKIM_KEY},
                "avionics_w": av, "aircraft": acs, "insolation_kwh_m2_day": insol,
                "solar_cell_eff": SOLAR_CELL_EFF, "solar_coverage": SOLAR_COVERAGE,
                "survival_hs_m": record.value("ds.survival_hs_m"),

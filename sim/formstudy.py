@@ -1302,5 +1302,407 @@ def wave_study4(path=WAVE4_PATH, n=30, seeds=(0,), workers=4, names=WAVE_AIRCRAF
     return result
 
 
+# ---- skim study (D-018, docs/02-form.md#wingtip-skim)
+SKIM_PATH = os.path.join("sim", "out", "skim_study.json")
+SKIM_FLOORS = (2.0, 1.0, 0.5, 0.3)            # body floor h_min (m)
+# wingtip clearances after ds.clearance_min_m (R-12's design point, read from the record): the
+# control library's 0.3 m (dsopt's default), 0.1 m, and 0 (the skid touches)
+SKIM_TIPS_EXTRA = (0.3, 0.1, 0.0)
+SKIM_MARGINS = dict(n_frac=0.8, mu_frac=0.9, v_factor=1.2)   # wingopt.MARGINS without h_min
+# (label, inner deg, outer deg, break eta); see dsopt.WingShape
+SKIM_SHAPES = (("dihedral 5 deg", 5.0, 5.0, 1.0), ("dihedral 10 deg", 10.0, 10.0, 1.0),
+               ("outer panel 10 deg from 0.5", 0.0, 10.0, 0.5),
+               ("outer panel 20 deg from 0.5", 0.0, 20.0, 0.5))
+SKIM_LEVER_TIPS = (0.3, 0.0)
+SKIM_SEEDS = (0, 1, 2, 3, 4, 5)
+SKIM_STOP_AFTER = 3
+SKIM_AIRCRAFT = ("ar20-sd7037-limit", "ar20-sd7037-none", "albatross-3m")
+
+
+def skim_aircraft(name):
+    """(make_ac(re), wingopt Design or None, Reynolds number to start from) for a skim-study name:
+    albatross-3m (fixed polar), the wing pass's best design (3.0 m, AR 20, SD7037, ballast to
+    ds.mass_max_kg as in wingopt.ballast_grid) and the same wing without ballast."""
+    if name == "albatross-3m":
+        ac = by_name(name)
+        return (lambda re: ac), None, None
+    from sim import wingopt as w
+    from sim.record import value
+    if name == "ar20-sd7037-limit":
+        bal = w.ballast_to_mass(3.0, 20.0, w.RHO_A["base"], value("ds.mass_max_kg") - 1e-3)
+    elif name == "ar20-sd7037-none":
+        bal = 0.0
+    else:
+        raise ValueError(name)
+    d = w.Design(3.0, 20.0, airfoil="SD7037", ballast=bal)
+    _, _, chord, vs = w.basics(d)
+    return (lambda re: w.build_aircraft(d, re)), d, w.re_of(1.3 * vs, chord)
+
+
+def skim_collocation(row):
+    """(col, x) of a skim_study row with a stored solution: the Collocation of its aircraft,
+    Reynolds number, floor, clearance and wing shape with the skim margins, at the profile of its
+    u10 (COARE 3.5), and its decision vector."""
+    from sim.dsopt import Collocation, WingShape, profile_for
+    mk, _, _ = skim_aircraft(row["aircraft"])
+    sh = row.get("shape")
+    shape = None if sh is None else WingShape(sh["inner_deg"], sh["outer_deg"], sh["eta"])
+    col = Collocation(mk(row.get("re_used")), profile_for(row["u10"], "log", roughness="coare35"),
+                      "min_wind", "travel", 40, h_min=row["h_min"],
+                      h_tip_min=row["h_tip_min"], tip_model="geometric", midpoints=True, rate_limits=True,
+                      rate_model="pb2v", n_min=0.0, wing_shape=shape, **SKIM_MARGINS)
+    return col, np.asarray(row["x"])
+
+
+def skim_tip_stats(col, x):
+    """Where the lowest wing point is in a flat-sea cycle: its height, the bank, airspeed, the
+    horizontal speed over the water (centre's ground velocity; the rotation of the tip about the
+    centre is neglected), the curvature of the tip height at its minimum (parabola through the
+    nodes around it) and the time the tip spends within 0.1 m of its minimum (linear between
+    nodes)."""
+    S, C, T, u = col.unpack(x)
+    N = col.N
+    from sim.dsopt import _tip_heights
+    tip = _tip_heights(col, S[:, 2], C[:, 1], S[:, 4])
+    i0 = int(np.argmin(tip))
+    dt = T / (N - 1)
+    V, g, p, z = S[i0, 3], S[i0, 4], S[i0, 5], S[i0, 2]
+    U = u * float(col.prof.f(z))
+    vx, vy = V * np.cos(g) * np.cos(p) + U, V * np.cos(g) * np.sin(p)
+    per = np.concatenate([tip[:-1], tip[:-1], tip[:-1]])   # node N-1 is node 0 of the next cycle
+    j = i0 % (N - 1) + (N - 1)
+    tt = np.arange(-2, 3) * dt
+    a2 = float(np.polyfit(tt, per[j - 2:j + 3], 2)[0])
+    fine = np.interp(np.linspace(0.0, N - 1, 40 * (N - 1) + 1), np.arange(N), tip)
+    return {"tip_min_m": float(tip[i0]), "tip_t_s": float(i0 * dt), "bank_at_tip_deg": float(np.degrees(abs(C[i0, 1]))),
+            "z_at_tip_m": float(z), "V_at_tip_ms": float(V), "water_speed_at_tip_ms": float(np.hypot(vx, vy)),
+            "tip_curvature_ms2": 2.0 * a2, "time_within_0p1_s": float(np.mean(fine < tip[i0] + 0.1) * T),
+            "bank_max_deg": float(np.degrees(np.abs(C[:, 1]).max())),
+            "tip_active": bool(tip[i0] - col.h_tip < 0.02)}
+
+
+def _skim_solve(make_ac, d, re, h_min, tip, shape, warm, seeds=SKIM_SEEDS):
+    """Minimum wind of one cell: cold starts (seeds, the first SKIM_STOP_AFTER that converge) and every warm
+    start, the lowest converged u10 kept; then, for a wingopt design, one more Reynolds pass warm
+    from it when the polar scale at the cycle's mean airspeed differs by more than wingopt.SCALE_TOL
+    (as wingopt.solve_a). Returns (row, x)."""
+    from sim.dsopt import WingShape, solve_min_wind
+    from sim import wingopt as w
+    t0 = time.time()
+    kw = dict(z0_mode="self_consistent", roughness="coare35", u10_ref=10.0, kind="log",
+              cycle="travel", n=40, h_min=h_min, h_tip_min=tip, tip_model="geometric",
+              midpoints=True, rate_limits=True, rate_model="pb2v", n_min=0.0, replay_check=True,
+              return_x=True, wing_shape=None if shape is None else WingShape(*shape), **SKIM_MARGINS)
+
+    def best_of(ac, starts):
+        cands = []
+        if starts is None:
+            if seeds:
+                cands.append(("cold", solve_min_wind(ac, seeds=seeds, stop_after=SKIM_STOP_AFTER, **kw)))
+            starts = warm
+        for label, xw in starts:
+            cands.append((label, solve_min_wind(ac, x0=xw, seeds=seeds, cold_fallback=False, **kw)))
+        ok = [c for c in cands if c[1][0]["success"]]
+        tried = {c[0]: (float(c[1][0]["u10"]) if c[1][0]["success"] else None) for c in cands}
+        return (min(ok, key=lambda c: c[1][0]["u10"]) if ok else None), tried
+
+    best, tried = best_of(make_ac(re), None)
+    re_cycle, passes = None, 1
+    if best is not None and d is not None:
+        nexp = w.AIRFOILS[d.airfoil][3]
+        chord = w.basics(d)[2]
+        re_cycle = w.re_of(w.mean_airspeed(best[1][2], best[1][1]), chord)
+        if abs(w._scale(re_cycle, nexp) / w._scale(re, nexp) - 1.0) > w.SCALE_TOL:
+            b2, t2 = best_of(make_ac(re_cycle), [("re pass", best[1][1])])
+            passes = 2
+            if b2 is not None:
+                best, re = b2, re_cycle
+                re_cycle = w.re_of(w.mean_airspeed(best[1][2], best[1][1]), chord)
+            tried.update({"re pass": t2["re pass"]})
+    row = {"h_min": h_min, "h_tip_min": tip, "shape": None if shape is None else WingShape(*shape).describe(),
+           "success": best is not None, "tried": tried, "re_used": re, "re_cycle": re_cycle,
+           "re_passes": passes, "runtime_s": time.time() - t0}
+    if best is None:
+        return row, None
+    label, (info, x, col) = best
+    row.update({"start": label, "u10": float(info["u10"]), "period": float(info["period"]),
+                "z_min": float(info["z_min"]), "z_max": float(info["z_max"]), "n_max": float(info["n_max"]),
+                "rc_tip_min": info.get("rc_tip_min"), "rc_h_min": info.get("rc_h_min"),
+                "v_stall": float(col.ac.v_stall), "mass": float(col.ac.mass), "span": float(col.ac.span)})
+    row.update(skim_tip_stats(col, x))
+    row["x"] = [float("%.9g" % v) for v in np.asarray(x)]   # scaled decision vector (dsopt.Collocation.pack)
+    return row, np.asarray(x)
+
+
+def skim_task(job):
+    """One aircraft: the floor and clearance grid from the tightest cell to the loosest (each cell
+    warm-started from its tighter neighbours, whose solutions are feasible in it); then the cells
+    that failed once more, from the loosest back, warm from their looser neighbours and with six
+    more seeds; then the geometry levers at the lowest floor that solved, for SKIM_LEVER_TIPS."""
+    from sim.record import value
+    name, progress = job
+    make_ac, d, re = skim_aircraft(name)
+    tips = (float(value("ds.clearance_min_m")),) + SKIM_TIPS_EXTRA
+    rows, sols = [], {}
+
+    def note(row):
+        row["aircraft"] = name
+        rows.append(row)
+        print("skim %s floor %.1f tip %.2f %s: ok=%s u10=%s (%.0f s)" % (
+            name, row["h_min"], row["h_tip_min"], row.get("lever") or "flat", row["success"],
+            "%.2f" % row["u10"] if row["success"] else "-", row["runtime_s"]), flush=True)
+        if progress:
+            with open(progress, "a") as fh:
+                fh.write(json.dumps(row) + "\n")
+
+    for ti, c in enumerate(tips):
+        first_le = next((f for f in SKIM_FLOORS if f <= c), None)
+        for fi, h in enumerate(SKIM_FLOORS):
+            if h <= c and h != first_le:   # the tip constraint implies the floor: same problem
+                same = dict(sols[(ti, SKIM_FLOORS.index(first_le))][0], h_min=h, same_as_floor=first_le,
+                            runtime_s=0.0)
+                sols[(ti, fi)] = (same, sols[(ti, SKIM_FLOORS.index(first_le))][1])
+                note(same)
+                continue
+            warm = []
+            for key, lab in (((ti - 1, fi), "tighter tip"), ((ti, fi - 1), "higher floor")):
+                if key in sols and sols[key][1] is not None:
+                    warm.append((lab, sols[key][1]))
+            row, x = _skim_solve(make_ac, d, re, h, c, None, warm)
+            if row["success"] and row.get("re_cycle"):
+                re = row["re_used"]
+            sols[(ti, fi)] = (row, x)
+            note(row)
+    for ti in reversed(range(len(tips))):
+        c = tips[ti]
+        first_le = next((f for f in SKIM_FLOORS if f <= c), None)
+        for fi in reversed(range(len(SKIM_FLOORS))):
+            row0 = sols[(ti, fi)][0]
+            if row0["success"] or row0.get("same_as_floor") is not None:
+                continue
+            warm = [(lab, sols[key][1]) for key, lab in (((ti + 1, fi), "looser tip"), ((ti, fi + 1), "lower floor"))
+                    if key in sols and sols[key][1] is not None]
+            row, x = _skim_solve(make_ac, d, row0.get("re_used") or re, SKIM_FLOORS[fi], c, None, warm,
+                                 seeds=tuple(s_ + 6 for s_ in SKIM_SEEDS))
+            row["backfill"] = True
+            row["runtime_s"] += row0["runtime_s"]
+            rows.remove(row0)
+            sols[(ti, fi)] = (row, x)
+            note(row)
+            if SKIM_FLOORS[fi] == first_le:   # the copies of this cell
+                for fj, h in enumerate(SKIM_FLOORS):
+                    old = sols[(ti, fj)][0]
+                    if old.get("same_as_floor") == first_le:
+                        rows.remove(old)
+                        sols[(ti, fj)] = (dict(row, h_min=h, same_as_floor=first_le, runtime_s=0.0), x)
+                        note(sols[(ti, fj)][0])
+    for c in SKIM_LEVER_TIPS:
+        ti = tips.index(c)
+        solved = [fi for fi in range(len(SKIM_FLOORS)) if sols[(ti, fi)][0]["success"]]
+        if not solved:
+            continue
+        fi = max(solved)
+        h = SKIM_FLOORS[fi]
+        base = sols[(ti, fi)]
+        prev = None
+        for label, gi, go, eta in SKIM_SHAPES:
+            warm = [("flat wing", base[1])] + ([("previous lever", prev)] if prev is not None else [])
+            row, x = _skim_solve(make_ac, d, base[0].get("re_used") or re, h, c, (gi, go, eta), warm)
+            row["lever"] = label
+            row["flat_u10"] = base[0].get("u10")
+            note(row)
+            prev = x if x is not None else prev
+    return rows
+
+
+def skim_study(path=SKIM_PATH, workers=2, names=SKIM_AIRCRAFT, progress=None):
+    """Minimum wind against the body floor and the wingtip clearance, with the wingtip constraint
+    kept (geometric tip, heights and the tip held at the midpoints), on a flat sea with COARE 3.5
+    (self-consistent z0) and the control library's other margins (load factor 0.8 of the limit,
+    0.9 of the bank limit, 1.2 times the stall speed, the pb2v roll and lift-coefficient rates),
+    for albatross-3m and the wing pass's AR 20 SD7037 design with and without ballast; then
+    dihedral and a bent-up outer panel (dsopt.WingShape) at the lowest floor that solved.
+    Writes path (sim/out/skim_study.json)."""
+    from concurrent.futures import ProcessPoolExecutor
+    from sim import record
+    from sim.record import value
+    t0 = time.time()
+    jobs = [(nm, progress) for nm in names]
+    rows = []
+    with ProcessPoolExecutor(workers) as ex:
+        for r in ex.map(skim_task, jobs, chunksize=1):
+            rows += r
+    paths = ["sim/formstudy.py", "sim/dsopt.py", "sim/wingopt.py", "sim/aircraft.py",
+             "sim/aircraft_models.py", "sim/seawind.py", "record/values.yaml"]
+    out = {"meta": record.meta("python -c \"from sim import formstudy; formstudy.skim_study()\"", paths),
+           "settings": {"floors_m": list(SKIM_FLOORS),
+                        "tips_m": [float(value("ds.clearance_min_m"))] + list(SKIM_TIPS_EXTRA),
+                        "margins": SKIM_MARGINS, "seeds": list(SKIM_SEEDS), "stop_after": SKIM_STOP_AFTER,
+                        "shapes": [list(s) for s in SKIM_SHAPES], "lever_tips_m": list(SKIM_LEVER_TIPS),
+                        "roughness": "coare35 self-consistent", "n": 40, "replay_check": True},
+           "rows": rows, "runtime_s": time.time() - t0}
+    with open(path, "w", newline="\n") as fh:
+        json.dump(out, fh, indent=1)
+        fh.write("\n")
+    return out
+
+
+# ---- support values of the skim configurations (docs/02-form.md#wingtip-skim)
+SKIM_UPWIND_PATH = os.path.join("sim", "out", "skim_upwind.json")
+SKIM_UPWIND_AIRCRAFT = ("ar20-sd7037-limit", "albatross-3m")
+# (label, body floor, tip clearance, WingShape arguments)
+SKIM_UPWIND_CONFIGS = (("standard", 2.0, 0.3, None), ("skid", 1.0, 0.0, None),
+                       ("skid, dihedral 10 deg", 1.0, 0.0, (10.0, 10.0, 1.0)))
+SKIM_UPWIND_U10 = (13.0, 16.0)
+SKIM_UPWIND_CHI = (90.0, 135.0, 180.0)   # deg from downwind
+
+
+def _skim_re(name, path=SKIM_PATH):
+    """Reynolds number to start a wing design from: the skim study's standard cell (floor 2 m,
+    clearance 0.3 m) if its output exists, else 1.3 times the stall speed."""
+    mk, d, re = skim_aircraft(name)
+    try:
+        with open(path) as fh:
+            for r in json.load(fh)["rows"]:
+                if (r["aircraft"] == name and not r.get("lever") and r["success"] and r["h_min"] == 2.0
+                        and r["h_tip_min"] == 0.3 and r.get("re_used")):
+                    return r["re_used"]
+    except (OSError, ValueError, KeyError):
+        pass
+    return re
+
+
+def _skim_course(ac, prof, u10, chi, h_min, tip, shape, starts, seeds=SKIM_SEEDS):
+    """Support value h(chi): dsopt max_speed toward chi at u10 with the skim study's margins, from
+    cold starts (the first SKIM_STOP_AFTER of seeds that converge) and every warm start; the
+    largest converged progress is kept. Returns (label, (info, x, col)) or None, and the tries."""
+    from sim.dsopt import WingShape, solve
+    kw = dict(mode="max_speed", cycle="travel", n=40, u10=u10, chi=np.radians(chi), h_min=h_min,
+              h_tip_min=tip, tip_model="geometric", midpoints=True, rate_limits=True,
+              rate_model="pb2v", n_min=0.0, replay_check=True, return_x=True,
+              wing_shape=None if shape is None else WingShape(*shape), **SKIM_MARGINS)
+    cands = []
+    if seeds:
+        cands.append(("cold", solve(ac, prof, seeds=seeds, stop_after=SKIM_STOP_AFTER, **kw)))
+    for label, x0 in starts:
+        cands.append((label, solve(ac, prof, x0=x0, **kw)))
+    ok = [c for c in cands if c[1][0]["success"]]
+    tried = {c[0]: (float(c[1][0]["speed_along_chi"]) if c[1][0]["success"] else None) for c in cands}
+    return (max(ok, key=lambda c: c[1][0]["speed_along_chi"]) if ok else None), tried
+
+
+SKIM_UPWIND_RE_TOL = 0.01      # polar scale tolerance of the per-course Reynolds iteration
+SKIM_UPWIND_RE_PASSES = 4
+
+
+def _skim_course_own_re(mk, d, re_start, prof, u10, chi, h_min, tip, shape, starts, seeds=SKIM_SEEDS):
+    """_skim_course with the polar at the course's own Reynolds number: after the first pass at
+    re_start, each further pass re-solves warm at the Reynolds number of the cycle's mean airspeed
+    until the polar scale changes by less than SKIM_UPWIND_RE_TOL (at most SKIM_UPWIND_RE_PASSES
+    passes; a failed pass keeps the previous one). Returns (best, tried, re, passes, scale ratio
+    of the final cycle's own Reynolds number against the one solved)."""
+    from sim import wingopt as w
+    best, tried = _skim_course(mk(re_start), prof, u10, chi, h_min, tip, shape, starts, seeds=seeds)
+    re, passes = re_start, 1
+    if d is None or best is None:
+        return best, tried, re, passes, None
+    nexp = w.AIRFOILS[d.airfoil][3]
+    chord = w.basics(d)[2]
+
+    def ratio(b, re_):
+        return w._scale(w.re_of(w.mean_airspeed(b[1][2], b[1][1]), chord), nexp) / w._scale(re_, nexp)
+
+    while passes < SKIM_UPWIND_RE_PASSES and abs(ratio(best, re) - 1.0) > SKIM_UPWIND_RE_TOL:
+        re_new = w.re_of(w.mean_airspeed(best[1][2], best[1][1]), chord)
+        b2, t2 = _skim_course(mk(re_new), prof, u10, chi, h_min, tip, shape,
+                              [("re pass", np.asarray(best[1][1]))], seeds=())
+        tried["re pass %d" % passes] = t2["re pass"]
+        passes += 1
+        if b2 is None:
+            break
+        best, re = b2, re_new
+    return best, tried, re, passes, float(ratio(best, re))
+
+
+def skim_upwind_task(job):
+    """One aircraft at one u10: the three configurations in turn, each course warm-started from the
+    previous course and from the same course of the previous configuration, plus cold starts, and
+    for a wing design solved at its own Reynolds number (_skim_course_own_re; the first version
+    took the Reynolds number of the fastest course for every course, K-018); a course that failed
+    is tried again warm from the solved courses with six more seeds."""
+    from sim.dsopt import profile_for
+    name, u10 = job
+    mk, d, _ = skim_aircraft(name)
+    re0 = _skim_re(name) if d is not None else None
+    prof = profile_for(u10, "log", roughness="coare35")
+    rows, prev_cfg = [], {}
+    for label, h_min, tip, shape in SKIM_UPWIND_CONFIGS:
+        t0 = time.time()
+        sols, tries, res, passes, ratios = {}, {}, {}, {}, {}
+        prev_x, re_prev = None, re0
+        for chi in SKIM_UPWIND_CHI:
+            starts = [(lab, x) for lab, x in (("previous course", prev_x), ("previous configuration", prev_cfg.get(chi)))
+                      if x is not None]
+            best, tried, re, npass, rat = _skim_course_own_re(mk, d, re_prev, prof, u10, chi, h_min, tip, shape, starts)
+            tries[chi] = tried
+            if best is not None:
+                sols[chi], res[chi], passes[chi], ratios[chi] = best, re, npass, rat
+                prev_x, re_prev = np.asarray(best[1][1]), re
+        for chi in SKIM_UPWIND_CHI:   # a course that failed: again, warm from every solved course, six more seeds
+            if chi in sols:
+                continue
+            starts = [("course %g" % c, np.asarray(s_[1][1])) for c, s_ in sols.items()]
+            best, tried, re, npass, rat = _skim_course_own_re(mk, d, re_prev, prof, u10, chi, h_min, tip, shape, starts,
+                                                              seeds=tuple(s_ + 6 for s_ in SKIM_SEEDS))
+            tries[chi].update({"backfill " + k: v for k, v in tried.items()})
+            if best is not None:
+                sols[chi], res[chi], passes[chi], ratios[chi] = best, re, npass, rat
+        for chi in SKIM_UPWIND_CHI:
+            row = {"aircraft": name, "u10": u10, "config": label, "h_min": h_min, "h_tip_min": tip,
+                   "shape": None if shape is None else list(shape), "chi_deg": chi,
+                   "success": chi in sols, "tried": {k: v for k, v in tries.get(chi, {}).items()},
+                   "re_used": res.get(chi), "re_passes": passes.get(chi), "re_scale_ratio": ratios.get(chi)}
+            if chi in sols:
+                start, (info, x, col) = sols[chi]
+                row.update({"start": start, "h_ms": float(info["speed_along_chi"]),
+                            "ground_speed_ms": float(info["ground_speed"]), "period": float(info["period"]),
+                            "z_min": float(info["z_min"]), "z_max": float(info["z_max"]),
+                            "rc_tip_min": info.get("rc_tip_min"), "x": [float("%.9g" % v) for v in np.asarray(x)]})
+                row.update(skim_tip_stats(col, x))
+            rows.append(row)
+            print("upwind %s u10 %g %s chi %g: ok=%s h=%s" % (name, u10, label, chi, row["success"],
+                                                           "%.2f" % row["h_ms"] if row["success"] else "-"), flush=True)
+        prev_cfg = {chi: np.asarray(s_[1][1]) for chi, s_ in sols.items()}
+        print("upwind %s u10 %g %s done (%.0f s)" % (name, u10, label, time.time() - t0), flush=True)
+    return rows
+
+
+def skim_upwind_study(path=SKIM_UPWIND_PATH, workers=2):
+    """Support values h(90), h(135) and h(180) at u10 13 and 16 m/s for the best wing and the
+    albatross-like glider in the standard configuration (floor 2 m, clearance 0.3 m), with the
+    skid (floor 1 m, clearance 0) and with the skid and 10 deg of dihedral. Writes path."""
+    from concurrent.futures import ProcessPoolExecutor
+    from sim import record
+    t0 = time.time()
+    jobs = [(nm, u) for nm in SKIM_UPWIND_AIRCRAFT for u in SKIM_UPWIND_U10]
+    rows = []
+    with ProcessPoolExecutor(workers) as ex:
+        for r in ex.map(skim_upwind_task, jobs, chunksize=1):
+            rows += r
+    paths = ["sim/formstudy.py", "sim/dsopt.py", "sim/wingopt.py", "sim/aircraft.py",
+             "sim/aircraft_models.py", "sim/seawind.py", "record/values.yaml"]
+    out = {"meta": record.meta("python -c \"from sim import formstudy; formstudy.skim_upwind_study()\"", paths),
+           "settings": {"configs": [list(c) for c in SKIM_UPWIND_CONFIGS], "u10": list(SKIM_UPWIND_U10),
+                        "chi_deg": list(SKIM_UPWIND_CHI), "margins": SKIM_MARGINS, "seeds": list(SKIM_SEEDS),
+                        "stop_after": SKIM_STOP_AFTER, "frame": "chi from downwind: 90 across, 180 straight upwind",
+                        "re_tol": SKIM_UPWIND_RE_TOL, "re_passes_max": SKIM_UPWIND_RE_PASSES,
+                        "roughness": "coare35 at u10", "n": 40, "replay_check": True},
+           "rows": rows, "runtime_s": time.time() - t0}
+    with open(path, "w", newline="\n") as fh:
+        json.dump(out, fh, indent=1)
+        fh.write("\n")
+    return out
+
+
 if __name__ == "__main__":
     run()

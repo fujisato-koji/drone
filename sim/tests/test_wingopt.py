@@ -202,5 +202,43 @@ class TestSteadyGuess(unittest.TestCase):
             self.assertAlmostEqual(info["power_w"], col.avg_power(x), 6)
 
 
+class TestHeavy(unittest.TestCase):
+    """The heavier-than-limit study (Q-067, Q-069): ds.mass_max_kg is waived, not changed."""
+
+    def test_heavy_design_mass_and_feasibility(self):
+        d = w.heavy_design(20.0, 8.0)
+        self.assertAlmostEqual(w.basics(d)[0]["mass"], 8.0, 9)
+        self.assertTrue(w.feasibility(d)[0])
+        self.assertFalse(w.feasibility(w.Design(3.0, 20.0, ballast=d.ballast))[0])   # the limit still holds
+        self.assertTrue(d.key.endswith("|heavy"))
+        self.assertEqual(value("ds.mass_max_kg"), 3.0)
+
+    def test_stiff_caps_factor_is_mass_independent(self):
+        a, b = w.cap_stiffness(w.heavy_design(16.0, 4.0)), w.cap_stiffness(w.heavy_design(16.0, 10.0))
+        self.assertAlmostEqual(a["stiffness_factor"], b["stiffness_factor"], 9)
+        self.assertGreater(a["stiffness_factor"], 1.0)
+        self.assertAlmostEqual(b["caps_stiff_kg"] / a["caps_stiff_kg"], b["caps_stress_kg"] / a["caps_stress_kg"], 9)
+
+    def test_steady_flight_at_its_own_reynolds_number(self):
+        d = w.heavy_design(20.0, 3.0)
+        st = w.steady_flight(d, 9.0, 20.0, 1.6e5)
+        self.assertLess(abs(w.re_of(st["V"], w.basics(d)[2]) / st["re"] - 1.0), 2e-3)
+        hi = w.steady_flight(d, 9.0, 20.0, 1.6e5, iters=0)   # the polar at the start's Reynolds number
+        self.assertLess(hi["power_w"], st["power_w"])   # a higher Reynolds number flatters the steady flight
+        self.assertAlmostEqual(st["wh_per_km"], st["power_w"] / (3.6 * st["progress"]), 12)
+
+    def test_spar_tube_check(self):
+        light, heavy = w.spar_tube_check(w.heavy_design(16.0, 3.0)), w.spar_tube_check(w.heavy_design(16.0, 10.0))
+        self.assertTrue(light["fits"])
+        self.assertLessEqual(light["deflection_ratio"], value("spar.deflection_limit") + 1e-12)
+        self.assertFalse(heavy["fits"])
+        self.assertTrue(w.spar_tube_check(w.heavy_design(16.0, 10.0), free=True)["fits"])   # K-018: a catalogue artefact
+
+    def test_caps_factor_scales_with_the_modulus(self):
+        d = w.heavy_design(20.0, 3.0)
+        a, b = w.cap_stiffness(d), w.cap_stiffness(d, modulus=4.0 * value("spar.carbon_modulus"))
+        self.assertAlmostEqual(b["deflection_ratio_stress_sized"], a["deflection_ratio_stress_sized"] / 4.0, 9)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -386,5 +386,53 @@ class TestReplayRefinePreset(unittest.TestCase):
             self.assertTrue(info["replay_pass"])
 
 
+class TestWingShape(unittest.TestCase):
+    """Dihedral and a bent-up outer panel for the wingtip constraint (skim study, D-018)."""
+
+    KW = dict(tip_model="geometric", midpoints=True, rate_limits=True, rate_model="pb2v",
+              n_min=0.0, n_frac=0.8, mu_frac=0.9)
+
+    def test_flat_shape_reproduces_the_flat_wing(self):
+        from sim.dsopt import WingShape
+        prof = profile_for(10.0)
+        a = Collocation(by_name("albatross-3m"), prof, "min_wind", "travel", 9, **self.KW)
+        b = Collocation(by_name("albatross-3m"), prof, "min_wind", "travel", 9,
+                        wing_shape=WingShape(0.0, 0.0, 1.0), **self.KW)
+        x = a.guess(np.random.default_rng(3))
+        np.testing.assert_allclose(b.ineq_fun(x), a.ineq_fun(x), atol=1e-12)
+        np.testing.assert_allclose(b.ineq_jac(x), a.ineq_jac(x), atol=1e-12)
+
+    def test_geometry_and_lift_share(self):
+        from sim.dsopt import WingShape, shaped_aircraft
+        g = np.radians(10.0)
+        d = WingShape.dihedral(10.0)
+        self.assertAlmostEqual(d.kappa, np.cos(g), 12)
+        mu = np.radians(60.0)
+        (dep, _, _), = d.low_points(1.5, mu, 0.0)
+        self.assertAlmostEqual(dep, 1.5 * np.sin(mu - g), 12)
+        o = WingShape.outer_panel(20.0, 0.5)
+        self.assertAlmostEqual(o.outer_share, 1.0 - 2.0 / np.pi * (0.5 * np.sqrt(0.75) + np.pi / 6.0), 12)
+        tip, brk = o.low_points(1.5, np.radians(10.0), 0.0)   # below the panel angle the break is lowest
+        self.assertGreater(brk[0], tip[0])
+        tip, brk = o.low_points(1.5, mu, 0.0)
+        self.assertAlmostEqual(tip[0], 1.5 * (0.5 * np.sin(mu) + 0.5 * np.sin(mu - np.radians(20.0))), 12)
+        ac = by_name("albatross-3m")
+        s = shaped_aircraft(ac, d)
+        self.assertAlmostEqual(s.v_stall, ac.v_stall / np.sqrt(np.cos(g)), 10)
+        self.assertAlmostEqual(s.k_induced, ac.k_induced / np.cos(g) ** 2, 12)
+        with self.assertRaises(ValueError):
+            Collocation(ac, profile_for(10.0), "min_wind", "travel", 9, tip_model="abs", wing_shape=d)
+
+    def test_jacobians_with_shapes(self):
+        from sim.dsopt import WingShape
+        prof = profile_for(10.0)
+        for sh in (WingShape.dihedral(10.0), WingShape.outer_panel(25.0, 0.6)):
+            col = Collocation(by_name("albatross-3m"), prof, "min_wind", "travel", 9,
+                              wing_shape=sh, **self.KW)
+            rng = np.random.default_rng(2)
+            x = col.guess(rng) * (1 + 0.01 * rng.standard_normal(col.nv))
+            _fd_check(self, col, x)
+
+
 if __name__ == "__main__":
     unittest.main()
