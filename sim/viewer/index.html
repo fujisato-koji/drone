@@ -96,6 +96,13 @@
       <div class="ctl step"><label for="flPos" data-i="stPos" data-t="flPosTip"></label><select id="flPos" data-t="flPosTip"><option value="mast" data-i="posMast"></option><option value="click" data-i="posClick"></option></select></div>
       <div class="dim hint" id="flPt"></div>
       <div class="ctl step"><label for="flHead" data-i="stHead" data-t="flHeadTip"></label><select id="flHead" data-t="flHeadTip"><option value="up" data-i="hUp"></option><option value="down" data-i="hDown"></option><option value="left" data-i="hLeft"></option><option value="right" data-i="hRight"></option><option value="ref" data-i="hRef"></option></select></div>
+      <div class="ctl step"><label for="flTgt" data-i="stTgt" data-t="flTgtTip"></label><select id="flTgt" data-t="flTgtTip"><option value="none" data-i="tgtNone"></option><option value="click" data-i="tgtClick"></option></select></div>
+      <div id="tgtCtl" style="display:none">
+        <div class="ctl"><button id="flPlace" type="button" data-t="placeTip"></button></div>
+        <div class="dim hint" id="tgtPt"></div>
+        <div class="ctl"><label for="tgtDist" data-i="tgtDist" data-t="tgtDistTip"></label><input id="tgtDist" type="number" min="100" max="20000" step="100" value="1000" style="width:64px" data-t="tgtDistTip"><select id="tgtDir" data-t="tgtDistTip"><option value="up" data-i="tdUp"></option><option value="down" data-i="tdDown"></option><option value="across" data-i="tdAcross"></option></select><button id="tgtSet" type="button" data-i="tgtSet" data-t="tgtDistTip"></button></div>
+        <div class="card"><div class="ct" data-i="hullT" data-t="hullTip"></div><canvas id="hullCv" width="280" height="200" data-t="hullTip"></canvas></div>
+      </div>
       <div class="ctl step"><label for="flWorld" data-i="stWorld" data-t="flWorldTip"></label><select id="flWorld" data-t="flWorldTip"><option value="flat" data-i="worldFlat"></option><option value="truth" data-i="worldTruth"></option></select></div>
       <div class="ctl step"><label for="flMotor" data-i="stMotor" data-t="flMotorTip"></label><select id="flMotor" data-t="flMotorTip"><option value="off" data-i="motorOff"></option><option value="on" data-i="motorOn"></option></select></div>
       <div class="ctl step"><label for="flPw" data-i="stPw" data-t="flPwTip"></label><select id="flPw" data-t="flPwTip"><option value="free" data-i="pwFree"></option><option value="normal" data-i="pwNormal" selected></option><option value="costly" data-i="pwCostly"></option></select></div>
@@ -146,6 +153,7 @@
 <script src="envsea.js"></script>
 <script src="gust.js"></script>
 <script src="mpc.js"></script>
+<script src="navigator.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -240,6 +248,22 @@ const I18N = {
     f_pw: '平均電力', f_pw_tip: 'モータの電力量を飛行時間で割った値です。電力量は、推力と対気速度の積を、プロペラとモータの効率の積で割って、時間で積分したものです。モータ補助が「あり」のときだけ値が入ります。',
     f_on: 'モータを回した割合', f_on_tip: '推力が機体重量の 1 % を超えていた時間の割合です。',
     f_wh: '使った電力量', f_wh_tip: '飛行のあいだに使った電力量です。',
+    stTgt: '目的地', flTgtTip: '「なし」では、「向き」で決めた方向へ飛びます。「海面をクリックして置く」では、目的地を置くと、航法が風に対する進み方（風上へはジグザグ）を5秒ごとに選び、機体はその周期軌道を飛びます。到着すると止まります。',
+    tgtNone: 'なし（決めた向きに飛ぶ）', tgtClick: '海面をクリックして置く',
+    placeLaunch: 'クリックで置くもの: 出発点', placeTarget: 'クリックで置くもの: 目的地',
+    placeTip: '海面をクリックしたときに置くものを切り替えます。出発点と目的地は別々に置けます。',
+    tgtPtSet: (x, y) => '目的地: (' + x + ', ' + y + ') m', tgtPtHint: '目的地はまだありません。',
+    tgtDist: '距離で置く', tgtDistTip: '出発点から、指定した距離と風に対する向きに目的地を置きます。表示している海より遠くへ置くときに使います。',
+    tdUp: '風上', tdDown: '風下', tdAcross: '風に直角（左）', tgtSet: '置く',
+    needTarget: '先に、目的地を置いてください。',
+    hullT: '到達できる平均の地上速度', hullTip: '周期軌道を飛んだときの平均の地上速度を、機体を中心に点で描きます（上が北）。青は風だけで飛ぶ周期軌道、橙はモータ補助の周期軌道です。青い線で囲んだ範囲が、風だけで交互に飛んで得られる平均の速度で、風上の側にはかかりません。風上へ進むにはモータが要る理由です。矢印は風の吹く向き、緑の線は目的地の向き、黄色の点は選んでいる周期軌道です。',
+    hullWind: (u) => '風速 ' + u + ' m/s の表',
+    f_tgt: '目的地までの距離', f_tgt_tip: '機体から目的地までの水平距離です。',
+    f_vmg: '目的地へ近づく速さ（VMG）', f_vmg_tip: '目的地までの距離が縮む速さです。直近の 30 秒の平均で、ジグザグの途中は小さく見えます。',
+    f_tacks: '向き変えの回数', f_tacks_tip: '航法が周期軌道の組を替えた回数です。風上へ進むときのジグザグの折り返しと、風下で左右を替える回数を合わせて数えます。',
+    f_nav: '航法の状態', f_nav_tip: '直進は目的地へまっすぐ、風上へのジグザグと風下での交互は、二つの周期軌道を交互に飛んでいる状態です。進めないは、どの周期軌道の組でも目的地へ近づけない状態です。',
+    nv_direct: '直進', nv_up: '風上へのジグザグ', nv_down: '風下での交互', nv_none: '進めない', nv_arrived: '到着',
+    nvMotor: '（モータ周期）', endA: '目的地に着いた',
     mpcMs: (l, m) => '直近 ' + l + ' ms、平均 ' + m + ' ms', mpcSel: (u, c, set) => 'u10 ' + u + ' m/s、chi ' + c + ' deg、余裕 ' + set,
     endC: '中心が水面に触れた', endT: '翼端が水面に触れた', endN: '数値が壊れた', endS: '止めた',
     refMpc: 'MPC（周期軌道の表）',
@@ -342,6 +366,22 @@ const I18N = {
     f_pw: 'Average electric power', f_pw_tip: 'Electric energy divided by flight time. The energy is thrust times airspeed divided by the product of propeller and motor efficiency, integrated over time. Filled when Motor assist is On.',
     f_on: 'Share of time with the motor on', f_on_tip: 'Share of the time the thrust was above 1 % of the weight.',
     f_wh: 'Electric energy used', f_wh_tip: 'Electric energy used during the flight.',
+    stTgt: 'Destination', flTgtTip: 'With "None" the aircraft flies the heading chosen above. With "Click the sea to place it" the navigation picks, every 5 s, how to make good towards the destination relative to the wind (zigzag when it is upwind) and the aircraft flies that cycle. It stops on arrival.',
+    tgtNone: 'None (fly the chosen heading)', tgtClick: 'Click the sea to place it',
+    placeLaunch: 'A click places: launch point', placeTarget: 'A click places: destination',
+    placeTip: 'Switches what a click on the sea places. The launch point and the destination are placed separately.',
+    tgtPtSet: (x, y) => 'Destination: (' + x + ', ' + y + ') m', tgtPtHint: 'No destination yet.',
+    tgtDist: 'Place by distance', tgtDistTip: 'Places the destination at the given distance from the launch point in a direction relative to the wind. Use it to place the destination farther than the sea on screen.',
+    tdUp: 'Upwind', tdDown: 'Downwind', tdAcross: 'Across the wind (left)', tgtSet: 'Place',
+    needTarget: 'Place a destination first.',
+    hullT: 'Achievable mean ground velocities', hullTip: 'The mean ground velocity of each cycle, drawn as a point around the aircraft (north is up). Blue: cycles flown on the wind alone; orange: motor-assisted cycles. The blue outline is what flying them in turn gives; it does not reach the upwind side, which is why going upwind needs the motor. The arrow is where the wind blows to, the green line the direction of the destination, the yellow dot the cycle in use.',
+    hullWind: (u) => 'table at u10 = ' + u + ' m/s',
+    f_tgt: 'Distance to destination', f_tgt_tip: 'Horizontal distance from the aircraft to the destination.',
+    f_vmg: 'Speed towards destination (VMG)', f_vmg_tip: 'How fast the distance to the destination shrinks, averaged over the last 30 s; it looks small in the middle of a zigzag.',
+    f_tacks: 'Turns (tacks and gybes)', f_tacks_tip: 'How often the navigation switched the cycle it flies: the turns of the zigzag upwind plus the changes of side downwind.',
+    f_nav: 'Navigation state', f_nav_tip: 'Direct is straight at the destination; upwind tacking and downwind gybing fly two cycles in turn; no progress means no pair of cycles gets closer.',
+    nv_direct: 'direct', nv_up: 'upwind tacking', nv_down: 'downwind gybing', nv_none: 'no progress', nv_arrived: 'arrived',
+    nvMotor: ' (motor cycle)', endA: 'Reached the destination',
     mpcMs: (l, m) => 'last ' + l + ' ms, mean ' + m + ' ms', mpcSel: (u, c, set) => 'u10 ' + u + ' m/s, chi ' + c + ' deg, margins ' + set,
     endC: 'centre touched the water', endT: 'wingtip touched the water', endN: 'numerical failure', endS: 'stopped',
     refMpc: 'MPC (cycle table)',
@@ -811,6 +851,7 @@ function mpcRequest(t) {
     world: { kind: kind, wind: { ustar: W.ustar, z0: W.z0, ex: W.ex, ey: W.ey, karman: C.karman },
       stokes: STOKES, maxComponents: MPC_MAXC },
     u10: W.u10, chiDeg: MPC_CHI };   // W.u10 and W.ustar: the mean wind of this moment, no gusts
+  if (NV.on && NV.cmd) navRequestFields(req);   // the navigator names the cycle (or a steady motor leg)
   if (kind === 'truth') {
     req.world.comps = {};
     for (const key of ['a', 'k', 'omega', 'phase', 'dx', 'dy', 'urel']) req.world.comps[key] = CO[key].slice(0, N);
@@ -823,6 +864,149 @@ function mpcRequest(t) {
 function mpcControls(t) {
   if (!MP.plan) return [Math.sqrt(FL.ac.cd0 / FL.ac.k_induced), 0];
   return MPC.planControls(MP.plan, t - MP.plan.t0);
+}
+
+
+// ---------------------------------------------------------------- destination (navigation on the velocity hull)
+// With a destination the navigator (navigator.js, main thread) picks the cycle every NAV_EVERY_S of
+// flight from the hull of the aircraft's library cycles at the mean wind of that moment; the worker's
+// planner flies the cycle it is told to (req.cycle). Without one nothing changes.
+const NAV_EVERY_S = 5, NAV_RADIUS = 200;
+const NV = { on: false, src: null, nav: null, cmd: null, target: null, tacks: 0, hist: [], place: 'launch',
+  trackN: 0, tackN: 0, layKey: '' };
+const TRACK_MAX = 4000, TACK_MAX = 400;
+const trackPos = new Float32Array(TRACK_MAX * 3);
+const trackGeo = new THREE.BufferGeometry();
+trackGeo.setAttribute('position', new THREE.BufferAttribute(trackPos, 3));
+trackGeo.setDrawRange(0, 0);
+const trackLine = new THREE.Line(trackGeo, new THREE.LineBasicMaterial({ color: 0xffffff }));
+trackLine.frustumCulled = false; scene.add(trackLine);
+const tackPos = new Float32Array(TACK_MAX * 3);
+const tackGeo = new THREE.BufferGeometry();
+tackGeo.setAttribute('position', new THREE.BufferAttribute(tackPos, 3));
+tackGeo.setDrawRange(0, 0);
+const tackPts = new THREE.Points(tackGeo, new THREE.PointsMaterial({ color: 0xff5ad6, size: 7, sizeAttenuation: false }));
+tackPts.frustumCulled = false; scene.add(tackPts);
+const tgtMark = new THREE.Group();
+tgtMark.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 30, 0)]),
+  new THREE.LineBasicMaterial({ color: 0xff7a1a })));
+{
+  const ring = [];
+  for (let i = 0; i <= 64; i++) ring.push(new THREE.Vector3(NAV_RADIUS * Math.cos(i / 64 * 2 * Math.PI), 0.4, NAV_RADIUS * Math.sin(i / 64 * 2 * Math.PI)));
+  tgtMark.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ring), new THREE.LineBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.6 })));
+}
+tgtMark.visible = false; scene.add(tgtMark);
+const layGeo = [0, 1].map(() => new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(1, 0, 0)]));
+const layLines = layGeo.map((g) => { const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.8 })); l.visible = false; l.frustumCulled = false; scene.add(l); return l; });
+const windFromDeg = () => -90 - Math.atan2(W.ey, W.ex) * 180 / Math.PI;   // meteorological, as navigator.js wants it
+// library entries the navigator may use for an aircraft: all with the motor on, the soaring ones without
+function navEntries(name, motorOn) {
+  const LM = window.LIBRARY_MOTOR && window.LIBRARY_MOTOR.aircraft && window.LIBRARY_MOTOR.aircraft[name];
+  if (!LM) return [];
+  return LM.filter((e) => e.vx !== undefined && (motorOn || e.kind === 'soaring'));
+}
+function navStep(t) {
+  const cmd = NV.nav.step(t, [FL.s[0], FL.s[1]], W.u10, windFromDeg(), [NV.target.x, NV.target.y]);
+  NV.cmd = cmd;
+  if (cmd.tacked) {
+    NV.tacks++;
+    if (NV.tackN < TACK_MAX) { tackPos.set([FL.s[0], 0.6, -FL.s[1]], 3 * NV.tackN); NV.tackN++; tackGeo.setDrawRange(0, NV.tackN); tackGeo.attributes.position.needsUpdate = true; }
+  }
+  return cmd;
+}
+function navCycleKey() {
+  const pt = NV.cmd.point;
+  return { kind: pt.kind, u10: pt.entry.u10, chi_deg: pt.entry.chi_deg, mirror: pt.side < 0 };
+}
+// fields of a planner request that name the navigator's choice: a library cycle, or the entry of a steady motor leg
+function navRequestFields(req) {
+  const pt = NV.cmd.point;
+  if (pt.steady) req.entry = NAV.steadyEntry(pt); else req.cycle = navCycleKey();
+  req.guideSig = [3.0, 3.0, 0.15, 0.1];   // the heading is held to 0.1 rad (sim.mpc.NAV_GUIDE_SIG)
+}
+// the sector of directions the soaring cycles alone can fetch the destination from: two laylines
+function navLaylines() {
+  const hull = NV.src.at(W.u10), psi = NAV.psiOf(windFromDeg());
+  const ok = (deg) => { const a = deg * Math.PI / 180; return hull.rayPoint([Math.cos(a), Math.sin(a)]) !== null; };
+  let lo = 0, hi = 0;
+  if (!ok(0)) return null;
+  while (lo > -180 && ok(lo - 1)) lo--;
+  while (hi < 180 && ok(hi + 1)) hi++;
+  if (hi - lo >= 359) return null;
+  return [lo, hi].map((deg) => {   // direction of travel at the edge; the layline runs back from the destination
+    const a = deg * Math.PI / 180, w = NAV.toWorld(psi, [Math.cos(a), Math.sin(a)]);
+    return w;
+  });
+}
+function updateLaylines() {
+  const show = NV.src && NV.target && $('flTgt').value === 'click';
+  const key = show ? [$('flAc').value, $('flMotor').value, Math.round(W.u10 * 2), Math.round(windFromDeg()), NV.target.x, NV.target.y].join('|') : '';
+  if (key === NV.layKey) return;
+  NV.layKey = key;
+  layLines.forEach((l) => { l.visible = false; });
+  if (!show) return;
+  const lay = navLaylines();
+  if (!lay) return;
+  lay.forEach((w, i) => {
+    const L = 3000, pos = layGeo[i].attributes.position;
+    pos.setXYZ(0, NV.target.x, 0.5, -NV.target.y);
+    pos.setXYZ(1, NV.target.x - L * w[0], 0.5, -(NV.target.y - L * w[1]));
+    pos.needsUpdate = true; layLines[i].visible = true;
+  });
+}
+function setTarget(x, y) {
+  NV.target = { x: +x.toFixed(1), y: +y.toFixed(1) };
+  tgtMark.position.set(NV.target.x, 0, -NV.target.y); tgtMark.visible = true;
+  NV.layKey = ''; renderFl();
+}
+function navSource() {
+  const name = $('flAc').value, es = navEntries(name, $('flMotor').value === 'on');
+  NV.src = es.length ? new NAV.HullSource(es) : null;
+  return es;
+}
+// the hull inset: mean ground velocities around the aircraft symbol, north up
+function drawHull() {
+  const cv = $('hullCv'); if (!cv || !NV.src) return;
+  const g = cv.getContext('2d'), w = cv.width, h = cv.height, cx = w / 2, cy = h / 2;
+  const hull = NV.src.at(W.u10), psi = NAV.psiOf(windFromDeg());
+  let vmax = 10;
+  hull.points.forEach((p) => { vmax = Math.max(vmax, Math.hypot(p.vx, p.vy)); });
+  vmax = Math.ceil(vmax / 10) * 10;
+  const sc = (Math.min(w, h) / 2 - 14) / vmax;
+  const px = (p) => { const v = NAV.toWorld(psi, [p.vx, p.vy]); return [cx + sc * v[0], cy - sc * v[1]]; };
+  g.clearRect(0, 0, w, h);
+  g.strokeStyle = '#888'; g.fillStyle = '#888'; g.lineWidth = 1; g.font = '10px sans-serif';
+  for (let r = 10; r <= vmax; r += 10) { g.beginPath(); g.arc(cx, cy, r * sc, 0, 2 * Math.PI); g.stroke(); g.fillText(r + '', cx + r * sc + 2, cy - 2); }
+  // convex hull of the soaring points
+  const hullOf = (list) => {
+    const P = list.map(px).sort((a, b) => a[0] - b[0] || a[1] - b[1]), cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    if (P.length < 3) return P;
+    const lo = [], up = [];
+    P.forEach((q) => { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); });
+    P.slice().reverse().forEach((q) => { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); });
+    return lo.slice(0, -1).concat(up.slice(0, -1));
+  };
+  const soar = hull.points.filter((p) => p.kind === 'soaring'), mot = hull.points.filter((p) => p.kind === 'motor');
+  const poly = (list, col, dash) => {
+    const H = hullOf(list); if (H.length < 2) return;
+    g.strokeStyle = col; g.setLineDash(dash); g.beginPath(); H.forEach((q, i) => (i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]))); g.closePath(); g.stroke(); g.setLineDash([]);
+  };
+  if (soar.length) poly(soar, '#1b6fd1', []);
+  if (mot.length) poly(hull.points, '#e08a1a', [4, 3]);
+  hull.points.forEach((p) => { const q = px(p); g.fillStyle = p.kind === 'motor' ? '#e08a1a' : '#1b6fd1'; g.beginPath(); g.arc(q[0], q[1], 2.5, 0, 2 * Math.PI); g.fill(); });
+  // wind arrow (the direction the wind blows to), at the top left
+  const wv = NAV.toWorld(psi, [1, 0]);
+  g.strokeStyle = '#555'; g.fillStyle = '#555'; g.lineWidth = 2; g.beginPath(); g.moveTo(24, 24); g.lineTo(24 + 16 * wv[0], 24 - 16 * wv[1]); g.stroke();
+  g.beginPath(); g.arc(24 + 16 * wv[0], 24 - 16 * wv[1], 3, 0, 2 * Math.PI); g.fill(); g.fillText('wind', 8, 12);
+  // direction of the destination
+  if (NV.target && FL.s) {
+    const dx = NV.target.x - FL.s[0], dy = NV.target.y - FL.s[1], dn = Math.hypot(dx, dy) || 1;
+    g.strokeStyle = '#2aa84a'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + (w / 2 - 14) * dx / dn, cy - (h / 2 - 14) * dy / dn); g.stroke();
+  }
+  // the aircraft symbol and the cycle in use
+  g.fillStyle = '#222'; g.beginPath(); g.moveTo(cx, cy - 6); g.lineTo(cx + 5, cy + 5); g.lineTo(cx - 5, cy + 5); g.closePath(); g.fill();
+  if (NV.cmd && NV.cmd.point) { const q = px(NV.cmd.point); g.fillStyle = '#f2c200'; g.strokeStyle = '#222'; g.lineWidth = 1; g.beginPath(); g.arc(q[0], q[1], 5, 0, 2 * Math.PI); g.fill(); g.stroke(); }
+  g.fillStyle = '#555'; g.fillText(tx('hullWind', hull.u10), 4, h - 4);
 }
 
 // aircraft shape: two thin wing boxes and a fuselage, true size; local +X forward, +Y up, +Z right
@@ -871,8 +1055,8 @@ const ptMark = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THRE
   new THREE.LineBasicMaterial({ color: 0xf2c200 }));
 ptMark.visible = false; ptMark.frustumCulled = false; scene.add(ptMark);
 
-const flRows = ['el', 'v', 'h', 'dist', 'e', 'n', 'ph', 'u', 'ref', 'ms', 'late', 'sel', 'end', 'pw', 'on', 'wh', 'rf'];
-const flTipped = ['ms', 'late', 'sel', 'end', 'pw', 'on', 'wh', 'rf'];   // rows with a tooltip on the label
+const flRows = ['el', 'v', 'h', 'dist', 'e', 'n', 'ph', 'u', 'ref', 'ms', 'late', 'sel', 'end', 'pw', 'on', 'wh', 'rf', 'tgt', 'vmg', 'tacks', 'nav'];
+const flTipped = ['ms', 'late', 'sel', 'end', 'pw', 'on', 'wh', 'rf', 'tgt', 'vmg', 'tacks', 'nav'];   // rows with a tooltip on the label
 $('flro').innerHTML = flRows.map((r) => '<tr><td data-i="f_' + r + '"' + (flTipped.includes(r) ? ' data-t="f_' + r + '_tip"' : '') + '></td><td id="fl_' + r + '"></td></tr>').join('');
 const setFl = (k, s) => { $('fl_' + k).textContent = s; };
 for (const r of flRows) setFl(r, '-');
@@ -881,11 +1065,12 @@ let flNoteFn = () => '', flSplashFn = () => '';
 const renderFl = () => {
   $('flNote').textContent = flNoteFn(); $('flSplash').textContent = flSplashFn();
   $('flPt').textContent = FL.pt ? tx('ptSet', FL.pt.x, FL.pt.y) : tx('ptHint');
+  $('tgtPt').textContent = NV.target ? tx('tgtPtSet', NV.target.x, NV.target.y) : tx('tgtPtHint');
 };
 dyn.push(renderFl);
 if (!AIRCRAFT || !Object.keys(AIRCRAFT).length) {
   flNoteFn = () => tx('aircraftMissing');
-  for (const id of ['flAc', 'flPos', 'flHead', 'flWorld', 'flMotor', 'flPw', 'flGo', 'flStop', 'flChase']) $(id).disabled = true;
+  for (const id of ['flAc', 'flPos', 'flHead', 'flTgt', 'flWorld', 'flMotor', 'flPw', 'flGo', 'flStop', 'flChase']) $(id).disabled = true;
 } else {
   const names = Object.keys(AIRCRAFT).filter((n) => n !== 'flyingwing-2m'
     && (!HAVE_MPC || (libFor(n, true) || []).length || (libFor(n, false) || []).length));
@@ -911,18 +1096,52 @@ function launchPoint() {
   return { x: mx, y: my };
 }
 function stopFlight() { FL.on = false; if (!FL.end) FL.end = 'S'; }
+// destination controls
+const tgtMode = () => $('flTgt').value === 'click';
+function syncTgt() {
+  $('tgtCtl').style.display = tgtMode() ? '' : 'none';
+  if (!tgtMode()) { NV.place = 'launch'; tgtMark.visible = false; layLines.forEach((l) => { l.visible = false; }); NV.layKey = ''; }
+  else if (NV.target) tgtMark.visible = true;
+  if (tgtMode()) navSource();
+  renderPlace(); renderFl();
+}
+const renderPlace = () => { $('flPlace').textContent = tx(NV.place === 'target' ? 'placeTarget' : 'placeLaunch'); };
+dyn.push(renderPlace);
+$('flTgt').addEventListener('change', () => { NV.place = tgtMode() ? 'target' : 'launch'; syncTgt(); });
+$('flAc').addEventListener('change', () => { if (tgtMode()) { navSource(); NV.layKey = ''; } });
+$('flMotor').addEventListener('change', () => { if (tgtMode()) { navSource(); NV.layKey = ''; } });
+$('flPlace').addEventListener('click', () => { NV.place = NV.place === 'target' ? 'launch' : 'target'; renderPlace(); });
+$('tgtSet').addEventListener('click', () => {   // by distance and direction from the launch point
+  const p = launchPoint(), d = Math.max(100, +$('tgtDist').value || 1000), psi = NAV.psiOf(windFromDeg());
+  const dir = $('tgtDir').value, v = dir === 'up' ? [-1, 0] : dir === 'down' ? [1, 0] : [0, 1];   // wind frame; y is to the left of downwind
+  const w = NAV.toWorld(psi, v);
+  setTarget(p.x + d * w[0], p.y + d * w[1]);
+});
+syncTgt();
 function launch() {
   if (!AIRCRAFT) return;
   if ($('flPos').value === 'click' && !FL.pt) { flNoteFn = () => tx('needClick'); renderFl(); return; }
   const name = $('flAc').value, ac = AIRCRAFT[name];
   if (!HAVE_MPC) { flNoteFn = () => tx('libMissing'); renderFl(); return; }
-  const lib = libFor(name, $('flMotor').value === 'on');
+  const useNav = tgtMode();
+  if (useNav && !NV.target) { flNoteFn = () => tx('needTarget'); renderFl(); return; }
+  const lib = useNav ? navSource() : libFor(name, $('flMotor').value === 'on');
   if (!lib || !lib.length) { flNoteFn = () => tx('mpcNoLib'); renderFl(); return; }
   if (!mpcEnsureWorker()) return;
   const p = launchPoint();
   const psiW = Math.atan2(W.ey, W.ex);   // the heading of the mean wind
   // the highest node of the library cycle the planner starts from
-  const c0 = MPC.pickCycle(lib, W.u10, MPC_CHI * Math.PI / 180);
+  NV.on = false; NV.cmd = null; NV.tacks = 0; NV.hist = []; NV.trackN = 0; NV.tackN = 0;
+  trackGeo.setDrawRange(0, 0); tackGeo.setDrawRange(0, 0);
+  let c0 = MPC.pickCycle(lib, W.u10, MPC_CHI * Math.PI / 180);
+  if (useNav) {   // the first cycle is the navigator's
+    NV.nav = new NAV.HullNavigator(NV.src, { arrivalRadius: NAV_RADIUS,
+      steady: $('flMotor').value === 'on' ? new NAV.SteadyModel(NAV.steadyParams(MPC.makeAircraft(ac), MPC.MOTOR)) : null });
+    NV.nav.reset();
+    const cmd0 = NV.nav.step(0, [p.x, p.y], W.u10, windFromDeg(), [NV.target.x, NV.target.y]);
+    NV.cmd = cmd0; NV.on = true;
+    c0 = new MPC.Cycle(cmd0.point.steady ? NAV.steadyEntry(cmd0.point) : cmd0.point.entry, cmd0.point.side < 0);
+  }
   let k = 0;
   for (let i = 1; i < c0.z.length; i++) if (c0.z[i] > c0.z[k]) k = i;
   const zr = c0.z[k], V = c0.V[k], gam = c0.g[k], psiRef = c0.psi[k];
@@ -931,7 +1150,7 @@ function launch() {
   if (head === 'down') psi = psiW;
   else if (head === 'left') psi = psiW + Math.PI / 2;
   else if (head === 'right') psi = psiW - Math.PI / 2;
-  else if (head === 'ref' && psiRef !== null) psi = psiRef + psiW;
+  else if ((head === 'ref' || useNav) && psiRef !== null) psi = psiRef + psiW;
   FL.ac = ac; FL.end = null; FL.act = null;
   FL.motor = $('flMotor').value === 'on';
   FL.reflex = FL.motor && $('flReflex').checked;
@@ -948,7 +1167,7 @@ function launch() {
     const A = libActuators();
     FL.act = new MPC.Actuators(ac, { rateModel: A.rate_model, tau: A.tau_s, clRate: A.cl_rate_per_s, kPb2v: A.k_pb2v, delay: A.delay_s });
     MP.worker.postMessage({ type: 'init', ac: ac, entries: lib,
-      settings: FL.motor ? { motor: true, energyLevel: $('flPw').value, thrustSampling: 'sustained', foldSwitch: 'state' } : {}, actuators: A });
+      settings: FL.motor ? { motor: true, energyLevel: $('flPw').value, thrustSampling: 'sustained', foldSwitch: 'state', thrustUpdate: useNav ? 'raw' : 'clipped', hCeil: useNav ? 28.5 : null } : {}, actuators: A });
   }
   FL.s = [p.x, p.y, fSurface(p.x, p.y, T) + zr, V, gam, psi];
   FL.cl = 0; FL.mu = 0; FL.acc = 0; FL.el = 0; FL.trail = []; FL.splash = null; FL.started = true; FL.on = true;
@@ -970,6 +1189,7 @@ $('flStop').addEventListener('click', stopFlight);
     ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
     if (!ray.ray.intersectPlane(plane, hit)) return;
     if (Math.abs(hit.x - seaC.x) > HALF || Math.abs(-hit.z - seaC.y) > HALF) return;
+    if (tgtMode() && NV.place === 'target') { setTarget(hit.x, -hit.z); return; }
     FL.pt = { x: +hit.x.toFixed(1), y: +(-hit.z).toFixed(1) };
     $('flPos').value = 'click';
     renderFl();
@@ -989,6 +1209,18 @@ function flightAdvance(dtWanted, t0) {
     const t = t0 + i * FDT;
     envUpdate(t);   // the varying wind and the short waves at this step
     {
+      if (NV.on) {
+        if (Math.round(FL.el / FDT) % Math.round(((NV.cmd && NV.cmd.mode === 'direct') ? 1 : NAV_EVERY_S) / FDT) === 0) navStep(t);   // every second in the final approach
+        if (Math.hypot(NV.target.x - FL.s[0], NV.target.y - FL.s[1]) <= NAV_RADIUS) { FL.end = 'A'; stopFlight(); break; }
+        if (Math.round(FL.el / FDT) % Math.round(2 / FDT) === 0 && NV.trackN < TRACK_MAX) {
+          trackPos.set([FL.s[0], 0.5, -FL.s[1]], 3 * NV.trackN); NV.trackN++;
+          trackGeo.setDrawRange(0, NV.trackN); trackGeo.attributes.position.needsUpdate = true;
+        }
+        if (Math.round(FL.el / FDT) % Math.round(1 / FDT) === 0) {
+          NV.hist.push([FL.el, Math.hypot(NV.target.x - FL.s[0], NV.target.y - FL.s[1])]);
+          if (NV.hist.length > 31) NV.hist.shift();
+        }
+      }
       if (Math.round(FL.el / FDT) % MPC_EVERY === 0) mpcRequest(t);
       const ac = FL.ac, V = FL.s[3];
       let pc = mpcControls(t);
@@ -1073,6 +1305,17 @@ function updateFlightView() {
   setFl('on', FL.motor && FL.nStep ? (100 * FL.nOn / FL.nStep).toFixed(0) + ' %' : '-');
   setFl('wh', FL.motor ? (FL.eJ / 3600).toFixed(3) + ' Wh' : '-');
   setFl('rf', FL.reflex ? FL.rx.n + ' / ' + FL.rx.eJ.toFixed(1) + ' J' : '-');
+  if (NV.cmd && NV.target && FL.started && NV.on) {
+    const dnow = Math.hypot(NV.target.x - s[0], NV.target.y - s[1]);
+    setFl('tgt', dnow.toFixed(0) + ' m');
+    setFl('vmg', NV.hist.length > 1 ? ((NV.hist[0][1] - NV.hist[NV.hist.length - 1][1]) / Math.max(1e-9, NV.hist[NV.hist.length - 1][0] - NV.hist[0][0])).toFixed(1) + ' m/s' : '-');
+    setFl('tacks', String(NV.tacks));
+    const md = FL.end === 'A' ? 'arrived' : NV.cmd.mode;
+    const nm = { 'direct': 'nv_direct', 'upwind tacking': 'nv_up', 'downwind gybing': 'nv_down', 'no progress': 'nv_none', 'arrived': 'nv_arrived' }[md];
+    setFl('nav', tx(nm) + (NV.cmd.kind === 'motor' && md !== 'arrived' ? tx('nvMotor') : ''));
+  } else { setFl('tgt', '-'); setFl('vmg', '-'); setFl('tacks', '-'); setFl('nav', '-'); }
+  updateLaylines();
+  if (tgtMode()) drawHull();
   if (exhaust) {   // exhaust mark: length follows the thrust (full at 10 % of the weight)
     const fr = FL.motor ? FL.T / (0.1 * FL.ac.mass * Flight.G) : 0;
     exhaust.visible = FL.motor && FL.T > 0.01 * FL.ac.mass * Flight.G;

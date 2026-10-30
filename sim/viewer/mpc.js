@@ -334,11 +334,23 @@ function mpcFactory() {
   // entries: array of {u10, chi_deg, ...} for one aircraft
   function pickCycle(entries, u10Est, chiRad) {
     if (!entries || !entries.length) throw new Error('no cycles');
-    var u = null, i;
-    for (i = 0; i < entries.length; i++) {
-      if (u === null || Math.abs(entries[i].u10 - u10Est) < Math.abs(u - u10Est)) u = entries[i].u10;
+    var chiTol = 20, i, j, winds = [];
+    for (i = 0; i < entries.length; i++) if (winds.indexOf(entries[i].u10) < 0) winds.push(entries[i].u10);
+    winds.sort(function (p, q) { return Math.abs(p - u10Est) - Math.abs(q - u10Est); });   // stable: ties keep the library order
+    var chi = Math.abs(chiRad * 180 / Math.PI), gap = {}, u = null;
+    winds.forEach(function (w) {
+      var g = Infinity;
+      for (j = 0; j < entries.length; j++) if (entries[j].u10 === w) g = Math.min(g, Math.abs(entries[j].chi_deg - chi));
+      gap[w] = g;
+    });
+    for (i = 0; i < winds.length; i++) if (gap[winds[i]] <= chiTol) { u = winds[i]; break; }
+    if (u === null) {   // none within the tolerance: the smallest gap, ties to the nearer wind
+      u = winds[0];
+      for (i = 1; i < winds.length; i++) {
+        if (gap[winds[i]] < gap[u] || (gap[winds[i]] === gap[u] && Math.abs(winds[i] - u10Est) < Math.abs(u - u10Est))) u = winds[i];
+      }
     }
-    var chi = Math.abs(chiRad * 180 / Math.PI), best = null;
+    var best = null;
     for (i = 0; i < entries.length; i++) {
       if (entries[i].u10 !== u) continue;
       if (best === null || Math.abs(entries[i].chi_deg - chi) < Math.abs(best.chi_deg - chi)) best = entries[i];
@@ -348,9 +360,12 @@ function mpcFactory() {
 
   // Library cycle matched to the current state (sim.mpc.CycleGuide without the wave shift).
   var GUIDE_SIG = [3.0, null, 0.25, 0.6];
-  function Guide(cycle, world, t, s, psiW, horizon, wD, tauHint, hintWindow) {
+  var SWITCH_MATCH_MAX = 2.0, SWITCH_MAX_WAIT_S = 15.0;
+  var STEADY_SIG_H = 0.5, STEADY_SIG_PSI = 0.04, STEADY_W_D = 200.0;   // match to a steady reference: tight height, heavier terminal weight
+  function Guide(cycle, world, t, s, psiW, horizon, wD, tauHint, hintWindow, sig) {
     this.cycle = cycle; this.psiW = psiW; this.H = horizon; this.wD = wD;
-    this.sig = [GUIDE_SIG[0], 0.25 * cycle.vMean, GUIDE_SIG[2], GUIDE_SIG[3]];
+    var sg = sig || GUIDE_SIG;   // sig: [h, V or null, gamma, heading] tolerances of the match
+    this.sig = [sg[0], sg[1] ? sg[1] : 0.25 * cycle.vMean, sg[2], sg[3]];
     var x = s[0], y = s[1], z = s[2], V = s[3], g = s[4], psi = s[5];
     this.h0 = z - world.eta(x, y, t);
     var f0 = this.h0, f1 = V, f2 = g, f3 = wrap(psi - psiW);
@@ -372,6 +387,10 @@ function mpcFactory() {
     this.target = cycle.state(te);
     this.dEc = cycle.energy(te) - cycle.energy(this.tauS);
     this.E0 = G * this.h0 + 0.5 * V * V;
+    if (cycle.d.steady) {
+      this.sig[0] = Math.min(this.sig[0], STEADY_SIG_H); this.sig[3] = Math.min(this.sig[3], STEADY_SIG_PSI); this.wD = Math.max(this.wD, STEADY_W_D);   // see sim.mpc.CycleGuide
+      this.dEc = cycle.energy(te) - this.E0;
+    }   // a steady reference holds an energy level (see sim.mpc.CycleGuide)
   }
   // nominal controls at the knot times: Float64Array [cl knots..., mu knots...]
   Guide.prototype.nominal = function (knotsT) {
@@ -416,6 +435,10 @@ function mpcFactory() {
     for (k in DEFAULTS) this[k] = opt[k] !== undefined ? opt[k] : DEFAULTS[k];
     this.ac = ac;
     this.motor = !!opt.motor;
+    this.hCeil = opt.hCeil !== undefined && opt.hCeil !== null ? opt.hCeil : null;   // soft ceiling (m), null: off
+    this.wCeil = opt.wCeil !== undefined ? opt.wCeil : 200.0;
+    this.thrustUpdate = opt.thrustUpdate || 'clipped';   // 'raw': the update on the unclipped, symmetric perturbations; the signed nominal is unbiased, the applied (clipped) thrust is not (sim.mpc MPPIPlanner)
+    if (this.thrustUpdate !== 'clipped' && this.thrustUpdate !== 'raw') throw new Error('thrustUpdate');
     if ((this.thrustSampling !== 'basic' && this.thrustSampling !== 'sustained') ||
         (this.foldSwitch !== 'smooth' && this.foldSwitch !== 'state')) throw new Error('thrustSampling / foldSwitch');
     this.nu = this.motor ? 3 : 2;      // controls per knot: cl, mu (and the thrust T, N)
@@ -578,7 +601,8 @@ function mpcFactory() {
         var V = s[3], q = 0.5 * ac.rho * V * V * ac.wing_area, n = q * c3cmd / (ac.mass * G);
         var pen = this.wClear * Math.pow(Math.max(0.0, this.hClear - hc) / this.hClear, 2) +
           this.wN * Math.pow(Math.max(0.0, n - ac.n_max), 2) +
-          this.wStall * Math.pow(Math.max(0.0, vmin - V) / ac.v_stall, 2);
+          this.wStall * Math.pow(Math.max(0.0, vmin - V) / ac.v_stall, 2) +
+          (this.hCeil !== null ? this.wCeil * Math.pow(Math.max(0.0, hc - this.hCeil), 2) : 0.0);
         if (live) c += dt * pen;
         if (motor && live) c += dt * this.wEnergy * t2 * v0 / this.eta;   // electric energy of the step
         var hit = live && hc < 0.0;
@@ -596,7 +620,7 @@ function mpcFactory() {
 
   // The weighted MPPI update (MPPIPlanner.update). U: (2, nCtrl); Us: (S, 2, nCtrl).
   // Returns {U, ess, nDead}.
-  Planner.prototype.update = function (U, Us, S, cost, dead) {
+  Planner.prototype.update = function (U, Us, S, cost, dead, clipThrust) {
     var nc = this.nCtrl, nu = this.nu, i, j;
     var cmin = Infinity, nOk = 0, sum = 0, sum2 = 0, sumAll = 0, sum2All = 0;
     for (i = 0; i < S; i++) {
@@ -625,16 +649,16 @@ function mpcFactory() {
       for (i = 0; i < S; i++) acc += w[i] * (Us[i * nu * nc + j] - U[j]);
       out[j] = U[j] + acc;
     }
-    this._clip(out);
+    this._clip(out, clipThrust === false);
     return { U: out, ess: 1.0 / w2, nDead: nDead };
   };
 
-  Planner.prototype._clip = function (U) {   // U: (2, nCtrl) block at offset 0
+  Planner.prototype._clip = function (U, keepThrust) {   // U: (nu, nCtrl); keepThrust: leave the thrust row unclipped
     var ac = this.ac, nc = this.nCtrl;
     for (var j = 0; j < nc; j++) {
       U[j] = clamp(U[j], ac.cl_min, ac.cl_max);
       U[nc + j] = clamp(U[nc + j], -ac.mu_max, ac.mu_max);
-      if (this.motor) U[2 * nc + j] = clamp(U[2 * nc + j], 0.0, this.tMax);
+      if (this.motor && !keepThrust) U[2 * nc + j] = clamp(U[2 * nc + j], 0.0, this.tMax);
     }
     return U;
   };
@@ -687,7 +711,8 @@ function mpcFactory() {
   Planner.prototype.thrustNoise = function (eps, o) {
     var nc = this.nCtrl, j;
     if (this.thrustSampling === 'sustained' && this.rng.uniform() < SUSTAIN.pHold) {
-      var lvl = Math.abs(this.rng.next()) * this.sigmaHold;
+      var lvl = this.rng.next() * this.sigmaHold;
+      if (this.thrustUpdate !== 'raw') lvl = Math.abs(lvl);   // one-sided; with 'raw' symmetric about the nominal
       var a = Math.floor(this.rng.uniform() * nc), b = Math.floor(this.rng.uniform() * nc);
       var lo = Math.min(a, b), hi = Math.max(a, b);
       for (j = 0; j < nc; j++) eps[o + j] = (j >= lo && j <= hi) ? lvl : 0.0;
@@ -734,17 +759,29 @@ function mpcFactory() {
         Us.set(pv, (1 + nCand) * nu * nc);
       }
       var r = this.rollout(world, t, s, Us, S, guide, false);
-      var u = this.update(U, Us, S, r.cost, r.dead);
+      var UsUpd = Us;
+      if (this.motor && this.thrustUpdate === 'raw') {
+        // the thrust row of the update uses the perturbed values before the clip at zero (the clipped
+        // ones are all >= 0, so their weighted mean exceeds the nominal even when nothing asks for thrust)
+        UsUpd = Float64Array.from(Us);
+        for (i = 0; i < S; i++) {
+          if (i >= 1 && i <= nCand) continue;
+          if (prev !== null && i === 1 + nCand) continue;
+          for (j = 0; j < nc; j++) UsUpd[i * nu * nc + 2 * nc + j] = U[2 * nc + j] + (i === 0 ? 0 : eps[i * nu * nc + 2 * nc + j]);
+        }
+      }
+      var u = this.update(U, UsUpd, S, r.cost, r.dead, !(this.motor && this.thrustUpdate === 'raw'));
       U = u.U; ess = u.ess; nDead = u.nDead;
     }
     this.U = U;
     var fin = this.rollout(world, t, s, U, 1, guide, true);
     var times = new Float64Array(this.nsteps + 1);
     for (i = 0; i <= this.nsteps; i++) times[i] = i * this.dt;
+    var tMaxApplied = this.tMax;   // the applied thrust command is clipped (the nominal U may be unclipped)
     var plan = { knotsT: this.knotsT, cl: Float64Array.from(U.subarray(0, nc)),
       mu: Float64Array.from(U.subarray(nc, 2 * nc)), path: fin.paths[0], times: times,
       cost: fin.cost[0], ess: ess, nDead: nDead,
-      th: this.motor ? Float64Array.from(U.subarray(2 * nc, 3 * nc)) : null };
+      th: this.motor ? Float64Array.from(U.subarray(2 * nc, 3 * nc), function (v) { return clamp(v, 0.0, tMaxApplied); }) : null };
     plan.controls = function (tau) { return planControls(plan, tau); };
     return plan;
   };
@@ -826,17 +863,44 @@ function mpcFactory() {
       thrustTau: (opt.settings && opt.settings.motorValues || {}).thrustTauS }) : null;
     this.tauPrev = null;
   }
-  Controller.prototype.reset = function () { this.pl.reset(); this.tauPrev = null; };
-  // req: {t, s, act: {cl, mu, clCmd, muCmd} | null, world: spec, u10, chiDeg}
+  Controller.prototype.reset = function () { this.pl.reset(); this.tauPrev = null; this.prevCycle = null; this.switchWaitT = null; };
+  // req: {t, s, act: {cl, mu, clCmd, muCmd} | null, world: spec, u10, chiDeg, cycle?: {kind, u10, chi_deg, mirror}}
   Controller.prototype.plan = function (req) {
     var pl = this.pl, world = makeWorld(req.world), w = req.world.wind;
     var psiW = Math.atan2(w.ey, w.ex), chi = req.chiDeg * Math.PI / 180;
-    var cyc = pickCycle(this.entries, req.u10, chi);
+    var cyc;
+    if (req.entry) {   // a steady motor leg: its own entry (see navigator.js, steadyEntry)
+      cyc = new Cycle(req.entry, false);
+    } else if (req.cycle) {   // the navigator names the cycle: {kind, u10, chi_deg, mirror}
+      var ck = req.cycle, ent = null, q;
+      for (q = 0; q < this.entries.length; q++) {
+        var en = this.entries[q];
+        if (en.u10 === ck.u10 && en.chi_deg === ck.chi_deg && (en.kind || 'soaring') === ck.kind) { ent = en; break; }
+      }
+      if (ent === null) throw new Error('no such cycle ' + JSON.stringify(ck));
+      cyc = new Cycle(ent, !!ck.mirror);
+    } else cyc = pickCycle(this.entries, req.u10, chi);
+    var pc = this.prevCycle;
+    if (pc && (pc.d.kind || 'soaring') === 'soaring' && (cyc.d.kind || 'soaring') === 'soaring' &&
+        (pc.d !== cyc.d || pc.mirror !== cyc.mirror) && req.cycle) {
+      // a change between soaring cycles waits for the phase where the new cycle matches the present state
+      // (sim.mpc SWITCH_MATCH_MAX, SWITCH_MAX_WAIT_S): at any other phase the mirrored heading and bank are a jump
+      var probe = new Guide(cyc, world, req.t, req.s, psiW, pl.horizonS, pl.wD, null, undefined, req.guideSig);
+      if (this.switchWaitT === null || this.switchWaitT === undefined) this.switchWaitT = req.t;
+      if (probe.matchDist > SWITCH_MATCH_MAX && req.t - this.switchWaitT < SWITCH_MAX_WAIT_S) cyc = pc;
+      else this.switchWaitT = null;
+    } else this.switchWaitT = null;
+    if (this.prevCycle && (this.prevCycle.d !== cyc.d || this.prevCycle.mirror !== cyc.mirror)) this.tauPrev = null;   // another cycle: match its phase afresh
+    this.prevCycle = cyc;
     var guide = new Guide(cyc, world, req.t, req.s, psiW, pl.horizonS, pl.wD,
-      this.tauPrev === null ? null : this.tauPrev + pl.replanS);
+      this.tauPrev === null ? null : this.tauPrev + pl.replanS, undefined, req.guideSig);
     this.tauPrev = guide.tau0;
     var a = req.act;
     pl.actState = a ? [a.cl, a.mu, a.clCmd, a.muCmd].concat(pl.motor && a.T !== undefined && a.T !== null ? [a.T] : []) : null;
+    if (!a && pl.motor) {   // the very first plan: the actuators start at the cycle's own controls and thrust
+      var n0 = guide.nominal(pl.knotsT), th0 = guide.nominalThrust(pl.knotsT);
+      pl.actState = [n0[0], n0[pl.nCtrl], n0[0], n0[pl.nCtrl], th0[0]];
+    }
     var plan = pl.plan(world, req.t, req.s, guide);
     plan.t0 = req.t;
     plan.info = { tau0: guide.tau0, period: cyc.T, u10: cyc.d.u10, chiDeg: cyc.d.chi_deg,

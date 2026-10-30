@@ -7,7 +7,7 @@ import numpy as np
 
 from sim.aircraft_models import by_name
 from sim.dsopt import dyn, profile_for, thrust_max
-from sim.mpc import KEPT_AIRCRAFT, LIB_CHI_DEG, LIB_MOTOR_PATH, MARGIN_SETS, Cycle, CycleLibrary
+from sim.mpc import KEPT_AIRCRAFT, LIB_CHI_DEG, LIB_MOTOR_PATH, MARGIN_SETS, NAV_CHI_DEG, Cycle, CycleLibrary
 
 G = 9.80665
 
@@ -77,7 +77,8 @@ class TestMotorLibrary(unittest.TestCase):
                 self.assertGreater(e["power_avg_w"], 0.0)
                 self.assertGreater(e["speed_along_chi"], 0.5 * ac.v_best_ld * 0.99)
         chis = {c for e in self.ok for c in [e["chi_deg"]]}
-        self.assertTrue(chis <= set(LIB_CHI_DEG))
+        # the build's courses, the upwind-side courses of extend_motor_library and straight upwind (180)
+        self.assertTrue(chis <= set(LIB_CHI_DEG) | set(NAV_CHI_DEG) | {180.0})
 
     def test_entries_respect_their_margins_on_a_dense_replay(self):
         sets = dict(MARGIN_SETS)
@@ -85,7 +86,12 @@ class TestMotorLibrary(unittest.TestCase):
         for e in self.ok:
             ac = by_name(e["aircraft"])
             m = e["margins"]
-            self.assertEqual((m["h_min"], m["n_frac"], m["mu_frac"], m["v_factor"]), sets[e["margin_set"]])
+            want = sets[e["margin_set"]]
+            # the straight upwind motor cycles are solved with a raised minimum height (extend_motor_upwind)
+            self.assertEqual((m["n_frac"], m["mu_frac"], m["v_factor"]), want[1:])
+            self.assertGreaterEqual(m["h_min"], want[0])
+            if m["h_min"] > want[0]:
+                self.assertEqual(e["chi_deg"], 180.0)
             hmin, tipmin, S, C, dt = replay(e, ac)
             tag = "%s %s u10 %g chi %g (%s)" % (e["aircraft"], e["kind"], e["u10"], e["chi_deg"], e["margin_set"])
             self.assertGreaterEqual(hmin, m["h_min"] - 0.05, tag)
