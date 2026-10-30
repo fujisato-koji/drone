@@ -477,22 +477,75 @@ What it found:
 - Each design is a single run of a local optimizer from one start, and more starts move some results by up to a metre per second, so ranks closer than that are not reliable (K-014).
 - So on a flat sea in neutral air, with the margins a controller needs, the wind alone carries the drone only from about 13 m/s; the routes to R-02's design point are the swell (see the cycles synchronized with the waves), the extra shear under swell and in stable air (Q-061), and the motor (Q-055).
 
-## Navigation: the speed polar and the tactical layer {#navigation}
+## Navigation: the speed polar, the velocity hull and the tactical layer {#navigation}
 
-The planner flies a cycle at the course it is given; which course to take towards a target is the navigation's job, and like a yacht the drone cannot sail straight into the wind (Q-066).
+The planner flies a cycle; which cycle to fly towards a target is the navigation's job, and like a yacht the drone cannot sail straight into the wind (Q-066).
 Albatrosses keep headings about lit.albatross_preferred_heading_deg off the wind and route like yacht racers (P73), and can travel upwind (P43).
 
 The speed polar (`python -m sim.polar`, `sim/out/ds_polar.json`): the progress speed along each course relative to the wind, from the cycle optimizer with the control library's margins, COARE 3.5 and the roll and lift-coefficient rates, for the albatross-like glider, the baseline and the sealed hull at 9 to 20 m/s.
 
-- No form makes progress straight upwind at any wind; progress turns negative within about nav.no_progress_within_deg_min to nav.no_progress_within_deg_max of the wind's eye.
-- The best course for an upwind target is nav.best_upwind_course_off_wind_deg off the wind in every case; the progress towards a target straight upwind is then nav.albatross_upwind_vmg_u11_ms at 11 m/s to nav.albatross_upwind_vmg_u20_ms at 20 m/s for the albatross-like glider and nav.baseline_upwind_vmg_u13_ms to nav.baseline_upwind_vmg_u20_ms for the baseline.
-- Downwind the best course is straight or within 30 deg of it, so little gybing is needed.
-- With the margins the albatross-like glider soars from nav.albatross_polar_min_u10_ms and the baseline and the sealed hull from nav.baseline_polar_min_u10_ms; below that the planner's motor-assisted cycles take over.
-- The polar comes from single runs of a local optimizer on a 15 deg grid, and one row (the albatross-like glider at 11 m/s) is rough, so the angles are good to about the grid.
+The progress in that table is a projection, not a speed along a track.
+The optimizer maximises the speed along the course and leaves the velocity across it free, so a cycle's mean ground velocity lies off its course: for the albatross-like glider at 16 m/s the cycle of the 120 deg course makes 12.7 m/s along the course but flies at 21.6 m/s, about 54 deg to the downwind side of it.
+The progress is the support function of the cycles' mean ground velocities, and the speed made good towards a target is not the progress times the cosine of the angle to the target.
+An earlier version of this section read the table that way (a best upwind course 60 deg off the wind and an upwind progress of 3 to 7.5 m/s); those figures were wrong and their record keys are replaced by the ones below.
 
-The tactical layer (`sim/navigator.py`) chooses the course for the best progress towards the target from the polar, tacks or gybes when the other side gains more than a margin and the cost of a turn, tacks on headers when the wind direction swings, and reports when no course makes progress so that the strategic layer can wait on the water or use the motor.
-On a synthetic polar it reaches a target 10 km upwind at 94% of the ideal progress with a tack cost of 30 s, and with a wind swinging by 15 deg it arrives 27% sooner by tacking on headers than by tacking only at the laylines.
-Its connection to the planner and a closed-loop flight to a target 10 km upwind come next.
+- The best soaring velocity component towards straight upwind (the progress at the 180 deg course) is negative for all three forms at 11 to 20 m/s: nav.albatross_upwind_support_max_ms to nav.albatross_upwind_support_min_ms for the albatross-like glider, nav.baseline_upwind_support_max_ms to nav.baseline_upwind_support_min_ms for the baseline, nav.sealedhull_upwind_support_max_ms to nav.sealedhull_upwind_support_min_ms for the sealed hull.
+  Soaring alone cannot go upwind with these margins, nor hold its position; the component is already negative within about nav.no_progress_within_deg_min to nav.no_progress_within_deg_max of the wind's eye.
+- Going upwind or across the wind needs the motor, and a powered leg does not need a cycle: steady level flight at 10 m, aimed by the wind triangle at the airspeed of least electric energy per metre, makes good nav.albatross_steady_upwind_u16_ms straight upwind at 16 m/s for nav.albatross_steady_upwind_u16_j_per_m of electricity per metre for the albatross-like glider.
+  The library's own steady upwind motor cycle (nav.albatross_motor_upwind_u16_ms for nav.albatross_motor_upwind_u16_j_per_m) stays as a point of the hull.
+- With the margins the albatross-like glider soars from nav.albatross_polar_min_u10_ms and the baseline and the sealed hull from nav.baseline_polar_min_u10_ms; below that the planner's motor-assisted cycles take over.
+- The polar comes from single runs of a local optimizer on a 15 deg grid, and one row (the albatross-like glider at 11 m/s) is rough, so the values are good to about the grid.
+
+The velocity hull (`sim/navigator.py`, `VelocityHull`): the points are the mean ground velocities of the library's cycles (net displacement over a period divided by the period) and their mirror images, soaring and motor-assisted kept apart, each motor point with its average electric power; flying cycles in turn gives every velocity inside their convex hull.
+At 16 m/s every soaring point has a downwind component, at least nav.albatross_hull_min_downwind_u16_ms for the albatross-like glider, nav.baseline_hull_min_downwind_u16_ms for the baseline and nav.sealedhull_hull_min_downwind_u16_ms for the sealed hull (the library's courses stop at 150 deg, so these are coarser than the support values above); the directions that soaring alone can make good along lie within nav.albatross_soaring_sector_u16_deg, nav.baseline_soaring_sector_u16_deg and nav.sealedhull_soaring_sector_u16_deg of the downwind axis, so a target across the wind or upwind is out of reach without the motor.
+
+The tactical layer (`HullNavigator`, mirrored in `sim/viewer/navigator.js`) chooses, for the line to the target, the pair of cycles on either side of the line whose time-weighted mean velocity lies on it, and flies them as legs inside a corridor around the line.
+Soaring points are used first (the pair with the largest speed made good).
+Only when no soaring pair makes progress does it use the motor, and then not a library cycle but a steady leg (`SteadyModel`): level flight at 10 m aimed by the wind triangle so that the ground track lies on the line, at the airspeed (from 1.2 stall speeds up to 3 best glide speeds, at most 80% of the maximum thrust) of least electric energy per metre made good, with a proportional cross-track guidance (the track turns towards the line by atan(error / 400 m), at most 35 deg).
+The wind at 10 m is u10, the reference height of the profile; 10 m rather than the library's 2 m because level flight in the wind gradient is unstable, the gradient at 10 m is a fifth of that at 2 m, and at 2 m any slip below the cycle is a contact, so the planner climbed off the 2 m cycle and made 15 to 20% of its ground speed, against about 90% at 10 m.
+A mix of a soaring and a motor cycle is no longer flown (a change of cycle costs a transient of tens of seconds, and it was the cause of the flights that ended short or in the water).
+The corridor of a soaring pair is as wide as a leg of about max(90 s, tack cost / 10%) at the faster cross speed, is clipped on each side where the target would no longer be reachable by soaring, and narrows towards the target; inside five arrival radii the navigator steers straight at the target (a soaring cycle only if it passes within 0.7 radius of it, and a motor leg once begun stays a motor leg).
+The planner flies what the navigator names (`fly_mpc(..., target=(x, y), navigator=True, nav_hull=..., nav_kw={"steady": SteadyModel})`), the steady leg as a one-period reference of constant height, airspeed, thrust and heading, every 5 s (every second in the final approach).
+
+Two changes of the planner were needed for this to work.
+First, the motor ran all the time on soaring legs: the share of time with more than 1% of the weight in thrust was 0.99 on the downwind case, 28 W on average, on a cycle that needs none.
+The cause is the MPPI update: the thrust perturbations are clipped at zero, so their weighted mean is above the nominal even when no sample asks for thrust; with the update taken on the unclipped perturbations (`thrust_update="raw"`) the share on the downwind case is nav.albatross_u16_downwind_motor_on_share.
+What remains is real: the planner's dynamics (folded-propeller drag, the lags of the actuators) leave a shortfall of 2 to 12 J/kg per 6 s horizon against the library's soaring cycle, which are solved without the propeller drag, and the motor fills part of it.
+Second, the heading tolerance of the guide is 0.1 rad instead of 0.6 rad (`NAV_GUIDE_SIG`), because the mean cross velocity of a cycle is set by its mean heading.
+
+Closed loop (`python -m sim.mpc --nav-exp --nav-dist 5000`, key `nav_exp` in `sim/out/mpc.json`; `--nav-dist 10000 --nav-key nav_exp_10km` for the 10 km cases): a flat COARE 3.5 sea, true state and wind, the motor on at the middle energy weight, an arrival radius of 200 m.
+The prediction is the kinematic run on the same hull and steady model (`sail_hull`).
+
+5 km:
+
+| aircraft | u10 (m/s) | target | result | VMG (m/s) | hull: speed made good (m/s), kinematic time | energy (Wh) | motor on |
+|---|---|---|---|---|---|---|---|
+| albatross-3m | 13 | upwind | arrived in 640 s | 7.5 | 8.2, 589 s | 10.9 | 1.00 |
+| albatross-3m | 13 | across | arrived in 430 s | 11.2 | 11.6, 415 s | 5.2 | 1.00 |
+| albatross-3m | 16 | upwind | arrived in 626 s | 7.7 | 8.9, 539 s | 17.0 | 1.00 |
+| albatross-3m | 16 | across | arrived in 379 s | 12.7 | 12.7, 379 s | 6.4 | 1.00 |
+| albatross-3m | 16 | downwind | arrived in 181 s | 26.5 | 28.9, 229 s | 0.8 | 0.36 |
+| baseline-2m | 16 | upwind | arrived in 662 s | 7.2 | 8.7, 550 s | 14.9 | 1.00 |
+| baseline-2m | 16 | across | arrived in 396 s | 12.1 | 12.4, 388 s | 5.6 | 1.00 |
+| albatross-3m | 9 | upwind | arrived in 763 s | 6.3 | 7.7, 627 s | 7.5 | 1.00 |
+
+10 km, the albatross-like glider:
+
+| aircraft | u10 (m/s) | target | result | VMG (m/s) | hull: speed made good (m/s), kinematic time | energy (Wh) | motor on |
+|---|---|---|---|---|---|---|---|
+| albatross-3m | 13 | upwind | arrived in 1311 s | 7.5 | 8.2, 1202 s | 22.3 | 1.00 |
+| albatross-3m | 13 | across | arrived in 897 s | 10.9 | 11.6, 847 s | 10.7 | 1.00 |
+| albatross-3m | 16 | upwind | arrived in 1281 s | 7.6 | 8.9, 1101 s | 34.7 | 1.00 |
+| albatross-3m | 16 | across | arrived in 777 s | 12.6 | 12.7, 774 s | 13.1 | 1.00 |
+
+- Every case arrives, from the downwind flight on soaring cycles to the upwind and across-wind flights on steady motor legs, at 13 and 16 m/s and, for the albatross-like glider, at 9 m/s upwind (nav.albatross_u9_upwind_5km_s s).
+  The speed made good upwind is 82 to 92% of the steady leg's (the 9 m/s case lowest; nav.albatross_u16_upwind_5km_s s over 5 km at 16 m/s and nav.albatross_u16_upwind_10km_s s over 10 km), across the wind 94 to 100%.
+  The energy is nav.albatross_u16_upwind_5km_wh Wh over 5 km upwind and nav.albatross_u16_across_5km_wh Wh across the wind at 16 m/s.
+- Downwind the albatross-like glider arrives after nav.albatross_u16_downwind_5km_s s on soaring cycles, 0.8 Wh and a motor share of nav.albatross_u16_downwind_motor_on_share; the motor share is 1.00 on the powered legs, as it should be.
+- The baseline across the wind at 16 m/s touched the water after 153 s in the earlier run, on a soaring cycle of the 135 deg course followed at 85 s by a change to the library's 150 deg motor cycle: that cycle is a steady flight at 2 m and 12 m/s, the aircraft was at 25 m/s and up to 30 m, and the planner dived to match the reference within its 6 s horizon, with the roll rate at its limit a fifth of the time and a load factor of 3.9 against 4.0 near the water.
+  With the steady leg at 10 m there is no such change, and the same case arrives.
+- Open item Q-066 stays open for what is not shown: waves (the sea here is flat), the state and the wind from the estimator instead of the truth, targets at other angles to the wind than the three above, a wind that changes during the flight, and a mix of soaring and powered legs (which saves energy on paper: 2.3 against 4.4 J/m across the wind at 16 m/s, but was the cause of the failures and is not flown).
+  A node closed loop in the viewer's own code reaches a target 1 km upwind at 16 m/s in 100 s.
 
 ## Control modes {#control-modes}
 

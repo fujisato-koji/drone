@@ -64,7 +64,11 @@ def build_motor(path=LIB_MOTOR_PATH):
             continue
         d = {"u10": e["u10"], "chi_deg": e["chi_deg"], "margin_set": e["margin_set"],
              "kind": e["kind"], "power_avg_w": float(f"{e.get('power_avg_w', 0.0):.4g}"),
-             "period": float(f"{e['period']:.6g}")}
+             "period": float(f"{e['period']:.6g}"),
+             # mean ground velocity in the wind frame (net displacement over one period / period), m/s:
+             # the point of the cycle on the velocity hull (sim.navigator.VelocityHull)
+             "vx": float(f"{(e['x'][-1] - e['x'][0]) / e['period']:.6g}"),
+             "vy": float(f"{(e['y'][-1] - e['y'][0]) / e['period']:.6g}")}
         for k in ("t", "z", "V", "gamma", "psi", "cl", "mu", "thrust"):
             d[k] = sig(e[k], SIG.get(k, 4))
         out.setdefault(e["aircraft"], []).append(d)

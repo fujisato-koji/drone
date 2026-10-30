@@ -1241,33 +1241,147 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#receding-horizon
-  - key: nav.best_upwind_course_off_wind_deg
-    v: 60
+  - key: nav.albatross_upwind_support_max_ms
+    v: -2.49
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_upwind_support_min_ms
+    v: -5.46
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.baseline_upwind_support_max_ms
+    v: -6.14
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.baseline_upwind_support_min_ms
+    v: -7.14
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.sealedhull_upwind_support_max_ms
+    v: -6.21
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.sealedhull_upwind_support_min_ms
+    v: -7.18
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_hull_min_downwind_u16_ms
+    v: 4.25
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.baseline_hull_min_downwind_u16_ms
+    v: 9.21
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.sealedhull_hull_min_downwind_u16_ms
+    v: 9.23
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_soaring_sector_u16_deg
+    v: 74
     unit: deg
     status: calculated
     basis:
       - docs/02-form.md#navigation
-  - key: nav.albatross_upwind_vmg_u11_ms
-    v: 3.75
+  - key: nav.baseline_soaring_sector_u16_deg
+    v: 54
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.sealedhull_soaring_sector_u16_deg
+    v: 54
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_motor_upwind_u16_ms
+    v: 6.02
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#navigation
-  - key: nav.albatross_upwind_vmg_u20_ms
-    v: 7.55
+  - key: nav.albatross_motor_upwind_u16_j_per_m
+    v: 11.49
+    unit: J/m
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_u16_downwind_5km_s
+    v: 181
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_u9_upwind_5km_s
+    v: 763
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_u9_upwind_5km_wh
+    v: 7.5
+    unit: Wh
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_steady_upwind_u16_ms
+    v: 8.91
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#navigation
-  - key: nav.baseline_upwind_vmg_u13_ms
-    v: 3.0
-    unit: m/s
+  - key: nav.albatross_steady_upwind_u16_j_per_m
+    v: 10.76
+    unit: J/m
     status: calculated
     basis:
       - docs/02-form.md#navigation
-  - key: nav.baseline_upwind_vmg_u20_ms
-    v: 4.45
-    unit: m/s
+  - key: nav.albatross_u16_upwind_5km_s
+    v: 626
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_u16_upwind_10km_s
+    v: 1281
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_u16_upwind_5km_wh
+    v: 17.0
+    unit: Wh
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_u16_across_5km_wh
+    v: 6.4
+    unit: Wh
+    status: calculated
+    basis:
+      - docs/02-form.md#navigation
+  - key: nav.albatross_u16_downwind_motor_on_share
+    v: 0.36
+    unit: 1
     status: calculated
     basis:
       - docs/02-form.md#navigation

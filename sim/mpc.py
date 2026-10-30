@@ -51,6 +51,19 @@ Motor library, sustained thrust sampling, state fold, reflex (choices the spec l
   and not folded otherwise, instead of the smooth function of the thrust (see fold_effective).
 - Reflex (reflex=True in fly_mpc): see the Reflex class.
 
+Navigation in the closed loop (fly_mpc target / navigator / nav_hull; choices the spec left open):
+- The tactical layer is sim.navigator.HullNavigator on the velocity hull of the library entries (the
+  mean ground velocity of each cycle, not its course speed: see the notes in sim.navigator). It is called
+  every value("nav.update_s", 5.0) s with the true position and wind and names the library cycle to fly
+  (entry and side), not a course; fly_mpc builds the Cycle from it. A change of cycle drops the phase
+  hint. The Polar based Navigator is still accepted (navigator=True with nav_polar) and picks the cycle
+  by course.
+- Arrival: the target within NAV_ARRIVAL_M (100 m), tested at every integration step.
+- nav_exp (run_nav_job): flat COARE 3.5 sea, truth state and wind, motor on at the middle weight, the
+  settings of the motor library experiment; the prediction is sail_hull on the same hull.
+- Library: the upwind-side courses (extend_motor_library) and straight upwind motor cycles
+  (extend_motor_upwind); calm entries are turned onto their course (align_calm_entries).
+
 Estimates in the loop (state_source / wind_source = "estimate"; choices the spec left open):
 - A SensorSuite (default "standard") and the Estimator run at the integration step on the true
   state; the actual bank (after the actuators) feeds the sensor truth.
@@ -69,6 +82,7 @@ Estimates in the loop (state_source / wind_source = "estimate"; choices the spec
 from __future__ import annotations
 
 import json
+import math
 import os
 import time
 from dataclasses import dataclass
@@ -197,8 +211,11 @@ class MPPIPlanner:
                  w_e=1.0, w_p=0.5, h_clear=1.0, clearance="height", w_clear=200.0,
                  w_n=50.0, w_stall=300.0, w_smooth=2.0, c_contact=1e4, smooth_modes=0,
                  smooth_gain=3.0, w_d=10.0, n_limit=False, motor=False, w_energy=None,
-                 thrust_sampling="basic", fold_switch="smooth"):
+                 thrust_sampling="basic", fold_switch="smooth", thrust_update="clipped"):
         self.ac = aircraft
+        if thrust_update not in ("clipped", "raw"):
+            raise ValueError(thrust_update)
+        self.thrust_update = thrust_update
         self.horizon_s, self.dt, self.n_samples, self.n_ctrl = horizon_s, dt, n_samples, n_ctrl
         self.lam, self.sigma_cl, self.sigma_mu, self.replan_s = lam, sigma_cl, sigma_mu, replan_s
         self.n_iter, self.n_iter_cold = n_iter, n_iter_cold
@@ -478,6 +495,7 @@ class MPPIPlanner:
                     eps = np.concatenate([eps, self._thrust_noise(self.n_samples)], axis=1)
             eps[0] = 0.0
             Us = self._clip(U[None] + eps)
+            Uraw = (U[None] + eps) if (self.motor and self.thrust_update == "raw") else None
             cand = self._candidates()
             if self.motor and self.thrust_sampling == "sustained":
                 cand = np.concatenate([cand, self._thrust_candidates(U)])
@@ -485,7 +503,19 @@ class MPPIPlanner:
             if guide is not None and prev is not None:
                 Us[1 + len(cand)] = self._clip(prev.copy())
             cost, _, dead = self.rollout(world, t, s0, Us, target_dir)
-            U, ess, n_dead = self.update(U, Us, cost, dead)
+            if Uraw is not None:
+                # thrust_update "raw": the thrust row of the update uses the perturbed values before the
+                # clip at zero. The clipped values are all >= 0, so their weighted mean is above the
+                # nominal even when no sample is better (a thrust that is never asked for).
+                Uu = Us.copy()
+                keep = np.ones(Us.shape[0], bool)
+                keep[1:1 + len(cand)] = False
+                if guide is not None and prev is not None:
+                    keep[1 + len(cand)] = False
+                Uu[keep, 2, :] = Uraw[keep, 2, :]
+                U, ess, n_dead = self.update(U, Uu, cost, dead)
+            else:
+                U, ess, n_dead = self.update(U, Us, cost, dead)
         self.U = U
         cost, path, dead = self.rollout(world, t, s0, U[None], target_dir)
         nfirst = int(round(self.replan_s / self.dt))
@@ -665,11 +695,13 @@ def _solve_motor_entry_raw(job):
     dsopt.control_stats and dsopt.motor_stats."""
     from sim.aircraft_models import by_name
     from sim.dsopt import control_stats, motor_stats, profile_for, solve
-    name, u10, chi_deg, n = job
+    name, u10, chi_deg, n = job[:4]
+    h_over = job[4] if len(job) > 4 else None      # optional: a larger minimum height than the margin set's
     ac = by_name(name)
     prof = profile_for(max(u10, 1.0), "log", roughness="coare35")
     tried = []
     for label, (h_min, n_frac, mu_frac, v_factor) in MARGIN_SETS:
+        h_min = h_min if h_over is None else max(h_min, h_over)
         for seeds in MOTOR_SEEDS:
             t0 = time.time()
             info, x, col = solve(ac, prof, mode="min_power", cycle="travel", n=n, u10=u10,
@@ -785,6 +817,166 @@ def build_motor_library(names=KEPT_AIRCRAFT, u10s=MOTOR_U10, chis=LIB_CHI_DEG, n
     with open(path, "w", newline="\n") as fh:
         json.dump({"meta": meta, "entries": entries}, fh, indent=1)
         fh.write("\n")
+    filter_motor_library(path)
+    return entries
+
+
+# ---- upwind-side courses and the calm-entry course fix ------------------------------------------
+NAV_CHI_DEG = (120.0, 135.0, 150.0)       # upwind-side courses added for the navigator (0 downwind, 180 upwind)
+NAV_U10 = (9.0, 11.0, 13.0, 16.0, 20.0, 24.0)    # winds of the extension (3 and 6 m/s motor cycles cut, see meta)
+SOARING_MIN_PROGRESS = 1.0                # m/s along the course; a soaring cycle that makes less hands over to a motor cycle
+CALM_COURSE_TOL_DEG = 5.0
+
+
+def track_angle_deg(e):
+    """Direction (deg ccw from +x, the library frame) of the mean ground track of an entry: its net
+    displacement over one period."""
+    return float(np.degrees(np.arctan2(e["y"][-1] - e["y"][0], e["x"][-1] - e["x"][0])))
+
+
+def course_error_deg(e):
+    """Signed difference (deg, in (-180, 180]) of the entry's mean ground track from its course chi."""
+    return float((track_angle_deg(e) - e["chi_deg"] + 180.0) % 360.0 - 180.0)
+
+
+def calm_course_errors(entries, tol=CALM_COURSE_TOL_DEG):
+    """[(aircraft, chi, error deg)] of the successful calm (u10 = 0) entries whose mean track is more
+    than tol deg off their course. Empty after the build's fix."""
+    return [(e["aircraft"], e["chi_deg"], course_error_deg(e)) for e in entries
+            if e.get("success") and e["u10"] == 0.0 and abs(course_error_deg(e)) > tol]
+
+
+def rotate_calm_entry(e, chi_deg):
+    """Copy of the calm entry e flown along the course chi_deg. With no wind the dynamics are
+    invariant under a rotation about the vertical, so the cycle turned by (chi - mean track) is the
+    same cycle (same power, margins, replay) with its mean track exactly along chi; the optimizer
+    only bounded the speed along chi from below, so its track could lie anywhere (the cause of a calm
+    entry 49 deg off its course). speed_along_chi becomes the whole ground speed."""
+    rot = np.radians(chi_deg - track_angle_deg(e))
+    c, s = np.cos(rot), np.sin(rot)
+    x, y = np.asarray(e["x"], float), np.asarray(e["y"], float)
+    r = dict(e)
+    r["x"] = [float(f"{v:.6g}") for v in c * x - s * y]
+    r["y"] = [float(f"{v:.6g}") for v in s * x + c * y]
+    r["psi"] = [float(f"{v:.6g}") for v in np.asarray(e["psi"], float) + rot]
+    r["chi_deg"] = float(chi_deg)
+    r["speed_along_chi"] = float(np.hypot(r["x"][-1] - r["x"][0], r["y"][-1] - r["y"][0]) / e["period"])
+    r["calm_rotated_deg"] = float(np.degrees(rot))
+    return r
+
+
+def align_calm_entries(entries, chis):
+    """Entries with every calm entry turned onto its course; calm (aircraft, chi) of chis that have
+    no entry (new courses, or a failed solve) are filled with a turned copy of the aircraft's
+    lowest-power calm cycle (marked calm_derived_from_chi)."""
+    out, have = [], {}
+    for e in entries:
+        if e["u10"] == 0.0 and e.get("success"):
+            e = rotate_calm_entry(e, e["chi_deg"])
+            have.setdefault(e["aircraft"], {})[e["chi_deg"]] = e
+        out.append(e)
+    ids = {(e["aircraft"], e["u10"], e["chi_deg"]) for e in out if e.get("success")}
+    for a, d in have.items():
+        src = min(d.values(), key=lambda e: e["power_avg_w"])
+        for chi in chis:
+            if (a, 0.0, chi) in ids:
+                continue
+            new = rotate_calm_entry(src, chi)
+            new["calm_derived_from_chi"] = src["chi_deg"]
+            new["tried"] = []
+            out = [x for x in out if (x["aircraft"], x["u10"], x["chi_deg"]) != (a, 0.0, chi)] + [new]
+    return out
+
+
+def extend_motor_library(chis=NAV_CHI_DEG, u10s=NAV_U10, workers=6, path=LIB_MOTOR_PATH, n=40):
+    """Add the upwind-side courses chis to the motor library file (the existing entries are kept).
+
+    At every (aircraft, wind) that already has soaring cycles: a soaring cycle per course (margin
+    library solve); where that does not converge or makes less than SOARING_MIN_PROGRESS along the
+    course, and at the winds without soaring cycles, a motor cycle (min_power) as in the build.
+    Calm entries are not solved: they are turned copies (align_calm_entries), which also puts the
+    existing calm entries onto their courses. Dense-replay filter at the end."""
+    from concurrent.futures import ProcessPoolExecutor
+
+    t0 = time.time()
+    with open(path) as fh:
+        d = json.load(fh)
+    names = d["meta"]["kept_aircraft"]
+    soar_winds = {(e["aircraft"], e["u10"]) for e in d["entries"]
+                  if e["success"] and e["kind"] == "soaring"}
+    chis = tuple(float(c) for c in chis)
+    keep = [e for e in d["entries"] if e["chi_deg"] not in chis or e["u10"] == 0.0]
+    sjobs = [(a, u, c, n) for a in names for u in u10s if (a, u) in soar_winds for c in chis]
+    with ProcessPoolExecutor(workers) as ex:
+        soaring = list(ex.map(_solve_soaring_entry, sorted(sjobs, key=lambda j: j[1]), chunksize=1))
+        ok = {(e["aircraft"], e["u10"], e["chi_deg"]) for e in soaring
+              if e["success"] and e["speed_along_chi"] >= SOARING_MIN_PROGRESS}
+        mjobs = [(a, u, c, n) for a in names for u in u10s for c in chis if (a, u, c) not in ok]
+        mjobs.sort(key=lambda j: (j[1] > 11.0, j[1] > 13.0, j[1]))
+        motor = list(ex.map(_solve_motor_entry, mjobs, chunksize=1))
+    new = [e for e in soaring if (e["aircraft"], e["u10"], e["chi_deg"]) in ok] + motor
+    entries = align_calm_entries(keep + new, tuple(d["meta"]["chi_deg"]) + chis)
+    entries.sort(key=lambda e: (e["aircraft"], e["u10"], e["chi_deg"]))
+    d["entries"] = entries
+    m = d["meta"]
+    m["chi_deg"] = sorted(set(m["chi_deg"]) | set(chis))
+    m["extension"] = {
+        "tdr_run": "python -m sim.mpc --extend-motor-library", "chi_deg": list(chis),
+        "u10_solved": list(u10s), "runtime_s": time.time() - t0, "workers": workers,
+        "soaring_jobs": len(sjobs), "motor_jobs": len(mjobs),
+        "soaring_min_progress_m_s": SOARING_MIN_PROGRESS,
+        "cut": "motor cycles at 3 and 6 m/s were not solved for the new courses (the slowest solves, "
+               "about 170 to 300 s each) and no new course was solved at the calm; the planner then "
+               "takes the new course from the nearest wind that has it (CycleLibrary.pick)",
+        "calm": "u10 = 0 entries are not solved: each is the cycle turned about the vertical onto its "
+                "course (rotate_calm_entry); calm entries missing at the old courses and all the new "
+                "courses are turned copies of the aircraft's lowest-power calm cycle",
+        "soaring_to_motor": "a soaring cycle that did not converge or made less than "
+                            "soaring_min_progress_m_s along its course is replaced by a motor cycle"}
+    with open(path, "w", newline="\n") as fh:
+        json.dump(d, fh, indent=1)
+        fh.write("\n")
+    filter_motor_library(path)
+    return entries
+
+
+NAV_UPWIND_H_MIN = 10.0     # m; the steady upwind motor cycle flies this high: at the 2 m margin the planner cannot hold it
+NAV_UPWIND_MOTOR = tuple((a, u) for a in KEPT_AIRCRAFT for u in (3.0, 6.0, 9.0, 11.0, 13.0, 16.0, 20.0))
+
+
+def extend_motor_upwind(pairs=NAV_UPWIND_MOTOR, chi=180.0, workers=6, path=LIB_MOTOR_PATH, n=40):
+    """Add motor cycles straight upwind (chi = 180 deg) for the (aircraft, wind) pairs: the soaring
+    cycles never have an upwind velocity component, so without these the velocity hull has no way
+    upwind at the soaring winds. The same motor solve as the build (min_power, speed along chi at
+    least 0.5 v_best_ld; with chi = 180 that is a mean ground speed straight into the wind) with the minimum
+    height raised to NAV_UPWIND_H_MIN: the cycle is a steady straight flight at that height, which the
+    receding-horizon planner holds at 10 m (about 90 % of its ground speed) but not at the 2 m margin
+    (it climbs away, 15 to 20 % of it). The calm
+    entries are filled for chi by align_calm_entries. Dense-replay filter at the end."""
+    from concurrent.futures import ProcessPoolExecutor
+
+    t0 = time.time()
+    with open(path) as fh:
+        d = json.load(fh)
+    jobs = [(a, u, float(chi), n, NAV_UPWIND_H_MIN) for a, u in pairs]
+    with ProcessPoolExecutor(workers) as ex:
+        new = list(ex.map(_solve_motor_entry, jobs, chunksize=1))
+    ids = {(e["aircraft"], e["u10"], e["chi_deg"]) for e in new}
+    keep = [e for e in d["entries"] if (e["aircraft"], e["u10"], e["chi_deg"]) not in ids]
+    entries = align_calm_entries(keep + new, tuple(d["meta"]["chi_deg"]) + (float(chi),))
+    entries.sort(key=lambda e: (e["aircraft"], e["u10"], e["chi_deg"]))
+    d["entries"] = entries
+    d["meta"]["chi_deg"] = sorted(set(d["meta"]["chi_deg"]) | {float(chi)})
+    d["meta"]["upwind_motor"] = {
+        "tdr_run": "python -m sim.mpc --extend-motor-upwind", "chi_deg": float(chi),
+        "pairs": [list(p) for p in pairs], "runtime_s": time.time() - t0, "workers": workers,
+        "h_min_m": NAV_UPWIND_H_MIN,
+        "why": "soaring cycles never fly upwind (every mean ground velocity has a downwind "
+               "component), so the velocity hull needs motor cycles that do",
+        "missing": [[e["aircraft"], e["u10"]] for e in new if not e["success"]]}
+    with open(path, "w", newline=chr(10)) as fh:
+        json.dump(d, fh, indent=1)
+        fh.write(chr(10))
     filter_motor_library(path)
     return entries
 
@@ -938,16 +1130,49 @@ class CycleLibrary:
         return cls.load({"margin": LIB_MARGIN_PATH, "motor": LIB_MOTOR_PATH}.get(library_path,
                                                                                     library_path))
 
-    def pick(self, name, u10_est, chi_rad):
-        """Cycle for the aircraft nearest to u10_est and |chi| (mirrored for negative chi)."""
+    def pick(self, name, u10_est, chi_rad, chi_tol=20.0):
+        """Cycle for the aircraft nearest to u10_est and |chi| (mirrored for negative chi).
+
+        The wind is the nearest one that has a course within chi_tol deg of the one asked (the one
+        with the smallest gap when none has), so a wind without the upwind-side courses hands over
+        to the next wind that has them."""
         es = [e for e in self.entries if e["aircraft"] == name]
         if not es:
             raise KeyError(name)
-        u = min({e["u10"] for e in es}, key=lambda v: abs(v - u10_est))
-        es = [e for e in es if e["u10"] == u]
         chi = abs(np.degrees(chi_rad))
-        e = min(es, key=lambda e: abs(e["chi_deg"] - chi))
+        winds = sorted({e["u10"] for e in es}, key=lambda v: abs(v - u10_est))
+        gap = {u: min(abs(e["chi_deg"] - chi) for e in es if e["u10"] == u) for u in winds}
+        u = next((u for u in winds if gap[u] <= chi_tol),
+                 min(winds, key=lambda u: (gap[u], abs(u - u10_est))))
+        e = min((e for e in es if e["u10"] == u), key=lambda e: abs(e["chi_deg"] - chi))
         return Cycle(e, mirror=chi_rad < 0.0)
+
+
+def polar_from_library(lib, name):
+    """Polar (sim.navigator.Polar) of one aircraft from the library entries: the speed along the
+    course of each entry (speed_along_chi, soaring or motor-assisted) at its wind and course; NaN where
+    the library has no entry or the speed is at most sim.navigator.MIN_PROGRESS. Winds with fewer than
+    two courses are left out; the course axis is the courses the library has."""
+    from sim.navigator import MIN_PROGRESS, Polar
+    es = [e for e in lib.entries if e["aircraft"] == name]
+    chis = sorted({e["chi_deg"] for e in es})
+    winds = sorted({e["u10"] for e in es if sum(1 for x in es if x["u10"] == e["u10"]) >= 2})
+    tab = np.full((len(winds), len(chis)), np.nan)
+    for e in es:
+        if e["u10"] in winds and e["speed_along_chi"] > MIN_PROGRESS:
+            tab[winds.index(e["u10"]), chis.index(e["chi_deg"])] = e["speed_along_chi"]
+    return Polar(winds, chis, tab)
+
+
+def nav_polar(lib, name, u10):
+    """(polar, source) for the closed-loop navigator: the optimizer's speed polar
+    (sim/out/ds_polar.json) where it has a progress speed at this wind for the aircraft, else the
+    polar of the library entries (polar_from_library)."""
+    from sim.navigator import polar_from_ds
+    ds = polar_from_ds(name)
+    if ds is not None and np.any(np.isfinite(ds.speed(np.arange(0.0, 181.0, 5.0), u10))):
+        return ds, "ds_polar"
+    return polar_from_library(lib, name), "library"
 
 
 def dominant_wave(world):
@@ -973,9 +1198,10 @@ class CycleGuide:
     SIG = (3.0, None, 0.25, 0.6)     # h (m), V (None: 0.25 mean V), gamma, heading (rad)
 
     def __init__(self, cycle, world, t, s, psi_w, horizon, wave_aware=True, w_d=10.0,
-                 d_max=0.15, theta_star=np.pi / 3, tau_hint=None, hint_window=0.2):
+                 d_max=0.15, theta_star=np.pi / 3, tau_hint=None, hint_window=0.2, sig=None):
         self.cycle, self.psi_w, self.H, self.w_d = cycle, psi_w, horizon, w_d
-        self.sig = (self.SIG[0], self.SIG[1] or 0.25 * cycle.v_mean, self.SIG[2], self.SIG[3])
+        sg = self.SIG if sig is None else sig      # sig: (h m, V m/s or None, gamma, heading rad) of the match
+        self.sig = (sg[0], sg[1] or 0.25 * cycle.v_mean, sg[2], sg[3])
         x, y, z, V, g, psi = (float(v) for v in s)
         eta = float(world.surface(x, y, t)[0])
         self.h0 = z - eta
@@ -1174,7 +1400,7 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             library=None, wave_aware=True, state_source="truth", wind_source="truth",
             suite="standard", profile_fit="two_param", actuators=None, n_limit=False,
             log_every_s=5.0, stop_on_tip=False, library_path=None, motor=False, w_energy=None, reflex=False,
-            true_fold_switch=None):
+            true_fold_switch=None, target=None, navigator=None, nav_polar=None, nav_kw=None, nav_hull=None, guide_sig=None):
     """Closed loop: true dynamics (rk4, dt), planner every replan_s in the chosen world model.
 
     world_model: "truth" | "flat" | "estimated". sensors: list of SurfaceSensor (used only for
@@ -1194,6 +1420,22 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     and the folded-propeller drag. The metrics then also hold out["motor"]: electric energy and
     average power, the share of time with thrust, the number and length of bursts and where in the
     cycle they start (see burst_stats).
+
+    target / navigator (default None; nothing changes then; needs a library): with target = (x, y)
+    (metres, x east, y north, from the start at the origin) and navigator=True (or a
+    sim.navigator.Navigator) the tactical layer chooses the course. Every nav.update_s (5 s) the
+    Navigator gets the position, the wind (truth for now: u10_est and the true wind direction) and
+    the target and returns the course; the planner then flies the library cycle of that course
+    relative to the wind (CycleLibrary.pick, mirrored for the port side). target_bearing_deg is
+    ignored. nav_polar: the sim.navigator.Polar, or nav_hull: the sim.navigator.HullSource of the
+    aircraft (the hull navigator, which names the cycle to fly itself; one of them is needed when
+    navigator is True); nav_kw: Navigator
+    keywords (default arrival_radius NAV_ARRIVAL_M). guide_sig: the match tolerances of CycleGuide
+    (h, V, gamma, heading); the navigator needs a tight heading (NAV_GUIDE_SIG), because the cycle's mean
+    cross-track velocity is set by its mean heading, which the loose default does not hold. A change of cycle (course or side) drops the
+    phase hint, so CycleGuide matches the phase of the new cycle to the state. The run ends "arrived"
+    when the target is within the arrival radius. The metrics then also hold out["nav"]: the
+    track (every NAV_TRACK_S), the commands, the tacks, the mode shares and the arrival time.
 
     reflex (default False; nothing changes then; needs motor=True): the Reflex supervisor runs at
     every control step on the true state, in the world of the latest plan, and overrides the
@@ -1220,6 +1462,25 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     est = (estimator or LocalWaveEstimator()) if world_model == "estimated" else None
     for sn in sensors or []:
         sn.reset()
+    nav, nav_log, nav_track, nav_next, nav_cmd = None, [], [], 0.0, None
+    if navigator:
+        from sim.navigator import Navigator
+        from sim.record import value as _value
+        if target is None or library is None:
+            raise ValueError("navigator needs a target and a library")
+        nav = navigator if hasattr(navigator, "step") else None
+        if nav is None and nav_hull is not None:
+            from sim.navigator import HullNavigator
+            nav = HullNavigator(nav_hull, **dict({"arrival_radius": NAV_ARRIVAL_M}, **(nav_kw or {})))
+        if nav is None:
+            if nav_polar is None:
+                raise ValueError("navigator=True needs nav_polar or nav_hull")
+            nav = Navigator(nav_polar, **dict({"arrival_radius": NAV_ARRIVAL_M}, **(nav_kw or {})))
+        nav.reset()
+        nav_update_s = float(_value("nav.update_s", 5.0))
+        target = np.asarray(target, float)
+        nav_cmd = nav.step(0.0, (0.0, 0.0), u10_est, env_true.wind.from_deg, target)
+        target_bearing_deg = nav_cmd.bearing
     brg = np.radians(target_bearing_deg)
     u = np.array([np.sin(brg), np.cos(brg)])                  # (east, north)
     psi0 = float(np.arctan2(u[1], u[0]))
@@ -1230,6 +1491,11 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     if library is not None:
         # start on the library cycle at its highest node (as the old tracker does)
         c0 = library.pick(ac.name, u10_est, chi)
+        pt0 = getattr(nav_cmd, "point", None)
+        if pt0 is not None and pt0.steady is not None:
+            c0 = Cycle(steady_entry(pt0), mirror=False)
+        elif pt0 is not None and pt0.entry is not None:      # the hull navigator's first cycle
+            c0 = Cycle(pt0.entry, mirror=pt0.side < 0)
         k0 = int(np.argmax(c0.z))
         s = np.array([0.0, 0.0, float(env_true.surface(0.0, 0.0, 0.0)[0]) + c0.z[k0], c0.V[k0],
                       c0.g[k0], psi_w + c0.psi[k0]])
@@ -1273,11 +1539,15 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     fold_state = (pl.fold_switch if true_fold_switch is None else true_fold_switch) == "state" if motor else False
     rf = Reflex(ac, pl.t_max, pl.fold_dcd, n_limit, pl.fold_switch) if reflex else None
     rf_events, rf_cur, world = [], None, None
+    cyc_prev = None
     for i in range(nsteps + 1):
         t = i * dt
         eta_t = float(env_true.surface(s[0], s[1], t)[0])
         if s[2] - eta_t < 0.0:
             ended = "contact"
+            break
+        if nav is not None and math.hypot(target[0] - s[0], target[1] - s[1]) <= nav.arrival_radius:
+            ended = "arrived"
             break
         if stop_on_tip and wingtip_height(ac, s[2], eta_t, s[4], mu_a) < 0.0:
             ended = "tip contact"
@@ -1342,13 +1612,39 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             else:
                 s_plan = s
             psi_p = psi_w_cur if wind_source == "estimate" else psi_w
-            chi_p = float(wrap(np.arctan2(u[1], u[0]) - psi_p))
             u10_p = u10_cur if wind_source == "estimate" else u10_est
+            if nav is not None and t >= nav_next - 1e-9:
+                from_n = from_cur if wind_source == "estimate" else from_deg
+                nav_cmd = nav.step(t, (s[0], s[1]), u10_p, from_n, target,
+                                   None if not nav_log else nav_log[-1]["bearing"])
+                b_ = np.radians(nav_cmd.bearing)
+                u = np.array([np.sin(b_), np.cos(b_)])
+                nav_next = t + (NAV_FAST_UPDATE_S if nav_cmd.mode == "direct" else nav_update_s)
+                nav_log.append({"t": t, "x": float(s[0]), "y": float(s[1]),
+                                "bearing": float(nav_cmd.bearing), "chi": float(nav_cmd.chi),
+                                "side": nav_cmd.side, "mode": nav_cmd.mode,
+                                "vmg": float(nav_cmd.vmg), "tacked": bool(nav_cmd.tacked),
+                                "distance": float(nav_cmd.distance),
+                                "kind": getattr(nav_cmd, "kind", ""),
+                                "per_m": float(getattr(nav_cmd, "per_m", 0.0)),
+                                "cross": float(getattr(nav_cmd, "cross", 0.0)),
+                                "cycle": (None if getattr(nav_cmd, "point", None) is None
+                                          else nav_cmd.point.key)})
+            chi_p = float(wrap(np.arctan2(u[1], u[0]) - psi_p))
             guide = None
             if library is not None:
-                cyc = library.pick(ac.name, u10_p, chi_p)
+                pt_ = getattr(nav_cmd, "point", None) if nav is not None else None
+                if pt_ is not None and pt_.steady is not None:    # a steady motor leg: its own reference
+                    cyc = Cycle(steady_entry(pt_), mirror=False)
+                elif pt_ is not None and pt_.entry is not None:   # the hull navigator names the cycle
+                    cyc = Cycle(pt_.entry, mirror=pt_.side < 0)
+                else:
+                    cyc = library.pick(ac.name, u10_p, chi_p)
+                if cyc_prev is not None and (cyc.d is not cyc_prev.d or cyc.mirror != cyc_prev.mirror):
+                    tau_prev = None          # another cycle: its phase is matched afresh
+                cyc_prev = cyc
                 guide = CycleGuide(cyc, world, t, s_plan, psi_p, pl.horizon_s,
-                                  wave_aware=wave_aware, w_d=pl.w_d,
+                                  wave_aware=wave_aware, w_d=pl.w_d, sig=guide_sig,
                                   tau_hint=None if tau_prev is None else tau_prev + pl.replan_s)
                 if tau_prev is not None and guide.tau0 < tau_prev - 0.5 * cyc.T:
                     n_cyc += 1
@@ -1409,6 +1705,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             cl_a, mu_a = (cl, mu) if actuators is None else actuators.step(cl, mu, dt, s[3])
         cl_f = n_limited_cl(ac, s[3], cl_a) if n_limit else cl_a
         T.append(t); ST.append(s.copy()); MU.append(mu_a); CL.append(cl_f)
+        if nav is not None and i % int(round(NAV_TRACK_S / dt)) == 0:
+            nav_track.append([float(t), float(s[0]), float(s[1])])
         NN.append(q * cl_f / (ac.mass * G))
         NCMD.append(q * cl / (ac.mass * G))
         NBND.append(float(cl_f < cl_a - 1e-12))
@@ -1485,12 +1783,70 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                 "wind_dir_err_rms_deg": float(np.sqrt(np.mean([r["wind_dir_err_deg"] ** 2 for r in post]))),
                 "profile_dir_err_rms_deg": float(np.sqrt(np.mean([r["profile_dir_err_deg"] ** 2 for r in post]))),
                 "u10_est_last": post[-1]["u10_est"], "z0_est_last": post[-1]["z0_est"]}
+    if nav is not None:
+        nav_track.append([float(t), float(s[0]), float(s[1])])
+        out["nav"] = nav_summary(nav, nav_log, nav_track, target, ended == "arrived", float(t), nav_update_s)
     if keep:
         out["traj"] = {"t": np.array(T), "state": np.array(ST), "mu": np.array(MU),
                        "cl": np.array(CL)}
         if motor:
             out["traj"]["thrust"] = np.array(TH)
     return out
+
+
+NAV_ARRIVAL_M = 200.0      # arrival radius of the closed-loop navigator (the Navigator default is 50 m)
+STEADY_PERIOD_S = 8.0     # period of the synthetic cycle of a steady leg (nothing in it depends on the phase)
+
+
+def steady_entry(pt):
+    """Library-entry dict of a steady motor leg (HullPoint.steady, set by sim.navigator.HullNavigator): level
+    flight at the leg's height, airspeed, lift coefficient, thrust and heading (the angle in the wind frame is
+    the entry's psi), wings level. The same fields as a library cycle, so Cycle and CycleGuide use it as
+    the planner's reference unchanged. Cached on the point."""
+    st = pt.steady
+    if "_entry" not in st:
+        n, P = 9, STEADY_PERIOD_S
+        t = [P * i / (n - 1) for i in range(n)]
+        psi = float(np.arctan2(st["heading"][1], st["heading"][0]))
+        st["_entry"] = {"aircraft": "steady", "u10": 0.0, "chi_deg": round(abs(float(np.degrees(psi))), 1),
+                        "margin_set": "steady", "success": True, "kind": "motor",
+                        "period": P, "t": t, "x": [pt.vx * v for v in t], "y": [pt.vy * v for v in t],
+                        "z": [st["height"]] * n, "V": [st["V"]] * n, "gamma": [0.0] * n, "psi": [psi] * n,
+                        "cl": [st["cl"]] * n, "mu": [0.0] * n, "thrust": [st["thrust"]] * n,
+                        "power_avg_w": pt.power}
+    return st["_entry"]
+
+
+NAV_FAST_UPDATE_S = 1.0     # the navigator is called this often in the final approach (mode direct)
+NAV_TRACK_S = 5.0          # spacing of the logged track points
+
+
+def nav_summary(nav, log, track, target, arrived, t_end, update_s):
+    """Log of a navigated run: track [t, x, y] every NAV_TRACK_S, the commands (every navigator
+    call), the tack times, the time share of each navigator mode, and the arrival."""
+    d0 = float(np.hypot(*np.asarray(target, float))) if len(track) else 0.0
+    xe, ye = track[-1][1], track[-1][2]
+    d1 = float(np.hypot(target[0] - xe, target[1] - ye))
+    modes = {}
+    for k, c in enumerate(log):
+        t1 = log[k + 1]["t"] if k + 1 < len(log) else t_end
+        modes[c["mode"]] = modes.get(c["mode"], 0.0) + max(0.0, t1 - c["t"])
+    tacks = [c["t"] for c in log if c["tacked"]]
+    kinds = {}
+    for k, c in enumerate(log):
+        t1 = log[k + 1]["t"] if k + 1 < len(log) else t_end
+        kinds[c.get("kind", "")] = kinds.get(c.get("kind", ""), 0.0) + max(0.0, t1 - c["t"])
+    return {"target": [float(target[0]), float(target[1])], "arrived": bool(arrived),
+            "arrival_time_s": t_end if arrived else None, "end_distance_m": d1,
+            "start_distance_m": d0, "mean_vmg_ms": (d0 - d1) / t_end if t_end > 0 else 0.0,
+            "n_tacks": len(tacks), "tack_times_s": tacks, "mode_time_s": modes, "kind_time_s": kinds,
+            "update_s": float(update_s),
+            "navigator": {"tack_cost_s": nav.tack_cost_s, "hysteresis": nav.hysteresis,
+                          "min_leg_s": nav.min_leg_s, "arrival_radius_m": nav.arrival_radius,
+                          "amort_s": getattr(nav, "amort_s", None)},
+            "track": track, "commands": [[c["t"], c["bearing"], c["chi"], c["side"], c["mode"],
+                                          c["vmg"], c["tacked"], c.get("kind", ""), c.get("cycle")]
+                                         for c in log]}
 
 
 BURST_ON_FRAC = 0.01       # thrust above this share of the weight counts as running
@@ -2196,6 +2552,129 @@ def motor_exp_main(a):
         fh.write(chr(10))
 
 
+NAV_CASES = (       # (aircraft, u10, direction of the target from the start)
+    ("albatross-3m", 13.0, "upwind"), ("albatross-3m", 13.0, "across"),
+    ("albatross-3m", 16.0, "upwind"), ("albatross-3m", 16.0, "across"), ("albatross-3m", 16.0, "downwind"),
+    ("baseline-2m", 16.0, "upwind"), ("baseline-2m", 16.0, "across"),
+    ("albatross-3m", 9.0, "upwind"))
+NAV_PKW = dict(MOTOR_EXP_PKW, thrust_update="raw")      # raw: the unbiased thrust update (see MPPIPlanner)
+STEADY_HEIGHT_REF = 10.0                  # sim.navigator.STEADY_HEIGHT_M
+NAV_GUIDE_SIG = (3.0, None, 0.25, 0.1)     # heading tolerance 0.1 rad instead of 0.6 (see fly_mpc guide_sig)
+
+
+def nav_target(direction, dist):
+    """Target (x east, y north) of the experiment: the wind blows from 270 deg (toward +x), so upwind
+    is -x, downwind +x; across the wind is +y."""
+    return {"upwind": (-dist, 0.0), "downwind": (dist, 0.0)}.get(direction, (0.0, dist))
+
+
+def run_nav_job(job):
+    """One navigated flight of nav_exp: flat COARE 3.5 sea, truth state and wind, motor on at the
+    middle energy weight, the settings of the motor library experiment, library "motor", the hull
+    navigator. job = (aircraft, u10, direction, distance m, t_end s or None). Returns the closed-loop
+    result plus the kinematic prediction (sail_hull) on the same hull."""
+    from sim.aircraft import Actuators
+    from sim.aircraft_models import by_name
+    from sim.navigator import HullNavigator, HullSource, sail_hull
+    name, u10, direction, dist, t_end = job
+    ac = by_name(name)
+    env = _make_env_coare("flat", u10)
+    lib = CycleLibrary.from_keyword("motor")
+    src = HullSource.from_entries(lib.entries, name)
+    hull = src.at(u10)
+    tgt = nav_target(direction, dist)
+    from sim.navigator import SteadyModel
+    steady = SteadyModel.from_aircraft(ac)
+    pred = sail_hull(src, lambda t: (u10, env.wind.from_deg), (0.0, 0.0), tgt,
+                     nav=HullNavigator(src, arrival_radius=NAV_ARRIVAL_M, steady=steady), t_max=6 * 3600.0)
+    first = HullNavigator(src, arrival_radius=NAV_ARRIVAL_M, steady=steady).step(
+        0.0, (0.0, 0.0), u10, env.wind.from_deg, tgt)
+    if t_end is None:
+        t_end = min(2.0 * pred["time"] + 600.0, 7200.0) if pred["arrived"] else 3600.0
+    t0 = time.time()
+    r = fly_mpc(ac, env, "flat", [], t_end, 0.0, u10, seed=1, planner_kw=dict(NAV_PKW),
+                library=lib, state_source="truth", wind_source="truth",
+                actuators=Actuators(ac, rate_model="pb2v"), n_limit=True, stop_on_tip=True,
+                wave_aware=False, motor=True, w_energy=energy_weight(ac, "normal"),
+                target=tgt, navigator=True, nav_hull=src, guide_sig=NAV_GUIDE_SIG,
+                nav_kw={"steady": steady})
+    r["wall_s"] = time.time() - t0
+    r = _no_nan(r)
+    r["motor"]["bursts"] = r["motor"].get("bursts", [])[:20]
+    r["predicted"] = {"arrived": pred["arrived"], "time_s": pred["time"], "n_legs": pred["n_legs"],
+                      "mean_vmg_ms": pred["mean_vmg"], "energy_wh": pred["energy_j"] / 3600.0,
+                      "plan_vmg_ms": first.vmg, "plan_kind": first.kind,
+                      "plan_energy_per_m_j": first.per_m, "hull_wind_u10": hull.u10,
+                      "track": pred["track"][::10].tolist()}
+    return {"aircraft": name, "u10": u10, "direction": direction, "distance_m": dist,
+            "hull_points": len(hull.points), **r}
+
+
+def nav_exp_table(rows):
+    lines = ["| aircraft | u10 | target | result | time (s) | legs | VMG (m/s) | hull plan: kind, VMG, "
+             "kinematic time (s), legs, VMG | energy (Wh) | Wh/km made good | thrust on |",
+             "|" + "---|" * 11]
+    for r in rows:
+        nv, m, p = r.get("nav") or {}, r.get("motor") or {}, r["predicted"]
+        km = (nv.get("start_distance_m", 0) - nv.get("end_distance_m", 0)) / 1000.0
+        lines.append("| %s | %g | %s %g km | %s | %s | %s | %s | %s, %s, %s, %s, %s | %s | %s | %s |" % (
+            r["aircraft"], r["u10"], r["direction"], r["distance_m"] / 1000.0,
+            r["ended"], _fmt(nv.get("arrival_time_s"), "%.0f"), nv.get("n_tacks", "n/a"),
+            _fmt(nv.get("mean_vmg_ms"), "%.2f"), p["plan_kind"] or "none", _fmt(p["plan_vmg_ms"], "%.2f"),
+            _fmt(p["time_s"], "%.0f"), p["n_legs"], _fmt(p["mean_vmg_ms"], "%.2f"),
+            _fmt(m.get("energy_wh"), "%.1f"),
+            _fmt(m["energy_wh"] / km if km > 0.05 and m.get("energy_wh") is not None else None, "%.2f"),
+            _fmt(m.get("thrust_on_share"), "%.2f")))
+    return chr(10).join(lines)
+
+
+def nav_exp_main(a):
+    from concurrent.futures import ProcessPoolExecutor
+
+    from sim import record
+    from sim.record import value
+    dist = a.nav_dist
+    jobs = [(n, u, d, dist, None) for n, u, d in NAV_CASES]
+    if a.nav_only:
+        keys = set(a.nav_only.split(";"))
+        jobs = [j for j in jobs if "%s,%g,%s" % (j[0], j[1], j[2]) in keys]
+    t0 = time.time()
+    with ProcessPoolExecutor(a.workers) as ex:
+        rows = list(ex.map(run_nav_job, jobs, chunksize=1))
+    print(nav_exp_table(rows))
+    runtime = time.time() - t0
+    print("runtime %.0f s" % runtime)
+    d = json.load(open(a.out)) if os.path.exists(a.out) else {}
+    d[a.nav_key] = {
+        "meta": {**record.meta("python -m sim.mpc --nav-exp --nav-dist %g --workers %d"
+                               % (dist, a.workers),
+                               [__file__, LIB_MOTOR_PATH, os.path.join(os.path.dirname(__file__), "navigator.py"),
+                                os.path.join(os.path.dirname(__file__), "out", "ds_polar.json")]),
+                 "planner_kw": NAV_PKW, "runtime_s": runtime, "distance_m": dist, "seed": 1,
+                 "workers": a.workers, "library": "motor (sim/out/mpc_library_motor.json)",
+                 "energy_level": "normal (k = %g)" % W_ENERGY_LEVELS["normal"],
+                 "sea": "flat, Wind(u10, 270, roughness='coare35'); wind from the west, toward +x",
+                 "targets": "upwind = (-D, 0), across = (0, D) from the start at the origin",
+                 "state_source": "truth", "wind_source": "truth", "reflex": False,
+                 "actuators": "rate_model pb2v", "n_limit": True, "stop_on_tip": True,
+                 "navigator": "sim.navigator.HullNavigator on the velocity hull of the library entries "
+                              "(HullSource, nearest library wind), arrival radius %g m, called every %g s "
+                              "(nav.update_s)" % (NAV_ARRIVAL_M, value("nav.update_s", 5.0)),
+                 "steady_leg": "where no soaring pair makes progress the motor leg is a steady level flight at "
+                               "%g m aimed by the wind triangle at the airspeed of least electric energy per "
+                               "metre (sim.navigator.SteadyModel), the planner's reference; the hull's 180 deg "
+                               "motor cycles stay as points" % STEADY_HEIGHT_REF,
+                 "planner": "MOTOR_EXP_PKW plus thrust_update raw (the unbiased thrust update), guide heading "
+                            "tolerance %g rad (NAV_GUIDE_SIG)" % NAV_GUIDE_SIG[3],
+                 "prediction": "sim.navigator.sail_hull on the same hull and navigator, tack pause 30 s",
+                 "t_end": "2 x the predicted arrival time + 600 s, at most 7200 s",
+                 "mean_vmg": "(start distance - end distance) / time, in m/s"},
+        "results": rows}
+    with open(a.out, "w", newline=chr(10)) as fh:
+        json.dump(_no_nan(d), fh, indent=1)
+        fh.write(chr(10))
+
+
 def _fmt(v, f):
     return "n/a" if v is None else f % v
 
@@ -2234,6 +2713,12 @@ def main():
     ap.add_argument("--est-exp2", action="store_true")
     ap.add_argument("--build-margin-library", action="store_true")
     ap.add_argument("--build-motor-library", action="store_true")
+    ap.add_argument("--extend-motor-library", action="store_true")
+    ap.add_argument("--extend-motor-upwind", action="store_true")
+    ap.add_argument("--nav-exp", action="store_true")
+    ap.add_argument("--nav-dist", type=float, default=10000.0)
+    ap.add_argument("--nav-key", default="nav_exp", help="key of sim/out/mpc.json the nav experiment writes")
+    ap.add_argument("--nav-only", default="", help="cases as 'aircraft,u10,direction' joined by ;")
     ap.add_argument("--margin-exp", action="store_true")
     ap.add_argument("--burst-exp", action="store_true")
     ap.add_argument("--motor-lib-exp", action="store_true")
@@ -2244,6 +2729,15 @@ def main():
         return
     if a.build_motor_library:
         build_motor_library(workers=a.workers)
+        return
+    if a.extend_motor_upwind:
+        extend_motor_upwind(workers=a.workers)
+        return
+    if a.nav_exp:
+        nav_exp_main(a)
+        return
+    if a.extend_motor_library:
+        extend_motor_library(workers=a.workers)
         return
     if a.margin_exp:
         margin_main(a)
