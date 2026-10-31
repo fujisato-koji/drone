@@ -2093,26 +2093,36 @@ NAV_TIP_MARGIN_M = 0.3      # wingtip clearance the planner keeps (h_clear); a r
 
 
 def flight_margins(ac, env, T, ST, MU, out):
-    """Heights and margins of a navigated run, from the recorded trajectory (every len(T)//4000-th step, at most 4000 points): the median,
-    minimum and maximum height above the surface, the lowest wingtip, the lowest airspeed against the stall
-    speed, the time with cos(gamma) < 0 (a loop) and below the stall speed. in_band: the heights stay inside
-    R-12's band (ds.clearance_min_m to ds.altitude_band_max_m); margins_ok: no loop, no flight below the stall
-    speed, wingtip at least NAV_TIP_MARGIN_M, load factor within n_max. valid = in_band and margins_ok: a run
-    that is not valid does not count as arrived."""
+    """Heights and margins of a run, from every recorded step of the trajectory (K-020: a subsample of at most
+    4000 points missed a wingtip of 0.08 m): the median, minimum and maximum height above the surface, the
+    lowest wingtip, the lowest airspeed against the stall speed (and how far below it), the time with
+    cos(gamma) < 0 (a loop) and below the stall speed. in_band: the heights stay inside R-12's band
+    (ds.clearance_min_m to ds.altitude_band_max_m); margins_ok: no loop, no flight below the stall speed, wingtip
+    at least NAV_TIP_MARGIN_M, load factor within n_max. valid = in_band and margins_ok: a run that is not valid
+    does not count as arrived."""
     from sim.record import value
-    k = max(1, len(T) // 4000)
-    t, st, mu = T[::k], ST[::k], MU[::k]
-    eta = np.array([float(env.surface(x, y, tt)[0]) for x, y, tt in zip(st[:, 0], st[:, 1], t)])
-    h = st[:, 2] - eta
-    tip = wingtip_height(ac, st[:, 2], eta, st[:, 4], mu)
-    dt = float(T[1] - T[0]) * k if len(T) > 1 else 0.0
+    T, ST, MU = np.asarray(T, float), np.asarray(ST, float), np.asarray(MU, float)
+    eta = np.empty(len(T))
+    for a in range(0, len(T), 50000):          # the surface at every step, in blocks
+        b = min(len(T), a + 50000)
+        eta[a:b] = np.asarray(env.surface(ST[a:b, 0], ST[a:b, 1], T[a:b])[0], float)
+    h = ST[:, 2] - eta
+    tip = wingtip_height(ac, ST[:, 2], eta, ST[:, 4], MU)
+    dt = float(T[1] - T[0]) if len(T) > 1 else 0.0
     lo, hi = float(value("ds.clearance_min_m")), float(value("ds.altitude_band_max_m"))
-    loop_s = float(np.sum(np.cos(st[:, 4]) <= 0.0) * dt)
-    stall_s = float(np.sum(st[:, 3] < ac.v_stall) * dt)
+    loop_s = float(np.sum(np.cos(ST[:, 4]) <= 0.0) * dt)
+    below = ST[:, 3] < ac.v_stall
+    stall_s = float(np.sum(below) * dt)
+    edges = np.diff(np.concatenate([[0], below.astype(int), [0]]))
+    spells = (np.flatnonzero(edges == -1) - np.flatnonzero(edges == 1)) * dt
+    i_tip = int(np.argmin(tip))
     m = {"height_median_m": float(np.median(h)), "height_min_m": float(h.min()), "height_max_m": float(h.max()),
-         "wingtip_min_m": float(tip.min()), "airspeed_min_ms": float(st[:, 3].min()),
-         "stall_speed_ms": float(ac.v_stall), "loop_s": loop_s, "below_stall_s": stall_s,
-         "max_n_flown": out.get("max_n_flown"), "band_m": [lo, hi]}
+         "wingtip_min_m": float(tip[i_tip]), "wingtip_min_t_s": float(T[i_tip]),
+         "airspeed_min_ms": float(ST[:, 3].min()), "airspeed_min_t_s": float(T[int(np.argmin(ST[:, 3]))]),
+         "stall_speed_ms": float(ac.v_stall), "below_stall_depth_ms": float(max(0.0, ac.v_stall - ST[:, 3].min())),
+         "below_stall_longest_s": float(spells.max()) if len(spells) else 0.0,
+         "loop_s": loop_s, "below_stall_s": stall_s, "max_n_flown": out.get("max_n_flown"), "band_m": [lo, hi],
+         "resolution": "every step"}
     m["in_band"] = bool(h.min() >= lo and h.max() <= hi)
     m["margins_ok"] = bool(loop_s == 0.0 and stall_s == 0.0 and tip.min() >= NAV_TIP_MARGIN_M
                            and (out.get("max_n_flown") or 0.0) <= ac.n_max)
@@ -3007,6 +3017,7 @@ def main():
     ap.add_argument("--wave-t-end", type=float, default=None, help="flight time of --wave-loop-exp (default 600 s)")
     ap.add_argument("--wave-sense-exp", action="store_true", help="the planner's sea known with an error (sim.wavelib)")
     ap.add_argument("--wave-nav-exp", action="store_true", help="a navigation run over swell (sim.wavelib)")
+    ap.add_argument("--rebuild-crest-rides", action="store_true", help="the wave library's crest rides afresh (sim.wavelib)")
     a = ap.parse_args()
     if a.wave_diagnosis:
         from sim.wavelib import diagnosis_main
@@ -3015,6 +3026,11 @@ def main():
     if a.build_wave_library:
         from sim.wavelib import build_wave_library
         build_wave_library(workers=a.workers)
+        return
+    if a.rebuild_crest_rides:
+        from sim.wavelib import rebuild_crest_rides
+        m = rebuild_crest_rides(workers=a.workers)
+        print("crest rides rebuilt: %d seas changed, %.0f s" % (m["changed_seas"], m["runtime_s"]))
         return
     if a.wave_loop_exp:
         from sim.wavelib import wave_exp_main

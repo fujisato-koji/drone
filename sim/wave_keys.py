@@ -182,7 +182,33 @@ def loop_summary(rows):
            "loop_motor_share_median": (round(share[len(share) // 2], 2), "1"),
            "loop_low_motor_runs": (len(low), "1"),
            "loop_u3_power_max_w": (round(max(r["motor"]["avg_power_w"] for r in rows if r["u10"] == 3.0), 1), "W")}
+    dear = [r for r in rows if r["u10"] == 3.0 and r.get("after_entry") and r.get("flat")
+            and r["after_entry"]["avg_power_w"] > r["flat"]["power_avg_w"]]
+    ffo = sorted(r["after_entry"]["forward_face_share"] for r in rows
+                 if r["u10"] != 3.0 and r.get("after_entry") and r["margins"]["counts"])
+    out["loop_u3_dearer_runs"] = (len(dear), "1")
+    if dear:
+        out["loop_u3_dearer_forward_face_max"] = (round(max(r["after_entry"]["forward_face_share"] for r in dear), 2), "1")
+        out["loop_u3_dearer_motor_share_min"] = (round(min(r["after_entry"]["thrust_on_share"] for r in dear), 2), "1")
+        out["loop_u3_dearer_v_c0_runs"] = (sum(abs((r.get("entry") or {}).get("course_rel_deg") or 0.0) < 1e-6
+                                               for r in dear), "1")
+    if ffo:
+        out["loop_forward_face_median_counted"] = (round(ffo[len(ffo) // 2], 2), "1")
     return out
+
+
+def loop_library_values(rows, lib):
+    """How many of the loop's cases have no soaring entry in the library (crest ride or optimizer cycle) for their
+    aircraft, wave wind, sea and wind, and the power of the optimizer's motor cycles at Tp 10 s."""
+    soar = {(e["aircraft"], e["preset"], e["hs"], e["tp"], e["direction"] if e["u10"] > 0 else "along", e["u10"])
+            for e in lib["entries"] if e.get("success") and e["kind"] == "soaring"}
+    none = [r for r in rows if (r["aircraft"], r["preset"], r["hs"], r["tp"],
+                                r["direction"] if r["u10"] > 0 else "along", r["u10"]) not in soar]
+    mot = [e["power_avg_w"] for e in lib["entries"] if e.get("success") and not e.get("crest") and e["kind"] == "motor"]
+    return {"loop_cases_without_soaring_entry": (len(none), "1"),
+            "lib_optimizer_motor_cycles": (len(mot), "1"),
+            "lib_optimizer_motor_needing_power": (sum(p >= NEAR_ZERO_W for p in mot), "1"),
+            "lib_optimizer_motor_power_max_w": (round(max(mot), 1), "W")}
 
 
 def sense_id(r):
@@ -197,6 +223,9 @@ def sense_values(rows):
     for r in rows:
         a = r.get("after_entry") or {}
         v = {"aloft_s": (round(r["survival_s"], 0), "s"), "counted": (int(r["margins"]["counts"]), "1"),
+             "in_band": (int(r["margins"]["in_band"]), "1"),
+             "below_stall_s": (round(r["margins"]["below_stall_s"], 2), "s"),
+             "wingtip_min_m": (round(r["margins"]["wingtip_min_m"], 2), "m"),
              "power_after_w": (round(a["avg_power_w"], 1), "W") if a else None,
              "motor_share": (round(r["motor"]["thrust_on_share"], 2), "1"),
              "height_median_m": (round(r["margins"]["height_median_m"], 1), "m")}
@@ -215,15 +244,36 @@ def nav_values_all(rows):
 
 
 def nav_values(r):
-    nv, m, p = r.get("nav") or {}, r["motor"], r["predicted"]
+    """Keys of a navigated run over swell. first_leg_vmg_ms is the speed made good of the hull plan's first leg;
+    hull_vmg_ms and hull_s are the kinematic run's (sail_hull) mean speed made good and time; the stall and wingtip
+    fields come from every recorded step (sim.mpc.flight_margins); the course fields from nav_course_stats."""
+    nv, m, p, c = r.get("nav") or {}, r["motor"], r["predicted"], r.get("course") or {}
     counted = bool(nv.get("counts_as_arrived"))
-    return {"nav_arrival_s": (round(nv["arrival_time_s"], 0) if counted else 0, "s"), "nav_counted": (int(counted), "1"),
-            "nav_vmg_ms": (round(nv["mean_vmg_ms"], 2), "m/s"), "nav_hull_ms": (round(p["plan_vmg_ms"], 2), "m/s"),
-            "nav_hull_s": (round(p["time_s"], 0), "s"), "nav_energy_wh": (round(m["energy_wh"], 1), "Wh"),
-            "nav_motor_share": (round(m["thrust_on_share"], 2), "1"),
-            "nav_height_median_m": (round(nv["height_median_m"], 1), "m"),
-            "nav_height_min_m": (round(nv["height_min_m"], 1), "m"), "nav_height_max_m": (round(nv["height_max_m"], 1), "m"),
-            "nav_hull_points": (int(r["hull_points"]), "1")}
+    out = {"nav_arrival_s": (round(nv["arrival_time_s"], 0) if counted else 0, "s"),
+           "nav_reached": (int(bool(nv.get("arrived"))), "1"), "nav_counted": (int(counted), "1"),
+           "nav_vmg_ms": (round(nv["mean_vmg_ms"], 2), "m/s"),
+           "nav_first_leg_vmg_ms": (round(p["plan_vmg_ms"], 2), "m/s"),
+           "nav_hull_vmg_ms": (round(p["mean_vmg_ms"], 2), "m/s"),
+           "nav_hull_s": (round(p["time_s"], 0), "s"), "nav_energy_wh": (round(m["energy_wh"], 2), "Wh"),
+           "nav_motor_share": (round(m["thrust_on_share"], 2), "1"),
+           "nav_height_median_m": (round(nv["height_median_m"], 1), "m"),
+           "nav_height_min_m": (round(nv["height_min_m"], 2), "m"),
+           "nav_height_max_m": (round(nv["height_max_m"], 1), "m"),
+           "nav_wingtip_min_m": (round(nv["wingtip_min_m"], 2), "m"),
+           "nav_below_stall_s": (round(nv["below_stall_s"], 2), "s"),
+           "nav_below_stall_longest_s": (round(nv["below_stall_longest_s"], 2), "s"),
+           "nav_below_stall_depth_ms": (round(nv["below_stall_depth_ms"], 3), "m/s"),
+           "nav_hull_points": (int(r["hull_points"]), "1")}
+    if c:
+        out.update({"nav_closest_m": (round(c["closest_m"], 0), "m"),
+                    "nav_closest_east_m": (round(c["closest_east_m"], 0), "m"),
+                    "nav_dip_t_s": (round(c["airspeed_min_t_s"], 1), "s"),
+                    "nav_dip_since_change_s": (round(c["since_change_at_dip_s"], 1), "s"),
+                    "nav_dip_on_crest_ride": (int(bool(c["crest_at_dip"])), "1")})
+        if c.get("heading_off_min_deg") is not None:
+            out.update({"nav_heading_off_min_deg": (round(c["heading_off_min_deg"], 0), "deg"),
+                        "nav_heading_off_max_deg": (round(c["heading_off_max_deg"], 0), "deg")})
+    return out
 
 
 def values_block():
@@ -234,6 +284,8 @@ def values_block():
     if "wave_loop_exp" in d:
         parts.append(loop_values(d["wave_loop_exp"]["results"]))
         parts.append(loop_summary(d["wave_loop_exp"]["results"]))
+        if lib is not None:
+            parts.append(loop_library_values(d["wave_loop_exp"]["results"], lib))
     if "wave_sense_exp" in d:
         parts.append(sense_values(d["wave_sense_exp"]["results"]))
     if "wave_nav_exp" in d:
@@ -247,14 +299,16 @@ def values_block():
 
 
 def loop_table(rows):
+    have = loop_values(rows)
     lines = ["| aircraft | Hs | swell | u10 | wave wind | " + " | ".join(f.replace("_", " ") for f, _ in LOOP_FIELDS)
              + " |", "|" + "---|" * (5 + len(LOOP_FIELDS))]
     for r in rows:
         cid = case_id(r)
+        cells = [("wave.%s_%s" % (cid, f)) if ("%s_%s" % (cid, f)) in have else "n/a" for f, _ in LOOP_FIELDS]
         lines.append("| %s | %g | %s | %g | %s | " % (SHORT[r["aircraft"]], r["hs"],
                                                        "calm" if r["u10"] == 0.0 else r["direction"], r["u10"],
                                                        PSHORT[r["preset"]])
-                     + " | ".join("wave.%s_%s" % (cid, f) for f, _ in LOOP_FIELDS) + " |")
+                     + " | ".join(cells) + " |")
     return chr(10).join(lines) + chr(10)
 
 
@@ -273,7 +327,8 @@ def lib_table(lib):
 
 
 def sense_table(rows):
-    fields = ("aloft_s", "counted", "power_after_w", "motor_share", "height_median_m")
+    fields = ("aloft_s", "counted", "in_band", "below_stall_s", "wingtip_min_m", "power_after_w", "motor_share",
+              "height_median_m")
     lines = ["| planner's sea | " + " | ".join(f.replace("_", " ") for f in fields) + " |",
              "|" + "---|" * (1 + len(fields))]
     for r in rows:
@@ -285,8 +340,9 @@ def sense_table(rows):
 
 
 def nav_table(rows):
-    fields = ("arrival_s", "counted", "vmg_ms", "hull_ms", "hull_s", "energy_wh", "motor_share", "height_median_m",
-              "height_min_m", "height_max_m", "hull_points")
+    fields = ("arrival_s", "reached", "counted", "vmg_ms", "first_leg_vmg_ms", "hull_vmg_ms", "hull_s", "energy_wh",
+              "motor_share", "height_median_m", "height_min_m", "height_max_m", "wingtip_min_m", "below_stall_s",
+              "hull_points")
     lines = ["| target | " + " | ".join(f.replace("_", " ") for f in fields) + " |",
              "|" + "---|" * (1 + len(fields))]
     for r in rows:

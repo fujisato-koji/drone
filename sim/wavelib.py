@@ -5,6 +5,11 @@ component (amplitude Hs / 2, deep water, period Tp), the model of the cycle opti
 (sim.dsopt), with the wave-coherent wind of the P63 calibration or the P64 low bound
 (sim.dsopt.wave_preset_params) and the COARE 3.5 log profile over the local surface.
 
+Crest rides (crest_ride, crest_entries): steady flight in the wave frame on the forward face, kept as a family
+over the height up to CREST_H_MAX = 10 m. That top is a choice, not a limit: in the model rides soar up to about
+23 m over a 3 m swell of 10 s along a 6 m/s wind and about 29 m in calm air (K-020). A ride is an equilibrium that
+holds only with the planner's feedback, not a stable one.
+
 Frames: the library frame of sim.dsopt and sim.mpc (the mean wind blows toward +x, angles counter-clockwise
 from +x). A sea is named by the swell's direction of travel relative to the wind: "along" (0 deg), "across"
 (90 deg, toward +y in the library frame) and "against" (180 deg). A course is named relative to the swell's
@@ -244,7 +249,7 @@ WAVE_MARGINS = (2.0, 0.8, 0.9, 1.2)      # h_min, n_frac, mu_frac, v_factor: the
 WAVE_SEEDS = (0, 1, 2)
 WAVE_N = 40
 WAVE_MAXITER = 150
-CREST_H_MAX = 10.0                       # m; highest crest ride: above it the ride moves toward the crest (phase-stable side)
+CREST_H_MAX = 10.0                       # m; top of the crest-ride family, a choice and not a limit (see crest_ride)
 
 
 def wave_dict(hs, tp, direction):
@@ -394,9 +399,13 @@ def crest_ride(ac, preset, hs, tp, direction, u10, v_c, h_min=None, h_max=CREST_
 
     The rides of one along-crest speed form a family over the height: at each height the phase on the crest side
     of the forward face (between the crest and the phase of the largest surplus at h_min) where the updraft
-    balances the sink; the crest side is the phase-stable one (an aircraft that falls back towards the crest
-    loses updraft, sinks and speeds up). The family runs from h_min up to h_max or to the balance height at the
-    phase of the largest surplus, whichever is lower, in CREST_FAMILY_DH steps; the ride is its highest member.
+    balances the sink. A ride is an equilibrium, not a stable one: K-020 replayed rides of either side of the
+    surplus maximum with a small airspeed error and fixed controls and both drifted off, so a ride holds only with
+    the planner's feedback; the crest side was chosen because a pilot flight from below reached it. The family
+    runs from h_min up to h_max or to the balance height at the phase of the largest surplus, whichever is lower,
+    in CREST_FAMILY_DH steps; the ride is its highest member. h_max (CREST_H_MAX, 10 m) is a choice and not a
+    limit: rides soar up to about 23 m over the 3 m swell along a 6 m/s wind and about 29 m in calm air (K-020);
+    10 m was taken because a ride at 20 m could not be entered from the start in a pilot flight.
     Returns a dict (the ride's state, and "family": rows [h, theta, V, gamma, psi, cl])."""
     h_min = WAVE_MARGINS[0] if h_min is None else h_min
     acf, wv, prof, u = _crest_setup(ac, preset, hs, tp, direction, u10)
@@ -544,14 +553,32 @@ def crest_entries(name, preset, hs, tp, direction, u10, motor=True):
     """The crest-riding entries of one sea and wind: the slowest along-crest speed that soars (the purest ride,
     course nearest the swell's travel) and the fastest either way along the crest, each a library entry (kind
     soaring, crest True, steady in the wave frame) with the ride's phase as its wave phase. Where no ride soars
-    and motor is True: the motor ride of least power (kind motor, motor_crest_ride)."""
+    and motor is True: the motor ride of least power (kind motor, motor_crest_ride).
+
+    The speeds are searched on the CREST_VC_STEP grid: crest_exists screens them, and crest_ride is tried in order
+    of the along-crest speed (from zero for the slowest, from the largest either way for the fastest) until it
+    succeeds. crest_ride can refuse a speed that crest_exists accepts, since it takes the phase of the largest
+    surplus, where the airspeed can fall below the margin (K-020: the first build tried only the slowest and the
+    two fastest screened speeds and so lost the slowest soaring speed in 12 of 104 seas)."""
     from sim.aircraft_models import by_name
     ac = by_name(name)
     vcs = np.arange(-30.0, 30.0 + 1e-9, CREST_VC_STEP)
     ok = [float(v) for v in vcs if crest_exists(ac, preset, hs, tp, direction, u10, float(v))]
-    rides = {v: crest_ride(ac, preset, hs, tp, direction, u10, v) for v in {min(ok, key=abs), max(ok), min(ok)}} if ok else {}
-    ok = [v for v, r in rides.items() if r is not None]
-    if not ok:
+    rides = {}
+
+    def first(order):
+        for v in order:
+            if v not in rides:
+                rides[v] = crest_ride(ac, preset, hs, tp, direction, u10, v)
+            if rides[v] is not None:
+                return v
+        return None
+
+    picks = [first(sorted(ok, key=lambda v: (abs(v), v))),
+             first(sorted((v for v in ok if v > 0.0), reverse=True)),
+             first(sorted(v for v in ok if v < 0.0))]
+    picks = sorted({v for v in picks if v is not None})
+    if not picks:
         if not motor:
             return []
         rd = motor_crest_ride(ac, preset, hs, tp, direction, u10)
@@ -560,7 +587,53 @@ def crest_entries(name, preset, hs, tp, direction, u10, motor=True):
         return [_crest_entry(name, preset, hs, tp, direction, u10, rd, "motor", None)]
     return [_crest_entry(name, preset, hs, tp, direction, u10, rides[v], "soaring",
                          crest_replay(ac, preset, hs, tp, direction, u10, rides[v]))
-            for v in sorted({min(ok, key=abs), max(ok), min(ok)})]
+            for v in picks]
+
+
+def rebuild_crest_rides(workers=6, path=WAVE_LIB_PATH):
+    """python -m sim.mpc --rebuild-crest-rides: the crest-ride entries of the wave library computed afresh over every
+    sea of the build's grid (crest_entries), the optimizer's cycles kept as they are. The library's meta block keeps
+    the build's stamp and gains crest_rebuild with its own command, commit and stamp, and the seas whose kept
+    along-crest speeds changed."""
+    import json
+    import time
+    from concurrent.futures import ProcessPoolExecutor
+    from sim import record
+    here = _os.path.dirname(__file__)
+    t0 = time.time()
+    with open(path) as fh:
+        lib = json.load(fh)
+    old = [e for e in lib["entries"] if e.get("crest")]
+    keep = [e for e in lib["entries"] if not e.get("crest")]
+    tiers = [[tuple(s) for s in tier] for tier in lib["settings"]["tiers"]]
+    cjobs = [(n, p, hs, tp, d, u) for tier in tiers for hs, tp in tier for d, u in wave_seas(hs, tp)
+             for p in PRESETS for n in WAVE_AIRCRAFT]
+    with ProcessPoolExecutor(workers) as ex:
+        new = [e for es in ex.map(_crest_job, cjobs, chunksize=2) for e in es]
+
+    def speeds(es):
+        g = {}
+        for e in es:
+            k = (e["aircraft"], e["preset"], e["hs"], e["tp"], e["direction"], e["u10"])
+            g.setdefault(k, []).append((e["kind"], round(e["ride"]["v_c"], 3)))
+        return {k: sorted(v) for k, v in g.items()}
+
+    so, sn = speeds(old), speeds(new)
+    changed = [{"sea": list(k), "before": so.get(k), "after": sn.get(k)} for k in sorted(set(so) | set(sn), key=str)
+               if so.get(k) != sn.get(k)]
+    lib["entries"] = keep + new
+    meta = record.meta("python -m sim.mpc --rebuild-crest-rides --workers %d" % workers,
+                       [__file__, _os.path.join(here, "dsopt.py"), _os.path.join(here, "seawind.py")])
+    meta.update({"runtime_s": time.time() - t0, "workers": workers, "seas": len(cjobs),
+                 "why": "K-020: crest_entries tried only three screened speeds, and crest_ride refused the slowest "
+                        "soaring one in some seas; the speeds are now searched (crest_entries)",
+                 "changed_seas": len(changed), "changes": changed})
+    lib["meta"]["crest_rebuild"] = meta
+    lib["counts"] = library_counts(lib["entries"])
+    with open(path, "w", newline=chr(10)) as fh:
+        json.dump(lib, fh, indent=1)
+        fh.write(chr(10))
+    return meta
 
 
 # ---- the library in the closed loop ----------------------------------------------------------------------------
@@ -883,9 +956,13 @@ def run_wave_job(job):
     after = None
     if t_in is not None and T[-1] > t_in + 1.0:
         k = T >= t_in
+        kk, om, dx, dy, ph, _ = mpc.world_swell(env)
+        theta = np.mod(kk * (dx * ST[k, 0] + dy * ST[k, 1]) - om * T[k] + ph, 2.0 * np.pi)   # 0 crest, pi trough
         after = {"t_entry_s": float(t_in), "duration_s": float(T[-1] - t_in), "avg_power_w": float(P[k].mean()),
                  "thrust_on_share": float(np.mean(th[k] > mpc.BURST_ON_FRAC * ac.mass * G)),
-                 "height_median_m": float(np.median(ST[k, 2] - np.asarray(env.surface(ST[k, 0], ST[k, 1], T[k])[0])))}
+                 "height_median_m": float(np.median(ST[k, 2] - np.asarray(env.surface(ST[k, 0], ST[k, 1], T[k])[0]))),
+                 "forward_face_share": float(np.mean(theta < np.pi)),
+                 "phase_median": float(np.median(theta))}
     e = pilot.last
     entry = None if e is None else {"course_rel_deg": e["course_rel_deg"], "crest": bool(e.get("crest")),
                                     "kind": e["kind"], "power_avg_w": e["power_avg_w"],
@@ -938,9 +1015,10 @@ def wave_exp_main(a):
 
     def dump(done):
         rows.sort(key=lambda r: order.get((r["aircraft"], r["hs"], r["direction"], r["u10"], r["preset"]), 1e9))
-        d[WAVE_EXP_KEY] = {"meta": dict(meta, runtime_s=time.time() - t0, complete=done), "results": rows}
+        cur = json.load(open(a.out)) if _os.path.exists(a.out) else {}    # other experiments may have written since
+        cur[WAVE_EXP_KEY] = {"meta": dict(meta, runtime_s=time.time() - t0, complete=done), "results": rows}
         with open(a.out, "w", newline=chr(10)) as fh:
-            json.dump(d, fh, indent=1)
+            json.dump(cur, fh, indent=1)
             fh.write(chr(10))
 
     meta = record.meta("python -m sim.mpc --wave-loop-exp --workers %d" % a.workers
@@ -992,7 +1070,9 @@ def wave_exp_main(a):
 WAVE_SENSE_KEY = "wave_sense_exp"
 WAVE_SENSE_CASE = ("albatross-3m", 3.0, "along", 6.0, "p63")
 WAVE_SENSE_ERRORS = (("phase", 0.15), ("phase", 0.3), ("phase", 0.6), ("phase", 1.2), ("phase", -0.6),
-                     ("height", 0.8), ("height", 1.2))
+                     ("height", 0.8), ("height", 0.9), ("height", 1.2))
+# height 0.8 makes the planner's swell 2.4 m, whose nearest library sea is the 2 m one, so it flies that sea's
+# entry; 0.9 (2.7 m) keeps the 3 m entry and tests a low height estimate alone (K-020)
 WAVE_SENSE_T_END = 300.0
 
 
@@ -1047,6 +1127,41 @@ def wave_hull_entries(entries, name, preset, hs, tp, direction, u10):
             and e["hs"] == hs and e["tp"] == tp and e["direction"] == direction and e["u10"] == u10]
 
 
+def nav_course_stats(r, tr, tgt, window_s=240.0):
+    """Where a navigated run went and when its airspeed was lowest (full resolution): the closest approach to the
+    target and how far east of it, the heading against the commanded bearing (median of the absolute difference
+    per window of window_s), the time of the lowest airspeed, the cycle flown then (crest ride or the optimizer's
+    cycle) and the time since the last change of cycle before it."""
+    T, ST = np.asarray(tr["t"], float), np.asarray(tr["state"], float)
+    nv = r["nav"]
+    cmds = nv["commands"]       # [t, bearing, chi, side, mode, vmg, tacked, kind, cycle key, cross]
+    d = np.hypot(ST[:, 0] - tgt[0], ST[:, 1] - tgt[1])
+    i = int(np.argmin(d))
+    ct = np.array([c[0] for c in cmds])
+    j = np.clip(np.searchsorted(ct, T, side="right") - 1, 0, len(cmds) - 1)
+    brg = np.array([c[1] for c in cmds])[j]
+    head = np.mod(90.0 - np.degrees(ST[:, 5]), 360.0)
+    off = np.abs((head - brg + 180.0) % 360.0 - 180.0)
+    win = [float(np.median(off[(T >= a) & (T < a + window_s)])) for a in np.arange(0.0, T[-1], window_s)
+           if np.sum((T >= a) & (T < a + window_s)) > 10]
+    k = int(np.argmin(ST[:, 3]))
+    t_dip = float(T[k])
+    keys = [c[8] for c in cmds]
+    changes = [cmds[n][0] for n in range(1, len(cmds)) if keys[n] != keys[n - 1]]
+    before = [c for c in changes if c <= t_dip]
+    cyc = keys[int(j[k])]
+    entry_crest = None
+    for p_ in r.get("hull", []):
+        if p_["key"] == cyc:
+            entry_crest = p_["crest"]
+    return {"closest_m": float(d[i]), "closest_t_s": float(T[i]), "closest_east_m": float(ST[i, 0] - tgt[0]),
+            "heading_off_window_deg": win, "heading_off_min_deg": float(min(win)) if win else None,
+            "heading_off_max_deg": float(max(win)) if win else None,
+            "airspeed_min_t_s": t_dip, "cycle_at_dip": cyc, "crest_at_dip": entry_crest,
+            "last_change_before_dip_s": float(before[-1]) if before else None,
+            "since_change_at_dip_s": float(t_dip - before[-1]) if before else float(t_dip)}
+
+
 def run_wave_nav(job):
     """The navigated closed loop over swell: the velocity hull of the wave library's entries at the sea and wind
     (sim.navigator.HullSource; the mirror images are valid for a swell along or against the wind), the hull
@@ -1081,8 +1196,10 @@ def run_wave_nav(job):
                     library=mpc.CycleLibrary.from_keyword("motor"), state_source="truth", wind_source="truth",
                     actuators=Actuators(ac, rate_model="pb2v"), n_limit=True, stop_on_tip=True, wave_aware=False,
                     motor=True, w_energy=mpc.energy_weight(ac, "normal"), target=tgt, navigator=True,
-                    nav_hull=src, guide_sig=mpc.NAV_GUIDE_SIG, nav_kw={"steady": steady}, start_entry=start)
+                    nav_hull=src, guide_sig=mpc.NAV_GUIDE_SIG, nav_kw={"steady": steady}, start_entry=start,
+                    keep=True)
     r["wall_s"] = time.time() - t0
+    traj = r.pop("traj")
     r = mpc._no_nan(r)
     r["motor"]["bursts"] = r["motor"].get("bursts", [])[:20]
     hull = src.at(u10)
@@ -1092,6 +1209,7 @@ def run_wave_nav(job):
                       "track": pred["track"][::10].tolist()}
     r["hull"] = [{"vx": p.vx, "vy": p.vy, "power": p.power, "kind": p.kind, "key": p.key,
                   "crest": bool((p.entry or {}).get("crest"))} for p in hull.points]
+    r["course"] = mpc._no_nan(nav_course_stats(r, traj, tgt))
     return {"aircraft": name, "hs": hs, "tp": WAVE_EXP_TP, "direction": d, "u10": u10, "preset": preset,
             "distance_m": dist, "target_rel_swell": target, "target": list(tgt),
             "hull_points": len(hull.points), **r}

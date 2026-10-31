@@ -191,5 +191,35 @@ class TestPilot(unittest.TestCase):
         self.assertEqual(runs[1]["wave_switches"], [])
 
 
+class TestK020Fixes(unittest.TestCase):
+    def test_slowest_soaring_crest_speed_is_kept(self):
+        # K-020: the 3 m swell along a 6 m/s wind soars at 6.5 m/s along the crest, but the first build kept only 13
+        from sim.wavelib import CREST_VC_STEP, crest_exists
+        ac = by_name("albatross-3m")
+        es = crest_entries("albatross-3m", "p63", 3.0, 10.0, "along", 6.0)
+        slow = min(abs(e["ride"]["v_c"]) for e in es)
+        self.assertLess(slow, 13.0)
+        # no slower screened speed is a ride
+        for v in np.arange(-slow + CREST_VC_STEP, slow - 1e-9, CREST_VC_STEP):
+            if crest_exists(ac, "p63", 3.0, 10.0, "along", 6.0, float(v)):
+                self.assertIsNone(crest_ride(ac, "p63", 3.0, 10.0, "along", 6.0, float(v), family=False))
+
+    def test_flight_margins_see_every_step(self):
+        # K-020: a subsample of 4000 points missed a short wingtip dip; the margins now use every step
+        from sim.mpc import flight_margins
+        ac = by_name("albatross-3m")
+        env = Environment.flat(Wind(6.0, 270.0))
+        n = 40001
+        T = np.arange(n) * 0.01
+        ST = np.zeros((n, 6))
+        ST[:, 2] = 5.0
+        ST[:, 3] = 15.0
+        ST[12345, 2] = 0.08                        # one step, not on the old subsample grid (every 10th)
+        m = flight_margins(ac, env, T, ST, np.zeros(n), {"max_n_flown": 1.0, "ended": "complete"})
+        self.assertAlmostEqual(m["wingtip_min_m"], 0.08)
+        self.assertFalse(m["margins_ok"])
+        self.assertAlmostEqual(m["wingtip_min_t_s"], 123.45)
+
+
 if __name__ == "__main__":
     unittest.main()
