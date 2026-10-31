@@ -690,6 +690,44 @@ Motor-assisted cycles in the library and a reflex (`python -m sim.mpc --motor-li
 - So the reflex needs redesign (Q-068): a stall threshold below the planner's floor, a stall test that accounts for the load factor, an override that does not zoom (thrust and lift scaled to the attitude, no full thrust past the vertical), and a world that sees the waves; and the waves still need wave-synchronized cycles in the library (Q-060).
 - Why those wave runs ended (the crests the flat world did not see, the components the shortened true world left out, and loops after the reflex), and the planner that flies wave-synchronized cycles over swell, are in the section on flight over swell (docs/02-form.md#wave-loop).
 
+### The redesigned reflex (Q-068, D-019)
+
+`sim.mpc.Reflex2` (`fly_mpc(reflex="v2")`) replaces the reflex above as a supervisor over the planner's commands at every control step; the first reflex stays in the code for the earlier runs.
+It fires on the prediction of the plan or on the sensors at the low wingtip, in this order:
+
+- The prediction flies the next ctrl.reflex_horizon_s with the plan's own schedule, as before, in the planner's world, so over swell it sees the waves the planner sees (the oracle sea of stage 1, the estimated sea later).
+  It fires when the centre comes below ctrl.reflex_clearance_m, when a wingtip is predicted in the water, or on a stall.
+- The stall test is on the load factor the path needs: the airspeed below ctrl.reflex2_v_frac times the stall speed at a load factor of cos gamma, the speed below which the wing at its largest lift coefficient no longer carries the weight across the path.
+  The threshold lies below the planner's own speed floor of 1.1 stall speeds, as K-015 proposed, and the test does not fire at the top of a zoom, where the path needs little lift.
+  The plan's own load factor cannot exceed the wing's in the point mass (the lift coefficient is clipped at cl_max), so a test on the predicted load factor itself could never fire; the test is therefore on what the path needs.
+- The range reading at the low wingtip is the primary tip trigger of D-019: the true gap from the tip to the water plus Gaussian noise of skid.req_range_accuracy_m, sampled at skid.req_range_rate_hz and read skid.req_range_latency_s plus skid.sense_process_s late.
+  It fires when the reading is below the trigger gap for the closing rate read over the last 0.05 s, within the sensor's span skid.req_range_span_m.
+  The trigger gap is the skim study's time budget (`sim.skid.latest_start`, docs/02-form.md#wingtip-skim) tabulated over the bank, the airspeed and the closing rate for each aircraft: the gap at which a roll towards wings level, started after the range latency, the processing and the actuator delay (ctrl.actuator_delay_s), keeps the immersion within ctrl.reflex2_tip_depth_m when the sea keeps rising under the tip by up to the sensor's span, with the load factor held at one; it grows with the closing rate, and at a steep bank and a fast closing it passes the sensor's span, so the reflex then fires as soon as the reading is in range.
+  It is armed only while the water stands higher than the planner's sea at the same point and time by more than three times the sensor's accuracy: the time budget is for a sea that rises above the plan, a tip that comes down to the water as the plan intends is the plan's own, and a plan that puts the tip into the water is the prediction's.
+- The wet sensor at the tip is the last resort: the tip in the water for skid.req_wet_latency_s plus skid.sense_process_s.
+
+The override is scaled with the attitude instead of the fixed lift coefficient and full thrust of the first reflex:
+
+- wings level, which the actuators reach at their full roll rate;
+- while descending towards the water, the full load factor the margins allow (0.8 of the limit, the lift coefficient up to cl_max);
+- once level or climbing, a load factor from the flight path, cos gamma plus ctrl.reflex2_gamma_gain_per_rad times the angle below ctrl.reflex2_gamma_target_deg, so the aircraft climbs away at a moderate angle and does not zoom; for a tip event at least the present load factor is held below that angle, as the time budget assumes; for a stall the target is ctrl.reflex2_gamma_stall_deg, to unload and regain speed;
+- the thrust full at or below level flight and falling to zero at a climb of ctrl.reflex2_thrust_zero_deg, so there is no thrust past the vertical.
+
+Once fired the reflex holds for at least ctrl.reflex2_hold_s and returns control to the planner at the first step after that where nothing fires.
+
+Constructed dives and contacts (`python -m sim.mpc --reflex-exp`, `sim/reflex.py`, key `reflex_exp`): the commands of a plan that leads into the water are held from a constructed state, as when the planner is wrong about the sea or late, so that only the reflex can save the aircraft; the reflex supervises with the prediction of that same plan and, for the redesign, the sensors on the true sea, and when it lets go the stale plan resumes.
+The dives are on a flat sea at 9 m/s (heights of 4 and 8 m, flight-path angles of -10 to -30 deg, 1.3 and 1.8 stall speeds, wings level and 35 deg of bank, a lift coefficient of a fifth of the best glide's); the contacts are banked level turns over a 3 m swell of 10 s flying into a crest, the low wingtip 0.3 or 0.6 m above the water, with the prediction seeing the true swell ("truth") or a flat sea ("flat": the planner did not see the swell).
+Each case flies for 4 s, both aircraft, and ends at a contact of the centre or of the wingtip deeper than the skid (skid.blade_depth_m); "touched" counts the cases where the tip was wet at all.
+
+<!-- pilot_reflex_keys begin -->
+<!-- pilot_reflex_keys end -->
+
+- On the dives the redesign rescues as many as the first reflex (reflex.dive_truth_v2_rescues and reflex.dive_truth_v1_rescues of reflex.dive_truth_none_base_contacts) and neither loops; the rest are dives too steep and low for the load factor the margins allow.
+  A first version of the override that took the load factor from the flight path also while descending pulled less in the steepest dives and rescued fewer; the full pull while descending is the fix.
+- On the contacts that the prediction sees, both reflexes rescue every case (reflex.contact_truth_v2_rescues and reflex.contact_truth_v1_rescues of reflex.contact_truth_none_base_contacts), but the first loops in reflex.contact_truth_v1_loops of them, up to reflex.contact_truth_v1_gamma_max_deg deg of flight-path angle and down to reflex.contact_truth_v1_v_min_over_stall of the stall speed, the zoom of K-015; the redesign does not loop (reflex.contact_truth_v2_loops), climbs to at most reflex.contact_truth_v2_gamma_max_deg deg and keeps reflex.contact_truth_v2_v_min_over_stall of the stall speed.
+- On the contacts that the prediction does not see (its world is flat), the first reflex rescues reflex.contact_flat_v1_rescues of reflex.contact_flat_none_base_contacts, the redesign every one (reflex.contact_flat_v2_rescues) on the range reading, and its tip never touches the water (reflex.contact_flat_v2_touched).
+- The firings in cases that had not touched by the end of the 4 s (reflex.contact_truth_v2_fired_no_contact and reflex.contact_flat_v2_fired_no_contact) are predicted contacts after that end.
+- The forces of the skid in the water are not in the point mass, so a touch within the skid's depth is only counted, not flown.
 
 ## Candidate forms {#candidate-forms}
 
@@ -994,6 +1032,35 @@ What the runs show:
 - The two aircraft behave alike, and the low bound of P64 moves the picture rather than removing it: it ends more runs early and makes the motor work harder, but it also carries runs that the P63 wave wind loses (the albatross-like glider over a 3 m swell against a 6 and a 9 m/s wind).
 - In wave.loop_flat_only runs the pilot refused the wave entry, because the only entry of that sea needed at least as much power as the flat library, and flew on the steady flat leg; wave.loop_flat_only_ended of them touched the water with a wingtip. A steady leg level above the local surface is not safe over a swell: its reference rides up and down with the surface, and the planner follows it into the troughs.
 
+### The pilot's choice and the forward face (Q-060)
+
+The runs above at 3 m/s lost the forward face, and the pilot could not see it because it chose by the library's nominal power.
+Pilot flights of the albatross-like glider over the 3 m swell at 3 m/s with the crest ride of no along-crest speed forced (not recorded) showed three ways the loop pays:
+
+- With the swell along the wind the flat leg nearly keeps pace with the swell, so the wave phase at the aircraft drifts slowly and the wait for the phase match can run out; the aircraft then reaches the ride's phase low and slow, slides back over the crest and holds the wave's speed behind it with the motor.
+  The ride sits near the crest, on the side where a lag loses the updraft, and the planner did not spend the speed to stay ahead.
+- With the swell against the wind the ride needs an airspeed far above the flat leg's, so the aircraft cannot get onto it and falls behind the crest in the same way.
+- The family member above the aircraft (the guide's climb of 2 m) asks for height while the aircraft is behind the ride's phase, which costs the speed that would hold the phase.
+
+The forward-face guide (`PILOT_FACE`, the face option of `WaveCycleGuide`, crest rides only):
+
+- the wave-phase error is asymmetric: ahead of the ride's phase, further down the forward face where the updraft is stronger, it is tolerated with wave.pilot_face_sig_ahead_rad, behind it with the guide's tolerance as before;
+- the member of the family is not taken above the aircraft while it is behind the phase of the ride at its own height;
+- a bounded barrier on the phase at the aircraft, weight wave.pilot_face_barrier_w per second in the running cost: zero more than wave.pilot_face_barrier_m_rad down the face from the crest, rising quadratically to one at the crest, one behind the crest for a quarter wavelength, then falling linearly to zero at the trough behind (where the next wave's face is nearer); it pulls the aircraft back down the face before it slides over the crest, and being bounded it never outweighs the cost of a contact.
+
+In the pilot flights the asymmetric tolerance and the member rule alone delayed the slide but did not stop it, a quarter of the barrier's weight did not stop it either, and a phase tolerance behind the ride tightened to half instead of the barrier held the face along the wind but dived the aircraft into the water against it, because the phase cost then outweighed a contact; with the barrier the aircraft held the face both ways, along the wind with the motor on part of the time and against it with the motor on most of the time, since it held a phase behind the ride and lower than it.
+
+The pilot's choice by trial (`WavePilot(policy="trial")`, `pilot_trial_job`): before a run, every entry of the library's nearest sea (one of each mirror pair, since an entry and its mirror image cost the same from a start along the swell's travel) and the flat leg are each flown in a closed-loop trial of wave.pilot_trial_s from the run's start, in the planner's world (the oracle sea of this stage), with the same planner, guide and flat leg as the run but another planner seed; the cost of a trial is what the loop paid: the average electric power after the entry (over the whole trial for the flat leg), with a penalty when a margin broke or the band was left, a larger one when the entry was not taken, and a larger one still when the trial ended on the water; the run flies the entry of least cost, or stays on the flat leg.
+This is a choice by simulation in the aircraft's own model of the sea: it costs one short flight per entry before each choice, which the simulation's clock does not count (Q-065), and in stage 2 its worth rests on the estimated sea.
+The flat leg of these runs is the powered leg above the mean sea level with the heading hold (see the powered leg below).
+
+`--wave-pilot-exp` flies the trials and then all wave.pilot_runs cases of the closed-loop experiment with the entry of least cost, seed 1 as before, for 10 minutes (key `wave_pilot_exp`, the trials under `wave_pilot_trials`).
+
+<!-- pilot_loop_keys begin -->
+<!-- pilot_loop_keys end -->
+
+PILOT_RESULTS_TODO
+
 ### Navigation over swell
 
 `--wave-nav-exp`: the albatross-like glider over a 3 m swell of 10 s running along a 6 m/s wind, to a target 5 km away, the velocity hull built from the wave library's entries at that sea and wind with their mirror images (the sea is symmetric about the wind axis), the hull navigator of the navigation section with its steady motor legs, and the planner flying what it names, the wave entries through the wave guide.
@@ -1016,6 +1083,39 @@ What the two runs show:
   The aircraft did not hold the leg's course: its heading lay wave.nav_heading_off_min_deg_across to wave.nav_heading_off_max_deg_across deg off the commanded bearing in every four-minute window, and it crossed the target's line wave.nav_crossing_offset_m_across m east of the target.
   The steady leg also holds a constant height above the local surface, so its reference rises and falls with the swell; the same leg ended wave.loop_flat_only_ended of the closed-loop runs above.
   A powered leg over waves needs its own reference (a constant height above the mean surface, or a wave-synchronized powered cycle); that is Q-073.
+
+### The powered leg over swell (Q-073)
+
+`--wave-leg-exp` flies the navigation over the same sea (a 3 m swell of 10 s along a 6 m/s wind, P63, the oracle sea) to a target 5 km away across the swell's travel (north, the leg runs along the crests), against it (west, upwind, the leg meets the crests head on) and with it (east, the soaring run, whose start is the leg), with three powered legs (`sim.wavelib.WAVE_LEGS`):
+
+- "surface": the steady leg of the navigation section, 10 m above the local surface (the leg of the runs above);
+- "surface hold": the same with a heading hold in the planner's nominal;
+- "msl hold": 10 m above the highest crest of the sea (`crest_elevation`, the second-order crest), held above the mean sea level (the datum "msl" of `SteadyModel` and of the planner's steady reference), with the heading hold.
+
+The heading hold (`heading_tau_s` of the steady reference, nav.steady_heading_tau_s) makes the planner's nominal bank so that the heading error at the plan time decays in that time, a coordinated turn that fades over the horizon; the samples then perturb a plan that already corrects the heading.
+The runs counted as arrived on the same criteria as above; the track error is the angle between the ground track (the logged positions every 5 s) and the commanded bearing, the median of each four-minute window, which the heading fields of the runs above do not give, since they compare the heading through the air and so carry the crab angle of the wind triangle.
+
+<!-- pilot_leg_keys begin -->
+<!-- pilot_leg_keys end -->
+
+Why the course was not held:
+
+- Neither the wave wind's mean nor a mismatch of the planner's model: with the controls of the leg held, the heading oscillates by a few degrees with each wave and keeps its mean, and the planner's prediction of each next half second matched the flight (pilot flights, not recorded).
+- Nor the cross-track guidance: it turned the commanded bearing back towards the line, to its limit of 35 deg, as designed, and the aircraft did not follow.
+- The planner did not correct the heading: the tolerance of a steady reference on the heading is tight (0.04 rad), the samples' random banks spread the heading at the end of the horizon over many tolerances, and the constant-bank candidates that every plan includes end far off in heading and inflate the spread of the costs that scales the weights, so the weights were nearly uniform and the update stayed at the reference's wings-level nominal while a constant bank of a few degrees would have cost a small fraction as much (pilot flights, not recorded).
+  Over a flat sea nothing pushes the heading off, so the nominal holds it; over a swell the wave wind turns it by a few degrees each wave, and the heading wandered to the side where the wave carried the aircraft.
+- The reference height did not cause it: the leg 10 m above the local surface flies the course once the heading is held (wave.leg_across_surface_hold_track_off_max_deg deg off at most across the swell, against wave.leg_across_surface_track_off_max_deg deg without the hold).
+
+What the runs show:
+
+- Across the swell's travel, with the heading hold, both legs arrive and count, in wave.leg_across_msl_hold_arrival_s s at wave.leg_across_msl_hold_vmg_ms m/s made good for wave.leg_across_msl_hold_energy_wh Wh above the mean sea level and in wave.leg_across_surface_hold_arrival_s s for wave.leg_across_surface_hold_energy_wh Wh above the local surface, against the kinematic run's wave.leg_across_msl_hold_hull_vmg_ms m/s; neither comes near the stall speed (wave.leg_across_msl_hold_below_stall_s s), and the lowest wingtip is wave.leg_across_msl_hold_wingtip_min_m m and wave.leg_across_surface_hold_wingtip_min_m m.
+  The leg without the hold (the run of the section above) never arrived (wave.nav_reached_across).
+- Against the swell's travel and upwind the legs with the hold arrive and count in wave.leg_against_msl_hold_arrival_s s (wave.leg_against_msl_hold_energy_wh Wh) and wave.leg_against_surface_hold_arrival_s s (wave.leg_against_surface_hold_energy_wh Wh), at wave.leg_against_msl_hold_vmg_ms m/s against the hull's wave.leg_against_msl_hold_hull_vmg_ms m/s, with the lowest wingtip at wave.leg_against_msl_hold_wingtip_min_m m and wave.leg_against_surface_hold_wingtip_min_m m; the leg without the hold ended with a wingtip in the water (wave.leg_against_surface_wingtip_min_m m) after flying wave.leg_against_surface_track_off_max_deg deg off its line.
+- With the swell's travel the run soars as before (wave.leg_with_msl_hold_arrival_s s, wave.leg_with_msl_hold_energy_wh Wh); its leg is only the start.
+- The choice: the leg above the mean sea level with the heading hold.
+  The heading hold is what makes either leg flyable; the two datums need nearly the same energy (the keys above), while the leg above the mean sea level keeps more height under the wingtip across and against the swell, holds a reference that does not depend on the surface under the aircraft (it needs the height of the crests, not their phase, which matters once the sea comes from the sensors, Q-064), and does not ride up and down with the swell.
+- A wave-synchronized powered cycle was not built: across or against the swell's travel no wave can carry the aircraft, since a cycle locked to one wave travels with it at its phase speed, so it would make way only with the swell, where the soaring entries already do.
+- The flights over swell of the next section start in flat flight on this leg and fall back on it where the pilot chooses no wave entry.
 
 ### What the planner needs to know of the sea (stage 2)
 
