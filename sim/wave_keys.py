@@ -76,6 +76,9 @@ def diag_values(d):
            "reproduced": (sum(abs(r["survival_s"] - r["recorded_survival_s"]) < 0.5 for r in ws), "1"),
            "flat_world_runs": (sum(r["planner_world"] == "flat" for r in ws), "1"),
            "crest_tip_runs": (len(crest), "1"),
+           "crest_tip_trajectories": (len({(r["aircraft"], r["u10"], r["planner_world"], round(r["survival_s"], 2))
+                                           for r in crest}), "1"),
+           "truth_end_eta_std": (round(truth[0]["end"]["eta_over_std"], 2), "1") if truth else None,
            "crest_eta_std_min": (round(min(r["end"]["eta_over_std"] for r in crest), 2), "1"),
            "crest_eta_std_max": (round(max(r["end"]["eta_over_std"] for r in crest), 2), "1"),
            "flat_plan_tip_min_m": (round(min(r["plans_last5s"]["tip_world_min_m"] for r in flat_tip), 2), "m"),
@@ -92,6 +95,7 @@ def diag_values(d):
            "swell_h_median_min_m": (round(min(r["h_median_m"] for r in sw), 1), "m"),
            "swell_h_median_max_m": (round(max(r["h_median_m"] for r in sw), 1), "m"),
            "swell_h_min_m": (round(min(r["h_min_m"] for r in sw), 2), "m")}
+    out = {k: v for k, v in out.items() if v is not None}
     if truth:
         t = truth[0]
         out["truth_plan_tip_m"] = (round(t["plans_last5s"]["tip_world_min_m"], 2), "m")
@@ -126,6 +130,9 @@ def lib_groups(lib):
 
 def lib_values(lib):
     out = {}
+    cr = lib["meta"].get("crest_rebuild")
+    if cr:
+        out["lib_crest_rebuild_changed_seas"] = (cr["changed_seas"], "1")
     dsopt_seas = {(e["aircraft"], e["preset"], e["hs"], e["tp"]) for e in lib["entries"] if not e.get("crest")}
     for (a, p, hs, tp), c in sorted(lib_groups(lib).items()):
         base = "lib_%s_%s_hs%s_tp%g_" % (SHORT[a], PSHORT[p], _num(hs), tp)
@@ -184,31 +191,33 @@ def loop_summary(rows):
            "loop_u3_power_max_w": (round(max(r["motor"]["avg_power_w"] for r in rows if r["u10"] == 3.0), 1), "W")}
     dear = [r for r in rows if r["u10"] == 3.0 and r.get("after_entry") and r.get("flat")
             and r["after_entry"]["avg_power_w"] > r["flat"]["power_avg_w"]]
+    full = [r for r in dear if r["ended"] == "complete"]
     ffo = sorted(r["after_entry"]["forward_face_share"] for r in rows
                  if r["u10"] != 3.0 and r.get("after_entry") and r["margins"]["counts"]
                  and "forward_face_share" in r["after_entry"])
     out["loop_u3_dearer_runs"] = (len(dear), "1")
-    if dear:
-        ff = [r["after_entry"].get("forward_face_share") for r in dear]
-        if None not in ff:
-            out["loop_u3_dearer_forward_face_max"] = (round(max(ff), 2), "1")
-        out["loop_u3_dearer_motor_share_min"] = (round(min(r["after_entry"]["thrust_on_share"] for r in dear), 2), "1")
-        out["loop_u3_dearer_v_c0_runs"] = (sum(abs((r.get("entry") or {}).get("course_rel_deg") or 0.0) < 1e-6
-                                               for r in dear), "1")
+    out["loop_u3_dearer_full_runs"] = (len(full), "1")
+    out["loop_u3_dearer_v_c0_runs"] = (sum(abs((r.get("entry") or {}).get("course_rel_deg") or 0.0) < 1e-6
+                                           and bool((r.get("entry") or {}).get("crest")) for r in dear), "1")
+    ff = [r["after_entry"].get("forward_face_share") for r in full]
+    if full and None not in ff:
+        out["loop_u3_dearer_full_forward_face_max"] = (round(max(ff), 2), "1")
+        out["loop_u3_dearer_full_forward_face_min"] = (round(min(ff), 2), "1")
+        out["loop_u3_dearer_full_motor_share_min"] = (round(min(r["after_entry"]["thrust_on_share"] for r in full), 2), "1")
     if ffo:
         out["loop_forward_face_median_counted"] = (round(ffo[len(ffo) // 2], 2), "1")
     return out
 
 
 def loop_library_values(rows, lib):
-    """How many of the loop's cases have no soaring entry in the library (crest ride or optimizer cycle) for their
-    aircraft, wave wind, sea and wind, and the power of the optimizer's motor cycles at Tp 10 s."""
+    """How many of the loop's cases have only a motor crest ride in the library for their aircraft, wave wind, sea and
+    wind (no soaring entry and no motor cycle below NEAR_ZERO_W), and the power of the optimizer's motor cycles."""
     soar = {(e["aircraft"], e["preset"], e["hs"], e["tp"], e["direction"] if e["u10"] > 0 else "along", e["u10"])
-            for e in lib["entries"] if e.get("success") and e["kind"] == "soaring"}
+            for e in lib["entries"] if e.get("success") and (e["kind"] == "soaring" or e["power_avg_w"] < NEAR_ZERO_W)}
     none = [r for r in rows if (r["aircraft"], r["preset"], r["hs"], r["tp"],
                                 r["direction"] if r["u10"] > 0 else "along", r["u10"]) not in soar]
     mot = [e["power_avg_w"] for e in lib["entries"] if e.get("success") and not e.get("crest") and e["kind"] == "motor"]
-    return {"loop_cases_without_soaring_entry": (len(none), "1"),
+    return {"loop_cases_motor_crest_only": (len(none), "1"),
             "lib_optimizer_motor_cycles": (len(mot), "1"),
             "lib_optimizer_motor_needing_power": (sum(p >= NEAR_ZERO_W for p in mot), "1"),
             "lib_optimizer_motor_power_max_w": (round(max(mot), 1), "W")}
@@ -273,6 +282,8 @@ def nav_values(r):
                     "nav_dip_t_s": (round(c["airspeed_min_t_s"], 1), "s"),
                     "nav_dip_since_change_s": (round(c["since_change_at_dip_s"], 1), "s"),
                     "nav_dip_on_crest_ride": (int(bool(c["crest_at_dip"])), "1")})
+        if c.get("crossing_offset_m") is not None:
+            out["nav_crossing_offset_m"] = (round(c["crossing_offset_m"], 0), "m")
         if c.get("heading_off_min_deg") is not None:
             out.update({"nav_heading_off_min_deg": (round(c["heading_off_min_deg"], 0), "deg"),
                         "nav_heading_off_max_deg": (round(c["heading_off_max_deg"], 0), "deg")})

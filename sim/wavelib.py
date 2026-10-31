@@ -1154,7 +1154,13 @@ def nav_course_stats(r, tr, tgt, window_s=240.0):
     for p_ in r.get("hull", []):
         if p_["key"] == cyc:
             entry_crest = p_["crest"]
+    # where the track crossed the target's line across the course (y for a target north, x for one east)
+    ax = 1 if abs(tgt[1]) >= abs(tgt[0]) else 0
+    sgn = 1.0 if tgt[ax] >= 0.0 else -1.0
+    cr = np.flatnonzero(sgn * ST[:, ax] >= sgn * tgt[ax])
+    cross_off = None if not len(cr) else float(ST[cr[0], 1 - ax] - tgt[1 - ax])
     return {"closest_m": float(d[i]), "closest_t_s": float(T[i]), "closest_east_m": float(ST[i, 0] - tgt[0]),
+            "crossing_offset_m": cross_off, "crossing_t_s": None if not len(cr) else float(T[cr[0]]),
             "heading_off_window_deg": win, "heading_off_min_deg": float(min(win)) if win else None,
             "heading_off_max_deg": float(max(win)) if win else None,
             "airspeed_min_t_s": t_dip, "cycle_at_dip": cyc, "crest_at_dip": entry_crest,

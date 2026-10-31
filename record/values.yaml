@@ -10466,6 +10466,18 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.diag_crest_tip_trajectories
+    v: 3
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.diag_truth_end_eta_std
+    v: 0.13
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.diag_crest_eta_std_min
     v: 1.7
     unit: 1
@@ -10576,6 +10588,12 @@ items:
       - docs/02-form.md#wave-loop
   - key: wave.diag_truth_dead_mean
     v: 80.0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.lib_crest_rebuild_changed_seas
+    v: 12
     unit: 1
     status: calculated
     basis:
@@ -11601,25 +11619,25 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_albatross_hs3_along_u6_p63_power_w
-    v: 3.9
+    v: 2.1
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_albatross_hs3_along_u6_p63_power_after_w
-    v: 3.5
+    v: 1.9
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_albatross_hs3_along_u6_p63_motor_share
-    v: 0.08
+    v: 0.02
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_albatross_hs3_along_u6_p63_height_median_m
-    v: 8.9
+    v: 10.7
     unit: m
     status: calculated
     basis:
@@ -11913,7 +11931,7 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_albatross_hs3_against_u6_p64_height_median_m
-    v: 11.9
+    v: 11.8
     unit: m
     status: calculated
     basis:
@@ -12771,25 +12789,25 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_baseline_hs3_along_u6_p63_power_w
-    v: 2.9
+    v: 2.3
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_baseline_hs3_along_u6_p63_power_after_w
-    v: 1.7
+    v: 1.1
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_baseline_hs3_along_u6_p63_motor_share
-    v: 0.17
+    v: 0.13
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_baseline_hs3_along_u6_p63_height_median_m
-    v: 9.7
+    v: 10.0
     unit: m
     status: calculated
     basis:
@@ -13797,7 +13815,7 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_ratio_min
-    v: 0.095
+    v: 0.093
     unit: 1
     status: calculated
     basis:
@@ -13827,7 +13845,7 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.loop_motor_share_min
-    v: 0.031
+    v: 0.022
     unit: 1
     status: calculated
     basis:
@@ -13850,6 +13868,72 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.loop_u3_dearer_runs
+    v: 6
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_u3_dearer_full_runs
+    v: 5
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_u3_dearer_v_c0_runs
+    v: 6
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_u3_dearer_full_forward_face_max
+    v: 0.63
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_u3_dearer_full_forward_face_min
+    v: 0.08
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_u3_dearer_full_motor_share_min
+    v: 0.87
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_forward_face_median_counted
+    v: 1.0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.loop_cases_motor_crest_only
+    v: 20
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.lib_optimizer_motor_cycles
+    v: 42
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.lib_optimizer_motor_needing_power
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.lib_optimizer_motor_power_max_w
+    v: 50.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.sense_phase_0p15_aloft_s
     v: 300.0
     unit: s
@@ -13862,20 +13946,38 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p15_in_band
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p15_below_stall_s
+    v: 0.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p15_wingtip_min_m
+    v: 5.37
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.sense_phase_0p15_power_after_w
-    v: 3.5
+    v: 2.9
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_phase_0p15_motor_share
-    v: 0.1
+    v: 0.06
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_phase_0p15_height_median_m
-    v: 8.7
+    v: 6.8
     unit: m
     status: calculated
     basis:
@@ -13892,20 +13994,38 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p3_in_band
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p3_below_stall_s
+    v: 0.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p3_wingtip_min_m
+    v: 2.5
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.sense_phase_0p3_power_after_w
-    v: 3.8
+    v: 5.2
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_phase_0p3_motor_share
-    v: 0.1
+    v: 0.22
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_phase_0p3_height_median_m
-    v: 7.9
+    v: 3.7
     unit: m
     status: calculated
     basis:
@@ -13922,20 +14042,38 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p6_in_band
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p6_below_stall_s
+    v: 0.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_0p6_wingtip_min_m
+    v: 0.19
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.sense_phase_0p6_power_after_w
-    v: 5.5
+    v: 20.6
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_phase_0p6_motor_share
-    v: 0.17
+    v: 0.86
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_phase_0p6_height_median_m
-    v: 5.6
+    v: 0.5
     unit: m
     status: calculated
     basis:
@@ -13952,20 +14090,38 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_1p2_in_band
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_1p2_below_stall_s
+    v: 0.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_1p2_wingtip_min_m
+    v: 0.14
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.sense_phase_1p2_power_after_w
-    v: 16.7
+    v: 39.6
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_phase_1p2_motor_share
-    v: 0.74
+    v: 0.89
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_phase_1p2_height_median_m
-    v: 2.2
+    v: 0.5
     unit: m
     status: calculated
     basis:
@@ -13977,25 +14133,43 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_phase_m0p6_counted
-    v: 0
+    v: 1
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_m0p6_in_band
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_m0p6_below_stall_s
+    v: 0.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_phase_m0p6_wingtip_min_m
+    v: 9.75
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.sense_phase_m0p6_power_after_w
-    v: 8.1
+    v: 1.1
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_phase_m0p6_motor_share
-    v: 0.39
+    v: 0.04
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_phase_m0p6_height_median_m
-    v: 6.1
+    v: 21.3
     unit: m
     status: calculated
     basis:
@@ -14009,6 +14183,24 @@ items:
   - key: wave.sense_height_0p8_counted
     v: 1
     unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p8_in_band
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p8_below_stall_s
+    v: 0.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p8_wingtip_min_m
+    v: 9.71
+    unit: m
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
@@ -14030,6 +14222,54 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p9_aloft_s
+    v: 300.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p9_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p9_in_band
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p9_below_stall_s
+    v: 0.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p9_wingtip_min_m
+    v: 9.38
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p9_power_after_w
+    v: 1.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p9_motor_share
+    v: 0.03
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_0p9_height_median_m
+    v: 10.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.sense_height_1p2_aloft_s
     v: 300.0
     unit: s
@@ -14042,20 +14282,38 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.sense_height_1p2_in_band
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_1p2_below_stall_s
+    v: 0.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_height_1p2_wingtip_min_m
+    v: 9.66
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.sense_height_1p2_power_after_w
-    v: 3.3
+    v: 1.8
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_height_1p2_motor_share
-    v: 0.1
+    v: 0.03
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_height_1p2_height_median_m
-    v: 8.9
+    v: 10.9
     unit: m
     status: calculated
     basis:
@@ -14072,20 +14330,38 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.sense_none_in_band
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_none_below_stall_s
+    v: 0.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.sense_none_wingtip_min_m
+    v: 9.48
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.sense_none_power_after_w
-    v: 3.5
+    v: 1.9
     unit: W
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_none_motor_share
-    v: 0.1
+    v: 0.03
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.sense_none_height_median_m
-    v: 8.9
+    v: 10.8
     unit: m
     status: calculated
     basis:
@@ -14093,6 +14369,12 @@ items:
   - key: wave.nav_arrival_s_across
     v: 0
     unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_reached_across
+    v: 0
+    unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
@@ -14108,7 +14390,13 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
-  - key: wave.nav_hull_ms_across
+  - key: wave.nav_first_leg_vmg_ms_across
+    v: 11.43
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_hull_vmg_ms_across
     v: 11.43
     unit: m/s
     status: calculated
@@ -14121,7 +14409,7 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.nav_energy_wh_across
-    v: 10.8
+    v: 10.83
     unit: Wh
     status: calculated
     basis:
@@ -14139,7 +14427,7 @@ items:
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.nav_height_min_m_across
-    v: 0.6
+    v: 0.48
     unit: m
     status: calculated
     basis:
@@ -14150,75 +14438,225 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
-  - key: wave.nav_hull_points_across
-    v: 10
-    unit: 1
+  - key: wave.nav_wingtip_min_m_across
+    v: 0.08
+    unit: m
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
-  - key: wave.nav_arrival_s_with
-    v: 0
+  - key: wave.nav_below_stall_s_across
+    v: 93.98
     unit: s
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
-  - key: wave.nav_counted_with
+  - key: wave.nav_below_stall_longest_s_across
+    v: 1.93
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_below_stall_depth_ms_across
+    v: 4.994
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_hull_points_across
+    v: 12
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_closest_m_across
+    v: 2791.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_closest_east_m_across
+    v: 2449.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_dip_t_s_across
+    v: 847.9
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_dip_since_change_s_across
+    v: 847.9
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_dip_on_crest_ride_across
     v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_crossing_offset_m_across
+    v: 3504.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_heading_off_min_deg_across
+    v: 48.0
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_heading_off_max_deg_across
+    v: 55.0
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_arrival_s_with
+    v: 308.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_reached_with
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_counted_with
+    v: 1
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.nav_vmg_ms_with
-    v: 15.23
+    v: 15.59
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
-  - key: wave.nav_hull_ms_with
+  - key: wave.nav_first_leg_vmg_ms_with
     v: 15.61
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.nav_hull_vmg_ms_with
+    v: 13.05
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.nav_hull_s_with
-    v: 409.0
+    v: 368.0
     unit: s
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.nav_energy_wh_with
-    v: 0.4
+    v: 0.28
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.nav_motor_share_with
-    v: 0.11
+    v: 0.07
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.nav_height_median_m_with
-    v: 8.7
+    v: 10.5
     unit: m
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.nav_height_min_m_with
-    v: 5.2
+    v: 3.63
     unit: m
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
   - key: wave.nav_height_max_m_with
-    v: 16.9
+    v: 14.3
     unit: m
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.nav_wingtip_min_m_with
+    v: 3.49
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_below_stall_s_with
+    v: 0.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_below_stall_longest_s_with
+    v: 0.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_below_stall_depth_ms_with
+    v: 0.0
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.nav_hull_points_with
-    v: 10
+    v: 12
     unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_closest_m_with
+    v: 200.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_closest_east_m_with
+    v: -149.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_dip_t_s_with
+    v: 212.9
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_dip_since_change_s_with
+    v: 72.9
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_dip_on_crest_ride_with
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_heading_off_min_deg_with
+    v: 14.0
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.nav_heading_off_max_deg_with
+    v: 14.0
+    unit: deg
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
