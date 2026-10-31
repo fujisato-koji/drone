@@ -243,3 +243,46 @@ items:
     by: checker
     date: 2026-10-31
     detail: "A separate checker, told to refute, worked in two rounds with its own code: the uncommitted state on 6404d4c, then c861395. Round 1 confirmed the support reading of the polar (consistent at 13 to 20 m/s with every cycle on the downwind side, the 120 deg cycle at 16 m/s flying 21.63 m/s 54 deg off its course, every library soaring cycle drifting downwind, so no soaring mix holds a line across the wind), the steady leg (8.92 m/s at 10.757 J/m, no limit binding) and the library changes (calm entries on course, own replays closing). It refuted: the albatross 11 m/s row as a support function; the no-progress range; the wing study's upwind VMG; powered legs said to fly at 10 m that flew at median heights of 16 to 35 m, two above R-12, which explained the 82 to 92 %; a downwind run on soaring cycles that ended on a powered leg with two loops, 3.9 m/s against a stall speed of 10.1 m/s and a 0.18 m wingtip, logged as arrived; the raw thrust update as unbiased (the one-sided held samples and the clip of the nominal); and many prose numbers (N-01). All of these were corrected. Round 2 reruns albatross 16 m/s upwind 5 km, 13 m/s across 10 km and 16 m/s downwind 5 km, all identical to the record. Median heights are 10.75 and 10.01 m, and the energy per metre is 1.024 and 0.999 times the steady leg's at 0.94 to 0.97 of its speed. Downwind it stays on soaring cycles with no loop or stall, airspeed at least 12.1 m/s, wingtip 0.51 m, height 1.81 to 29.83 m, motor share 0.048. counts_as_arrived matches a full-resolution recomputation. The new raw update keeps the signed nominal near zero (own test +0.02 and +0.69 %) while the applied thrust stays near 2 % of the weight when thrust does not matter. The generated keys and table match the runs, tdr check passes, and 311 tests pass. Left: sim/polar.py still computes an upwind VMG as progress times a cosine, the remaining motor share is called real without a test, three code comments still say unbiased, and one interval in the prose is wrong. The four remaining items were corrected."
+  - id: K-018
+    target:
+      - skim.ar20l_h20_c030_u10_ms
+      - skim.ar20l_h10_c030_u10_ms
+      - skim.ar20l_h03_c000_u10_ms
+      - skim.alb_h03_c000_u10_ms
+      - skim.ar20l_dih10_h03_c000_u10_ms
+      - skim.ar20l_std_u16_h180_ms
+      - skim.ar20l_skid_u16_h180_ms
+      - skim.ar20l_skiddih10_u16_h180_ms
+      - skim.alb_skiddih10_u16_h180_ms
+      - skid.ar20l_blade_d20_roll_over_aileron
+      - skid.ar20l_roll_moment_max_nm
+      - skid.ar20l_w10_dl10_trigger_1cm_m
+      - skid.blade_skimmer_check_10ms_n
+      - heavy.ar20_m06_u10_ms
+      - heavy.ar20_m03_p20_w
+      - heavy.ar20_stress_caps_deflection
+      - heavy.ar20_stiff_caps_factor
+    tier: T2
+    method: independent_model
+    result: partial
+    by: checker
+    date: 2026-10-31
+    detail: "Re-solved six skim cells from seeds 20 to 25 (12.855, 12.071, 11.382, 9.112, 10.317 and 10.983 with 10 deg dihedral, all as recorded) and replayed them with independent point-mass equations, own COARE 3.5 roughness and DOP853: closure within 2e-4, single shooting closes, wind gain equals drag loss, load factor within 0.3 percent of its limit, tip within 1 cm below the clearance between nodes, skim 1.39 s of 7.40 s. On the arc the bank sweeps 50 to 62 deg, the load factor is 1.6 to 2.8 and the tip moves over the water at a crab angle of 18 to 30 deg to the heading, so the blade's 5 deg misalignment does not hold; a fixed blade passes the ailerons' authority near 1 cm. The albatross-like glider's h(180) of 0.16 m/s reproduces (0.11 to 0.17 from five starts, 0.10 to 0.14 with a 1.5 cm clearance). The best wing's h(180) used the Reynolds number of the fastest course; at its own it is -6.15, -3.51 and -2.89 m/s at 16 m/s. Reflex kinematics, WingShape geometry and lift share, the induced drag (within 1 percent of a Trefftz optimum), heavy soaring minima (12.31, 12.26) and level-flight power (within 0.6 percent) agree. The spar factors hold only for the pultruded tube modulus of 35 GPa, and the tube result depends on the catalogue's 1 mm diameter steps and 2 mm walls. Dihedral's roll due to the skid's sideslip and the wing's bending are not modelled. The document was corrected."
+  - id: K-019
+    target:
+      - climate.so_year_below_dsmin_share
+      - climate.np_year_below_best_share
+      - climate.so_spell_dsmin_p99_h
+      - climate.np_spell_best_p99_h
+      - climate.so_weak_dsmin_swell2_share
+      - climate.np_weak_dsmin_swell2_share
+      - climate.so_best_motor_p99_wh
+      - climate.so_best_float_p99_wh
+      - climate.solar_day_best_so_wh
+      - climate.so_jja_u10_mean_ms
+    tier: T2
+    method: independent_model
+    result: partial
+    by: checker
+    date: 2026-10-31
+    detail: "A separate checker, told to refute, recomputed the six public points and the pooled Southern Ocean and North Pacific regions from the cached ERA5 downloads with its own code (own month, run and Pierson-Moskowitz code, no import of sim.climate), on the uncommitted state of design/wind-climate on ebbabcf; it did not read the private store. Every statistic reproduced within rounding: seasonal u10 moments and percentiles, the shares below the four thresholds, spell counts and percentiles by season, the weak-wind wave shares (within 1e-4 from the 0.25 m/s interpolation of the fully developed sea) and the energy rows. Method: spells, season assignment, pooling, UTC alignment (waves lag the wind by 4 to 5 h, as physical), models=era5 and era5_ocean, 175,320 hours per file with matching sha256 and no missing wind or wave height, exact grid snapping, open-sea positions, the u19.5 handling of the swell bound, the energy formula and the solar yield all pass; P61 is matched at 50S and the region runs about 0.5 m/s below it, and P73's birds match the northern point in summer. Defects: (1) energy rows use spell hours already rounded to 0.1 h and (2) keys round again values rounded in the analysis, so 20 of 271 public keys are one unit off in the last digit; (3) the peak period is missing at every point from 2024-11-19 to 2024-12-31 and those hours are dropped silently; (4) the private point ids are copied from the private store into the committed output without being forced to home_n; (5) the docs say wing.front1_c9_w stands for any weak wind, but upwind it is wing.front1_c9_chi180_w; (6) the battery for the 99th percentile spell reads like reliability, while that spell is exceeded about one to two times per point-year and the hour-weighted 99th percentile is much longer; (7) the swell is a lower bound only while the wind sea stays at or below the model's fully developed sea (0.5 to 1.7 points of share otherwise); (8) the np_3 description (not the Kuroshio-Oyashio extension proper) and the distance of so_1 from the Crozet Islands (about 160 km); (9) the 50S June insolation is applied to the whole Southern Ocean region, including 55S."

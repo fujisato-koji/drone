@@ -157,6 +157,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | mpc.margin_sea_survival_min_s | 4 | s | calculated | docs/02-form.md#receding-horizon |
 | mpc.margin_sea_survival_max_s | 82 | s | calculated | docs/02-form.md#receding-horizon |
 | lit.bird_experienced_wind_ms | 8.7 | m/s | sourced | P73 |
+| lit.bird_experienced_wind_sd_ms | 3.4 | m/s | sourced | P73 |
 | lit.bird_flapping_time_fraction | 0.046 | 1 | sourced | P81 |
 | lit.bird_flapping_energy_fraction | 0.133 | 1 | sourced | P81 |
 | dsopt.sachs_coare_dw_ms | 4.02 | m/s | calculated | docs/02-form.md#energy-sources |
@@ -845,6 +846,908 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | autonomy.waves_truth_crash_s | 73 | s | calculated | docs/02-form.md#autonomy-check |
 | autonomy.max_load_factor_waves | 7.34 | 1 | calculated | docs/02-form.md#autonomy-check |
 | autonomy.guard_floor_m | 0.5 | m | assumed | Q-051 |
+| skid.blade_thickness_m | 0.001 | m | assumed | Q-070 |
+| skid.blade_rake_deg | 60 | deg | assumed | Q-070 |
+| skid.blade_depth_m | 0.04 | m | assumed | Q-070 |
+| skid.ski_beam_m | 0.02 | m | assumed | Q-070 |
+| skid.ski_length_m | 0.06 | m | assumed | Q-070 |
+| skid.ski_trim_deg | 4 | deg | assumed | Q-070 |
+| skid.float_beam_m | 0.04 | m | assumed | Q-070 |
+| skid.float_length_m | 0.12 | m | assumed | Q-070 |
+| skid.blade_mass_kg | 0.006 | kg | assumed | Q-070 |
+| skid.ski_mass_kg | 0.01 | kg | assumed | Q-070 |
+| skid.float_mass_kg | 0.03 | kg | assumed | Q-070 |
+| skid.misalignment_deg | 5 | deg | assumed | Q-070 |
+| skid.sense_process_s | 0.01 | s | assumed | Q-070 |
+| skid.rudder_cl_max | 0.5 | 1 | assumed | Q-070 |
+| skid.rho_seawater_kg_m3 | 1026 | kg/m3 | sourced | S10 |
+| skid.nu_seawater_m2_s | 1.19e-06 | m2/s | sourced | S10 |
+| skid.spray_cd_t2 | 0.24 | 1 | sourced | P157, P160 |
+| skid.seawater_conductivity_s_m | 4.29 | S/m | sourced | P164, S10 |
+| lit.skimmer_skim_speed_ms | 10.3 | m/s | sourced | P121 |
+| lit.skimmer_bill_drag_wt_n | 0.0001 | N | sourced | P121 |
+| lit.skimmer_bill_drag_10ms_n | 0.35 | N | sourced | P157 |
+| lit.skimmer_bill_immersion_m | 0.04 | m | sourced | P157 |
+| lit.skimmer_hydro_drag_share | 0.2 | 1 | sourced | P157 |
+| lit.skimmer_skim_height_m | 0.1 | m | sourced | P158 |
+| lit.skimmer_lower_beak_thickness_max_mm | 3.3 | mm | sourced | P159 |
+| lit.ventilation_inception_deg | 15 | deg | sourced | P161, P162 |
+| lit.tipfloat_load_cap_displaced | 3 | 1 | sourced | P163 |
+| lit.ultrasonic_min_range_m | 0.2 | m | sourced | M18 |
+| lit.ultrasonic_rate_hz | 10 | Hz | sourced | M18 |
+| lit.cdc_rate_max_sps | 4080 | 1/s | sourced | M19 |
+| skim.ar20l_h10_c100_u10_ms | 13.45 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h20_c030_u10_ms | 12.85 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h10_c030_u10_ms | 12.07 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h05_c030_u10_ms | 12.07 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h03_c030_u10_ms | 12.07 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h03_c030_zmin_m | 1.61 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h20_c010_u10_ms | 12.85 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h10_c010_u10_ms | 11.62 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h05_c010_u10_ms | 11.62 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h03_c010_u10_ms | 11.62 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h20_c000_u10_ms | 12.85 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h10_c000_u10_ms | 11.39 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h05_c000_u10_ms | 11.38 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h03_c000_u10_ms | 11.38 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h03_c000_zmin_m | 1.16 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_h20_c100_u10_ms | 13.46 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_dih5_h03_c030_u10_ms | 11.96 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_dih10_h03_c030_u10_ms | 11.85 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_dih10_h03_c030_zmin_m | 1.13 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_out10_h03_c030_u10_ms | 11.96 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_out20_h03_c030_u10_ms | 11.88 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_dih5_h03_c000_u10_ms | 11.2 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_dih10_h03_c000_u10_ms | 10.98 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_dih10_h03_c000_zmin_m | 0.62 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_out10_h03_c000_u10_ms | 11.21 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_out20_h03_c000_u10_ms | 11.01 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h20_c100_u10_ms | 16.13 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h10_c100_u10_ms | 16.13 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h20_c030_u10_ms | 15.43 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h10_c030_u10_ms | 14.35 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h05_c030_u10_ms | 14.35 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h03_c030_u10_ms | 14.35 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h03_c030_zmin_m | 1.46 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h20_c010_u10_ms | 15.43 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h10_c010_u10_ms | 13.79 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h05_c010_u10_ms | 13.79 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h03_c010_u10_ms | 13.79 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h20_c000_u10_ms | 15.43 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h10_c000_u10_ms | 13.49 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h05_c000_u10_ms | 13.49 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h03_c000_u10_ms | 13.49 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_h03_c000_zmin_m | 1.13 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_dih5_h03_c030_u10_ms | 14.15 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_dih10_h03_c030_u10_ms | 13.97 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_dih10_h03_c030_zmin_m | 1.19 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_out10_h03_c030_u10_ms | 14.16 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_out20_h03_c030_u10_ms | 14.01 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_dih5_h03_c000_u10_ms | 13.25 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_dih10_h03_c000_u10_ms | 12.79 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_dih10_h03_c000_zmin_m | 0.4 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_out10_h03_c000_u10_ms | 13.26 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20n_out20_h03_c000_u10_ms | 12.77 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h20_c100_u10_ms | 10.81 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h10_c100_u10_ms | 10.81 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h20_c030_u10_ms | 10.32 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h10_c030_u10_ms | 9.67 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h05_c030_u10_ms | 9.67 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h03_c030_u10_ms | 9.67 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h03_c030_zmin_m | 1.61 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h20_c010_u10_ms | 10.32 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h10_c010_u10_ms | 9.31 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h05_c010_u10_ms | 9.31 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h03_c010_u10_ms | 9.31 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h20_c000_u10_ms | 10.32 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h10_c000_u10_ms | 9.11 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h05_c000_u10_ms | 9.11 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h03_c000_u10_ms | 9.11 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_h03_c000_zmin_m | 1.18 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_dih5_h03_c030_u10_ms | 9.58 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_dih10_h03_c030_u10_ms | 9.48 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_dih10_h03_c030_zmin_m | 1.13 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_out10_h03_c030_u10_ms | 9.58 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_out20_h03_c030_u10_ms | 9.51 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_dih5_h03_c000_u10_ms | 8.96 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_dih10_h03_c000_u10_ms | 8.79 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_dih10_h03_c000_zmin_m | 0.63 | m | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_out10_h03_c000_u10_ms | 8.96 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_out20_h03_c000_u10_ms | 8.82 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.req_wet_latency_s | 0.005 | s | calculated | docs/02-form.md#wingtip-skim |
+| skid.req_wet_rate_hz | 1000 | Hz | calculated | docs/02-form.md#wingtip-skim |
+| skid.req_wet_levels | 3 | count | calculated | docs/02-form.md#wingtip-skim |
+| skid.req_range_span_m | 0.45 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.req_range_accuracy_m | 0.005 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.req_range_rate_hz | 200 | Hz | calculated | docs/02-form.md#wingtip-skim |
+| skid.req_range_latency_s | 0.005 | s | calculated | docs/02-form.md#wingtip-skim |
+| lit.skimmer_tow_speed_min_ms | 1.8 | m/s | sourced | P157 |
+| lit.skimmer_tow_speed_max_ms | 6.8 | m/s | sourced | P157 |
+| lit.skimmer_bill_drag_10ms_central_n | 0.95 | N | calculated | docs/02-form.md#wingtip-skim |
+| lit.ventilation_froude_max | 3.0 | 1 | sourced | P161, P162 |
+| skid.blade_cda_m2 | 4.759e-05 | m2 | calculated | docs/02-form.md#wingtip-skim |
+| skid.blade_pair_over_body_cda | 0.041 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ski_cda_m2 | 7.543e-05 | m2 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ski_pair_over_body_cda | 0.065 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.float_cda_m2 | 8.517e-05 | m2 | calculated | docs/02-form.md#wingtip-skim |
+| skid.float_pair_over_body_cda | 0.074 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_bank_min_deg | 50.3 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_bank_max_deg | 61.9 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_n_min | 1.57 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_n_max | 2.8 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_water_min_ms | 15.9 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_water_max_ms | 24.8 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_crab_min_deg | 18.9 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_crab_max_deg | 30.0 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_bend_min_m | 0.043 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_bend_max_m | 0.093 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_s | 1.14 | s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_arc_zmin_m | 1.16 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_roll_rise_shallow_ms | 0.98 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_airspeed_ms | 19.6 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_bank_deg | 61.9 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_skim_arc_s | 1.38 | s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_roll_rise_ms | 0.74 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w05_wet_depth_m | 0.041 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w10_wet_depth_m | 0.09 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w20_wet_depth_m | 0.1 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w05_dl10_trigger_1cm_m | 0.03 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w05_dl10_trigger_2cm_m | 0.021 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w05_dl30_trigger_1cm_m | 0.03 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w05_dl30_trigger_2cm_m | 0.021 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w10_dl10_trigger_1cm_m | 0.111 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w10_dl10_trigger_2cm_m | 0.1 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w10_dl30_trigger_1cm_m | 0.112 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w10_dl30_trigger_2cm_m | 0.102 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w20_dl10_trigger_1cm_m | 0.322 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w20_dl10_trigger_2cm_m | 0.3 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w20_dl30_trigger_1cm_m | 0.444 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_w20_dl30_trigger_2cm_m | 0.431 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.wet_latency_s | 0.06 | s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ixx_kgm2 | 0.468 | kg m2 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_izz_kgm2 | 0.552 | kg m2 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_roll_moment_max_nm | 19.6 | N m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_yaw_moment_max_nm | 3.19 | N m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_roll_tau_s | 0.025 | s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_weight_n | 29.4 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_force_water_speed_ms | 24.8 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_froude_d05 | 112 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d05_drag_n | 0.17 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d05_side_n | 1.08 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d05_yaw_over_rudder | 0.08 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d05_roll_over_aileron | 0.07 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d05_sideslip_deg | 1.1 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d05_yaw_0p2s_deg | 0.54 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_froude_d10 | 79 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_fixed_d10_side_min_n | 16.3 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_fixed_d10_roll_over_aileron_min | 1.1 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_fixed_d10_side_max_n | 26.0 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_fixed_d10_roll_over_aileron_max | 1.76 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_dih10_roll_d10_nm | 3.1 | N m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_dih10_roll_d10_over_aileron | 0.16 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_dih10_clbeta_per_rad | -0.217 | 1/rad | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d10_drag_n | 0.4 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d10_side_n | 4.33 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d10_yaw_over_rudder | 0.19 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d10_roll_over_aileron | 0.29 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d10_sideslip_deg | 2.6 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d10_yaw_0p2s_deg | 1.25 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d10_drag_n | 2.54 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d10_normal_n | 12.08 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d10_yaw_over_rudder | 1.2 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d10_roll_over_aileron | 0.92 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d10_sideslip_deg | 16.4 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d10_yaw_0p2s_deg | 7.92 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d10_drag_n | 11.97 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d10_normal_n | 25.26 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d10_yaw_over_rudder | 5.63 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d10_roll_over_aileron | 1.93 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d10_sideslip_deg | 77.0 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d10_yaw_0p2s_deg | 37.29 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d10_drag_n | 9.28 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d10_normal_n | 48.4 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d10_yaw_over_rudder | 4.36 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d10_roll_over_aileron | 3.7 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d10_sideslip_deg | 59.7 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d10_yaw_0p2s_deg | 28.9 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_froude_d20 | 56 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_fixed_d20_side_min_n | 65.4 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_fixed_d20_roll_over_aileron_min | 4.41 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_fixed_d20_side_max_n | 104.0 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_fixed_d20_roll_over_aileron_max | 7.02 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_dih10_roll_d20_nm | 9.1 | N m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_dih10_roll_d20_over_aileron | 0.47 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d20_drag_n | 1.18 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d20_side_n | 17.32 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d20_yaw_over_rudder | 0.55 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d20_roll_over_aileron | 1.17 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d20_sideslip_deg | 7.6 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d20_yaw_0p2s_deg | 3.67 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d20_impulse_0p2s | 0.004 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d20_drag_n | 2.54 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d20_normal_n | 12.08 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d20_yaw_over_rudder | 1.2 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d20_roll_over_aileron | 0.92 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d20_sideslip_deg | 16.4 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_ski_d20_yaw_0p2s_deg | 7.92 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d20_drag_n | 21.64 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d20_normal_n | 69.96 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d20_yaw_over_rudder | 10.17 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d20_roll_over_aileron | 5.35 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d20_sideslip_deg | 139.2 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d20_yaw_0p2s_deg | 67.41 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_tip_d20_impulse_0p2s | 0.0735 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d20_drag_n | 9.28 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d20_normal_n | 48.4 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d20_yaw_over_rudder | 4.36 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d20_roll_over_aileron | 3.7 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d20_sideslip_deg | 59.7 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_float_d20_yaw_0p2s_deg | 28.9 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_froude_d30 | 46 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d30_drag_n | 2.34 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d30_side_n | 38.97 | N | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d30_yaw_over_rudder | 1.1 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d30_roll_over_aileron | 2.63 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d30_sideslip_deg | 15.1 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_blade_d30_yaw_0p2s_deg | 7.3 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_bank_min_deg | 48.9 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_bank_max_deg | 52.8 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_n_min | 3.2 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_n_max | 3.22 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_water_min_ms | 16.5 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_water_max_ms | 19.2 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_crab_min_deg | 32.7 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_crab_max_deg | 39.3 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_bend_min_m | 0.109 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_bend_max_m | 0.118 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_s | 0.17 | s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_arc_zmin_m | 1.13 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_roll_rise_shallow_ms | 0.82 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_airspeed_ms | 15.6 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_bank_deg | 48.4 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_skim_arc_s | 0.39 | s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_roll_rise_ms | 0.83 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w05_wet_depth_m | 0.039 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w10_wet_depth_m | 0.089 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w20_wet_depth_m | 0.1 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w05_dl10_trigger_1cm_m | 0.029 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w05_dl10_trigger_2cm_m | 0.019 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w05_dl30_trigger_1cm_m | 0.029 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w05_dl30_trigger_2cm_m | 0.019 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w10_dl10_trigger_1cm_m | 0.104 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w10_dl10_trigger_2cm_m | 0.093 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w10_dl30_trigger_1cm_m | 0.104 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w10_dl30_trigger_2cm_m | 0.094 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w20_dl10_trigger_1cm_m | 0.307 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w20_dl10_trigger_2cm_m | 0.286 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w20_dl30_trigger_1cm_m | 0.422 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20n_w20_dl30_trigger_2cm_m | 0.41 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_bank_min_deg | 51.8 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_bank_max_deg | 61.9 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_n_min | 1.6 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_n_max | 2.85 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_water_min_ms | 16.7 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_water_max_ms | 24.1 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_crab_min_deg | 15.7 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_crab_max_deg | 23.1 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_bend_min_m | 0.042 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_bend_max_m | 0.09 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_s | 1.01 | s | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_arc_zmin_m | 1.19 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_roll_rise_shallow_ms | 0.99 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_airspeed_ms | 20.1 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_bank_deg | 61.9 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_skim_arc_s | 1.39 | s | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_roll_rise_ms | 0.76 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w05_wet_depth_m | 0.04 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w10_wet_depth_m | 0.09 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w20_wet_depth_m | 0.1 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w05_dl10_trigger_1cm_m | 0.03 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w05_dl10_trigger_2cm_m | 0.02 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w05_dl30_trigger_1cm_m | 0.03 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w05_dl30_trigger_2cm_m | 0.02 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w10_dl10_trigger_1cm_m | 0.109 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w10_dl10_trigger_2cm_m | 0.098 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w10_dl30_trigger_1cm_m | 0.109 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w10_dl30_trigger_2cm_m | 0.099 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w20_dl10_trigger_1cm_m | 0.317 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w20_dl10_trigger_2cm_m | 0.296 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w20_dl30_trigger_1cm_m | 0.433 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.alb_w20_dl30_trigger_2cm_m | 0.421 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_dih10_arc_bank_min_deg | 33.5 | deg | calculated | docs/02-form.md#wingtip-skim |
+| skid.ar20l_dih10_arc_zmin_m | 0.6 | m | calculated | docs/02-form.md#wingtip-skim |
+| skid.blade_skimmer_check_10ms_n | 0.89 | N | calculated | docs/02-form.md#wingtip-skim |
+| lit.skimmer_tow_froude_min | 2.9 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| lit.skimmer_tow_froude_max | 10.9 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| spar.ud_carbon_modulus | 120000000000.0 | Pa | assumed | Q-010 |
+| heavy.albatross_wing_loading_npm2 | 143.4 | N/m2 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m03_wing_loading_npm2 | 52.3 | N/m2 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m03_over_albatross | 0.36 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_stiff_caps_factor | 3.64 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_stress_caps_deflection | 0.55 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m03_u10_ms | 13.01 | m/s | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m03_re_cycle | 195000 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m03_p20_w | 28.2 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m03_e20_wh_per_km | 0.44 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m03_p20_steady_w | 28.2 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m03_p180_w | 35.9 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m03_e180_wh_per_km | 1.8 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m03_p180_steady_w | 36.7 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m04_wing_loading_npm2 | 69.8 | N/m2 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m04_over_albatross | 0.49 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m04_u10_ms | 12.6 | m/s | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m04_re_cycle | 220000 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m04_p20_w | 41.5 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m04_e20_wh_per_km | 0.6 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m04_p20_steady_w | 41.5 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m04_p180_w | 47.2 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m04_e180_wh_per_km | 2.04 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m04_p180_steady_w | 48.0 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m06_wing_loading_npm2 | 104.6 | N/m2 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m06_over_albatross | 0.73 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m06_u10_ms | 12.34 | m/s | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m06_re_cycle | 265000 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m06_p20_w | 71.7 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m06_e20_wh_per_km | 0.91 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m06_p20_steady_w | 71.7 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m06_p180_w | 73.8 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m06_e180_wh_per_km | 2.59 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m06_p180_steady_w | 74.6 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m08_wing_loading_npm2 | 139.5 | N/m2 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m08_over_albatross | 0.97 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m08_u10_ms | 12.27 | m/s | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m08_re_cycle | 304000 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m08_p20_w | 105.8 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m08_e20_wh_per_km | 1.21 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m08_p20_steady_w | 105.8 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m08_p180_w | 105.6 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m08_e180_wh_per_km | 3.19 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m08_p180_steady_w | 106.3 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m10_wing_loading_npm2 | 174.4 | N/m2 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m10_over_albatross | 1.22 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m10_u10_ms | 12.26 | m/s | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m10_re_cycle | 339000 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m10_p20_w | 143.4 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m10_e20_wh_per_km | 1.52 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m10_p20_steady_w | 143.4 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m10_p180_w | 143.4 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m10_e180_wh_per_km | 3.66 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_m10_p180_steady_w | 143.4 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m03_wing_loading_npm2 | 65.4 | N/m2 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m03_over_albatross | 0.46 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_stiff_caps_factor | 4.55 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_stress_caps_deflection | 0.68 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m03_u10_ms | 12.87 | m/s | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m03_re_cycle | 168000 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m03_p20_w | 30.3 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m03_e20_wh_per_km | 0.44 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m03_p20_steady_w | 30.3 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m03_p180_w | 35.7 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m03_e180_wh_per_km | 1.67 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m03_p180_steady_w | 36.4 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m04_wing_loading_npm2 | 87.2 | N/m2 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m04_over_albatross | 0.61 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m04_u10_ms | 12.54 | m/s | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m04_re_cycle | 190000 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m04_p20_w | 44.4 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m04_e20_wh_per_km | 0.6 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m04_p20_steady_w | 44.4 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m04_p180_w | 47.5 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m04_e180_wh_per_km | 1.92 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m04_p180_steady_w | 48.2 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m06_wing_loading_npm2 | 130.8 | N/m2 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m06_over_albatross | 0.91 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m06_u10_ms | 12.31 | m/s | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m06_re_cycle | 229000 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m06_p20_w | 76.2 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m06_e20_wh_per_km | 0.89 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m06_p20_steady_w | 76.2 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m06_p180_w | 76.1 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m06_e180_wh_per_km | 2.49 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m06_p180_steady_w | 76.5 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m08_wing_loading_npm2 | 174.4 | N/m2 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m08_over_albatross | 1.22 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m08_u10_ms | 12.24 | m/s | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m08_re_cycle | 264000 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m08_p20_w | 112.1 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m08_e20_wh_per_km | 1.19 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m08_p20_steady_w | 112.1 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m08_p180_w | 112.1 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m08_e180_wh_per_km | 2.86 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m08_p180_steady_w | 112.1 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m10_wing_loading_npm2 | 218.0 | N/m2 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m10_over_albatross | 1.52 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m10_u10_ms | 12.24 | m/s | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m10_re_cycle | 293000 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m10_p20_w | 151.3 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m10_e20_wh_per_km | 1.48 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m10_p20_steady_w | 151.3 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m10_p180_w | 151.3 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m10_e180_wh_per_km | 3.21 | Wh/km | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_m10_p180_steady_w | 151.3 | W | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_stiff_caps_factor_ud | 1.06 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_tube_free_over_caps_min | 6.3 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar16_tube_free_over_caps_max | 8.4 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_stiff_caps_factor_ud | 1.33 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_tube_free_over_caps_min | 8.9 | 1 | calculated | docs/02-form.md#wing-sizing |
+| heavy.ar20_tube_free_over_caps_max | 10.3 | 1 | calculated | docs/02-form.md#wing-sizing |
+| skim.ar20l_std_u13_h90_ms | 11.88 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_std_u13_h135_ms | 0.45 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_std_u13_h180_ms | -10.27 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skid_u13_h90_ms | 15.83 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skid_u13_h135_ms | 4.82 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skid_u13_h180_ms | -4.98 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skiddih10_u13_h90_ms | 16.62 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skiddih10_u13_h135_ms | 5.71 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skiddih10_u13_h180_ms | -4.27 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_std_u16_h90_ms | 18.15 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_std_u16_h135_ms | 4.59 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_std_u16_h180_ms | -6.15 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skid_u16_h90_ms | 20.7 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skid_u16_h135_ms | 7.68 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skid_u16_h180_ms | -3.51 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skiddih10_u16_h90_ms | 21.53 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skiddih10_u16_h135_ms | 8.44 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skiddih10_u16_h180_ms | -2.89 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_std_u13_h90_ms | 17.45 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_std_u13_h135_ms | 6.28 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_std_u13_h180_ms | -2.98 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skid_u13_h90_ms | 19.76 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skid_u13_h135_ms | 8.91 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skid_u13_h180_ms | -0.66 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skiddih10_u13_h90_ms | 20.35 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skiddih10_u13_h135_ms | 9.45 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skiddih10_u13_h180_ms | -0.2 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_std_u16_h90_ms | 21.53 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_std_u16_h135_ms | 8.16 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_std_u16_h180_ms | -2.49 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skid_u16_h90_ms | 23.62 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skid_u16_h135_ms | 10.6 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skid_u16_h180_ms | -0.3 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skiddih10_u16_h90_ms | 24.24 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skiddih10_u16_h135_ms | 11.24 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skiddih10_u16_h180_ms | 0.16 | m/s | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skid_u13_drift_cut | 0.52 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skiddih10_u13_drift_cut | 0.58 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skid_u16_drift_cut | 0.43 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skim.ar20l_skiddih10_u16_drift_cut | 0.53 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skid_u13_drift_cut | 0.78 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skiddih10_u13_drift_cut | 0.93 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skid_u16_drift_cut | 0.88 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skiddih10_u16_drift_cut | 1.0 | 1 | calculated | docs/02-form.md#wingtip-skim |
+| skim.alb_skiddih10_u16_h180_start_spread_ms | 0.06 | m/s | calculated | K-018 |
+| skim.alb_skiddih10_u16_h180_tip15_ms | 0.1 | m/s | calculated | K-018 |
+| climate.so_djf_u10_mean_ms | 10.06 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_u10_p10_ms | 5.33 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_u10_p50_ms | 10.14 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_u10_p90_ms | 14.56 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_below_u6_share | 0.133 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_below_dsmin_share | 0.281 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_below_skim_share | 0.589 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_below_best_share | 0.779 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_u10_mean_ms | 10.94 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_u10_p10_ms | 5.89 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_u10_p50_ms | 11.04 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_u10_p90_ms | 15.76 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_below_u6_share | 0.105 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_below_dsmin_share | 0.22 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_below_skim_share | 0.493 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_below_best_share | 0.683 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_u10_mean_ms | 11.38 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_u10_p10_ms | 6.01 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_u10_p50_ms | 11.59 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_u10_p90_ms | 16.35 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_below_u6_share | 0.099 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_below_dsmin_share | 0.203 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_below_skim_share | 0.443 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_below_best_share | 0.623 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_u10_mean_ms | 11.15 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_u10_p10_ms | 6.15 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_u10_p50_ms | 11.28 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_u10_p90_ms | 15.9 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_below_u6_share | 0.094 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_below_dsmin_share | 0.204 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_below_skim_share | 0.469 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_below_best_share | 0.661 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_u10_mean_ms | 10.88 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_u10_p10_ms | 5.82 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_u10_p50_ms | 10.99 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_u10_p90_ms | 15.72 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_below_u6_share | 0.108 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_below_dsmin_share | 0.227 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_below_skim_share | 0.498 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_below_best_share | 0.686 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_u10_std_ms | 3.79 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_p50_h | 6 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_p90_h | 20 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_p99_h | 46 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_max_h | 93 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_ge24h_share | 0.271 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_per_year_over_p99 | 1.07 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_u6_hw_p99_h | 78 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_p50_h | 7 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_p90_h | 28 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_p99_h | 71 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_max_h | 169 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_ge24h_share | 0.459 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_per_year_over_p99 | 1.58 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_dsmin_hw_p99_h | 119 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim_p50_h | 10 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim_p90_h | 48 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim_p99_h | 135 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim_max_h | 361 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim_ge24h_share | 0.701 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim_per_year_over_p99 | 2.25 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_skim_hw_p99_h | 250 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_p50_h | 13 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_p90_h | 72 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_p99_h | 215 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_max_h | 532 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_ge24h_share | 0.82 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_per_year_over_p99 | 2.13 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.so_spell_best_hw_p99_h | 425 | h | calculated | docs/02-form.md#wind-climate |
+| climate.so_year_hs_survival_share | 0.424 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_hs2_share | 0.88 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_hs3_share | 0.374 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_swell2_share | 0.848 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_swell3_share | 0.351 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_hs_survival_share | 0.092 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_u6_tp_s | 11.8 | s | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_hs2_share | 0.902 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_hs3_share | 0.413 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_swell2_share | 0.816 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_swell3_share | 0.344 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_hs_survival_share | 0.105 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_dsmin_tp_s | 11.8 | s | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim_hs2_share | 0.944 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim_hs3_share | 0.536 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim_swell2_share | 0.719 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim_swell3_share | 0.316 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim_hs_survival_share | 0.166 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_skim_tp_s | 11.8 | s | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_hs2_share | 0.959 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_hs3_share | 0.627 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_swell2_share | 0.64 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_swell3_share | 0.288 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_hs_survival_share | 0.238 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.so_weak_best_tp_s | 11.9 | s | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_motor_p50_wh | 144 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_motor_p90_wh | 575 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_motor_p99_wh | 1459 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_float_p50_wh | 21 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_float_p90_wh | 84 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_float_p99_wh | 213 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_motor_p99_cell_kg | 6.32 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.so_albatross_float_p99_cell_kg | 0.92 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_motor_p50_wh | 433 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_motor_p90_wh | 2398 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_motor_p99_wh | 7161 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_float_p50_wh | 39 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_float_p90_wh | 216 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_float_p99_wh | 645 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_motor_p99_cell_kg | 31.0 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.so_best_float_p99_cell_kg | 2.79 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_albatross_motor_p90_wh | 658 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_albatross_motor_p99_wh | 1603 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_albatross_float_p90_wh | 96 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_albatross_float_p99_wh | 234 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_best_motor_p90_wh | 3293 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_best_motor_p99_wh | 9257 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_best_float_p90_wh | 297 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_djf_best_float_p99_wh | 834 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_albatross_motor_p90_wh | 575 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_albatross_motor_p99_wh | 1378 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_albatross_float_p90_wh | 84 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_albatross_float_p99_wh | 201 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_best_motor_p90_wh | 2364 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_best_motor_p99_wh | 7074 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_best_float_p90_wh | 213 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_mam_best_float_p99_wh | 637 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_albatross_motor_p90_wh | 534 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_albatross_motor_p99_wh | 1496 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_albatross_float_p90_wh | 78 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_albatross_float_p99_wh | 218 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_best_motor_p90_wh | 1865 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_best_motor_p99_wh | 5461 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_best_float_p90_wh | 168 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_jja_best_float_p99_wh | 492 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_albatross_motor_p90_wh | 555 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_albatross_motor_p99_wh | 1356 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_albatross_float_p90_wh | 81 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_albatross_float_p99_wh | 198 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_best_motor_p90_wh | 2198 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_best_motor_p99_wh | 6327 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_best_float_p90_wh | 198 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.so_son_best_float_p99_wh | 570 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_u10_mean_ms | 10.33 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_u10_p10_ms | 4.85 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_u10_p50_ms | 10.24 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_u10_p90_ms | 15.8 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_below_u6_share | 0.16 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_below_dsmin_share | 0.303 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_below_skim_share | 0.565 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_below_best_share | 0.72 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_u10_mean_ms | 8.32 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_u10_p10_ms | 3.64 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_u10_p50_ms | 8.04 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_u10_p90_ms | 13.33 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_below_u6_share | 0.287 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_below_dsmin_share | 0.495 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_below_skim_share | 0.768 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_below_best_share | 0.88 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_u10_mean_ms | 6.09 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_u10_p10_ms | 2.62 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_u10_p50_ms | 5.89 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_u10_p90_ms | 9.82 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_below_u6_share | 0.516 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_below_dsmin_share | 0.772 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_below_skim_share | 0.947 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_below_best_share | 0.984 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_u10_mean_ms | 8.21 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_u10_p10_ms | 3.48 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_u10_p50_ms | 7.92 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_u10_p90_ms | 13.31 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_below_u6_share | 0.301 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_below_dsmin_share | 0.506 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_below_skim_share | 0.773 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_below_best_share | 0.881 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_u10_mean_ms | 8.23 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_u10_p10_ms | 3.4 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_u10_p50_ms | 7.78 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_u10_p90_ms | 13.66 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_below_u6_share | 0.317 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_below_dsmin_share | 0.52 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_below_skim_share | 0.764 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_below_best_share | 0.867 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_u10_std_ms | 3.94 | m/s | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_p50_h | 7 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_p90_h | 39 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_p99_h | 131 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_max_h | 366 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_ge24h_share | 0.64 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_per_year_over_p99 | 1.72 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_u6_hw_p99_h | 304 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_p50_h | 10 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_p90_h | 62 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_p99_h | 246 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_max_h | 1409 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_ge24h_share | 0.79 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_per_year_over_p99 | 1.72 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_dsmin_hw_p99_h | 1034 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim_p50_h | 15 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim_p90_h | 104 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim_p99_h | 553 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim_max_h | 3076 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim_ge24h_share | 0.904 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim_per_year_over_p99 | 1.4 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_skim_hw_p99_h | 2667 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_p50_h | 18 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_p90_h | 152 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_p99_h | 821 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_max_h | 4419 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_ge24h_share | 0.942 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_per_year_over_p99 | 1.07 | 1/year | calculated | docs/02-form.md#wind-climate |
+| climate.np_spell_best_hw_p99_h | 4155 | h | calculated | docs/02-form.md#wind-climate |
+| climate.np_year_hs_survival_share | 0.175 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_hs2_share | 0.348 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_hs3_share | 0.11 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_swell2_share | 0.322 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_swell3_share | 0.103 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_hs_survival_share | 0.028 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_u6_tp_s | 11.6 | s | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_hs2_share | 0.409 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_hs3_share | 0.135 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_swell2_share | 0.336 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_swell3_share | 0.114 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_hs_survival_share | 0.036 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_dsmin_tp_s | 11.6 | s | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim_hs2_share | 0.534 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim_hs3_share | 0.207 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim_swell2_share | 0.347 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim_swell3_share | 0.128 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim_hs_survival_share | 0.062 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_skim_tp_s | 11.7 | s | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_hs2_share | 0.588 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_hs3_share | 0.263 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_swell2_share | 0.341 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_swell3_share | 0.131 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_hs_survival_share | 0.089 | 1 | calculated | docs/02-form.md#wind-climate |
+| climate.np_weak_best_tp_s | 11.8 | s | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_motor_p50_wh | 206 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_motor_p90_wh | 1274 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_motor_p99_wh | 5055 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_float_p50_wh | 30 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_float_p90_wh | 186 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_float_p99_wh | 738 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_motor_p99_cell_kg | 21.88 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.np_albatross_float_p99_cell_kg | 3.19 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_motor_p50_wh | 599 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_motor_p90_wh | 5062 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_motor_p99_wh | 27327 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_float_p50_wh | 54 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_float_p90_wh | 456 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_float_p99_wh | 2462 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_motor_p99_cell_kg | 118.3 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.np_best_float_p99_cell_kg | 10.66 | kg | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_albatross_motor_p90_wh | 637 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_albatross_motor_p99_wh | 1837 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_albatross_float_p90_wh | 93 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_albatross_float_p99_wh | 268 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_best_motor_p90_wh | 2631 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_best_motor_p99_wh | 9894 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_best_float_p90_wh | 237 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_djf_best_float_p99_wh | 891 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_albatross_motor_p90_wh | 1212 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_albatross_motor_p99_wh | 4155 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_albatross_float_p90_wh | 177 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_albatross_float_p99_wh | 607 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_best_motor_p90_wh | 6803 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_best_motor_p99_wh | 70920 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_best_float_p90_wh | 613 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_mam_best_float_p99_wh | 6389 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_albatross_motor_p90_wh | 3119 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_albatross_motor_p99_wh | 8705 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_albatross_float_p90_wh | 455 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_albatross_float_p99_wh | 1271 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_best_motor_p90_wh | 27156 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_best_motor_p99_wh | 75784 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_best_float_p90_wh | 2446 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_jja_best_float_p99_wh | 6827 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_albatross_motor_p90_wh | 1110 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_albatross_motor_p99_wh | 3505 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_albatross_float_p90_wh | 162 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_albatross_float_p99_wh | 512 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_best_motor_p90_wh | 5415 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_best_motor_p99_wh | 16501 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_best_float_p90_wh | 488 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.np_son_best_float_p99_wh | 1487 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.home_djf_u10_mean_ms | 7.62 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_u10_p10_ms | 3.11 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_u10_p50_ms | 7.45 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_u10_p90_ms | 12.31 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_below_u6_share | 0.345 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_below_dsmin_share | 0.561 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_below_skim_share | 0.827 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_below_best_share | 0.923 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_u10_mean_ms | 6.82 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_u10_p10_ms | 2.77 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_u10_p50_ms | 6.58 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_u10_p90_ms | 11.11 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_below_u6_share | 0.433 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_below_dsmin_share | 0.657 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_below_skim_share | 0.893 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_below_best_share | 0.959 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_u10_mean_ms | 5.2 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_u10_p10_ms | 1.99 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_u10_p50_ms | 4.82 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_u10_p90_ms | 8.92 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_below_u6_share | 0.652 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_below_dsmin_share | 0.839 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_below_skim_share | 0.973 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_below_best_share | 0.992 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_u10_mean_ms | 6.9 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_u10_p10_ms | 2.77 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_u10_p50_ms | 6.62 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_u10_p90_ms | 11.34 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_below_u6_share | 0.43 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_below_dsmin_share | 0.649 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_below_skim_share | 0.883 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_below_best_share | 0.951 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_u10_mean_ms | 6.63 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_u10_p10_ms | 2.55 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_u10_p50_ms | 6.3 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_u10_p90_ms | 11.1 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_below_u6_share | 0.466 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_below_dsmin_share | 0.677 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_below_skim_share | 0.895 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_below_best_share | 0.956 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_u10_std_ms | 3.34 | m/s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_p50_h | 8 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_p90_h | 40 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_p99_h | 115 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_max_h | 334 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_ge24h_share | 0.624 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_per_year_over_p99 | 2.48 | 1/year | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_u6_hw_p99_h | 261 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_p50_h | 11 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_p90_h | 69 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_p99_h | 212 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_max_h | 799 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_ge24h_share | 0.814 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_per_year_over_p99 | 2.2 | 1/year | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_dsmin_hw_p99_h | 606 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim_p50_h | 25 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim_p90_h | 187 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim_p99_h | 752 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim_max_h | 2389 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim_ge24h_share | 0.956 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim_per_year_over_p99 | 1.07 | 1/year | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_skim_hw_p99_h | 2262 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_p50_h | 46 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_p90_h | 381 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_p99_h | 1432 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_max_h | 3910 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_ge24h_share | 0.985 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_per_year_over_p99 | 0.57 | 1/year | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_spell_best_hw_p99_h | 3910 | h | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_year_hs_survival_share | 0.014 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_hs2_share | 0.063 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_hs3_share | 0.007 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_swell2_share | 0.054 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_swell3_share | 0.006 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_hs_survival_share | 0.001 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_u6_tp_s | 11.1 | s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_hs2_share | 0.078 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_hs3_share | 0.009 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_swell2_share | 0.054 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_swell3_share | 0.007 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_hs_survival_share | 0.001 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_dsmin_tp_s | 11.1 | s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim_hs2_share | 0.127 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim_hs3_share | 0.016 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim_swell2_share | 0.05 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim_swell3_share | 0.007 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim_hs_survival_share | 0.002 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_skim_tp_s | 11.1 | s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_hs2_share | 0.167 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_hs3_share | 0.025 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_swell2_share | 0.049 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_swell3_share | 0.007 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_hs_survival_share | 0.003 | 1 | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_weak_best_tp_s | 11.1 | s | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_motor_p50_wh | 226 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_motor_p90_wh | 1418 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_motor_p99_wh | 4351 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_float_p50_wh | 33 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_float_p90_wh | 207 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_float_p99_wh | 635 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_motor_p99_cell_kg | 18.84 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_albatross_float_p99_cell_kg | 2.75 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_motor_p50_wh | 1548 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_motor_p90_wh | 12677 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_motor_p99_wh | 47684 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_float_p50_wh | 140 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_float_p90_wh | 1142 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_float_p99_wh | 4296 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_motor_p99_cell_kg | 206.42 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_best_float_p99_cell_kg | 18.6 | kg | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_albatross_motor_p90_wh | 966 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_albatross_motor_p99_wh | 2323 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_albatross_float_p90_wh | 141 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_albatross_float_p99_wh | 339 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_best_motor_p90_wh | 9078 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_best_motor_p99_wh | 22961 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_best_float_p90_wh | 818 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_djf_best_float_p99_wh | 2069 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_albatross_motor_p90_wh | 1305 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_albatross_motor_p99_wh | 3459 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_albatross_float_p90_wh | 190 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_albatross_float_p99_wh | 505 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_best_motor_p90_wh | 17669 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_best_motor_p99_wh | 88768 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_best_float_p90_wh | 1592 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_mam_best_float_p99_wh | 7997 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_albatross_motor_p90_wh | 3288 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_albatross_motor_p99_wh | 7585 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_albatross_float_p90_wh | 480 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_albatross_float_p99_wh | 1107 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_best_motor_p90_wh | 46001 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_best_motor_p99_wh | 68418 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_best_float_p90_wh | 4144 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_jja_best_float_p99_wh | 6164 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_albatross_motor_p90_wh | 1274 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_albatross_motor_p99_wh | 3393 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_albatross_float_p90_wh | 186 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_albatross_float_p99_wh | 495 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_best_motor_p90_wh | 10226 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_best_motor_p99_wh | 20781 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_best_float_p90_wh | 921 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.home_son_best_float_p99_wh | 1872 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.solar_day_albatross_so_wh | 25.6 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.solar_day_best_so_wh | 31.9 | Wh | calculated | docs/02-form.md#wind-climate |
+| climate.solar_day_albatross_home_wh | 59.0 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.solar_day_best_home_wh | 73.8 | Wh | calculated | docs/02-form.md#wind-climate, private:loc-01 |
+| climate.avionics_day_wh | 72.0 | Wh | calculated | docs/02-form.md#wind-climate |
 | wave.diag_runs | 6 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.diag_reproduced | 6 | 1 | calculated | docs/02-form.md#wave-loop |
 | wave.diag_flat_world_runs | 5 | 1 | calculated | docs/02-form.md#wave-loop |

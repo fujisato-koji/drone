@@ -185,10 +185,13 @@ def loop_summary(rows):
     dear = [r for r in rows if r["u10"] == 3.0 and r.get("after_entry") and r.get("flat")
             and r["after_entry"]["avg_power_w"] > r["flat"]["power_avg_w"]]
     ffo = sorted(r["after_entry"]["forward_face_share"] for r in rows
-                 if r["u10"] != 3.0 and r.get("after_entry") and r["margins"]["counts"])
+                 if r["u10"] != 3.0 and r.get("after_entry") and r["margins"]["counts"]
+                 and "forward_face_share" in r["after_entry"])
     out["loop_u3_dearer_runs"] = (len(dear), "1")
     if dear:
-        out["loop_u3_dearer_forward_face_max"] = (round(max(r["after_entry"]["forward_face_share"] for r in dear), 2), "1")
+        ff = [r["after_entry"].get("forward_face_share") for r in dear]
+        if None not in ff:
+            out["loop_u3_dearer_forward_face_max"] = (round(max(ff), 2), "1")
         out["loop_u3_dearer_motor_share_min"] = (round(min(r["after_entry"]["thrust_on_share"] for r in dear), 2), "1")
         out["loop_u3_dearer_v_c0_runs"] = (sum(abs((r.get("entry") or {}).get("course_rel_deg") or 0.0) < 1e-6
                                                for r in dear), "1")
