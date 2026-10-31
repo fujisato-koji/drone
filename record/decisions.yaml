@@ -172,3 +172,11 @@ items:
       - Q-068
       - Q-070
       - R-12
+  - id: D-020
+    date: 2026-11-01
+    by: owner
+    what: "Arm the reflex's wingtip range trigger only while the water at the tip stands above the planner's sea at that point, so that the trigger does not fire while the sea is as the planner expects; the wet sensor stays the last resort (Q-077, D-019)."
+    touches:
+      - Q-077
+      - Q-068
+      - D-019

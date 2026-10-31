@@ -268,9 +268,10 @@ line by atan(e / lookahead) up to max_turn (a proportional guidance with a limit
 
 Over swell (Q-073; datum "msl", default "surface" as above): the leg holds a constant height above the mean
 sea level, height + crest_m, where crest_m is the elevation of the highest crest of the sea, so that the
-leg keeps at least height above every crest and does not ride up and down with the swell. A leg that holds
-its height above the local surface follows the swell into the troughs, and its height tolerance competes
-with the heading in the planner's cost, which turned the course off the line over a 3 m swell.
+leg keeps at least height above every crest and does not follow the swell's surface (flown along the swell's
+travel it still rides with the wave's vertical air, K-022). A leg that holds its height above the local surface
+follows the swell into the troughs; the course over a 3 m swell was lost to the planner's heading, not to the
+height (Q-073, Q-076).
 """
 
 STEADY_HEIGHT_M = 10.0

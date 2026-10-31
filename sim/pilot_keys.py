@@ -297,6 +297,23 @@ def reflex_values(summary):
     return out
 
 
+def reflex_cause_values(results):
+    """For the redesigned reflex on the contacts the prediction does not see: of the rescues, how many had a range
+    firing, how many on the range reading alone, and how many fired only on the prediction's tests."""
+    out = {}
+    for w in ("truth", "flat"):
+        rs = [r for r in results if r["family"] == "contact" and r["world"] == w
+              and r["results"]["none"]["ended"] != "complete" and r["results"]["v2"]["ended"] == "complete"]
+        causes = [{k for k, n in r["results"]["v2"]["causes"].items() if n} for r in rs]
+        out["contact_%s_v2_rescues_with_range" % w] = (sum("range" in c for c in causes), "1")
+        out["contact_%s_v2_rescues_range_only" % w] = (sum(c == {"range"} for c in causes), "1")
+        out["contact_%s_v2_rescues_prediction_only" % w] = (sum("range" not in c and "wet" not in c for c in causes), "1")
+    out["v2_stall_firings"] = (sum(r["results"]["v2"]["causes"].get("stall", 0) for r in results), "1")
+    out["v2_stall_firings_dive"] = (sum(r["results"]["v2"]["causes"].get("stall", 0) for r in results
+                                        if r["family"] == "dive"), "1")
+    return out
+
+
 def reflex_table(summary):
     lines = ["| case | prediction world | reflex | " + " | ".join(f.replace("_", " ") for f, _ in REFLEX_FIELDS) + " |",
              "|" + "---|" * (3 + len(REFLEX_FIELDS))]
@@ -317,6 +334,7 @@ def reflex_nav_values(rows_r, rows_0, dist):
     by = {(r["aircraft"], r["u10"], r["direction"]): r for r in rows_0}
     out = {}
     tot = {"runs": 0, "fired_runs": 0, "firings": 0, "counted": 0, "counted_without": 0}
+    tips = [float((r.get("nav") or {}).get("wingtip_min_m", 1e9)) for r in rows_r]
     for r in rows_r:
         b = by.get((r["aircraft"], r["u10"], r["direction"]))
         rf = r.get("reflex") or {}
@@ -334,6 +352,8 @@ def reflex_nav_values(rows_r, rows_0, dist):
             tot["counted_without"] += int(bool((b.get("nav") or {}).get("counts_as_arrived")))
     pre = "nav%d" % round(dist / 1000.0)
     out.update({"%s_%s" % (pre, k): (v, "1") for k, v in tot.items()})
+    if tips:
+        out["%s_wingtip_min_m" % pre] = (round(min(tips), 2), "m")
     return out
 
 
@@ -358,6 +378,7 @@ def reflex_loop_values(rows_r, rows_0):
     out.update({"loop_%s" % k: (v, "1") for k, v in tot.items()})
     for c, n in causes.items():
         out["loop_cause_%s" % c] = (n, "1")
+    out["loop_wingtip_min_m"] = (round(min(r["margins"]["wingtip_min_m"] for _, r in pairs), 2), "m")
     rs = [float((r.get("reflex") or {}).get("total_s", 0.0)) for _, r in pairs]
     if rs:
         out["loop_reflex_s_max"] = (round(max(rs), 2), "s")
@@ -398,6 +419,7 @@ def values_block(d):
         parts.append((leg_values(leg_rows(d)), SEC_WAVE, "wave."))
     if "reflex_exp" in d:
         parts.append((reflex_values(reflex_summary(d["reflex_exp"]["results"])), SEC_REFLEX, "reflex."))
+        parts.append((reflex_cause_values(d["reflex_exp"]["results"]), SEC_REFLEX, "reflex."))
     for k0, kr in (("nav_exp", "nav_exp_reflex2"), ("nav_exp_10km", "nav_exp_10km_reflex2")):
         if kr in d:
             parts.append((reflex_nav_values(d[kr]["results"], d[k0]["results"], d[kr]["meta"]["distance_m"]),
