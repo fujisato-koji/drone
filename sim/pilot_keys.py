@@ -173,6 +173,32 @@ def pilot_summary(rows, earlier, trials, prefix="pilot"):
     return {"%s_%s" % (prefix, k): v for k, v in out.items() if v is not None}
 
 
+def face_values(trials, noface):
+    """The crest-ride trials with the forward-face guide (wave_pilot_trials) against the same trials without it
+    (wave_pilot_trials_noface): how many ended on the water, broke a margin or kept them, and in how many pairs the guide
+    made the trial's cost lower or higher (by more than a tenth)."""
+    def key(t):
+        return case_of(t) + (t["key"],)
+    face = {key(t): t for t in trials if t["key"] and "|crest|" in t["key"]}
+    pairs = [(face[key(t)], t) for t in noface if key(t) in face]
+
+    def counts(ts, pre):
+        return {pre + "trials": (len(ts), "1"), pre + "ended": (sum(t["ended"] != "complete" for t in ts), "1"),
+                pre + "broke": (sum(t["ended"] == "complete" and not t["valid"] for t in ts), "1"),
+                pre + "kept": (sum(t["ended"] == "complete" and t["valid"] for t in ts), "1")}
+    out = {}
+    out.update(counts([f for f, _ in pairs], "pilot_face_"))
+    out.update(counts([n for _, n in pairs], "pilot_noface_"))
+    out["pilot_face_lower"] = (sum(f["cost_w"] < 0.9 * n["cost_w"] for f, n in pairs), "1")
+    out["pilot_face_higher"] = (sum(f["cost_w"] > 1.1 * n["cost_w"] for f, n in pairs), "1")
+    kept = [(f["cost_w"], n["cost_w"]) for f, n in pairs if f["valid"] and n["valid"] and f["ended"] == n["ended"] == "complete"]
+    if kept:
+        out["pilot_face_kept_both"] = (len(kept), "1")
+        out["pilot_face_kept_both_median_w"] = (round(_median([a for a, _ in kept]), 1), "W")
+        out["pilot_noface_kept_both_median_w"] = (round(_median([b for _, b in kept]), 1), "W")
+    return out
+
+
 def pilot_table(rows, trials, prefix="pilot"):
     have = pilot_values(rows, trials, prefix)
     fields = list(PILOT_FIELDS) + [("choice_course_deg", "deg")]
@@ -365,6 +391,9 @@ def values_block(d):
         trials = d.get("wave_pilot_trials", {}).get("results", [])
         parts.append((pilot_values(rows, trials), SEC_WAVE, "wave."))
         parts.append((pilot_summary(rows, d["wave_loop_exp"]["results"], trials), SEC_WAVE, "wave."))
+    if "wave_pilot_trials_noface" in d and "wave_pilot_trials" in d:
+        parts.append((face_values(d["wave_pilot_trials"]["results"], d["wave_pilot_trials_noface"]["results"]),
+                      SEC_WAVE, "wave."))
     if "wave_leg_exp" in d:
         parts.append((leg_values(leg_rows(d)), SEC_WAVE, "wave."))
     if "reflex_exp" in d:

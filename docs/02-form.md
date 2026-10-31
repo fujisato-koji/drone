@@ -726,9 +726,17 @@ Each case flies for 4 s, both aircraft, and ends at a contact of the centre or o
   A first version of the override that took the load factor from the flight path also while descending pulled less in the steepest dives and rescued fewer; the full pull while descending is the fix.
 - On the contacts that the prediction sees, both reflexes rescue every case (reflex.contact_truth_v2_rescues and reflex.contact_truth_v1_rescues of reflex.contact_truth_none_base_contacts), but the first loops in reflex.contact_truth_v1_loops of them, up to reflex.contact_truth_v1_gamma_max_deg deg of flight-path angle and down to reflex.contact_truth_v1_v_min_over_stall of the stall speed, the zoom of K-015; the redesign does not loop (reflex.contact_truth_v2_loops), climbs to at most reflex.contact_truth_v2_gamma_max_deg deg and keeps reflex.contact_truth_v2_v_min_over_stall of the stall speed.
 - On the contacts that the prediction does not see (its world is flat), the first reflex rescues reflex.contact_flat_v1_rescues of reflex.contact_flat_none_base_contacts, the redesign every one (reflex.contact_flat_v2_rescues) on the range reading, and its tip never touches the water (reflex.contact_flat_v2_touched).
-- The firings in cases that had not touched by the end of the 4 s (reflex.contact_truth_v2_fired_no_contact and reflex.contact_flat_v2_fired_no_contact) are predicted contacts after that end.
+- The firings in cases that had not touched by the end of the 4 s (reflex.contact_flat_v2_fired_no_contact for the redesign, reflex.contact_truth_v1_fired_no_contact and reflex.contact_flat_v1_fired_no_contact for the first reflex) are predicted contacts near that end, where the tip had come within a few centimetres of the water.
+- A rescue from a slow banked turn costs airspeed: rolling level with the load factor held and climbing away, the redesign dips to reflex.contact_flat_v2_v_min_over_stall of the stall speed at the worst (reflex.contact_truth_v2_v_min_over_stall where the prediction sees the swell), briefly below it; the override does not yet trade its climb for speed when it starts slow.
 - The lead and the longer hold were chosen on these cases and on the flat-sea run downwind (pilot runs, not recorded): with a lead of three quarters of a second the redesign rescued fewer dives, with the whole horizon it fired on that run, and with the short hold after a range firing the stale plan banked the tip back into a rising crest in one of the contacts the prediction does not see.
 - The forces of the skid in the water are not in the point mass, so a touch within the skid's depth is only counted, not flown.
+
+In the closed loop:
+
+- On the flat-sea navigation runs of the navigation section, flown again with the redesigned reflex (`--nav-exp --nav-reflex v2`, keys `nav_exp_reflex2` and `nav_exp_10km_reflex2`), it fired reflex.nav5_firings times in reflex.nav5_runs runs of 5 km and reflex.nav10_firings times in reflex.nav10_runs runs of 10 km; reflex.nav5_counted and reflex.nav10_counted of them count, as without it (reflex.nav5_counted_without and reflex.nav10_counted_without), with the same arrival times and energy as without it (the energy of each run is a key, for example reflex.nav5_albatross_u16_downwind_energy_wh against nav.run5_albatross_u16_downwind_energy_wh).
+  The run downwind, the soaring one, is where the first version of the redesign (the whole horizon) fired on a predicted wingtip at the end of its prediction while the flight kept its wingtip margin; with the lead it does not.
+
+REFLEX_LOOP_TODO
 
 ## Candidate forms {#candidate-forms}
 
