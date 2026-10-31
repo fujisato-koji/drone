@@ -59,7 +59,7 @@
 
   <details class="sec" open>
     <summary id="sec1s" data-i="sec1"></summary>
-    <div class="ctl"><label for="envMode" data-i="envMode" data-t="envModeTip"></label><select id="envMode" data-t="envModeTip"><option value="scenario" data-i="emScen"></option><option value="free" data-i="emFree"></option><option value="varying" data-i="emVar"></option></select></div>
+    <div class="ctl"><label for="envMode" data-i="envMode" data-t="envModeTip"></label><select id="envMode" data-t="envModeTip"><option value="scenario" data-i="emScen"></option><option value="free" data-i="emFree"></option><option value="varying" data-i="emVar"></option><option value="swell" data-i="emSwell"></option></select></div>
     <div id="scen" style="display:none">
       <div class="ctl"><label for="hour" data-i="hour" data-t="hourTip"></label><input id="hour" type="range" min="0" max="72" step="0.1" value="0" data-t="hourTip"><span class="val" id="hourv"></span></div>
       <div class="ctl"><button id="play" type="button" data-t="playTip"></button>
@@ -78,6 +78,14 @@
       <div class="ctl"><label for="swTp" data-i="swTp" data-t="swTpTip"></label><input id="swTp" type="range" min="6" max="18" step="0.5" value="11" data-t="swTpTip"><span class="val" id="swTpv"></span></div>
       <div class="ctl"><label for="swFrom" data-i="swFrom" data-t="swFromTip"></label><input id="swFrom" type="range" min="0" max="359" step="1" value="200" data-t="swFromTip"><span class="val" id="swFromv"></span></div>
       <table id="envro"></table>
+    </div>
+    <div id="swellCtl" style="display:none">
+      <div class="ctl"><label for="swlHs" data-i="swlHs" data-t="swlHsTip"></label><select id="swlHs" data-t="swlHsTip"><option value="1.5">1.5 m</option><option value="2">2 m</option><option value="3" selected>3 m</option></select></div>
+      <div class="ctl"><label for="swlTp" data-i="swlTp" data-t="swlTpTip"></label><select id="swlTp" data-t="swlTpTip"><option value="8">8 s</option><option value="10" selected>10 s</option><option value="12">12 s</option></select></div>
+      <div class="ctl"><label for="swlDir" data-i="swlDir" data-t="swlDirTip"></label><select id="swlDir" data-t="swlDirTip"><option value="along" data-i="dAlong"></option><option value="across" data-i="dAcross"></option><option value="against" data-i="dAgainst"></option></select></div>
+      <div class="ctl"><label for="swlPre" data-i="swlPre" data-t="swlPreTip"></label><select id="swlPre" data-t="swlPreTip"><option value="p63" data-i="preP63"></option><option value="p64_low" data-i="preP64"></option></select></div>
+      <div class="dim" data-i="swlWindNote"></div>
+      <table id="swro"></table>
     </div>
     <div id="varCtl" style="display:none">
       <div class="ctl"><label for="slowKind" data-i="slowKind" data-t="slowKindTip"></label><select id="slowKind" data-t="slowKindTip"><option value="calm" data-i="skCalm"></option><option value="cell" data-i="skCell"></option></select></div>
@@ -109,7 +117,10 @@
       <div class="ctl"><label class="auto" data-t="flReflexTip"><input id="flReflex" type="checkbox" data-t="flReflexTip"> <span data-i="reflex"></span></label></div>
       <div class="ctl"><button id="flGo" type="button" data-i="go" data-t="goTip"></button><button id="flStop" type="button" data-i="stop" data-t="stopTip"></button></div>
       <div class="ctl"><label class="auto" data-t="chaseTip"><input id="flChase" type="checkbox" data-t="chaseTip"> <span data-i="chase"></span></label></div>
+      <div class="dim" id="swlFixed" style="display:none" data-i="swlFixed"></div>
       <table id="flro"></table>
+      <div class="sub" id="wvHead" style="display:none" data-i="wvHead" data-t="wvHeadTip"></div>
+      <table id="wvro" style="display:none"></table>
       <div class="dim" id="flNote"></div>
       <div class="warn" id="flSplash"></div>
     </div>
@@ -154,6 +165,8 @@
 <script src="gust.js"></script>
 <script src="mpc.js"></script>
 <script src="navigator.js"></script>
+<script src="wave/index.js"></script>
+<script src="wave.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -277,7 +290,47 @@ const I18N = {
     r_t: '波の時刻', r_u10: '基準の 10 m の風速', r_us: '摩擦速度 u*', r_z0: '粗度長 z0', r_hsTp: ' の波高と周期',
     r_eta: '観測柱の水面の高さ', r_w2: '観測柱 2 m の風速', r_w10: '観測柱 10 m の風速', r_vw2: '観測柱 2 m の上下の風',
     s_hour: '表示中の時刻', s_u10: '10 m の風速', s_from: '風の吹いてくる向き', s_hss: '風浪の波高', s_tps: '風浪の周期',
-    s_hsw: 'うねりの波高', s_us: '摩擦速度 u*', s_z0: '粗度長 z0', s_wc: '白波の割合'
+    s_hsw: 'うねりの波高', s_us: '摩擦速度 u*', s_z0: '粗度長 z0', s_wc: '白波の割合',
+    emSwell: 'うねり（規則波）',
+    swlHs: 'うねりの波高 Hs', swlHsTip: 'うねりの有義波高です。波の表（Python で解いた、波に同期した飛び方の表）の格子から選びます。海は一つの規則的な長い峰の波で、水面は 2 次です。',
+    swlTp: 'うねりの周期 Tp', swlTpTip: 'うねりの周期です。波の表の格子から選びます。最適化で解いた周期軌道があるのは、周期 10 s の波高 3 m と 2 m だけで、ほかは波頭乗りだけです。',
+    swlDir: 'うねりの向き', swlDirTip: 'うねりが進む向きを、風が吹いていく向きに対して選びます。「風と同じ向き」は風下へ、「風に直角（左へ）」は風下を向いて左へ、「風と逆向き」は風上へ進みます。',
+    dAlong: '風と同じ向き', dAcross: '風に直角（左へ）', dAgainst: '風と逆向き',
+    swlPre: '波が起こす風', swlPreTip: '波の動きが空気に起こす風（波と同期した風）の強さです。「P63」は測定に合わせた値、「P64 の下限」は上下の風を弱く見積もった値です（Q-058）。',
+    preP63: 'P63', preP64: 'P64 の下限',
+    swlWindNote: '風速は 0 から 12 m/s です。波の表は 0、3、6、9 m/s で解いてあり、いちばん近い風の表を使います。風は COARE 3.5 の対数分布です。',
+    sr_wave: 'うねりの波長と波速', sr_wind: '摩擦速度 u* と粗度長 z0', sr_lib: '使う表の風速', sr_file: '波の表（選んだ機体）',
+    srWave: (l, c) => l + ' m、' + c + ' m/s', srFile: (n, o) => n + ' 項目（最適化の周期軌道 ' + o + '）', srNotLoaded: '未読み込み',
+    swlFixed: 'うねりの設定では、モータ補助はあり、電力の重みはふつう、反射はなし、MPC から見た海は真の波（このうねり）、向きはうねりの進む向き、目的地はなしに決まります。Python の実行（--wave-loop-exp）と同じ条件です。',
+    swlNoLib: 'window.WAVE_INDEX がありません。python -m sim.export_wave_library で wave/index.js を作ってください。うねりの設定は使えません。',
+    swlAc: 'この機体は波の表にありません。albatross-3m か baseline-2m を選んでください。',
+    swlLoading: '波の表を読み込んでいます。', swlLoadFail: (f) => '波の表 ' + f + ' を読み込めませんでした。',
+    swlLockTip: '飛行中は、うねりと風の向きの設定を変えられません。',
+    wvHead: '波の表で飛ぶ（Python の実行と同じ値）', wvHeadTip: 'Python の --wave-loop-exp が実行ごとに出す値を、この飛行について計算して示します。「乗ってから」は、最初に波の表の項目へ乗り換えた時刻からの値です。',
+    w_ref: '参照している飛び方', w_ref_tip: '「平らな海の定常区間」は、出発のときの、高さ 10 m の水平なモータ飛行です。「波頭乗り」は、うねりの前面の上昇風に乗って波と一緒に進む飛び方で、高さの段のうち機体の 2 m 上のものを追います。「波に同期した周期軌道」は、最適化で解いた、波に合わせて繰り返す軌道です。乗り換えは、機体の波の位相が参照の位相に 0.3 rad 以内で合うまで待ちます（最長 60 秒）。',
+    rfStart: '平らな海の定常区間', rfCrest: '波頭乗り', rfCycle: '波に同期した周期軌道',
+    rfWait: (s) => '（乗り換えを待つ ' + s + ' 秒）', rfRefused: '（この海では表のモータ飛行が平らな海より高くつくので、平らな飛行を続ける）',
+    w_ent: '選んだ項目', w_ent_tip: 'うねりの進む向きに対する進路（左が正）、波頭に沿った対地速度（左が正）、いま追っている波頭乗りの高さ、表の平均電力です。',
+    wEnt: (c, vc, h, p) => '進路 ' + c + ' deg' + (vc === null ? '' : '、波頭に沿って ' + vc + ' m/s') + (h === null ? '' : '、高さ ' + h + ' m') + '、表の電力 ' + p + ' W',
+    w_sel: '表の海と風', w_sel_tip: '波の表のうち、選ばれた海（波高、周期、向き）と風速です。',
+    wSel: (hs, tp, d, u) => 'Hs ' + hs + ' m、Tp ' + tp + ' s、' + d + '、u10 ' + u + ' m/s',
+    w_ph: '機体の波の位相', w_ph_tip: '機体の位置でのうねりの位相です。0 が波頭、π が谷で、0 から π が前面です。そのあとは、直近の計画での参照の位相とのずれ（機体から参照を引いた値）です。',
+    wPh: (p, side, e) => p + ' rad（' + side + '）' + (e === null ? '' : '、ずれ ' + e + ' rad'), front: '前面', back: '背面',
+    w_pw: '平均電力（全体 / 乗ってから）', w_pw_tip: 'モータの電力量を時間で割った値です。電力量は、推力と対気速度の積をプロペラとモータの効率で割り、時間で積分したものです。',
+    w_on: 'モータの割合（全体 / 乗ってから）', w_on_tip: '推力が機体重量の 1 % を超えていた時間の割合です。',
+    w_hm: '高さの中央値（全体 / 乗ってから）', w_hm_tip: '水面（2 次の水面）からの高さの中央値です。',
+    w_fw: '前面にいた割合（乗ってから）', w_fw_tip: '乗り換えてから、機体がうねりの前面（位相 0 から π）にいた時間の割合と、位相の中央値です。',
+    w_bd: '高さの最小と最大', w_bd_tip: '水面からの高さの最小と最大です。R-12 の帯に入っていれば、数える条件の一つを満たします。',
+    w_tp: '翼端の最小の高さ', w_tp_tip: '翼端の水面からの高さの最小です。0.3 m 以上なら満たします。',
+    w_st: '失速と宙返り', w_st_tip: '失速速度を下回った時間、最低の対気速度、経路角が 90 度を超えていた（宙返り）時間です。時間がどちらも 0 秒なら満たします。',
+    wSt: (a, v, b) => '失速 ' + a + ' s、最低 ' + v + ' m/s、宙返り ' + b + ' s',
+    w_nm: '最大の荷重倍数', w_nm_tip: '飛んだ揚力係数での最大の荷重倍数です。限界以下なら満たします。',
+    w_ct: '数える条件', w_ct_tip: 'Python の実行で数える条件です。最後まで飛び、高さが帯に入り、翼端、失速、宙返り、荷重倍数の余裕を守った飛行です。ここでは、今までの飛行が満たしているかを示します。',
+    ctYes: 'ここまで満たす', ctNo: (w) => '満たさない（' + w + '）',
+    ctBand: '高さの帯', ctTip: '翼端', ctStall: '失速', ctLoop: '宙返り', ctN: '荷重倍数', ctEnd: '着水',
+    w_py: 'Python の同じ条件の実行', w_py_tip: '同じ機体、海、風、波が起こす風での、Python の実行（--wave-loop-exp、10 分）の値です。平均電力（全体 / 乗ってから）、モータの割合、高さの中央値、数えたかどうかです。実験にない条件では「なし」です。',
+    wPy: (p, pa, s, h, c) => p + ' / ' + pa + ' W、モータ ' + s + ' %、高さ ' + h + ' m、' + (c ? '数えた' : '数えない'),
+    over: (a, b) => a + ' / ' + b
   },
   en: {
     pageTitle: 'Sea and wind', title: 'Sea and wind simulator',
@@ -395,7 +448,47 @@ const I18N = {
     r_t: 'Wave time', r_u10: 'Wind at 10 m', r_us: 'Friction velocity u*', r_z0: 'Roughness length z0', r_hsTp: ' Hs / Tp',
     r_eta: 'Surface height at mast', r_w2: 'Wind at 2 m', r_w10: 'Wind at 10 m', r_vw2: 'Vertical wind at 2 m',
     s_hour: 'Elapsed time', s_u10: 'Wind at 10 m', s_from: 'Wind from', s_hss: 'Wind sea height', s_tps: 'Wind sea period',
-    s_hsw: 'Swell height', s_us: 'Friction velocity u*', s_z0: 'Roughness length z0', s_wc: 'Whitecap fraction'
+    s_hsw: 'Swell height', s_us: 'Friction velocity u*', s_z0: 'Roughness length z0', s_wc: 'Whitecap fraction',
+    emSwell: 'Swell (regular waves)',
+    swlHs: 'Swell height Hs', swlHsTip: 'Significant height of the swell, from the grid of the wave library (the wave-synchronized flights solved in Python). The sea is one regular long-crested wave with the second-order surface.',
+    swlTp: 'Swell period Tp', swlTpTip: 'Period of the swell, from the grid of the wave library. The optimizer\'s cycles exist only at 10 s for 3 m and 2 m; elsewhere there are crest rides only.',
+    swlDir: 'Swell direction', swlDirTip: 'Where the swell travels relative to where the wind blows: "Along the wind" travels downwind, "Across (to the left)" travels to the left facing downwind, "Against the wind" travels upwind.',
+    dAlong: 'Along the wind', dAcross: 'Across (to the left)', dAgainst: 'Against the wind',
+    swlPre: 'Wave-induced wind', swlPreTip: 'Strength of the air motion the waves induce (the wave-coherent wind). "P63" is the measured calibration, "P64 low" the low bound with a weaker vertical wind (Q-058).',
+    preP63: 'P63', preP64: 'P64 low',
+    swlWindNote: 'Wind 0 to 12 m/s. The wave library is solved at 0, 3, 6 and 9 m/s and the nearest wind is used. The wind is the COARE 3.5 log profile.',
+    sr_wave: 'Swell wavelength / phase speed', sr_wind: 'u* / z0', sr_lib: 'Library wind used', sr_file: 'Wave library (chosen aircraft)',
+    srWave: (l, c) => l + ' m / ' + c + ' m/s', srFile: (n, o) => n + ' entries (' + o + ' optimizer cycles)', srNotLoaded: 'not loaded',
+    swlFixed: 'With the swell setting the motor assist is on, the power weight normal, the reflex off, the sea as MPC sees it the true waves (this swell), the heading along the swell\'s travel and no destination: the conditions of the Python runs (--wave-loop-exp).',
+    swlNoLib: 'window.WAVE_INDEX missing: run python -m sim.export_wave_library to create wave/index.js. The swell setting is off.',
+    swlAc: 'This aircraft is not in the wave library: choose albatross-3m or baseline-2m.',
+    swlLoading: 'Loading the wave library.', swlLoadFail: (f) => 'Could not load the wave library ' + f + '.',
+    swlLockTip: 'The swell and the wind direction cannot be changed while flying.',
+    wvHead: 'Flying the wave library (as the Python runs report)', wvHeadTip: 'The values that Python\'s --wave-loop-exp reports for each run, computed for this flight. "After entry" counts from the first change onto an entry of the wave library.',
+    w_ref: 'Reference flown', w_ref_tip: '"Flat steady leg" is the start: level motor flight 10 m above the surface. "Crest ride" rides the updraft on the forward face of the swell, moving with the wave, and follows the member of its family 2 m above the aircraft. "Wave-synchronized cycle" is the optimizer\'s cycle in step with the wave. A change waits until the wave phase at the aircraft is within 0.3 rad of the reference\'s (at most 60 s).',
+    rfStart: 'flat steady leg', rfCrest: 'crest ride', rfCycle: 'wave-synchronized cycle',
+    rfWait: (s) => ' (waiting to change, ' + s + ' s)', rfRefused: ' (here the library\'s motor flight costs more than the flat sea: flat flight goes on)',
+    w_ent: 'Entry', w_ent_tip: 'Course relative to the swell\'s travel (left positive), ground speed along the crest (left positive), the height of the crest ride followed now, and the library\'s average power.',
+    wEnt: (c, vc, h, p) => 'course ' + c + ' deg' + (vc === null ? '' : ', along the crest ' + vc + ' m/s') + (h === null ? '' : ', height ' + h + ' m') + ', library power ' + p + ' W',
+    w_sel: 'Library sea and wind', w_sel_tip: 'The sea (height, period, direction) and wind of the wave library that the pilot chose.',
+    wSel: (hs, tp, d, u) => 'Hs ' + hs + ' m, Tp ' + tp + ' s, ' + d + ', u10 ' + u + ' m/s',
+    w_ph: 'Wave phase of the aircraft', w_ph_tip: 'Phase of the swell at the aircraft: 0 at the crest, pi in the trough, 0 to pi is the forward face. Then the error against the reference\'s phase at the last plan (aircraft minus reference).',
+    wPh: (p, side, e) => p + ' rad (' + side + ')' + (e === null ? '' : ', error ' + e + ' rad'), front: 'forward face', back: 'rear face',
+    w_pw: 'Average power (all / after entry)', w_pw_tip: 'Electric energy divided by the time. The energy is thrust times airspeed divided by the propeller and motor efficiencies, integrated over time.',
+    w_on: 'Motor share (all / after entry)', w_on_tip: 'Share of the time the thrust was above 1 % of the weight.',
+    w_hm: 'Median height (all / after entry)', w_hm_tip: 'Median height above the (second-order) surface.',
+    w_fw: 'On the forward face (after entry)', w_fw_tip: 'Share of the time after the entry the aircraft was on the forward face (phase 0 to pi), and the median phase.',
+    w_bd: 'Height min / max', w_bd_tip: 'Lowest and highest height above the surface. Inside the band of R-12 is one of the conditions to count.',
+    w_tp: 'Lowest wingtip', w_tp_tip: 'Lowest height of a wingtip above the surface; at least 0.3 m passes.',
+    w_st: 'Stall and loops', w_st_tip: 'Time below the stall speed, the lowest airspeed, and the time with the flight path past the vertical (a loop). Both times zero passes.',
+    wSt: (a, v, b) => 'below stall ' + a + ' s, lowest ' + v + ' m/s, loop ' + b + ' s',
+    w_nm: 'Largest load factor', w_nm_tip: 'Largest load factor at the lift coefficient flown; at most the limit passes.',
+    w_ct: 'Counts', w_ct_tip: 'The condition under which a Python run counts: it flew to the end inside the height band and kept the margins of the wingtip, the stall, loops and the load factor. Shown for the flight so far.',
+    ctYes: 'so far, yes', ctNo: (w) => 'no (' + w + ')',
+    ctBand: 'height band', ctTip: 'wingtip', ctStall: 'stall', ctLoop: 'loop', ctN: 'load factor', ctEnd: 'contact',
+    w_py: 'Python run, same case', w_py_tip: 'The Python run (--wave-loop-exp, 10 minutes) of the same aircraft, sea, wind and wave wind: average power (all / after entry), motor share, median height, and whether it counted. "n/a" where the experiment has no such case.',
+    wPy: (p, pa, s, h, c) => p + ' / ' + pa + ' W, motor ' + s + ' %, height ' + h + ' m, ' + (c ? 'counted' : 'not counted'),
+    over: (a, b) => a + ' / ' + b
   }
 };
 let LANG = 'ja';
@@ -430,7 +523,9 @@ const SCEN = !!F.frames;
 $('what').dataset.i = SCEN ? 'what' : 'whatNoScen';
 $('sec1s').dataset.t = SCEN ? 'sec1TipScen' : 'sec1TipNoScen';
 const C = F.constants;
-const STOKES = !!(F.meta && F.meta.stokes);
+const STOKES_FIELD = !!(F.meta && F.meta.stokes);
+let STOKES = STOKES_FIELD;   // the swell mode always uses the second-order surface
+let WW = null;               // the wave wind of a preset in the swell mode {au, aw, du, dw}, else null
 const ROUGH = (F.meta && F.meta.roughness) || 'charnock';
 const SEA = 240, HALF = SEA / 2, MAXC = 128, MAXM = 2 * MAXC;   // merged components: two frames
 const W = Object.assign({}, FR[0].wind);        // current (blended) wind
@@ -441,8 +536,9 @@ let warnNear = false;
 dyn.push(() => {
   $('meta').textContent = tx('meta', F.meta.generated, SCEN ? F.meta.scenario : '', FR.length, nMax);
   $('warn').textContent = [warnMany ? tx('warnMany', nMax, MAXC) : '', warnNear ? tx('warnNearest') : ''].filter(Boolean).join(' ');
-  $('rough').textContent = tx('rough', ROUGH, STOKES);
+  renderRough();
 });
+function renderRough() { $('rough').textContent = tx('rough', ENV.mode === 'swell' ? 'coare35' : ROUGH, STOKES); }
 
 // ---------------------------------------------------------------- merged component set
 // CO holds the components of the two neighbouring frames, amplitudes already weighted
@@ -547,6 +643,12 @@ function windAt(h, o, gx, gy, gt) {
   let u = sp * W.ex, v = sp * W.ey, w = 0;
   for (let i = 0; i < N; i++) {
     const k = CO.k[i];
+    if (WW) {   // the swell mode's wave wind (sim.wavelib.swell_env): its own decay and amplitude per axis
+      const base = CO.urel[i] * CO.a[i] * k, kz = k * h;
+      const fu = base * Math.exp(-WW.du * kz) * WW.au, fw = base * Math.exp(-WW.dw * kz) * WW.aw;
+      u += fu * cosT[i] * CO.dx[i]; v += fu * cosT[i] * CO.dy[i]; w -= fw * sinT[i];
+      continue;
+    }
     const f = CO.urel[i] * CO.a[i] * k * Math.exp(-k * h);
     const up = f * cosT[i];
     u += up * CO.dx[i]; v += up * CO.dy[i];
@@ -778,8 +880,13 @@ const AIRCRAFT = window.AIRCRAFT || null;
 const FDT = 0.01, FMAX_STEPS = 20, TRAIL_DT = 0.1, TRAIL_N = 600;   // 60 s of trail
 const fwv = { u: 0, v: 0, w: 0 };
 // the viewer's own wind and surface, as the mast uses them (scenario blend, second-order surface)
-const fSurface = (x, y, t) => surface(x, y, t).eta;
+// In the swell mode the aircraft flies the planner's own world (wave.js swellSea through mpc.js SeaWorld, the oracle
+// sea of sim.wavelib.swell_env); the drawn sea, the mast and the particles use the same formulas above.
+const SWL = { spec: null, world: null, rel: 0, loading: {} };
+const fv3 = [0, 0, 0];
+const fSurface = (x, y, t) => (SWL.world ? SWL.world.eta(x, y, t) : surface(x, y, t).eta);
 const fWind = (x, y, z, t) => {
+  if (SWL.world) { SWL.world.windAt(x, y, z, t, fv3); return [fv3[0], fv3[1], fv3[2]]; }
   const e = surface(x, y, t).eta;
   windAt(z - e, fwv, x, y, t);   // the aircraft flies in the full field: mean, slow change, gusts, waves
   return [fwv.u, fwv.v, fwv.w];
@@ -787,7 +894,7 @@ const fWind = (x, y, z, t) => {
 Object.defineProperty(fWind, 'z0', { get: () => W.z0 });
 const FL = { on: false, started: false, s: null, ac: null, cl: 0, mu: 0, acc: 0, el: 0,
   trail: [], splash: null, pt: null, act: null, end: null,
-  motor: false, T: 0, eJ: 0, nOn: 0, nStep: 0, tMax: 0, eta: 1, foldDcd: 0 };
+  motor: false, T: 0, eJ: 0, nOn: 0, nStep: 0, tMax: 0, eta: 1, foldDcd: 0, wave: null, acm: null };
 
 // ---------------------------------------------------------------- MPC (planner in a Web Worker)
 // The planner (mpc.js) runs in a worker made from a Blob URL of its own source text, which also
@@ -825,13 +932,14 @@ function mpcOnMessage(e) {
   MP.plan = { t0: m.t0, knotsT: m.knotsT, cl: m.cl, mu: m.mu, th: m.th, dt: m.dt };
   MP.last = m.ms; MP.sum += m.ms; MP.n++;
   MP.info = m.info;
+  if (FL.wave) waveEntryCheck(m.info);
   for (let i = 0; i < PLAN_PTS; i++) planPos.set([m.path[6 * i], m.path[6 * i + 2], -m.path[6 * i + 1]], 3 * i);
   planGeo.attributes.position.needsUpdate = true;
 }
 function mpcEnsureWorker() {
   if (MP.worker) return true;
   try {
-    const url = URL.createObjectURL(new Blob([MPC.workerSource()], { type: 'text/javascript' }));
+    const url = URL.createObjectURL(new Blob([window.WAVE ? WAVE.workerSource() : MPC.workerSource()], { type: 'text/javascript' }));
     const w = new Worker(url);
     w.onmessage = mpcOnMessage;
     w.onerror = (ev) => { const msg = ev.message || 'error'; flSplashFn = () => tx('mpcErr', msg); renderFl(); };
@@ -846,6 +954,13 @@ function mpcEnsureWorker() {
 function mpcRequest(t) {
   if (MP.busy) { if (MP.plan) MP.late++; return; }
   const a = FL.act, kind = $('flWorld').value;
+  if (FL.wave) {   // swell mode: the oracle sea (the planner flies the true swell), the course along the swell's travel
+    MP.busy = true;
+    MP.worker.postMessage({ type: 'plan', id: MP.flight, req: { t: t, s: FL.s.slice(),
+      act: a.cl === null ? null : { cl: a.cl, mu: a.mu, clCmd: a.cmdLast[0], muCmd: a.cmdLast[1], T: a.T },
+      world: SWL.spec, u10: W.u10, chi: SWL.rel * (Math.PI / 180) } });
+    return;
+  }
   const req = { t: t, s: FL.s.slice(),
     act: a.cl === null ? null : { cl: a.cl, mu: a.mu, clCmd: a.cmdLast[0], muCmd: a.cmdLast[1], T: a.T },
     world: { kind: kind, wind: { ustar: W.ustar, z0: W.z0, ex: W.ex, ey: W.ey, karman: C.karman },
@@ -1076,6 +1191,7 @@ if (!AIRCRAFT || !Object.keys(AIRCRAFT).length) {
     && (!HAVE_MPC || (libFor(n, true) || []).length || (libFor(n, false) || []).length));
   $('flAc').innerHTML = names.map((n) => '<option>' + n + '</option>').join('');
   const showAc = () => {
+    if (ENV.mode === 'swell') { flNoteFn = () => ''; renderFl(); preloadSea(); return; }
     const es = HAVE_MPC ? libFor($('flAc').value, $('flMotor').value === 'on') : null;
     const ks = es ? [...new Set(es.map((x) => x.u10))].sort((a, b) => a - b) : [];
     flNoteFn = () => !HAVE_MPC ? tx('libMissing') : es && es.length ? tx('mpcLibAt', ks.join(', ')) : tx('mpcNoLib'); renderFl();
@@ -1120,6 +1236,8 @@ $('tgtSet').addEventListener('click', () => {   // by distance and direction fro
 syncTgt();
 function launch() {
   if (!AIRCRAFT) return;
+  if (ENV.mode === 'swell') { launchSwell(); return; }
+  FL.wave = null;
   if ($('flPos').value === 'click' && !FL.pt) { flNoteFn = () => tx('needClick'); renderFl(); return; }
   const name = $('flAc').value, ac = AIRCRAFT[name];
   if (!HAVE_MPC) { flNoteFn = () => tx('libMissing'); renderFl(); return; }
@@ -1240,6 +1358,7 @@ function flightAdvance(dtWanted, t0) {
         if (rxOn) FL.rx.eJ += FL.T * V * FDT / FL.eta;
         if (FL.T > 0.01 * ac.mass * Flight.G) FL.nOn++;
         FL.cl = MPC.nLimitedCl(ac, V, a[0]); FL.mu = a[1];
+        if (FL.wave) waveStep(t);   // the statistics of the Python runs, at the state before the step
         FL.s = Flight.rk4(FL.s, a[0], a[1], ac, fWind, t, FDT, true, FL.T, MPC.foldEffective(ac, FL.foldDcd, FL.T, tc));   // folded on the commanded state
       } else {
         a = FL.act.step(cmd, Math.min(Math.max(pc[1], -ac.mu_max), ac.mu_max), FDT, V);
@@ -1296,15 +1415,16 @@ function updateFlightView() {
   setFl('e', (m.energy * Flight.G).toFixed(0) + ' J/kg');
   setFl('n', m.loadFactor.toFixed(2));
   setFl('ph', MP.info ? (MP.info.tau0 / MP.info.period).toFixed(2) : '-');
-  setFl('u', MP.info ? MP.info.u10 + ' / ' + W.u10.toFixed(1) + ' m/s' : '-'); setFl('ref', tx('refMpc'));
+  setFl('u', MP.info ? (FL.wave ? (MP.info.u10Lib === null ? '-' : MP.info.u10Lib) : MP.info.u10) + ' / ' + W.u10.toFixed(1) + ' m/s' : '-'); setFl('ref', tx('refMpc'));
   setFl('ms', MP.n ? tx('mpcMs', MP.last.toFixed(1), (MP.sum / MP.n).toFixed(1)) : '-');
   setFl('late', String(MP.late));
-  setFl('sel', MP.info ? tx('mpcSel', MP.info.u10, MP.info.chiDeg, MP.info.marginSet) : '-');
+  setFl('sel', MP.info && !FL.wave ? tx('mpcSel', MP.info.u10, MP.info.chiDeg, MP.info.marginSet) : '-');
   setFl('end', FL.end ? tx('end' + FL.end) : '-');
   setFl('pw', FL.motor && FL.el > 0 ? (FL.eJ / FL.el).toFixed(1) + ' W' : '-');
   setFl('on', FL.motor && FL.nStep ? (100 * FL.nOn / FL.nStep).toFixed(0) + ' %' : '-');
   setFl('wh', FL.motor ? (FL.eJ / 3600).toFixed(3) + ' Wh' : '-');
   setFl('rf', FL.reflex ? FL.rx.n + ' / ' + FL.rx.eJ.toFixed(1) + ' J' : '-');
+  if (FL.wave) renderWave();
   if (NV.cmd && NV.target && FL.started && NV.on) {
     const dnow = Math.hypot(NV.target.x - s[0], NV.target.y - s[1]);
     setFl('tgt', dnow.toFixed(0) + ' m');
@@ -1513,6 +1633,7 @@ function setComponents(c) {
 // moves the sea smoothly. The flight and the planner read CO and W, so they use the new sea at once
 // and the planner's next plan sees it.
 function rebuildSea() {
+  if (ENV.mode === 'swell') { rebuildSwell(); return; }
   const sw = $('swOn').checked ? { hs: +$('swHs').value, tp: +$('swTp').value, fromDeg: +$('swFrom').value } : null;
   const set = { u10: +u10El.value, fromDeg: +fromEl.value, hours: EnvSea.AGE_HOURS[+ageEl.value], swell: sw,
     seed: (F.meta && F.meta.seed) || 1 };
@@ -1540,11 +1661,17 @@ function startVarying() {
   envUpdate(T);
 }
 function applyEnvMode(init) {
-  const prev = ENV.mode, m = modeEl.value, scen = m === 'scenario';
+  const prev = ENV.mode, m = modeEl.value, scen = m === 'scenario', swell = m === 'swell';
   ENV.mode = m; ENV.gust = null; ENV.slow = null; W.adv = undefined;
   $('scen').style.display = scen && SCEN ? '' : 'none';
   $('windCtl').style.display = scen && SCEN ? 'none' : '';   // the scenario sets the wind
-  $('freeCtl').style.display = scen ? 'none' : '';
+  $('freeCtl').style.display = scen || swell ? 'none' : '';
+  $('swellCtl').style.display = swell ? '' : 'none';
+  // the swell mode's wind: 0 to 12 m/s in whole m/s (the pilot's nearest library wind then has no ties)
+  if (swell) { u10El.min = 0; u10El.max = 12; u10El.step = 1; } else { u10El.min = 2; u10El.max = 25; u10El.step = 0.5; }
+  if (!swell) { SWL.world = null; SWL.spec = null; WW = null; STOKES = STOKES_FIELD; seaMat.uniforms.uStokes.value = STOKES ? 1 : 0; }
+  syncSwellFlightCtl();
+  renderRough();
   $('timeNote').style.display = scen ? '' : 'none';   // it explains the storm hour
   $('varCtl').style.display = m === 'varying' ? '' : 'none';
   u10El.disabled = fromEl.disabled = scen && SCEN;
@@ -1554,6 +1681,9 @@ function applyEnvMode(init) {
   if (scen) {
     seaMat.uniforms.uRange.value = Math.max(1, hsTot);
     if (SCEN) { setHour(hourNow); syncHour(); updateScRo(); } else { setHour(0); setWind(+u10El.value, +fromEl.value); }
+  } else if (swell) {
+    if (prev === 'scenario') { u10El.value = Math.min(12, Math.round(W.u10)); fromEl.value = Math.round(W.from_deg) % 360; }
+    rebuildSwell(); preloadSea();
   } else {
     if (prev === 'scenario') { u10El.value = Math.min(25, Math.max(2, W.u10)); fromEl.value = Math.round(W.from_deg) % 360; }
     rebuildSea();
@@ -1614,6 +1744,224 @@ function drawStrip() {
   g.fillStyle = CS.s1; g.fillText(tx('stripMean'), ml, 7);
   g.fillStyle = CS.s2; g.fillText(tx('stripAct'), ml + g.measureText(tx('stripMean')).width + 12, 7);
 }
+// ---------------------------------------------------------------- swell mode (a regular swell and the wave library)
+// The sea of sim.wavelib.swell_env (wave.js swellSea): one regular long-crested component of height Hs and period Tp,
+// travelling along, across or against the wind, the second-order surface, the COARE 3.5 log wind and the wave wind of
+// the preset. A flight flies the wave library (wave/index.js and the file of the sea and aircraft, loaded on demand)
+// under the WaveController of wave.js in the worker, under the conditions of python -m sim.mpc --wave-loop-exp.
+const WIX = window.WAVE_INDEX || null;
+const HAVE_WAVE = !!(WIX && window.WAVE && window.MPC && window.NAV);
+if (!HAVE_WAVE) { const o = modeEl.querySelector('option[value=swell]'); o.disabled = true; o.title = tx('swlNoLib'); }
+function swellSet() {
+  return { u10: +u10El.value, fromDeg: +fromEl.value, hs: +$('swlHs').value, tp: +$('swlTp').value,
+    direction: $('swlDir').value, preset: $('swlPre').value };
+}
+function rebuildSwell() {
+  if (!HAVE_WAVE) return;
+  const sp = WAVE.swellSea(swellSet(), WIX), w = sp.wind;
+  W.u10 = w.u10; W.from_deg = w.from_deg; W.to_deg = w.to_deg; W.ex = w.ex; W.ey = w.ey; W.ustar = w.ustar; W.z0 = w.z0;
+  ENV.u0 = W.u10; ENV.us0 = W.ustar; ENV.U = W.u10; ENV.du = 0; ENV.trains = []; ENV.samples = [];
+  setComponents(sp.comps);
+  STOKES = true; seaMat.uniforms.uStokes.value = 1.0;
+  WW = { au: sp.waveWind.amp[0], aw: sp.waveWind.amp[1], du: sp.waveWind.decay[0], dw: sp.waveWind.decay[1] };
+  seaMat.uniforms.uRange.value = Math.max(1, sp.swell.hs);
+  SWL.spec = sp; SWL.world = MPC.makeWorld(sp); SWL.rel = sp.swell.relDeg;
+  renderRough(); updateSwellRo();
+}
+// load the file of one sea and aircraft by a script tag (works from file://); done(ok)
+function loadSeaFile(key, done) {
+  if (window.WAVE_SEAS && window.WAVE_SEAS[key]) { done(true); return; }
+  const info = WIX.seas[key];
+  if (!info) { done(false); return; }
+  if (SWL.loading[key]) { SWL.loading[key].push(done); return; }
+  SWL.loading[key] = [done];
+  const el = document.createElement('script');
+  const fin = () => { const cbs = SWL.loading[key] || []; delete SWL.loading[key]; for (const f of cbs) f(!!(window.WAVE_SEAS && window.WAVE_SEAS[key])); };
+  el.onload = fin; el.onerror = fin;
+  el.src = 'wave/' + info.file + '?' + info.sha;
+  document.head.appendChild(el);
+}
+function preloadSea() {
+  if (ENV.mode !== 'swell' || !HAVE_WAVE) return;
+  const st = swellSet();
+  loadSeaFile(WAVE.fileKey(st.preset, st.hs, st.tp, $('flAc').value), () => updateSwellRo());
+}
+const swRows = ['wave', 'wind', 'lib', 'file'];
+$('swro').innerHTML = swRows.map((r) => '<tr><td data-i="sr_' + r + '"></td><td id="swr_' + r + '"></td></tr>').join('');
+function updateSwellRo() {
+  if (!SWL.spec) return;
+  const sw = SWL.spec.swell, L = Flight.G * sw.tp * sw.tp / (2 * Math.PI), c = Flight.G * sw.tp / (2 * Math.PI);
+  $('swr_wave').textContent = tx('srWave', L.toFixed(0), c.toFixed(1));
+  $('swr_wind').textContent = W.ustar.toFixed(3) + ' m/s / ' + W.z0.toExponential(2) + ' m';
+  let u = WIX.grid.u10_flown[0];
+  for (const v of WIX.grid.u10_flown) if (Math.abs(v - W.u10) < Math.abs(u - W.u10)) u = v;
+  $('swr_lib').textContent = u + ' m/s';
+  const key = WAVE.fileKey(sw.preset, sw.hs, sw.tp, $('flAc').value), info = WIX.seas[key];
+  $('swr_file').textContent = !info ? '-' : (window.WAVE_SEAS && window.WAVE_SEAS[key]) ? tx('srFile', info.entries, info.optimizer) : tx('srNotLoaded');
+}
+dyn.push(updateSwellRo);
+for (const id of ['swlHs', 'swlTp', 'swlDir', 'swlPre']) $(id).addEventListener('change', () => { scheduleRebuild(); preloadSea(); });
+$('flAc').addEventListener('change', () => { if (ENV.mode === 'swell') { preloadSea(); updateSwellRo(); } });
+// the flight settings of the Python wave runs: motor on at the normal weight, no reflex, the oracle sea, along the swell
+function syncSwellFlightCtl() {
+  const sw = ENV.mode === 'swell', noAc = !AIRCRAFT || !Object.keys(AIRCRAFT).length;
+  if (sw) {
+    $('flMotor').value = 'on'; $('flPw').value = 'normal'; $('flReflex').checked = false; $('flWorld').value = 'truth';
+    $('flTgt').value = 'none'; NV.place = 'launch';
+  }
+  for (const id of ['flMotor', 'flWorld', 'flHead', 'flTgt']) $(id).disabled = sw || noAc;
+  if (HAVE_WAVE) for (const o of $('flAc').options) o.disabled = sw && !WIX.grid.aircraft.includes(o.value);
+  if (sw && HAVE_WAVE && !WIX.grid.aircraft.includes($('flAc').value)) $('flAc').value = WIX.grid.aircraft[0];
+  syncCtl();
+  if (sw) { $('flPw').disabled = true; $('flReflex').disabled = true; }
+  syncTgt();
+  $('swlFixed').style.display = sw ? '' : 'none';
+  $('wvHead').style.display = sw ? '' : 'none'; $('wvro').style.display = sw ? '' : 'none';
+}
+function launchSwell() {
+  if (!HAVE_WAVE || !SWL.spec) { flNoteFn = () => tx('swlNoLib'); renderFl(); return; }
+  if ($('flPos').value === 'click' && !FL.pt) { flNoteFn = () => tx('needClick'); renderFl(); return; }
+  const name = $('flAc').value, ac = AIRCRAFT[name];
+  if (!WIX.grid.aircraft.includes(name)) { flNoteFn = () => tx('swlAc'); renderFl(); return; }
+  const sw = SWL.spec.swell, key = WAVE.fileKey(sw.preset, sw.hs, sw.tp, name);
+  if (!(window.WAVE_SEAS && window.WAVE_SEAS[key])) {
+    flNoteFn = () => tx('swlLoading'); renderFl();
+    loadSeaFile(key, (ok) => { if (ok) { flNoteFn = () => ''; launchSwell(); } else { flNoteFn = () => tx('swlLoadFail', key); renderFl(); } });
+    return;
+  }
+  if (!mpcEnsureWorker()) return;
+  const acm = MPC.makeAircraft(Object.assign({ name: name }, ac)), A = WIX.actuators;
+  const start = WAVE.flatStartEntry(NAV, acm, W.u10, SWL.rel);   // the navigation's steady leg along the swell's travel
+  const p = launchPoint(), psiW = Math.atan2(W.ey, W.ex);
+  NV.on = false; NV.cmd = null; NV.tacks = 0; NV.hist = []; NV.trackN = 0; NV.tackN = 0;
+  trackGeo.setDrawRange(0, 0); tackGeo.setDrawRange(0, 0);
+  FL.ac = ac; FL.acm = acm; FL.end = null; FL.motor = true; FL.reflex = false; FL.rx = { on: false, n: 0, eJ: 0 }; FL.rf = null;
+  FL.T = 0; FL.eJ = 0; FL.nOn = 0; FL.nStep = 0; MP.rworld = null;
+  FL.tMax = MPC.MOTOR.thrustMaxPerWeight * ac.mass * Flight.G; FL.eta = MPC.MOTOR.propEff * MPC.MOTOR.motorEff;
+  FL.foldDcd = MPC.MOTOR.foldedCdaM2 / ac.wing_area;
+  MP.flight++; MP.busy = false; MP.plan = null; MP.last = 0; MP.sum = 0; MP.n = 0; MP.late = 0; MP.info = null;
+  FL.act = new MPC.Actuators(ac, { rateModel: A.rate_model, tau: A.tau_s, clRate: A.cl_rate_per_s, kPb2v: A.k_pb2v,
+    delay: A.delay_s, thrustTau: A.thrust_tau_s });
+  MP.worker.postMessage({ type: 'init', wave: true, ac: Object.assign({ name: name }, ac),
+    entries: window.WAVE_SEAS[key].map(WAVE.expandEntry), settings: WIX.planner, actuators: A, preset: sw.preset,
+    flat: WIX.flat[name], startEntry: start });
+  FL.wave = waveStats();
+  FL.wave.set = { name: name, hs: sw.hs, tp: sw.tp, dir: $('swlDir').value, preset: sw.preset, u10: +u10El.value };
+  // the highest node of the start leg (all nodes are equal): as sim.mpc.fly_mpc starts
+  FL.s = [p.x, p.y, fSurface(p.x, p.y, T) + start.z[0], start.V[0], start.gamma[0], psiW + start.psi[0]];
+  FL.cl = 0; FL.mu = 0; FL.acc = 0; FL.el = 0; FL.trail = []; FL.splash = null; FL.started = true; FL.on = true;
+  splashMark.visible = false; splashLbl.style.display = 'none'; flSplashFn = () => ''; flNoteFn = () => ''; renderFl();
+  buildShape(ac);
+  flightMesh.visible = true;
+}
+// per-step statistics of a swell flight, as sim.wavelib.run_wave_job and sim.mpc.flight_margins report them: the
+// electric energy and the motor share (sim.mpc.burst_stats), the heights above the surface (median from 1 cm bins),
+// the wingtip, the airspeed against the stall speed, loops, the load factor flown, and from the first change onto a
+// wave entry on the same with the share on the forward face (phase 0 to pi, median from 0.01 rad bins)
+const HB = 4200, HB0 = -1.0, HBW = 0.01, PB = 630, PBW = 0.01;
+function waveStats() {
+  return { n: 0, eJ: 0, nOn: 0, hMin: Infinity, hMax: -Infinity, hist: new Uint32Array(HB), tipMin: Infinity,
+    vMin: Infinity, nStall: 0, nLoop: 0, nMax: 0, tEntry: null, nA: 0, eA: 0, nOnA: 0, histA: new Uint32Array(HB),
+    phA: new Uint32Array(PB), nFwdA: 0, ring: [], tLast: 0 };
+}
+const hBin = (h) => Math.min(HB - 1, Math.max(0, Math.floor((h - HB0) / HBW)));
+function histMedian(hist, n, x0, w) {
+  if (!n) return NaN;
+  let c = 0;
+  for (let i = 0; i < hist.length; i++) { c += hist[i]; if (2 * c >= n) return x0 + (i + 0.5) * w; }
+  return NaN;
+}
+function waveAfter(S, r) {   // r: [t, energy J, motor on, height, phase]
+  S.nA++; S.eA += r[1]; S.nOnA += r[2]; S.histA[hBin(r[3])]++;
+  S.phA[Math.min(PB - 1, Math.floor(r[4] / PBW))]++;
+  if (r[4] < Math.PI) S.nFwdA++;
+}
+function waveStep(t) {
+  const S = FL.wave, s = FL.s, ac = FL.acm, G = Flight.G;
+  const h = s[2] - SWL.world.eta(s[0], s[1], t);
+  const tip = h - 0.5 * ac.span * Math.sin(Math.abs(FL.mu)) * Math.cos(s[4]);
+  const e = FL.T * s[3] * FDT / FL.eta, on = FL.T > WIX.margins.motor_on_frac * ac.mass * G ? 1 : 0;
+  const nf = 0.5 * ac.rho * s[3] * s[3] * ac.wing_area * FL.cl / (ac.mass * G);
+  const th = WAVE.phaseAt(SWL.world, s[0], s[1], t);
+  S.n++; S.eJ += e; S.nOn += on; S.hMin = Math.min(S.hMin, h); S.hMax = Math.max(S.hMax, h); S.hist[hBin(h)]++;
+  S.tipMin = Math.min(S.tipMin, tip); S.vMin = Math.min(S.vMin, s[3]);
+  if (s[3] < ac.v_stall) S.nStall++;
+  if (Math.cos(s[4]) <= 0) S.nLoop++;
+  S.nMax = Math.max(S.nMax, nf); S.tLast = t;
+  const r = [t, e, on, h, th];
+  if (S.tEntry !== null) waveAfter(S, r);
+  else { S.ring.push(r); if (S.ring.length > 3000) S.ring.shift(); }   // kept until the plan that enters arrives
+}
+// the first change onto a wave entry (the time of the plan that made it): the steps from then on count as after
+function waveEntryCheck(info) {
+  const S = FL.wave;
+  if (!S || S.tEntry !== null || !info || info.tEntry === null || info.tEntry === undefined) return;
+  S.tEntry = info.tEntry;
+  for (const r of S.ring) if (r[0] >= S.tEntry - 1e-9) waveAfter(S, r);
+  S.ring = [];
+}
+function waveSummary() {
+  const S = FL.wave, M = WIX.margins, ac = FL.acm, dt = FDT;
+  const after = S.tEntry !== null && S.tLast > S.tEntry + 1.0 && S.nA > 0;
+  const fails = [];
+  if (FL.end === 'C' || FL.end === 'T' || FL.end === 'N') fails.push('ctEnd');
+  if (S.n && (S.hMin < M.band_m[0] || S.hMax > M.band_m[1])) fails.push('ctBand');
+  if (S.n && S.tipMin < M.tip_m) fails.push('ctTip');
+  if (S.nStall) fails.push('ctStall');
+  if (S.nLoop) fails.push('ctLoop');
+  if (S.nMax > ac.n_max) fails.push('ctN');
+  return { el: FL.el, ended: FL.end, steps: S.n, powerW: S.n ? S.eJ / (S.n * dt) : NaN,
+    powerAfterW: after ? S.eA / (S.nA * dt) : NaN, motorShare: S.n ? S.nOn / S.n : NaN,
+    motorShareAfter: after ? S.nOnA / S.nA : NaN, hMedian: histMedian(S.hist, S.n, HB0, HBW),
+    hMedianAfter: after ? histMedian(S.histA, S.nA, HB0, HBW) : NaN, hMin: S.hMin, hMax: S.hMax, tipMin: S.tipMin,
+    stallS: S.nStall * dt, loopS: S.nLoop * dt, vMin: S.vMin, nMax: S.nMax, tEntry: S.tEntry,
+    fwdAfter: after ? S.nFwdA / S.nA : NaN, phaseMedianAfter: after ? histMedian(S.phA, S.nA, 0, PBW) : NaN,
+    counts: fails.length === 0, fails: fails, info: MP.info, plans: MP.n, late: MP.late,
+    planMsMean: MP.n ? MP.sum / MP.n : NaN, set: S.set };
+}
+// a read-only hook for scripted checks (the headless browser check): the swell flight's statistics; before a flight
+// the sea time and the wave phase at the launch point (so that a check can launch at the phase a Python run starts at)
+window.viewerWaveStats = () => {
+  if (FL.wave) return waveSummary();
+  const p = launchPoint();
+  return { flying: false, t: T, phase: SWL.world ? WAVE.phaseAt(SWL.world, p.x, p.y, T) : null };
+};
+function pythonRun(st) {
+  if (!st) return null;
+  const d = st.u10 === 0 ? 'along' : st.dir;   // the calm run stands for every direction
+  return (WIX.runs || []).find((r) => r.aircraft === st.name && r.hs === st.hs && r.tp === st.tp && r.direction === d
+    && r.u10 === st.u10 && r.preset === st.preset) || null;
+}
+const wvRows = ['ref', 'ent', 'sel', 'ph', 'pw', 'on', 'hm', 'fw', 'bd', 'tp', 'st', 'nm', 'ct', 'py'];
+$('wvro').innerHTML = wvRows.map((r) => '<tr><td data-i="w_' + r + '" data-t="w_' + r + '_tip"></td><td id="wv_' + r + '"></td></tr>').join('');
+const fx = (v, d) => (v === null || v === undefined || !isFinite(v) ? '-' : v.toFixed(d));
+const pct = (v) => (isFinite(v) ? (100 * v).toFixed(1) + ' %' : '-');
+function renderWave() {
+  const f = MP.info, q = waveSummary(), M = WIX.margins, setW = (k, v) => { $('wv_' + k).textContent = v; };
+  const dirName = { along: 'dAlong', across: 'dAcross', against: 'dAgainst' };
+  if (f && f.ref) {
+    setW('ref', tx(f.ref === 'start' ? 'rfStart' : f.ref === 'crest' ? 'rfCrest' : 'rfCycle')
+      + (f.waiting ? tx('rfWait', f.waitS.toFixed(1)) : '') + (f.refused ? tx('rfRefused') : ''));
+    setW('ent', f.ref === 'start' ? '-' : tx('wEnt', fx(f.courseRelDeg, 1), f.vc === null ? null : fx(f.vc, 1),
+      f.rideH === null ? null : fx(f.rideH, 1), fx(f.powerW, 1)));
+    setW('sel', f.hsLib === null ? '-' : tx('wSel', f.hsLib, f.tpLib, tx(dirName[f.dirLib] || 'na'), f.u10Lib));
+  } else for (const k of ['ref', 'ent', 'sel']) setW(k, '-');
+  const th = WAVE.phaseAt(SWL.world, FL.s[0], FL.s[1], T);
+  setW('ph', th === null ? '-' : tx('wPh', fx(th, 2), tx(th < Math.PI ? 'front' : 'back'),
+    f && f.ref && f.ref !== 'start' && f.thetaErr !== null ? fx(f.thetaErr, 2) : null));
+  setW('pw', tx('over', fx(q.powerW, 2), fx(q.powerAfterW, 2)) + ' W');
+  setW('on', tx('over', pct(q.motorShare), pct(q.motorShareAfter)));
+  setW('hm', tx('over', fx(q.hMedian, 2), fx(q.hMedianAfter, 2)) + ' m');
+  setW('fw', isFinite(q.fwdAfter) ? pct(q.fwdAfter) + ', ' + fx(q.phaseMedianAfter, 2) + ' rad' : '-');
+  setW('bd', tx('over', fx(q.hMin, 2), fx(q.hMax, 2)) + ' m [' + M.band_m[0] + ', ' + M.band_m[1] + ']');
+  setW('tp', fx(q.tipMin, 2) + ' m');
+  setW('st', tx('wSt', fx(q.stallS, 2), fx(q.vMin, 1), fx(q.loopS, 2)));
+  setW('nm', fx(q.nMax, 2) + ' / ' + FL.acm.n_max);
+  setW('ct', q.counts ? tx('ctYes') : tx('ctNo', q.fails.map((k) => tx(k)).join(', ')));
+  const r = pythonRun(q.set);
+  setW('py', r ? tx('wPy', fx(r.power_w, 1), fx(r.power_after_w, 1), fx(100 * r.motor_share, 1),
+    fx(r.height_median_m, 1), r.counted) : tx('na'));
+}
 applyEnvMode(true);
 
 // ---------------------------------------------------------------- main loop
@@ -1670,6 +2018,10 @@ function loop(now) {
     spdEl.title = tx(lv ? 'lockVarTip' : 'spdTip');
     $('pause').title = $('pause').parentElement.title = tx(lv ? 'lockVarTip' : 'pauseTip');
     modeEl.disabled = FL.on; modeEl.title = tx(FL.on ? 'envLockTip' : 'envModeTip');
+    if (ENV.mode === 'swell') {   // the swell (and so the wave library) and the wind direction stay fixed in flight
+      for (const id of ['swlHs', 'swlTp', 'swlDir', 'swlPre']) { $(id).disabled = FL.on; $(id).title = tx(FL.on ? 'swlLockTip' : id + 'Tip'); }
+      fromEl.disabled = FL.on;
+    }
   }
   // the drawn sea follows the aircraft while it flies (display only; the flight model is analytic)
   {
