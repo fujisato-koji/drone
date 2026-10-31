@@ -22,6 +22,7 @@ Key names:
 import json
 import os
 
+from sim.reflex import reflex_summary
 from sim.wave_keys import PSHORT, SHORT, _num, nav_values
 
 HERE = os.path.dirname(__file__)
@@ -239,7 +240,7 @@ def leg_table(rows):
 
 
 REFLEX_FIELDS = (("cases", "1"), ("base_contacts", "1"), ("contacts", "1"), ("fired", "1"), ("rescues", "1"),
-                 ("false_firings", "1"), ("loops", "1"), ("gamma_max_deg", "deg"), ("v_min_over_stall", "1"),
+                 ("fired_no_contact", "1"), ("loops", "1"), ("gamma_max_deg", "deg"), ("v_min_over_stall", "1"),
                  ("touched", "1"), ("tip_depth_max_m", "m"))
 
 
@@ -349,7 +350,7 @@ def values_block(d):
     if "wave_leg_exp" in d:
         parts.append((leg_values(leg_rows(d)), SEC_WAVE, "wave."))
     if "reflex_exp" in d:
-        parts.append((reflex_values(d["reflex_exp"]["summary"]), SEC_REFLEX, "reflex."))
+        parts.append((reflex_values(reflex_summary(d["reflex_exp"]["results"])), SEC_REFLEX, "reflex."))
     for k0, kr in (("nav_exp", "nav_exp_reflex2"), ("nav_exp_10km", "nav_exp_10km_reflex2")):
         if kr in d:
             parts.append((reflex_nav_values(d[kr]["results"], d[k0]["results"], d[kr]["meta"]["distance_m"]),
@@ -394,7 +395,7 @@ def main():
     if "wave_leg_exp" in d:
         t = _replace(t, "pilot_leg_keys", leg_table(leg_rows(d)))
     if "reflex_exp" in d:
-        t = _replace(t, "pilot_reflex_keys", reflex_table(d["reflex_exp"]["summary"]))
+        t = _replace(t, "pilot_reflex_keys", reflex_table(reflex_summary(d["reflex_exp"]["results"])))
     if "wave_pilot_reflex_exp" in d:
         t = _replace(t, "pilot_reflex_loop_keys", reflex_loop_table(d["wave_pilot_reflex_exp"]["results"]))
     with open(DOC, "w", encoding="utf-8", newline="\n") as fh:

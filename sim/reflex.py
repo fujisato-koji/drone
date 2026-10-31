@@ -192,8 +192,9 @@ def run_reflex_case(case):
 
 
 def reflex_summary(rows):
-    """Counts per family and version: contacts, firings, rescues (a contact without a reflex avoided with it), false
-    firings (a firing in a case that does not end in contact without a reflex), loops and the deepest immersion."""
+    """Counts per family and version: contacts, firings, rescues (a contact without a reflex avoided with it), firings
+    in cases that do not end in contact without a reflex within the trial (fired_no_contact), loops and the deepest
+    immersion."""
     out = {}
     for fam in ("dive", "contact"):
         for w in ("truth", "flat"):
@@ -207,7 +208,7 @@ def reflex_summary(rows):
                 out[k] = {"cases": len(rs), "contacts": sum(x["ended"] != "complete" for x in res),
                           "fired": sum(x["firings"] > 0 for x in res),
                           "rescues": sum(base[id(r)] and r["results"][v]["ended"] == "complete" for r in rs),
-                          "false_firings": sum((not base[id(r)]) and r["results"][v]["firings"] > 0 for r in rs),
+                          "fired_no_contact": sum((not base[id(r)]) and r["results"][v]["firings"] > 0 for r in rs),
                           "base_contacts": sum(base.values()),
                           "loops": sum(x["loop_s"] > 0.0 for x in res),
                           "gamma_max_deg": float(max(x["gamma_max_deg"] for x in res)),
