@@ -1829,6 +1829,396 @@ items:
     status: calculated
     basis:
       - K-022
+  - key: sense.lidar_noise_m
+    v: 0.05
+    unit: m
+    status: sourced
+    basis:
+      - M14
+  - key: sense.lidar_rate_hz
+    v: 50
+    unit: Hz
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.lidar_latency_s
+    v: 0.065
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.lidar_nadir_return
+    v: 0.5
+    unit: 1
+    status: sourced
+    basis:
+      - P85
+  - key: sense.lidar_mass_g
+    v: 19.5
+    unit: g
+    status: sourced
+    basis:
+      - M14
+  - key: sense.lidar_power_w
+    v: 0.43
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: sense.mss_low_coef
+    v: 0.0146
+    unit: 1
+    status: sourced
+    basis:
+      - P135
+  - key: sense.mss_cm_a
+    v: 0.003
+    unit: 1
+    status: sourced
+    basis:
+      - P135
+  - key: sense.mss_cm_b
+    v: 0.00512
+    unit: s/m
+    status: sourced
+    basis:
+      - P135
+  - key: sense.radar_noise_m
+    v: 0.04
+    unit: m
+    status: sourced
+    basis:
+      - M11
+  - key: sense.radar_rate_hz
+    v: 82
+    unit: Hz
+    status: sourced
+    basis:
+      - M11
+  - key: sense.radar_latency_s
+    v: 0.05
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.radar_half_beam_deg
+    v: 15
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: sense.radar_mass_g
+    v: 110
+    unit: g
+    status: sourced
+    basis:
+      - M11
+  - key: sense.radar_power_w
+    v: 2
+    unit: W
+    status: sourced
+    basis:
+      - M11
+  - key: sense.tip_radar_noise_m
+    v: 0.014
+    unit: m
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.tip_radar_rate_hz
+    v: 50
+    unit: Hz
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.tip_radar_latency_s
+    v: 0.02
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.tip_radar_half_beam_deg
+    v: 26.5
+    unit: deg
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: sense.tip_radar_rmax_m
+    v: 20
+    unit: m
+    status: sourced
+    basis:
+      - M16
+  - key: sense.tip_radar_mass_g
+    v: 10
+    unit: g
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.tip_radar_power_w
+    v: 0.13
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: sense.fwd_rate_hz
+    v: 10
+    unit: Hz
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.fwd_noise_m
+    v: 0.1
+    unit: m
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.fwd_latency_s
+    v: 0.1
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.fwd_dropout
+    v: 0.3
+    unit: 1
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.fwd_mass_g
+    v: 50
+    unit: g
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.fwd_power_w
+    v: 1.5
+    unit: W
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.gnss_cep_m
+    v: 1.5
+    unit: m
+    status: sourced
+    basis:
+      - M20
+  - key: sense.gnss_vert_sigma_m
+    v: 2.5
+    unit: m
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.gnss_bias_tau_s
+    v: 300
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.gnss_height_white_m
+    v: 0.3
+    unit: m
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.gnss_horiz_white_m
+    v: 0.2
+    unit: m
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.gnss_vel_acc_ms
+    v: 0.05
+    unit: m/s
+    status: sourced
+    basis:
+      - M20
+  - key: sense.gnss_vh_sigma_ms
+    v: 0.074
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: sense.gnss_vz_sigma_ms
+    v: 0.1
+    unit: m/s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.gnss_vel_tau_s
+    v: 1.0
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.gnss_vel_tau_white_s
+    v: 0.1
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.gnss_rate_hz
+    v: 10
+    unit: Hz
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.gnss_power_w
+    v: 0.26
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: sense.gnss_mass_g
+    v: 40
+    unit: g
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.rtk_vert_sigma_m
+    v: 0.02
+    unit: m
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.rtk_bias_tau_s
+    v: 60
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.rtk_horiz_sigma_m
+    v: 0.015
+    unit: m
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.rtk_link_mass_g
+    v: 20
+    unit: g
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.rtk_link_power_w
+    v: 0.5
+    unit: W
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.clas_vert_cep_m
+    v: 0.08
+    unit: m
+    status: sourced
+    basis:
+      - M20
+  - key: sense.imu_accel_noise_ug
+    v: 70
+    unit: "ug/sqrt(Hz)"
+    status: sourced
+    basis:
+      - M21
+  - key: sense.imu_vbias_sigma_ms2
+    v: 0.05
+    unit: m/s2
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.imu_vbias_tau_s
+    v: 20
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.imu_mass_g
+    v: 5
+    unit: g
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.imu_power_w
+    v: 0.002
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: sense.baro_precision_m
+    v: 0.05
+    unit: m
+    status: sourced
+    basis:
+      - M22
+  - key: sense.baro_relative_m
+    v: 0.5
+    unit: m
+    status: sourced
+    basis:
+      - M22
+  - key: sense.baro_drift_tau_s
+    v: 1800
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.baro_static_sigma_m
+    v: 0.03
+    unit: m
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.baro_static_tau_s
+    v: 5
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.baro_mass_g
+    v: 1
+    unit: g
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.baro_power_w
+    v: 0.001
+    unit: W
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.att_sigma_deg
+    v: 0.5
+    unit: deg
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.att_tau_s
+    v: 10
+    unit: s
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.baro_rate_hz
+    v: 10
+    unit: Hz
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.rtk_vert_white_m
+    v: 0.01
+    unit: m
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.rtk_horiz_white_m
+    v: 0.005
+    unit: m
+    status: assumed
+    basis:
+      - Q-074
+  - key: sense.rtk_baseline_max_km
+    v: 20
+    unit: km
+    status: sourced
+    basis:
+      - M20
   # generated by python -m sim.nav_keys: begin
   - key: nav.run5_albatross_u13_upwind_arrival_s
     v: 588.0
@@ -21977,3 +22367,3989 @@ items:
     basis:
       - docs/02-form.md#receding-horizon
   # generated by python -m sim.pilot_keys: end
+  # generated by python -m sim.swellest_keys: begin
+  - key: est.set_lidar_mass_g
+    v: 64.5
+    unit: g
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_lidar_power_w
+    v: 0.69
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_mass_g
+    v: 155.0
+    unit: g
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_power_w
+    v: 2.26
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_mass_g
+    v: 175.0
+    unit: g
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_power_w
+    v: 2.52
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_baro_mass_g
+    v: 176.0
+    unit: g
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_baro_power_w
+    v: 2.52
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_rtk_mass_g
+    v: 196.0
+    unit: g
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_rtk_power_w
+    v: 3.02
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_lidar_rtk_mass_g
+    v: 85.5
+    unit: g
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_lidar_rtk_power_w
+    v: 1.19
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_fwd_baro_mass_g
+    v: 226.0
+    unit: g
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_fwd_baro_power_w
+    v: 4.02
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_vwhite_mass_g
+    v: 175.0
+    unit: g
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_vwhite_power_w
+    v: 2.52
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_fwd_rtk_mass_g
+    v: 246.0
+    unit: g
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_radar_tips_fwd_rtk_power_w
+    v: 4.52
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_tips_rtk_mass_g
+    v: 86.0
+    unit: g
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.set_tips_rtk_power_w
+    v: 1.02
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t60_phase_p90_mid
+    v: 0.336
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t60_phase_p90_worst
+    v: 0.936
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t60_height_p90_mid
+    v: 0.106
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t60_height_p90_worst
+    v: 0.208
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t120_phase_p90_mid
+    v: 1.161
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t120_phase_p90_worst
+    v: 2.769
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t120_height_p90_mid
+    v: 0.141
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t120_height_p90_worst
+    v: 0.763
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t300_phase_p90_mid
+    v: 2.433
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t300_phase_p90_worst
+    v: 3.066
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t300_height_p90_mid
+    v: 1.304
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_t300_height_p90_worst
+    v: 38.328
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_ready_share
+    v: 0.78
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t60_phase_p90_mid
+    v: 0.311
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t60_phase_p90_worst
+    v: 1.024
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t60_height_p90_mid
+    v: 0.073
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t60_height_p90_worst
+    v: 0.182
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t120_phase_p90_mid
+    v: 1.17
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t120_phase_p90_worst
+    v: 3.01
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t120_height_p90_mid
+    v: 0.11
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t120_height_p90_worst
+    v: 0.302
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t300_phase_p90_mid
+    v: 2.512
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t300_phase_p90_worst
+    v: 3.11
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t300_height_p90_mid
+    v: 0.987
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_t300_height_p90_worst
+    v: 27.382
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_ready_share
+    v: 0.74
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t60_phase_p90_mid
+    v: 0.307
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t60_phase_p90_worst
+    v: 1.01
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t60_height_p90_mid
+    v: 0.068
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t60_height_p90_worst
+    v: 0.164
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t120_phase_p90_mid
+    v: 1.045
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t120_phase_p90_worst
+    v: 3.072
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t120_height_p90_mid
+    v: 0.573
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t120_height_p90_worst
+    v: 0.805
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t300_phase_p90_mid
+    v: 2.172
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t300_phase_p90_worst
+    v: 3.093
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t300_height_p90_mid
+    v: 2.624
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_t300_height_p90_worst
+    v: 5.374
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_ready_share
+    v: 0.93
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t60_phase_p90_mid
+    v: 0.221
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t60_phase_p90_worst
+    v: 0.517
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t60_height_p90_mid
+    v: 0.795
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t60_height_p90_worst
+    v: 1.622
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t120_phase_p90_mid
+    v: 1.178
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t120_phase_p90_worst
+    v: 1.516
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t120_height_p90_mid
+    v: 0.343
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t120_height_p90_worst
+    v: 0.915
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t300_phase_p90_mid
+    v: 1.945
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t300_phase_p90_worst
+    v: 3.071
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t300_height_p90_mid
+    v: 0.991
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_t300_height_p90_worst
+    v: 2.211
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_baro_ready_share
+    v: 0.96
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t60_phase_p90_mid
+    v: 0.033
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t60_phase_p90_worst
+    v: 0.059
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t60_height_p90_mid
+    v: 0.023
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t60_height_p90_worst
+    v: 0.039
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t120_phase_p90_mid
+    v: 0.049
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t120_phase_p90_worst
+    v: 0.109
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t120_height_p90_mid
+    v: 0.096
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t120_height_p90_worst
+    v: 0.194
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t300_phase_p90_mid
+    v: 0.124
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t300_phase_p90_worst
+    v: 0.246
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t300_height_p90_mid
+    v: 0.227
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_t300_height_p90_worst
+    v: 0.463
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_rtk_ready_share
+    v: 1.0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t60_phase_p90_mid
+    v: 0.031
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t60_phase_p90_worst
+    v: 0.047
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t60_height_p90_mid
+    v: 0.03
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t60_height_p90_worst
+    v: 0.061
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t120_phase_p90_mid
+    v: 0.19
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t120_phase_p90_worst
+    v: 0.234
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t120_height_p90_mid
+    v: 0.436
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t120_height_p90_worst
+    v: 0.545
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t300_phase_p90_mid
+    v: 0.463
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t300_phase_p90_worst
+    v: 0.53
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t300_height_p90_mid
+    v: 2.836
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_t300_height_p90_worst
+    v: 3.593
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_lidar_rtk_ready_share
+    v: 1.0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t60_phase_p90_mid
+    v: 0.212
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t60_phase_p90_worst
+    v: 0.554
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t60_height_p90_mid
+    v: 0.45
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t60_height_p90_worst
+    v: 1.38
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t120_phase_p90_mid
+    v: 0.144
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t120_phase_p90_worst
+    v: 0.436
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t120_height_p90_mid
+    v: 0.062
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t120_height_p90_worst
+    v: 0.245
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t300_phase_p90_mid
+    v: 0.056
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t300_phase_p90_worst
+    v: 0.261
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t300_height_p90_mid
+    v: 0.034
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_t300_height_p90_worst
+    v: 0.131
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_baro_ready_share
+    v: 1.0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t60_phase_p90_mid
+    v: 0.149
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t60_phase_p90_worst
+    v: 0.604
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t60_height_p90_mid
+    v: 0.046
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t60_height_p90_worst
+    v: 0.109
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t120_phase_p90_mid
+    v: 0.739
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t120_phase_p90_worst
+    v: 1.746
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t120_height_p90_mid
+    v: 0.249
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t120_height_p90_worst
+    v: 0.416
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t300_phase_p90_mid
+    v: 1.687
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t300_phase_p90_worst
+    v: 2.908
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t300_height_p90_mid
+    v: 2.021
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_t300_height_p90_worst
+    v: 3.56
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_vwhite_ready_share
+    v: 0.98
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t60_phase_p90_mid
+    v: 0.023
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t60_phase_p90_worst
+    v: 0.036
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t60_height_p90_mid
+    v: 0.017
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t60_height_p90_worst
+    v: 0.028
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t120_phase_p90_mid
+    v: 0.025
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t120_phase_p90_worst
+    v: 0.038
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t120_height_p90_mid
+    v: 0.028
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t120_height_p90_worst
+    v: 0.046
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t300_phase_p90_mid
+    v: 0.04
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t300_phase_p90_worst
+    v: 0.056
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t300_height_p90_mid
+    v: 0.024
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_t300_height_p90_worst
+    v: 0.037
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_radar_tips_fwd_rtk_ready_share
+    v: 1.0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t60_phase_p90_mid
+    v: 0.035
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t60_phase_p90_worst
+    v: 0.049
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t60_height_p90_mid
+    v: 0.024
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t60_height_p90_worst
+    v: 0.044
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t120_phase_p90_mid
+    v: 0.068
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t120_phase_p90_worst
+    v: 0.116
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t120_height_p90_mid
+    v: 0.126
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t120_height_p90_worst
+    v: 0.215
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t300_phase_p90_mid
+    v: 0.126
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t300_phase_p90_worst
+    v: 0.231
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t300_height_p90_mid
+    v: 0.244
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_t300_height_p90_worst
+    v: 0.562
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.reg_tips_rtk_ready_share
+    v: 1.0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_along_t120_phase_p90
+    v: 0.012
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_along_t120_height_p90
+    v: 0.095
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_along_t300_phase_p90
+    v: 0.05
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_along_t300_height_p90
+    v: 0.141
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_across_t120_phase_p90
+    v: 0.045
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_across_t120_height_p90
+    v: 0.084
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_across_t300_phase_p90
+    v: 0.108
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_across_t300_height_p90
+    v: 0.177
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_against_t120_phase_p90
+    v: 0.044
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_against_t120_height_p90
+    v: 0.067
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_against_t300_phase_p90
+    v: 0.104
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp8_against_t300_height_p90
+    v: 0.192
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_along_t120_phase_p90
+    v: 0.047
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_along_t120_height_p90
+    v: 0.06
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_along_t300_phase_p90
+    v: 0.107
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_along_t300_height_p90
+    v: 0.183
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_across_t120_phase_p90
+    v: 0.044
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_across_t120_height_p90
+    v: 0.08
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_across_t300_phase_p90
+    v: 0.096
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_across_t300_height_p90
+    v: 0.146
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_against_t120_phase_p90
+    v: 0.046
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_against_t120_height_p90
+    v: 0.068
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_against_t300_phase_p90
+    v: 0.117
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp10_against_t300_height_p90
+    v: 0.195
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_along_t120_phase_p90
+    v: 0.051
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_along_t120_height_p90
+    v: 0.077
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_along_t300_phase_p90
+    v: 0.131
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_along_t300_height_p90
+    v: 0.198
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_across_t120_phase_p90
+    v: 0.069
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_across_t120_height_p90
+    v: 0.124
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_across_t300_phase_p90
+    v: 0.11
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_across_t300_height_p90
+    v: 0.157
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_against_t120_phase_p90
+    v: 0.033
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_against_t120_height_p90
+    v: 0.039
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_against_t300_phase_p90
+    v: 0.094
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs3_tp12_against_t300_height_p90
+    v: 0.145
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_along_t120_phase_p90
+    v: 0.016
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_along_t120_height_p90
+    v: 0.162
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_along_t300_phase_p90
+    v: 0.065
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_along_t300_height_p90
+    v: 0.257
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_across_t120_phase_p90
+    v: 0.07
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_across_t120_height_p90
+    v: 0.126
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_across_t300_phase_p90
+    v: 0.218
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_across_t300_height_p90
+    v: 0.454
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_against_t120_phase_p90
+    v: 0.072
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_against_t120_height_p90
+    v: 0.11
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_against_t300_phase_p90
+    v: 0.177
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp8_against_t300_height_p90
+    v: 0.367
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_along_t120_phase_p90
+    v: 0.073
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_along_t120_height_p90
+    v: 0.113
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_along_t300_phase_p90
+    v: 0.177
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_along_t300_height_p90
+    v: 0.349
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_across_t120_phase_p90
+    v: 0.071
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_across_t120_height_p90
+    v: 0.125
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_across_t300_phase_p90
+    v: 0.212
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_across_t300_height_p90
+    v: 0.416
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_against_t120_phase_p90
+    v: 0.062
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_against_t120_height_p90
+    v: 0.098
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_against_t300_phase_p90
+    v: 0.212
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp10_against_t300_height_p90
+    v: 0.426
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_along_t120_phase_p90
+    v: 0.104
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_along_t120_height_p90
+    v: 0.174
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_along_t300_phase_p90
+    v: 0.239
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_along_t300_height_p90
+    v: 0.447
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_across_t120_phase_p90
+    v: 0.109
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_across_t120_height_p90
+    v: 0.194
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_across_t300_phase_p90
+    v: 0.246
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_across_t300_height_p90
+    v: 0.463
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_against_t120_phase_p90
+    v: 0.046
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_against_t120_height_p90
+    v: 0.082
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_against_t300_phase_p90
+    v: 0.184
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_rtk_hs2_tp12_against_t300_height_p90
+    v: 0.369
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_along_t120_phase_p90
+    v: 0.036
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_along_t120_height_p90
+    v: 0.045
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_along_t300_phase_p90
+    v: 0.034
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_along_t300_height_p90
+    v: 0.028
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_across_t120_phase_p90
+    v: 0.045
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_across_t120_height_p90
+    v: 0.04
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_across_t300_phase_p90
+    v: 0.042
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_across_t300_height_p90
+    v: 0.029
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_against_t120_phase_p90
+    v: 0.039
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_against_t120_height_p90
+    v: 0.03
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_against_t300_phase_p90
+    v: 0.023
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp8_against_t300_height_p90
+    v: 0.019
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_along_t120_phase_p90
+    v: 0.099
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_along_t120_height_p90
+    v: 0.064
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_along_t300_phase_p90
+    v: 0.058
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_along_t300_height_p90
+    v: 0.027
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_across_t120_phase_p90
+    v: 0.069
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_across_t120_height_p90
+    v: 0.051
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_across_t300_phase_p90
+    v: 0.05
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_across_t300_height_p90
+    v: 0.045
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_against_t120_phase_p90
+    v: 0.166
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_against_t120_height_p90
+    v: 0.055
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_against_t300_phase_p90
+    v: 0.05
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp10_against_t300_height_p90
+    v: 0.02
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_along_t120_phase_p90
+    v: 0.226
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_along_t120_height_p90
+    v: 0.123
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_along_t300_phase_p90
+    v: 0.079
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_along_t300_height_p90
+    v: 0.044
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_across_t120_phase_p90
+    v: 0.203
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_across_t120_height_p90
+    v: 0.108
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_across_t300_phase_p90
+    v: 0.088
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_across_t300_height_p90
+    v: 0.079
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_against_t120_phase_p90
+    v: 0.34
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_against_t120_height_p90
+    v: 0.173
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_against_t300_phase_p90
+    v: 0.136
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs3_tp12_against_t300_height_p90
+    v: 0.062
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_along_t120_phase_p90
+    v: 0.064
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_along_t120_height_p90
+    v: 0.044
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_along_t300_phase_p90
+    v: 0.053
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_along_t300_height_p90
+    v: 0.028
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_across_t120_phase_p90
+    v: 0.044
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_across_t120_height_p90
+    v: 0.044
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_across_t300_phase_p90
+    v: 0.034
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_across_t300_height_p90
+    v: 0.028
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_against_t120_phase_p90
+    v: 0.055
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_against_t120_height_p90
+    v: 0.035
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_against_t300_phase_p90
+    v: 0.027
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp8_against_t300_height_p90
+    v: 0.023
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_along_t120_phase_p90
+    v: 0.157
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_along_t120_height_p90
+    v: 0.097
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_along_t300_phase_p90
+    v: 0.09
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_along_t300_height_p90
+    v: 0.04
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_across_t120_phase_p90
+    v: 0.131
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_across_t120_height_p90
+    v: 0.06
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_across_t300_phase_p90
+    v: 0.05
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_across_t300_height_p90
+    v: 0.051
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_against_t120_phase_p90
+    v: 0.226
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_against_t120_height_p90
+    v: 0.073
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_against_t300_phase_p90
+    v: 0.085
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp10_against_t300_height_p90
+    v: 0.029
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_along_t120_phase_p90
+    v: 0.345
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_along_t120_height_p90
+    v: 0.212
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_along_t300_phase_p90
+    v: 0.139
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_along_t300_height_p90
+    v: 0.079
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_across_t120_phase_p90
+    v: 0.315
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_across_t120_height_p90
+    v: 0.174
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_across_t300_phase_p90
+    v: 0.174
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_across_t300_height_p90
+    v: 0.118
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_against_t120_phase_p90
+    v: 0.436
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_against_t120_height_p90
+    v: 0.245
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_against_t300_phase_p90
+    v: 0.261
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.regsea_radar_tips_fwd_baro_hs2_tp12_against_t300_height_p90
+    v: 0.131
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_lidar_t60_phase_p90
+    v: 1.643
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_lidar_t60_height_p90
+    v: 1.779
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_lidar_t300_phase_p90
+    v: 2.202
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_lidar_t300_height_p90
+    v: 5.986
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_lidar_t60_phase_p90
+    v: 2.976
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_lidar_t60_height_p90
+    v: 0.695
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_lidar_t300_phase_p90
+    v: 1.661
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_lidar_t300_height_p90
+    v: 0.726
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_t60_phase_p90
+    v: 1.664
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_t60_height_p90
+    v: 2.577
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_t300_phase_p90
+    v: 2.283
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_t300_height_p90
+    v: 2.467
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_t60_phase_p90
+    v: 2.966
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_t60_height_p90
+    v: 0.7
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_t300_phase_p90
+    v: 2.999
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_t300_height_p90
+    v: 0.902
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_t60_phase_p90
+    v: 1.686
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_t60_height_p90
+    v: 2.588
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_t300_phase_p90
+    v: 2.531
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_t300_height_p90
+    v: 0.911
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_t60_phase_p90
+    v: 2.889
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_t60_height_p90
+    v: 0.994
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_t300_phase_p90
+    v: 2.211
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_t300_height_p90
+    v: 0.819
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_baro_t60_phase_p90
+    v: 0.233
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_baro_t60_height_p90
+    v: 0.389
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_baro_t60_ahead_m
+    v: 0.074
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_baro_t300_phase_p90
+    v: 2.153
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_baro_t300_height_p90
+    v: 0.35
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_baro_t300_ahead_m
+    v: 0.061
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_baro_t60_phase_p90
+    v: 0.272
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_baro_t60_height_p90
+    v: 0.513
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_baro_t60_ahead_m
+    v: 0.054
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_baro_t300_phase_p90
+    v: 2.264
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_baro_t300_height_p90
+    v: 0.358
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_baro_t300_ahead_m
+    v: 0.032
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_baro_t60_phase_p90
+    v: 0.777
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_baro_t60_height_p90
+    v: 0.526
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_baro_t60_ahead_m
+    v: 0.289
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_baro_t300_phase_p90
+    v: 2.974
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_baro_t300_height_p90
+    v: 5.417
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_baro_t300_ahead_m
+    v: 0.275
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_baro_t60_phase_p90
+    v: 1.582
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_baro_t60_height_p90
+    v: 0.94
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_baro_t60_ahead_m
+    v: 0.44
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_baro_t300_phase_p90
+    v: 2.848
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_baro_t300_height_p90
+    v: 1.228
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_baro_t300_ahead_m
+    v: 0.622
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_baro_t60_phase_p90
+    v: 1.887
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_baro_t60_height_p90
+    v: 1.363
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_baro_t60_ahead_m
+    v: 0.495
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_baro_t300_phase_p90
+    v: 2.6
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_baro_t300_height_p90
+    v: 1.968
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_baro_t300_ahead_m
+    v: 0.49
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_baro_t60_phase_p90
+    v: 1.497
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_baro_t60_height_p90
+    v: 1.251
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_baro_t300_phase_p90
+    v: 2.614
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_baro_t300_height_p90
+    v: 2.502
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_baro_t60_phase_p90
+    v: 1.329
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_baro_t60_height_p90
+    v: 2.594
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_baro_t300_phase_p90
+    v: 1.626
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_baro_t300_height_p90
+    v: 3.992
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_rtk_t60_phase_p90
+    v: 0.106
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_rtk_t60_height_p90
+    v: 0.162
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_rtk_t60_ahead_m
+    v: 0.042
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_rtk_t300_phase_p90
+    v: 1.427
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_rtk_t300_height_p90
+    v: 0.371
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_rtk_t300_ahead_m
+    v: 0.056
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_rtk_t60_phase_p90
+    v: 0.116
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_rtk_t60_height_p90
+    v: 0.162
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_rtk_t60_ahead_m
+    v: 0.025
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_rtk_t300_phase_p90
+    v: 1.799
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_rtk_t300_height_p90
+    v: 0.709
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_rtk_t300_ahead_m
+    v: 0.044
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_rtk_t60_phase_p90
+    v: 0.152
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_rtk_t60_height_p90
+    v: 0.165
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_rtk_t60_ahead_m
+    v: 0.235
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_rtk_t300_phase_p90
+    v: 3.02
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_rtk_t300_height_p90
+    v: 3.062
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_rtk_t300_ahead_m
+    v: 0.302
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_rtk_t60_phase_p90
+    v: 2.094
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_rtk_t60_height_p90
+    v: 0.901
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_rtk_t60_ahead_m
+    v: 0.457
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_rtk_t300_phase_p90
+    v: 1.825
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_rtk_t300_height_p90
+    v: 1.103
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_rtk_t300_ahead_m
+    v: 0.435
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_rtk_t60_phase_p90
+    v: 2.796
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_rtk_t60_height_p90
+    v: 0.785
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_rtk_t60_ahead_m
+    v: 0.737
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_rtk_t300_phase_p90
+    v: 2.587
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_rtk_t300_height_p90
+    v: 1.348
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_rtk_t300_ahead_m
+    v: 0.864
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_rtk_t60_phase_p90
+    v: 1.418
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_rtk_t60_height_p90
+    v: 1.045
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_rtk_t300_phase_p90
+    v: 2.959
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_rtk_t300_height_p90
+    v: 1.217
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_rtk_t60_phase_p90
+    v: 1.666
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_rtk_t60_height_p90
+    v: 0.4
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_rtk_t300_phase_p90
+    v: 3.012
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_rtk_t300_height_p90
+    v: 0.997
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_lidar_rtk_t60_phase_p90
+    v: 0.308
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_lidar_rtk_t60_height_p90
+    v: 0.213
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_lidar_rtk_t60_ahead_m
+    v: 0.038
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_lidar_rtk_t300_phase_p90
+    v: 2.364
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_lidar_rtk_t300_height_p90
+    v: 0.739
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_lidar_rtk_t300_ahead_m
+    v: 0.152
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_lidar_rtk_t60_phase_p90
+    v: 0.326
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_lidar_rtk_t60_height_p90
+    v: 0.222
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_lidar_rtk_t60_ahead_m
+    v: 0.027
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_lidar_rtk_t300_phase_p90
+    v: 1.315
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_lidar_rtk_t300_height_p90
+    v: 1.461
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_lidar_rtk_t300_ahead_m
+    v: 0.134
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_lidar_rtk_t60_phase_p90
+    v: 0.16
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_lidar_rtk_t60_height_p90
+    v: 0.175
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_lidar_rtk_t60_ahead_m
+    v: 0.227
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_lidar_rtk_t300_phase_p90
+    v: 2.927
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_lidar_rtk_t300_height_p90
+    v: 4.677
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_lidar_rtk_t300_ahead_m
+    v: 0.363
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_lidar_rtk_t60_phase_p90
+    v: 2.463
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_lidar_rtk_t60_height_p90
+    v: 0.813
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_lidar_rtk_t60_ahead_m
+    v: 0.448
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_lidar_rtk_t300_phase_p90
+    v: 2.519
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_lidar_rtk_t300_height_p90
+    v: 2.929
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_lidar_rtk_t300_ahead_m
+    v: 0.673
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_lidar_rtk_t60_phase_p90
+    v: 2.221
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_lidar_rtk_t60_height_p90
+    v: 0.404
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_lidar_rtk_t60_ahead_m
+    v: 0.519
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_lidar_rtk_t300_phase_p90
+    v: 2.881
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_lidar_rtk_t300_height_p90
+    v: 1.502
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_lidar_rtk_t300_ahead_m
+    v: 0.849
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_lidar_rtk_t60_phase_p90
+    v: 1.472
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_lidar_rtk_t60_height_p90
+    v: 0.542
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_lidar_rtk_t300_phase_p90
+    v: 3.127
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_lidar_rtk_t300_height_p90
+    v: 1.166
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_lidar_rtk_t60_phase_p90
+    v: 0.949
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_lidar_rtk_t60_height_p90
+    v: 0.139
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_lidar_rtk_t300_phase_p90
+    v: 1.594
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_lidar_rtk_t300_height_p90
+    v: 0.43
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_baro_t60_phase_p90
+    v: 0.237
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_baro_t60_height_p90
+    v: 0.231
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_baro_t60_ahead_m
+    v: 0.068
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_baro_t300_phase_p90
+    v: 2.056
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_baro_t300_height_p90
+    v: 0.445
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_baro_t300_ahead_m
+    v: 0.114
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_baro_t60_phase_p90
+    v: 0.251
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_baro_t60_height_p90
+    v: 0.243
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_baro_t60_ahead_m
+    v: 0.045
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_baro_t300_phase_p90
+    v: 1.255
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_baro_t300_height_p90
+    v: 0.604
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_baro_t300_ahead_m
+    v: 0.067
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_baro_t60_phase_p90
+    v: 0.74
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_baro_t60_height_p90
+    v: 0.452
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_baro_t60_ahead_m
+    v: 0.299
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_baro_t300_phase_p90
+    v: 2.509
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_baro_t300_height_p90
+    v: 0.568
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_baro_t300_ahead_m
+    v: 0.339
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_baro_t60_phase_p90
+    v: 1.67
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_baro_t60_height_p90
+    v: 0.73
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_baro_t60_ahead_m
+    v: 0.466
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_baro_t300_phase_p90
+    v: 1.139
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_baro_t300_height_p90
+    v: 1.863
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_baro_t300_ahead_m
+    v: 0.591
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_baro_t60_phase_p90
+    v: 2.421
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_baro_t60_height_p90
+    v: 0.947
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_baro_t60_ahead_m
+    v: 0.468
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_baro_t300_phase_p90
+    v: 1.073
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_baro_t300_height_p90
+    v: 1.927
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_baro_t300_ahead_m
+    v: 0.662
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_fwd_baro_t60_phase_p90
+    v: 0.537
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_fwd_baro_t60_height_p90
+    v: 0.048
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_fwd_baro_t300_phase_p90
+    v: 0.043
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_fwd_baro_t300_height_p90
+    v: 0.047
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_fwd_baro_t60_phase_p90
+    v: 0.191
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_fwd_baro_t60_height_p90
+    v: 0.051
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_fwd_baro_t300_phase_p90
+    v: 0.066
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_fwd_baro_t300_height_p90
+    v: 0.039
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_vwhite_t60_phase_p90
+    v: 1.784
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_vwhite_t60_height_p90
+    v: 0.909
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_vwhite_t300_phase_p90
+    v: 2.574
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_vwhite_t300_height_p90
+    v: 0.998
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_vwhite_t60_phase_p90
+    v: 2.271
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_vwhite_t60_height_p90
+    v: 0.834
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_vwhite_t300_phase_p90
+    v: 2.307
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_vwhite_t300_height_p90
+    v: 0.985
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_rtk_t60_phase_p90
+    v: 0.112
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_rtk_t60_height_p90
+    v: 0.099
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_rtk_t60_ahead_m
+    v: 0.054
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_rtk_t300_phase_p90
+    v: 1.964
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_rtk_t300_height_p90
+    v: 0.586
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_radar_tips_fwd_rtk_t300_ahead_m
+    v: 0.125
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_rtk_t60_phase_p90
+    v: 0.116
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_rtk_t60_height_p90
+    v: 0.095
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_rtk_t60_ahead_m
+    v: 0.033
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_rtk_t300_phase_p90
+    v: 0.906
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_rtk_t300_height_p90
+    v: 0.564
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_radar_tips_fwd_rtk_t300_ahead_m
+    v: 0.067
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_rtk_t60_phase_p90
+    v: 0.167
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_rtk_t60_height_p90
+    v: 0.246
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_rtk_t60_ahead_m
+    v: 0.238
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_rtk_t300_phase_p90
+    v: 2.91
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_rtk_t300_height_p90
+    v: 0.782
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_radar_tips_fwd_rtk_t300_ahead_m
+    v: 0.371
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_rtk_t60_phase_p90
+    v: 2.241
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_rtk_t60_height_p90
+    v: 0.767
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_rtk_t60_ahead_m
+    v: 0.513
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_rtk_t300_phase_p90
+    v: 2.378
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_rtk_t300_height_p90
+    v: 1.229
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_radar_tips_fwd_rtk_t300_ahead_m
+    v: 0.556
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_rtk_t60_phase_p90
+    v: 2.773
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_rtk_t60_height_p90
+    v: 0.574
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_rtk_t60_ahead_m
+    v: 0.524
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_rtk_t300_phase_p90
+    v: 0.53
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_rtk_t300_height_p90
+    v: 0.968
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_radar_tips_fwd_rtk_t300_ahead_m
+    v: 0.535
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_fwd_rtk_t60_phase_p90
+    v: 0.284
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_fwd_rtk_t60_height_p90
+    v: 0.032
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_fwd_rtk_t300_phase_p90
+    v: 0.035
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_radar_tips_fwd_rtk_t300_height_p90
+    v: 0.019
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_fwd_rtk_t60_phase_p90
+    v: 0.206
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_fwd_rtk_t60_height_p90
+    v: 0.062
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_fwd_rtk_t300_phase_p90
+    v: 0.05
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_radar_tips_fwd_rtk_t300_height_p90
+    v: 0.026
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_tips_rtk_t60_phase_p90
+    v: 0.105
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_tips_rtk_t60_height_p90
+    v: 0.155
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_tips_rtk_t60_ahead_m
+    v: 0.04
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_tips_rtk_t300_phase_p90
+    v: 1.422
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_tips_rtk_t300_height_p90
+    v: 0.36
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs3_along_tips_rtk_t300_ahead_m
+    v: 0.05
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_tips_rtk_t60_phase_p90
+    v: 0.113
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_tips_rtk_t60_height_p90
+    v: 0.154
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_tips_rtk_t60_ahead_m
+    v: 0.025
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_tips_rtk_t300_phase_p90
+    v: 1.498
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_tips_rtk_t300_height_p90
+    v: 0.389
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_irregular_hs2_along_tips_rtk_t300_ahead_m
+    v: 0.034
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_tips_rtk_t60_phase_p90
+    v: 0.121
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_tips_rtk_t60_height_p90
+    v: 0.208
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_tips_rtk_t60_ahead_m
+    v: 0.239
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_tips_rtk_t300_phase_p90
+    v: 1.612
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_tips_rtk_t300_height_p90
+    v: 2.038
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_swellws_hs3_along_tips_rtk_t300_ahead_m
+    v: 0.434
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_tips_rtk_t60_phase_p90
+    v: 1.678
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_tips_rtk_t60_height_p90
+    v: 0.883
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_tips_rtk_t60_ahead_m
+    v: 0.453
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_tips_rtk_t300_phase_p90
+    v: 2.136
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_tips_rtk_t300_height_p90
+    v: 1.319
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_along_tips_rtk_t300_ahead_m
+    v: 0.548
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_tips_rtk_t60_phase_p90
+    v: 2.355
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_tips_rtk_t60_height_p90
+    v: 0.795
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_tips_rtk_t60_ahead_m
+    v: 0.733
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_tips_rtk_t300_phase_p90
+    v: 2.741
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_tips_rtk_t300_height_p90
+    v: 1.305
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.irr_mixed_across_tips_rtk_t300_ahead_m
+    v: 0.75
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_tips_rtk_t60_phase_p90
+    v: 1.466
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_tips_rtk_t60_height_p90
+    v: 1.062
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_tips_rtk_t300_phase_p90
+    v: 2.979
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs3_tips_rtk_t300_height_p90
+    v: 1.254
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_tips_rtk_t60_phase_p90
+    v: 0.733
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_tips_rtk_t60_height_p90
+    v: 0.416
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_tips_rtk_t300_phase_p90
+    v: 3.004
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.orc_hs2_tips_rtk_t300_height_p90
+    v: 0.449
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs3_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs3_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs3_power_w
+    v: 7.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs3_power_after_w
+    v: 6.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs3_motor_share
+    v: 0.28
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs3_height_median_m
+    v: 9.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs3_t_ready_s
+    v: 46.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs3_t_entry_s
+    v: 65.5
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs3_phase_p90
+    v: 1.342
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs3_height_p90
+    v: 1.15
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs3_pred_rms_m
+    v: 0.287
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs2_counted
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs2_aloft_s
+    v: 324.7
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs2_power_w
+    v: 24.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs2_power_after_w
+    v: 27.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs2_motor_share
+    v: 0.75
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs2_height_median_m
+    v: 0.5
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs2_t_ready_s
+    v: 46.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs2_t_entry_s
+    v: 63.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs2_phase_p90
+    v: 2.926
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs2_height_p90
+    v: 0.613
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_hs2_pred_rms_m
+    v: 0.259
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs3_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs3_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs3_power_w
+    v: 4.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs3_power_after_w
+    v: 3.2
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs3_motor_share
+    v: 0.15
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs3_height_median_m
+    v: 9.4
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs3_t_ready_s
+    v: 46.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs3_t_entry_s
+    v: 66.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs3_phase_p90
+    v: 0.078
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs3_height_p90
+    v: 0.038
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs3_pred_rms_m
+    v: 0.302
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs2_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs2_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs2_power_w
+    v: 4.1
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs2_power_after_w
+    v: 2.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs2_motor_share
+    v: 0.14
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs2_height_median_m
+    v: 7.4
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs2_t_ready_s
+    v: 46.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs2_t_entry_s
+    v: 64.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs2_phase_p90
+    v: 0.127
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs2_height_p90
+    v: 0.031
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_baro_hs2_pred_rms_m
+    v: 0.186
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs3_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs3_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs3_power_w
+    v: 4.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs3_power_after_w
+    v: 2.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs3_motor_share
+    v: 0.13
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs3_height_median_m
+    v: 10.0
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs3_t_ready_s
+    v: 46.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs3_t_entry_s
+    v: 65.5
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs3_phase_p90
+    v: 0.038
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs3_height_p90
+    v: 0.019
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs3_pred_rms_m
+    v: 0.277
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs2_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs2_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs2_power_w
+    v: 3.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs2_power_after_w
+    v: 2.6
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs2_motor_share
+    v: 0.13
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs2_height_median_m
+    v: 7.9
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs2_t_ready_s
+    v: 46.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs2_t_entry_s
+    v: 63.5
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs2_phase_p90
+    v: 0.056
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs2_height_p90
+    v: 0.03
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_fwd_rtk_hs2_pred_rms_m
+    v: 0.181
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs3_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs3_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs3_power_w
+    v: 3.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs3_power_after_w
+    v: 2.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs3_motor_share
+    v: 0.13
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs3_height_median_m
+    v: 9.6
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs3_t_ready_s
+    v: 46.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs3_t_entry_s
+    v: 65.5
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs3_phase_p90
+    v: 0.077
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs3_height_p90
+    v: 0.166
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs3_pred_rms_m
+    v: 0.277
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs2_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs2_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs2_power_w
+    v: 3.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs2_power_after_w
+    v: 2.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs2_motor_share
+    v: 0.13
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs2_height_median_m
+    v: 7.7
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs2_t_ready_s
+    v: 46.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs2_t_entry_s
+    v: 63.5
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs2_phase_p90
+    v: 0.079
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs2_height_p90
+    v: 0.317
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_radar_tips_rtk_hs2_pred_rms_m
+    v: 0.181
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs3_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs3_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs3_power_w
+    v: 4.0
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs3_power_after_w
+    v: 2.7
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs3_motor_share
+    v: 0.13
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs3_height_median_m
+    v: 9.1
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs3_t_ready_s
+    v: 46.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs3_t_entry_s
+    v: 65.5
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs3_phase_p90
+    v: 0.098
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs3_height_p90
+    v: 0.171
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs3_pred_rms_m
+    v: 0.277
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs2_counted
+    v: 1
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs2_aloft_s
+    v: 600.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs2_power_w
+    v: 3.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs2_power_after_w
+    v: 2.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs2_motor_share
+    v: 0.12
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs2_height_median_m
+    v: 7.6
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs2_t_ready_s
+    v: 46.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs2_t_entry_s
+    v: 64.0
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs2_phase_p90
+    v: 0.087
+    unit: rad
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs2_height_p90
+    v: 0.33
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  - key: est.loop_tips_rtk_hs2_pred_rms_m
+    v: 0.181
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#sea-estimation
+  # generated by python -m sim.swellest_keys: end

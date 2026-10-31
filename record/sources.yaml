@@ -765,8 +765,8 @@ items:
     url: "https://store.sundance.com/docs/Ainstein/US-D1-Data-Sheetv2.pdf"
     license: unknown
     read: partial
-    retrieved: 2026-10-29
-    note: "24 GHz, 0.5 to 50 m, 110 g, 2 W, marketed for water."
+    retrieved: 2026-10-31
+    note: "24 GHz, 0.5 to 50 m, 110 g, 2 W, marketed for water. Read again on 2026-10-31 (pages 1 to 12 of 15): altitude precision 6.0 cm below 1 m and 4.0 cm above, field of view 43 x 30 deg, update rate 82 Hz (UART) and 86 Hz (CAN), bandwidth 190 MHz, the output is post-processed (averaging, filtering), no latency is given."
   - id: P86
     class: P
     title: "Optimal dynamic soaring trades off energy harvest and directional flight and its open code, and the Cuervo albatross optimizer (github.com/KristianCuervo/albatross), reproductions of the Sachs minimum wind of 8.6 m/s with z0 = 0.03 m"
@@ -1181,8 +1181,8 @@ items:
     url: "https://docs.sparkfun.com/SparkFun_Qwiic_Pulsed_Radar_Sensor_XM125/"
     license: unknown
     read: full
-    retrieved: 2026-10-30
-    note: "60 GHz chip about 5 mm, about 74 mA while measuring, water level to 20 m with a lens, beam 65 x 53 deg at half power."
+    retrieved: 2026-10-31
+    note: "60 GHz chip about 5 mm, about 74 mA while measuring, water level to 20 m with a lens, beam 65 x 53 deg at half power. Read again on 2026-10-31 (the PDF of datasheet v1.3, 2023-10-25, sections 4.5 to 4.7): distance accuracy as the typical standard deviation over units 2.67 to 5.05 mm by profile (distance detector output), measure-state currents at VIO 1.8 V summing to about 70 to 74 mA over the terminals, TX half-power beam width 53 deg (E-plane, 42 to 64) and 65 deg (H-plane, 52 to 78), simulated."
   - id: P133
     class: P
     title: "Development and application of an airborne system for ocean surface wave measurement, B. D. Reineman, PhD dissertation, UC San Diego, 2013"
@@ -1535,3 +1535,27 @@ items:
     read: excerpt
     retrieved: 2026-10-31
     note: "Excerpt: hourly series from 2005-01-01 to 2024-12-31 (UTC) from https://marine-api.open-meteo.com/v1/marine for the same points as P166; the URLs, retrieval times and sha256 are in sim/out/climate.json under sources. For this model the API serves only the total wave height, the mean and peak period and the direction: the swell and wind-sea variables come back undefined (a probe on 2026-10-31), so there is no swell partition. The peak period is missing at every point from 2024-11-19 to 2024-12-31 (found by K-019); the height and the mean period are complete."
+  - id: M20
+    class: M
+    title: "ZED-F9P-04B data sheet, UBX-21044850 R01, u-blox, 2021"
+    url: "https://cdn.sparkfun.com/assets/a/8/5/f/5/ZED-F9P-04B_DataSheet_UBX-21044850.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-31
+    note: "Sections 1.2 (tables 1 to 5) and the current table of section 4 read. Velocity accuracy 0.05 m/s (50% at 30 m/s, dynamic operation); horizontal position PVT 1.5 m CEP and SBAS 1.0 m CEP (24 h static); RTK 0.01 m + 1 ppm CEP horizontal and 0.01 m + 1 ppm R50 vertical (1 km baseline, ppm up to 20 km); PPP-RTK with CLAS 0.04 m CEP horizontal and 0.08 m CEP vertical, convergence under 70 s; RTK navigation rate 7 to 20 Hz by constellations; tracking current 85 mA (GPS, GLONASS, Galileo, BeiDou); dynamics to 4 g and 500 m/s. No vertical figure without corrections and no mass are given."
+  - id: M21
+    class: M
+    title: "ICM-42688-P six-axis MEMS motion sensor product page, TDK InvenSense"
+    url: "https://invensense.tdk.com/products/icm-42688-p/"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-31
+    note: "Accelerometer noise 70 ug/sqrt(Hz), gyroscope noise 2.8 mdps/sqrt(Hz), six-axis low-noise current 0.88 mA, package 2.50 x 3.00 x 0.91 (mm); the datasheet DS-000347 v1.9 it points to was not read."
+  - id: M22
+    class: M
+    title: "DPS310 digital barometric pressure sensor data sheet V1.0, Infineon, 2016-09-05"
+    url: "https://www.zeuthen.desy.de/~sulanke/Projects/ICECUBE/mDOM/mainboard/datasheets/sensor_pressure_prec_Infineon-DPS310.pdf"
+    license: unknown
+    read: partial
+    retrieved: 2026-10-31
+    note: "Page 1 (features) read: pressure precision +-0.005 hPa (+-0.05 m) in the high precision mode, measured as the average standard deviation; relative accuracy +-0.06 hPa (+-0.5 m); absolute accuracy +-1 hPa (+-8 m); 0.5 Pa/K; 1.7 uA for pressure at 1 Hz; 2.0 x 2.5 x 1.0 mm. A later revision quoted by distributors gives +-0.002 hPa precision; the 2016 figure is used."
