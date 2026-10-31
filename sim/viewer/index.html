@@ -1415,7 +1415,7 @@ function updateFlightView() {
   setFl('e', (m.energy * Flight.G).toFixed(0) + ' J/kg');
   setFl('n', m.loadFactor.toFixed(2));
   setFl('ph', MP.info ? (MP.info.tau0 / MP.info.period).toFixed(2) : '-');
-  setFl('u', MP.info ? (FL.wave ? MP.info.u10Lib : MP.info.u10) + ' / ' + W.u10.toFixed(1) + ' m/s' : '-'); setFl('ref', tx('refMpc'));
+  setFl('u', MP.info ? (FL.wave ? (MP.info.u10Lib === null ? '-' : MP.info.u10Lib) : MP.info.u10) + ' / ' + W.u10.toFixed(1) + ' m/s' : '-'); setFl('ref', tx('refMpc'));
   setFl('ms', MP.n ? tx('mpcMs', MP.last.toFixed(1), (MP.sum / MP.n).toFixed(1)) : '-');
   setFl('late', String(MP.late));
   setFl('sel', MP.info && !FL.wave ? tx('mpcSel', MP.info.u10, MP.info.chiDeg, MP.info.marginSet) : '-');
