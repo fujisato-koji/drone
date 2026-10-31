@@ -1319,6 +1319,34 @@ def wave_pilot_main(a):
     dump(True)
 
 
+PILOT_NOFACE_KEY = "wave_pilot_trials_noface"
+
+
+def wave_pilot_noface_main(a):
+    """python -m sim.mpc --wave-pilot-noface: the trials of every crest ride of the experiment's seas again, without the
+    forward-face guide (face None) and otherwise as the trials of wave_pilot_main (the same start, seed and flat leg),
+    so that the guide's own effect on the rides shows; key PILOT_NOFACE_KEY of the out file."""
+    import json
+    import time
+    from concurrent.futures import ProcessPoolExecutor
+    from sim import record
+    here = _os.path.dirname(__file__)
+    t0 = time.time()
+    jobs = [c + (k, {"face": None}) for c in wave_exp_cases() for k in pilot_candidates(*c) if k and "|crest|" in k]
+    with ProcessPoolExecutor(a.workers) as ex:
+        rows = list(ex.map(pilot_trial_job, jobs, chunksize=2))
+    files = [_os.path.join(here, "mpc.py"), __file__, WAVE_LIB_PATH, _os.path.join(here, "out", "mpc_library_motor.json"),
+             _os.path.join(here, "seawind.py"), _os.path.join(here, "aircraft.py"), _os.path.join(here, "navigator.py")]
+    meta = record.meta("python -m sim.mpc --wave-pilot-noface --workers %d" % a.workers, files)
+    meta.update({"runtime_s": time.time() - t0, "trial_s": PILOT_TRIAL_S, "seed": PILOT_TRIAL_SEED, "face": None,
+                 "leg": PILOT_LEG, "how": "the crest-ride trials of wave_pilot_trials without the forward-face guide"})
+    cur = json.load(open(a.out)) if _os.path.exists(a.out) else {}
+    cur[PILOT_NOFACE_KEY] = {"meta": meta, "results": rows}
+    with open(a.out, "w", newline=chr(10)) as fh:
+        json.dump(mpc_no_nan(cur), fh, indent=1)
+        fh.write(chr(10))
+
+
 def mpc_no_nan(d):
     from sim.mpc import _no_nan
     return _no_nan(d)

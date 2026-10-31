@@ -3362,6 +3362,7 @@ def main():
     ap.add_argument("--wave-pilot-exp", action="store_true", help="the closed loop over swell with the pilot's trials (sim.wavelib)")
     ap.add_argument("--pilot-reflex", default="", help="--wave-pilot-exp: fly the runs with this reflex (v2)")
     ap.add_argument("--pilot-key", default="", help="--wave-pilot-exp: key of the out file for the runs")
+    ap.add_argument("--wave-pilot-noface", action="store_true", help="the crest-ride trials without the face guide (sim.wavelib)")
     a = ap.parse_args()
     if a.wave_diagnosis:
         from sim.wavelib import diagnosis_main
@@ -3399,6 +3400,10 @@ def main():
     if a.wave_pilot_exp:
         from sim.wavelib import wave_pilot_main
         wave_pilot_main(a)
+        return
+    if a.wave_pilot_noface:
+        from sim.wavelib import wave_pilot_noface_main
+        wave_pilot_noface_main(a)
         return
     if a.build_margin_library:
         build_margin_library(workers=a.workers)
