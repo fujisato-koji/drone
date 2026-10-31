@@ -9,8 +9,9 @@
 // Planner settings are the ones of sim.mpc.LIB_PKW. Motor option (settings motor: true): the thrust
 // T is a third control per knot, as sim.mpc.MPPIPlanner(motor=True); see the notes there. Not mirrored (the Python code has them, the
 // library mode of the margin experiment does not use them): the wave-aware phase shift of the
-// guide (wave_aware False there), smooth perturbation modes (smooth_modes 0), the non-library
-// cost terms (progress, smoothness), and the estimators.
+// guide (wave_aware False there), the non-library cost terms (progress, smoothness), and the
+// estimators. The smooth perturbation modes, a guide's running cost and the wave wind of a preset are
+// mirrored for the swell mode (wave.js).
 function mpcFactory() {
   'use strict';
   var G = 9.81, H = 0.05, DT = 0.01, TWO_PI = 2 * Math.PI;
@@ -94,13 +95,18 @@ function mpcFactory() {
   // wind: {ustar, z0, ex, ey, karman}. comps: {a, k, omega, phase, dx, dy, urel} (arrays).
   // The formulas are those of the viewer (surface() and windAt() in index.html) and of
   // sim.seawind.Environment with the linear surface (stokes adds the second-order term to eta).
-  function SeaWorld(wind, comps, stokes) {
+  // waveWind (optional) {amp: [u, w], decay: [a_u, a_w]}: the wave-coherent wind of a preset of the wave runs
+  // (sim.seawind.Environment(decay=..., wave_amp=...), sim.wavelib.swell_env): it decays as exp(-a k h) and is
+  // scaled per axis; such a world takes its nine wind samples from windAt (no one-pass fast path).
+  function SeaWorld(wind, comps, stokes, waveWind) {
     this.wind = wind; this.z0 = wind.z0;
     this.kar = wind.karman !== undefined ? wind.karman : 0.4;
     this.stokes = !!stokes;
     this.c = comps || { a: [], k: [], omega: [], phase: [], dx: [], dy: [], urel: [] };
     this.n = this.c.a.length;
     this.C = new Float64Array(this.n); this.S = new Float64Array(this.n);
+    this.ww = waveWind ? { au: +waveWind.amp[0], aw: +waveWind.amp[1], du: +waveWind.decay[0], dw: +waveWind.decay[1] } : null;
+    if (this.ww) this.windDerivs = null;
   }
   SeaWorld.prototype.eta = function (x, y, t) {
     var c = this.c, n = this.n, eta = 0;
@@ -126,6 +132,15 @@ function mpcFactory() {
       for (i = 0; i < n; i++) {
         var ao = c.a[i] * c.omega[i];
         u += ao * C[i] * c.dx[i]; v += ao * C[i] * c.dy[i]; ww += ao * S[i];
+      }
+    } else if (this.ww) {   // the wave wind of a preset: own decay and amplitude per axis
+      var q = this.ww, sq = (w.ustar / this.kar) * Math.log(h / w.z0);
+      u = sq * w.ex; v = sq * w.ey;
+      for (i = 0; i < n; i++) {
+        var kq = c.k[i], base = c.urel[i] * c.a[i] * kq, kz = kq * h;
+        var fu = base * Math.exp(-q.du * kz) * q.au, fw = base * Math.exp(-q.dw * kz) * q.aw;
+        var uq = fu * C[i];
+        u += uq * c.dx[i]; v += uq * c.dy[i]; ww -= fw * S[i];
       }
     } else {
       var sp = (w.ustar / this.kar) * Math.log(h / w.z0);
@@ -228,7 +243,7 @@ function mpcFactory() {
   // spec: {kind: 'flat' | 'truth', wind, comps, stokes, maxComponents}
   function makeWorld(spec) {
     if (spec.kind === 'truth' && spec.comps) {
-      return new SeaWorld(spec.wind, limitComponents(spec.comps, spec.maxComponents || 0), spec.stokes);
+      return new SeaWorld(spec.wind, limitComponents(spec.comps, spec.maxComponents || 0), spec.stokes, spec.waveWind);
     }
     return flatWorld(spec.wind);
   }
@@ -452,6 +467,10 @@ function mpcFactory() {
       this.wEnergy = opt.wEnergy !== undefined ? opt.wEnergy
         : ENERGY_K[opt.energyLevel || 'normal'] * this.wE * this.eta / ac.mass;
     }
+    // smooth perturbation modes (sim.mpc.MPPIPlanner smooth_modes, smooth_gain): cos(pi m tau / H), m = 1..M,
+    // added to the cl and mu perturbations, so that a coherent turn can be sampled (the wave runs use 3)
+    this.smoothModes = opt.smoothModes ? Math.round(+opt.smoothModes) : 0;
+    this.smoothGain = opt.smoothGain !== undefined ? +opt.smoothGain : 3.0;
     this.act = null;        // actuator parameters (actuatorParams) or null: rollouts fly the commands
     this.actState = null;   // [actual cl, actual mu, last cl command, last mu command] or null
     this.epsHook = null;    // test hook: function (iteration) -> Float64Array (nSamples, 2, nCtrl)
@@ -460,6 +479,12 @@ function mpcFactory() {
     this.nsteps = Math.round(this.horizonS / this.dt);
     var nc = this.nCtrl, nh = 2 * this.nsteps + 1;
     this.knotsT = linspace(0.0, this.horizonS, nc);
+    this.basis = [];
+    for (var mm = 1; mm <= this.smoothModes; mm++) {
+      var brow = new Float64Array(nc);
+      for (var jj = 0; jj < nc; jj++) brow[jj] = Math.cos(Math.PI * mm * this.knotsT[jj] / this.horizonS);
+      this.basis.push(brow);
+    }
     this.idx = new Int32Array(nh); this.frac = new Float64Array(nh);
     for (var j = 0; j < nh; j++) {
       var tau = j * this.dt / 2.0, c = 0;
@@ -523,7 +548,7 @@ function mpcFactory() {
     var motor = this.motor, nu = this.nu, aTLag = 0;
     var s = sc.s, tmp = sc.tmp, k1 = sc.k1, k2 = sc.k2, k3 = sc.k3, k4 = sc.k4;
     var cost = new Float64Array(S), dead = new Uint8Array(S), paths = wantPath ? [] : null;
-    var vmin = 1.1 * ac.v_stall, aLag = 0, m = 0, j, i, d;
+    var vmin = 1.1 * ac.v_stall, aLag = 0, m = 0, j, i, d, wRun = guide.wRun > 0;
     if (act) {
       m = Math.round(act.delay / hd);
       aLag = act.tau > 0 ? 1.0 - Math.exp(-hd / act.tau) : 1.0;
@@ -603,6 +628,7 @@ function mpcFactory() {
           this.wN * Math.pow(Math.max(0.0, n - ac.n_max), 2) +
           this.wStall * Math.pow(Math.max(0.0, vmin - V) / ac.v_stall, 2) +
           (this.hCeil !== null ? this.wCeil * Math.pow(Math.max(0.0, hc - this.hCeil), 2) : 0.0);
+        if (wRun) pen = pen + guide.runningCost(world, t + dt, s);   // tracking of a wave cycle (wave.js WaveCycleGuide)
         if (live) c += dt * pen;
         if (motor && live) c += dt * this.wEnergy * t2 * v0 / this.eta;   // electric energy of the step
         var hit = live && hc < 0.0;
@@ -681,6 +707,20 @@ function mpcFactory() {
     }
     return out;
   };
+  // the smooth modes of one sample added to its cl and mu perturbations at eps[o .. o + 2 nc):
+  // smoothGain sigma / sqrt(M) times z @ basis with z standard normal (M per control)
+  Planner.prototype.smoothNoise = function (eps, o) {
+    var nc = this.nCtrl, M = this.smoothModes, sig = [this.sigmaCl, this.sigmaMu], r, m, j;
+    for (r = 0; r < 2; r++) {
+      var z = new Float64Array(M), f = this.smoothGain * sig[r] / Math.sqrt(M);
+      for (m = 0; m < M; m++) z[m] = this.rng.next();
+      for (j = 0; j < nc; j++) {
+        var acc = 0;
+        for (m = 0; m < M; m++) acc += z[m] * this.basis[m][j];
+        eps[o + r * nc + j] += f * acc;
+      }
+    }
+  };
   // constant-control plans always in the sample set (sim.mpc.MPPIPlanner._candidates)
   Planner.prototype.candidates = function () {
     var ac = this.ac, nc = this.nCtrl, nu = this.nu, out = [];
@@ -745,6 +785,7 @@ function mpcFactory() {
         for (i = 0; i < S; i++) {
           for (j = 0; j < nc; j++) eps[i * nu * nc + j] = this.rng.next() * this.sigmaCl;
           for (j = 0; j < nc; j++) eps[i * nu * nc + nc + j] = this.rng.next() * this.sigmaMu;
+          if (this.smoothModes) this.smoothNoise(eps, i * nu * nc);
           if (this.motor) this.thrustNoise(eps, i * nu * nc + 2 * nc);
         }
       }
@@ -934,7 +975,7 @@ function mpcFactory() {
     };
   }
 
-  return { G: G, wrap: wrap, interp: interp, DEFAULTS: DEFAULTS, makeAircraft: makeAircraft,
+  return { G: G, wrap: wrap, interp: interp, linspace: linspace, unwrap: unwrap, clamp: clamp, DEFAULTS: DEFAULTS, makeAircraft: makeAircraft,
     SeaWorld: SeaWorld, flatWorld: flatWorld, makeWorld: makeWorld, limitComponents: limitComponents,
     Actuators: Actuators, actuatorParams: actuatorParams, nLimitedCl: nLimitedCl,
     Cycle: Cycle, pickCycle: pickCycle, Guide: Guide, Planner: Planner, Controller: Controller,
