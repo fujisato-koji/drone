@@ -265,6 +265,12 @@ between the speed floor (v_factor x stall speed, v_factor 1.2 like the margins) 
 (STEADY_CAP x the best glide speed), with the thrust at most STEADY_THRUST_FRAC of the maximum and a
 speed made good of at least min_vmg. Cross track error is corrected by turning the track towards the
 line by atan(e / lookahead) up to max_turn (a proportional guidance with a limit).
+
+Over swell (Q-073; datum "msl", default "surface" as above): the leg holds a constant height above the mean
+sea level, height + crest_m, where crest_m is the elevation of the highest crest of the sea, so that the
+leg keeps at least height above every crest and does not ride up and down with the swell. A leg that holds
+its height above the local surface follows the swell into the troughs, and its height tolerance competes
+with the heading in the planner's cost, which turned the course off the line over a 3 m swell.
 """
 
 STEADY_HEIGHT_M = 10.0
@@ -297,6 +303,13 @@ class SteadyModel:
     lookahead: float = STEADY_LOOKAHEAD_M
     max_turn_deg: float = STEADY_MAX_TURN_DEG
     v_step: float = STEADY_V_STEP
+    datum: str = "surface"      # "surface": height above the local surface; "msl": above the mean sea level
+    crest_m: float = 0.0        # datum "msl": elevation of the highest crest above the mean sea level, m
+    heading_tau_s: float = 0.0  # > 0: the planner's nominal banks to null the heading error in about this time (s)
+
+    def ref_height(self):
+        """The leg's reference height above its datum (see STEADY_NOTES)."""
+        return self.height + self.crest_m if self.datum == "msl" else self.height
 
     @classmethod
     def from_aircraft(cls, ac):
@@ -392,7 +405,8 @@ class HullNavigator:
             return None
         pt = HullPoint(lg["ground"][0], lg["ground"][1], lg["power"], "motor", "steady", None, 1,
                        dict(V=lg["V"], cl=lg["cl"], thrust=lg["thrust"], heading=lg["heading"],
-                            height=self.steady.height))
+                            height=self.steady.ref_height(), datum=self.steady.datum,
+                            heading_tau_s=self.steady.heading_tau_s))
         return pt, lg
 
     def _steady_finish(self, psi, r, dist, e, E, t):

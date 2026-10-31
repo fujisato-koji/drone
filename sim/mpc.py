@@ -1217,6 +1217,7 @@ def dominant_wave(world):
 STEADY_SIG_H = 0.5         # m; height tolerance of the match to a steady reference
 STEADY_SIG_PSI = 0.04       # rad; heading tolerance of the match to a steady reference
 STEADY_W_D = 200.0         # terminal weight of the match to a steady reference
+STEADY_HOLD_MU_MAX = 0.35  # rad; bank limit of the heading correction in the nominal of a steady reference
 
 
 class CycleGuide:
@@ -1236,7 +1237,10 @@ class CycleGuide:
         sg = self.SIG if sig is None else sig      # sig: (h m, V m/s or None, gamma, heading rad) of the match
         self.sig = (sg[0], sg[1] or 0.25 * cycle.v_mean, sg[2], sg[3])
         x, y, z, V, g, psi = (float(v) for v in s)
-        eta = float(world.surface(x, y, t)[0])
+        # a steady leg over swell holds its height above the mean sea level (datum "msl", Q-073), else the height is
+        # above the local surface
+        self.msl = cycle.d.get("datum") == "msl"
+        eta = 0.0 if self.msl else float(world.surface(x, y, t)[0])
         self.h0 = z - eta
         feat = np.array([self.h0, V, g, wrap(psi - psi_w)])
         T = cycle.T
@@ -1284,9 +1288,21 @@ class CycleGuide:
             # reference energy, so that sinking back to the reference height from above is not penalised (with
             # the gain measured from the present energy the planner stayed where it had climbed to)
             self.dE_c = float(cycle.energy(te) - self.E0)
+        # a steady reference with heading_tau_s > 0: the nominal banks so that the heading error at the plan time
+        # decays with that time constant (a coordinated turn, tan mu = V dpsi / (g tau)), so that the samples are
+        # centred on a heading correction (Q-073)
+        self.hold = None
+        tau_h = float(cycle.d.get("heading_tau_s", 0.0) or 0.0) if cycle.d.get("steady") else 0.0
+        if tau_h > 0.0:
+            self.hold = (float(wrap(psi_w + self.target[3] - psi)), tau_h, V)
 
     def nominal(self, knots_t):
         cl, mu = self.cycle.controls(self.tau_s + np.asarray(knots_t))
+        if self.hold is not None:
+            dpsi, tau_h, V = self.hold
+            kt = np.asarray(knots_t, float)
+            mu = mu + np.arctan(V * dpsi * np.exp(-kt / tau_h) / (G * tau_h))
+            mu = np.clip(mu, -STEADY_HOLD_MU_MAX, STEADY_HOLD_MU_MAX)
         return np.stack([cl, mu])
 
     def nominal_thrust(self, knots_t):
@@ -1295,7 +1311,7 @@ class CycleGuide:
 
     def terminal_cost(self, world, t_end, s, planner):
         x, y, z, V, g, psi = s
-        h = z - np.asarray(world.surface(x, y, np.full(np.shape(x), float(t_end)))[0])
+        h = z if self.msl else z - np.asarray(world.surface(x, y, np.full(np.shape(x), float(t_end)))[0])
         ht, Vt, gt, pt = self.target
         d2 = (((h - ht) / self.sig[0]) ** 2 + ((V - Vt) / self.sig[1]) ** 2
               + ((g - gt) / self.sig[2]) ** 2 + (wrap(psi - self.psi_w - pt) / self.sig[3]) ** 2)
@@ -1331,7 +1347,7 @@ class WaveCycleGuide:
     Same interface as CycleGuide (nominal, nominal_thrust, terminal_cost, tau0, tau_s, match_dist, delta)."""
 
     def __init__(self, cycle, world, t, s, psi_w, horizon, w_d=10.0, sig=None, sig_theta=None,
-                 tau_hint=None, hint_window=0.2, w_run=0.0):
+                 tau_hint=None, hint_window=0.2, w_run=0.0, face=None):
         self.cycle, self.psi_w, self.H, self.w_d = cycle, psi_w, horizon, w_d
         self.w_run, self.t_plan = float(w_run), float(t)
         crest = bool(cycle.d.get("crest"))
@@ -1339,6 +1355,12 @@ class WaveCycleGuide:
         self.sig = (sg[0], sg[1] or 0.25 * cycle.v_mean, sg[2], sg[3])
         self.sig_theta = float((WAVE_CREST_SIG_THETA if crest else WAVE_SIG_THETA) if sig_theta is None
                                else sig_theta)
+        # forward-face guide of a crest ride (face: a dict, see FACE_GUIDE; None: off): the wave-phase error is
+        # asymmetric, a phase ahead of the ride (further down the forward face, where the updraft is stronger) is
+        # tolerated with sig_ahead and one behind it (towards the crest, where the ride loses its updraft and the
+        # aircraft slides back over the crest) with sig_behind; the member of the family is not taken above the
+        # aircraft while it is behind the ride's phase (the climb would cost the speed that holds the phase)
+        self.face = dict(face) if (face and crest) else None
         sw = world_swell(world)
         if sw is None or not cycle.wave:
             raise ValueError("WaveCycleGuide needs a wave cycle and a world with waves")
@@ -1348,14 +1370,20 @@ class WaveCycleGuide:
         # a crest ride with its family of rides over the height (sim.wavelib.crest_ride): the member at the
         # aircraft's height plus CREST_CLIMB_M (clipped to the family); it is steady, so it replaces the cycle
         self.member = None
+        th_a = self.theta_world(x, y, t)
         fam = (cycle.d.get("ride") or {}).get("family") if cycle.d.get("crest") else None
         if fam:
             F = np.asarray(fam, float)
-            hm = float(np.clip(self.h0 + CREST_CLIMB_M, F[0, 0], F[-1, 0]))
+            climb = CREST_CLIMB_M
+            if self.face is not None:
+                # behind the phase of the ride at the aircraft's own height: no climb (the face guide)
+                th_own = float(np.interp(np.clip(self.h0, F[0, 0], F[-1, 0]), F[:, 0], F[:, 1]))
+                if float(wrap(th_a - th_own)) < 0.0:
+                    climb = float(self.face.get("climb_behind", 0.0))
+            hm = float(np.clip(self.h0 + climb, F[0, 0], F[-1, 0]))
             r = [float(np.interp(hm, F[:, 0], F[:, j])) for j in range(6)]
             sgn = -1.0 if cycle.mirror else 1.0
             self.member = (r[0], r[2], r[3], float(wrap(sgn * r[4])), r[1], r[5])   # h, V, gamma, psi, theta, cl
-        th_a = self.theta_world(x, y, t)
         T = cycle.T
         taus = np.linspace(0.0, T, 160, endpoint=False)
         st = np.array([self._state(tau) for tau in taus])
@@ -1407,14 +1435,37 @@ class WaveCycleGuide:
         ht, Vt, gt, pt = ref
         d2 = (((h - ht) / self.sig[0]) ** 2 + ((V - Vt) / self.sig[1]) ** 2
               + ((g - gt) / self.sig[2]) ** 2 + (wrap(psi - self.psi_w - pt) / self.sig[3]) ** 2
-              + (wrap(self.theta_world(x, y, t) - theta_ref) / self.sig_theta) ** 2)
+              + self._phase2(wrap(self.theta_world(x, y, t) - theta_ref)))
         return d2, h
 
+    def _phase2(self, d):
+        """Squared, normalised wave-phase error d (aircraft minus reference, rad): symmetric with sig_theta, or with
+        the forward-face guide sig_ahead for d > 0 and sig_behind for d < 0."""
+        if self.face is None:
+            return (d / self.sig_theta) ** 2
+        sg = np.where(d >= 0.0, self.face.get("sig_ahead", self.sig_theta), self.face.get("sig_behind", self.sig_theta))
+        return (d / sg) ** 2
+
     def running_cost(self, world, t, s):
-        """w_run times the squared distance from the cycle at the same time (cost per second; 0 when w_run is 0)."""
+        """w_run times the squared distance from the cycle at the same time (cost per second; 0 when w_run is 0), plus
+        the forward-face barrier of a crest ride (face_barrier)."""
         tau = self.tau_s + (t - self.t_plan)
         d2, _ = self._d2(world, t, s, self._state(tau), float(self._theta(tau)))
-        return self.w_run * d2
+        out = self.w_run * d2
+        if self.face is not None and self.face.get("barrier_w", 0.0) > 0.0:
+            out = out + self.face["barrier_w"] * self.face_barrier(self.theta_world(s[0], s[1], t))
+        return out
+
+    def face_barrier(self, theta):
+        """Bounded barrier (0 to 1) on the wave phase at the aircraft (0 at the crest, positive down the forward face):
+        0 more than barrier_m (rad) down the face, rising quadratically to 1 at the crest, 1 behind the crest to a
+        quarter wavelength back, falling linearly to 0 at the trough behind; it pulls the aircraft back down the face
+        before it slides over the crest, and it is bounded so that it never outweighs a contact."""
+        m = float(self.face.get("barrier_m", 0.3))
+        th = wrap(np.asarray(theta, float))
+        face = np.clip((m - th) / m, 0.0, 1.0) ** 2
+        back = np.clip((th + np.pi) / (0.5 * np.pi), 0.0, 1.0)
+        return np.where(th >= 0.0, face, back)
 
     def terminal_cost(self, world, t_end, s, planner):
         d2, h = self._d2(world, t_end, s, self.target, self.theta_t)
@@ -1505,6 +1556,227 @@ class Reflex:
         return float(np.clip(cl, ac.cl_min, ac.cl_max)), 0.0, self.t_max
 
 
+REFLEX2_TRIGGER_W = tuple(0.25 * i for i in range(13))     # closing rates (m/s) of the trigger-gap table
+REFLEX2_TRIGGER_BANK_DEG = (15.0, 30.0, 45.0, 62.0)          # banks of the table (the last near 0.9 of the limit)
+REFLEX2_TRIGGER_V = (1.2, 1.6, 2.2)                          # airspeeds of the table, in stall speeds
+REFLEX2_RATE_WINDOW_S = 0.05     # the closing rate is the change of the range reading over this window
+_TRIGGER_TABLES = {}
+
+
+def tip_trigger_table(ac):
+    """The range trigger at the wingtip for the aircraft (cached): gaps[i_bank, i_V, i_w], the gap at which the reflex
+    must start so that the roll-out towards wings level keeps the immersion within ctrl.reflex2_tip_depth_m when the
+    gap closes at the rate w (sim.skid.latest_start: the load factor held at 1, the sea rising above the tip by up to
+    skid.req_range_span_m), counting the range sensor's latency, the processing and the actuator delay
+    (skid.req_range_latency_s, skid.sense_process_s, ctrl.actuator_delay_s); docs/02-form.md#wingtip-skim. Gaps
+    beyond the sensor's span are kept as computed (the trigger then fires as soon as the reading is in range)."""
+    key = ac.name
+    if key not in _TRIGGER_TABLES:
+        from sim import skid
+        from sim.record import value
+        lat = (value("skid.req_range_latency_s", 0.005) + value("skid.sense_process_s", 0.01)
+               + value("ctrl.actuator_delay_s", 0.05))
+        dmax = value("ctrl.reflex2_tip_depth_m", 0.01)
+        span_r = value("skid.req_range_span_m", 0.45)
+        G3 = np.zeros((len(REFLEX2_TRIGGER_BANK_DEG), len(REFLEX2_TRIGGER_V), len(REFLEX2_TRIGGER_W)))
+        for i, bank in enumerate(REFLEX2_TRIGGER_BANK_DEG):
+            for j, vf in enumerate(REFLEX2_TRIGGER_V):
+                for k, w in enumerate(REFLEX2_TRIGGER_W):
+                    if w <= 0.0:
+                        continue
+                    r = skid.latest_start(bank, vf * ac.v_stall, ac.span, 1.0, span_r, w, dmax, lat)
+                    G3[i, j, k] = 10.0 * span_r if r["trigger_gap_m"] is None else float(r["trigger_gap_m"])
+        _TRIGGER_TABLES[key] = G3
+    return _TRIGGER_TABLES[key]
+
+
+def tip_trigger_gap(ac, table, bank, V, w):
+    """Trigger gap (m) at the bank (rad, its magnitude), the airspeed and the closing rate, interpolated in the table
+    (clamped to its edges)."""
+    b = float(np.clip(np.degrees(abs(bank)), REFLEX2_TRIGGER_BANK_DEG[0], REFLEX2_TRIGGER_BANK_DEG[-1]))
+    v = float(np.clip(V / ac.v_stall, REFLEX2_TRIGGER_V[0], REFLEX2_TRIGGER_V[-1]))
+    w = float(np.clip(w, 0.0, REFLEX2_TRIGGER_W[-1]))
+    gw = np.array([[np.interp(w, REFLEX2_TRIGGER_W, table[i, j]) for j in range(table.shape[1])]
+                   for i in range(table.shape[0])])
+    gb = np.array([np.interp(b, REFLEX2_TRIGGER_BANK_DEG, gw[:, j]) for j in range(gw.shape[1])])
+    return float(np.interp(v, REFLEX2_TRIGGER_V, gb))
+
+
+class Reflex2:
+    """The redesigned reflex (Q-068, D-019; fly_mpc(reflex="v2")): a supervisor over the planner's commands at every
+    control step. It fires on
+
+    - the prediction of the plan (the next ctrl.reflex_horizon_s with the plan's own schedule, in the planner's world,
+      so over waves it sees the waves the planner sees): the centre below ctrl.reflex_clearance_m ("centre"), a
+      wingtip in the water ("tip"), or a stall ("stall"): the airspeed below ctrl.reflex2_v_frac times the stall
+      speed at the load factor the path needs, v_stall sqrt(cos gamma), the speed below which the wing at its
+      largest lift coefficient no longer carries the weight across the path (the plan's own load factor cannot pass
+      the wing's in the point mass, so the test is on what the path needs; 0.95 lies below the planner's own speed
+      floor of 1.1 stall speeds, K-015);
+    - the range reading from the low wingtip to the water ("range", the primary tip trigger of D-019): the truth plus
+      Gaussian noise of skid.req_range_accuracy_m, sampled at skid.req_range_rate_hz and read
+      skid.req_range_latency_s plus skid.sense_process_s late; it fires when the reading is below the trigger gap of
+      the closing rate read over REFLEX2_RATE_WINDOW_S (tip_trigger_table), and never above
+      skid.req_range_span_m;
+    - the wet sensor at the tip ("wet", the last resort): the tip in the water for skid.req_wet_latency_s plus
+      skid.sense_process_s.
+
+    The override is scaled with the attitude, never a fixed lift coefficient with full thrust: wings level (the
+    actuators roll at their full rate), a load factor from the flight path, n = cos gamma + k (gamma* - gamma) with
+    k ctrl.reflex2_gamma_gain_per_rad and gamma* ctrl.reflex2_gamma_target_deg (below it, for a tip event, at least
+    the present load factor is held, as the skim study's time budget assumes), at most 0.8 n_max, so the aircraft
+    climbs away at a moderate angle and does not zoom; for a stall gamma* is ctrl.reflex2_gamma_stall_deg (unload
+    to regain speed); the thrust is full at or below level flight and falls to zero at a climb of
+    ctrl.reflex2_thrust_zero_deg, so there is no thrust past the vertical. Once fired it holds for at least
+    ctrl.reflex2_hold_s and returns control to the planner at the first step after that where nothing fires."""
+
+    CAUSES = ("centre", "tip", "stall", "range", "wet")
+
+    def __init__(self, aircraft, t_max, fold_dcd, n_limit=True, fold_switch="smooth", seed=0, sensor=True):
+        from sim.record import value
+        self.ac, self.t_max, self.fold_dcd, self.n_limit = aircraft, float(t_max), fold_dcd, n_limit
+        self.fold_switch = fold_switch
+        self.horizon_s = float(value("ctrl.reflex_horizon_s", 1.5))
+        self.clearance_m = float(value("ctrl.reflex_clearance_m", 0.3))
+        self.v_frac = float(value("ctrl.reflex2_v_frac", 0.95))
+        self.gamma_t = float(np.radians(value("ctrl.reflex2_gamma_target_deg", 10.0)))
+        self.gamma_s = float(np.radians(value("ctrl.reflex2_gamma_stall_deg", -5.0)))
+        self.k_gamma = float(value("ctrl.reflex2_gamma_gain_per_rad", 3.0))
+        self.gamma_T0 = float(np.radians(value("ctrl.reflex2_thrust_zero_deg", 30.0)))
+        self.hold_s = float(value("ctrl.reflex2_hold_s", 0.2))
+        self.n_frac = MARGIN_SETS[0][1][1]
+        self.dt = REFLEX_DT
+        self.n = int(round(self.horizon_s / self.dt))
+        self.sensor = bool(sensor)
+        self.sigma = float(value("skid.req_range_accuracy_m", 0.005))
+        self.rate_hz = float(value("skid.req_range_rate_hz", 200.0))
+        self.lat = float(value("skid.req_range_latency_s", 0.005)) + float(value("skid.sense_process_s", 0.01))
+        self.wet_lat = float(value("skid.req_wet_latency_s", 0.005)) + float(value("skid.sense_process_s", 0.01))
+        self.span_r = float(value("skid.req_range_span_m", 0.45))
+        self.table = tip_trigger_table(aircraft)
+        self.rng = np.random.default_rng(seed + 7000)
+        self.reset()
+
+    def reset(self):
+        self.hist_t, self.hist_g = [], []         # true gap of the low tip at each step
+        self.reads = []                           # (time of the reading, reading m)
+        self.next_read = 0.0
+        self.wet_since = None
+        self.on_until = -np.inf
+        self.last_cause = None
+        self.last_reading = None
+        self.bank, self.V = 0.0, 1.2 * self.ac.v_stall
+
+    # -- sensors ----------------------------------------------------------------------------
+    def sense(self, t, gap, bank=0.0, V=None):
+        """Feed the true gap of the low tip (m above the local surface, negative in the water) at time t, with the
+        bank and the airspeed (for the trigger gap); samples the range sensor at its rate with its latency and noise
+        and tracks the time the tip is wet."""
+        self.bank, self.V = float(bank), float(self.ac.v_stall * 1.2 if V is None else V)
+        self.hist_t.append(float(t))
+        self.hist_g.append(float(gap))
+        if len(self.hist_t) > 400:
+            del self.hist_t[:200]
+            del self.hist_g[:200]
+        while self.next_read <= t + 1e-12:
+            tr = self.next_read - self.lat
+            g = float(np.interp(tr, self.hist_t, self.hist_g)) if self.hist_t[0] <= tr else self.hist_g[0]
+            self.reads.append((self.next_read, g + self.sigma * float(self.rng.standard_normal())))
+            self.next_read += 1.0 / self.rate_hz
+        if len(self.reads) > 200:
+            del self.reads[:100]
+        if gap < 0.0:
+            self.wet_since = t if self.wet_since is None else self.wet_since
+        else:
+            self.wet_since = None
+
+    def tip_check(self, t):
+        """("range" | "wet", reading m, closing rate m/s) when the tip sensors fire, else None."""
+        if not self.sensor or not self.reads:
+            return None
+        if self.wet_since is not None and t - self.wet_since >= self.wet_lat - 1e-12:
+            return ("wet", self.reads[-1][1], 0.0)
+        tr, g = self.reads[-1]
+        old = [r for r in self.reads if r[0] <= tr - REFLEX2_RATE_WINDOW_S + 1e-12]
+        w = 0.0 if not old else (old[-1][1] - g) / (tr - old[-1][0])
+        self.last_reading = (g, w)
+        if g > self.span_r:
+            return None
+        trig = tip_trigger_gap(self.ac, self.table, self.bank, self.V, w)
+        if g < max(trig, 2.0 * self.sigma):
+            return ("range", g, w)
+        return None
+
+    # -- prediction -------------------------------------------------------------------------
+    def predict(self, world, t, s, knots_t, cl_k, mu_k, th_k, tau):
+        """First violation of the prediction (as Reflex.predict, with the tests of this class): (cause, seconds
+        ahead, centre height, tip height, airspeed) or None."""
+        ac, dt, n = self.ac, self.dt, self.n
+        taus = tau + np.arange(2 * n + 1) * dt / 2.0
+        cl = np.clip(np.interp(taus, knots_t, cl_k), ac.cl_min, ac.cl_max)
+        mu = np.clip(np.interp(taus, knots_t, mu_k), -ac.mu_max, ac.mu_max)
+        T = (np.clip(np.interp(taus, knots_t, th_k), 0.0, self.t_max) if th_k is not None
+             else np.zeros_like(taus))
+        st = np.asarray(s, float)[:, None]
+        kw = dict(n_limit=self.n_limit)
+        fd = [self.fold_dcd if self.fold_switch == "smooth"
+              else float(fold_effective(ac, self.fold_dcd, T[j], T[j])) for j in range(2 * n + 1)]
+        for i in range(n + 1):
+            tt = t + i * dt
+            x, y, z, V, g, _ = st[:, 0]
+            h = z - float(world.surface(x, y, tt)[0])
+            tip = h - 0.5 * ac.span * np.sin(abs(mu[2 * i])) * np.cos(g)
+            v_lim = self.v_frac * ac.v_stall * np.sqrt(max(np.cos(g), 0.0))
+            cause = ("centre" if h < self.clearance_m else "tip" if tip < 0.0
+                     else "stall" if V < v_lim else None)
+            if cause is not None:
+                return (cause, i * dt, float(h), float(tip), float(V))
+            if i == n:
+                break
+            k1 = derivatives_vec(tt, st, ac, world, cl[2 * i:2 * i + 1], mu[2 * i:2 * i + 1],
+                                 thrust=T[2 * i], fold_dcd=fd[2 * i], **kw)
+            km = derivatives_vec(tt + dt / 2, st + dt / 2 * k1, ac, world,
+                                 cl[2 * i + 1:2 * i + 2], mu[2 * i + 1:2 * i + 2],
+                                 thrust=T[2 * i + 1], fold_dcd=fd[2 * i + 1], **kw)
+            st = st + dt * km
+            if not np.all(np.isfinite(st)):
+                return ("stall", (i + 1) * dt, float("nan"), float("nan"), float("nan"))
+        return None
+
+    # -- the supervisor ---------------------------------------------------------------------
+    def check(self, world, t, s, knots_t, cl_k, mu_k, th_k, tau):
+        """The cause that fires now (the prediction first, then the tip sensors), "hold" while the last firing is
+        held, or None: (cause, seconds ahead, centre height, tip height or reading, airspeed)."""
+        hit = self.predict(world, t, s, knots_t, cl_k, mu_k, th_k, tau)
+        if hit is None:
+            sh = self.tip_check(t)
+            if sh is not None:
+                hit = (sh[0], 0.0, float("nan"), float(sh[1]), float(s[3]))
+        if hit is not None:
+            self.on_until = t + self.hold_s
+            self.last_cause = hit[0]
+            return hit
+        if t < self.on_until - 1e-12:
+            return ("hold", 0.0, float("nan"), float("nan"), float(s[3]))
+        return None
+
+    def override(self, s, cause, n_now):
+        """(cl, mu, thrust) of the override at state s for the cause (see the class notes); n_now: the load factor
+        flown now."""
+        ac = self.ac
+        V, g = float(s[3]), float(s[4])
+        if cause == "hold":
+            cause = self.last_cause or "centre"
+        g_star = self.gamma_s if cause == "stall" else self.gamma_t
+        n_path = float(np.cos(g) + self.k_gamma * (g_star - g))
+        n_cmd = max(n_path, float(n_now)) if (cause in ("range", "wet", "tip") and g < g_star) else n_path
+        n_cmd = float(np.clip(n_cmd, 0.0, self.n_frac * ac.n_max))
+        q = 0.5 * ac.rho * V * V * ac.wing_area
+        cl = float(np.clip(n_cmd * ac.mass * G / max(q, 1e-9), ac.cl_min, ac.cl_max))
+        thrust = self.t_max * float(np.clip((self.gamma_T0 - g) / self.gamma_T0, 0.0, 1.0))
+        return cl, 0.0, thrust
+
+
 # ---------------------------------------------------------------------------------------------
 # closed loop on the true dynamics
 # ---------------------------------------------------------------------------------------------
@@ -1563,7 +1835,7 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             suite="standard", profile_fit="two_param", actuators=None, n_limit=False,
             log_every_s=5.0, stop_on_tip=False, library_path=None, motor=False, w_energy=None, reflex=False,
             true_fold_switch=None, target=None, navigator=None, nav_kw=None, nav_hull=None, guide_sig=None,
-            plan_hook=None, wave_library=None, start_entry=None, planner_world=None):
+            plan_hook=None, wave_library=None, start_entry=None, planner_world=None, tip_depth_m=None):
     """Closed loop: true dynamics (rk4, dt), planner every replan_s in the chosen world model.
 
     world_model: "truth" | "flat" | "estimated". sensors: list of SurfaceSensor (used only for
@@ -1614,6 +1886,12 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     commands with full thrust and a pull-up while the plan is predicted to leave 0.3 m of clearance
     or 1.05 stall speeds within 1.5 s. The metrics then also hold out["reflex"]: the number of
     reflexes, their causes, durations and electric energy (also counted in out["motor"]).
+    reflex "v2": the redesigned Reflex2 (the tests of the plan's prediction in the planner's world, the range reading
+    and the wet sensor at the low wingtip, an override scaled with the attitude), with the same record.
+
+    tip_depth_m (default None; with stop_on_tip): the run ends when the low wingtip is deeper in the water than this
+    (the skid's depth, D-018) instead of at the first contact; out["tip_wet"] then holds the deepest immersion and the
+    time the tip was in the water.
     """
     from sim.seasense import LocalWaveEstimator
     if reflex and not motor:
@@ -1668,8 +1946,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         if start_entry is not None:
             c0 = cyc_start = Cycle(start_entry)
         k0 = int(np.argmax(c0.z))
-        s = np.array([0.0, 0.0, float(env_true.surface(0.0, 0.0, 0.0)[0]) + c0.z[k0], c0.V[k0],
-                      c0.g[k0], psi_w + c0.psi[k0]])
+        z_d = 0.0 if c0.d.get("datum") == "msl" else float(env_true.surface(0.0, 0.0, 0.0)[0])
+        s = np.array([0.0, 0.0, z_d + c0.z[k0], c0.V[k0], c0.g[k0], psi_w + c0.psi[k0]])
     use_est = state_source == "estimate" or wind_source == "estimate"
     if state_source not in ("truth", "estimate") or wind_source not in ("truth", "estimate"):
         raise ValueError("state_source and wind_source must be 'truth' or 'estimate'")
@@ -1710,7 +1988,10 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     ph_ref = None                                   # (tau_s, period, low-point fraction, plan time)
     T_a = 0.0
     fold_state = (pl.fold_switch if true_fold_switch is None else true_fold_switch) == "state" if motor else False
-    rf = Reflex(ac, pl.t_max, pl.fold_dcd, n_limit, pl.fold_switch) if reflex else None
+    rf2 = reflex == "v2"
+    rf = ((Reflex2(ac, pl.t_max, pl.fold_dcd, n_limit, pl.fold_switch, seed=seed) if rf2
+           else Reflex(ac, pl.t_max, pl.fold_dcd, n_limit, pl.fold_switch)) if reflex else None)
+    wet_depth, wet_s = 0.0, 0.0
     rf_events, rf_cur, world = [], None, None
     cyc_prev, switch_wait_t = None, None
     wave_switches = []
@@ -1723,7 +2004,10 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         if nav is not None and math.hypot(target[0] - s[0], target[1] - s[1]) <= nav.arrival_radius:
             ended = "arrived"
             break
-        if stop_on_tip and wingtip_height(ac, s[2], eta_t, s[4], mu_a) < 0.0:
+        tip_now = wingtip_height(ac, s[2], eta_t, s[4], mu_a)
+        if tip_now < 0.0:
+            wet_depth, wet_s = max(wet_depth, -float(tip_now)), wet_s + dt
+        if stop_on_tip and tip_now < (0.0 if tip_depth_m is None else -float(tip_depth_m)):
             ended = "tip contact"
             break
         if not np.all(np.isfinite(s)):
@@ -1890,12 +2174,20 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             n_prelude += 1
             cl, mu = ac.cl_best_ld, np.radians(20.0) * (1.0 if int(t // 10.0) % 2 == 0 else -1.0)
         rx_on = False
+        if reflex and rf2:
+            rf.sense(t, tip_now, mu_a, s[3])
         if reflex and ready:
-            hit = rf.predict(world, t, s, plan.knots_t, plan.cl_knots, plan.mu_knots,
-                             plan.thrust_knots, t - t_plan)
+            if rf2:
+                hit = rf.check(world, t, s, plan.knots_t, plan.cl_knots, plan.mu_knots, plan.thrust_knots, t - t_plan)
+            else:
+                hit = rf.predict(world, t, s, plan.knots_t, plan.cl_knots, plan.mu_knots,
+                                 plan.thrust_knots, t - t_plan)
             if hit is not None:
                 rx_on = True
-                cl, mu, _ = rf.override(s)
+                if rf2:
+                    cl, mu, T_rx = rf.override(s, hit[0], NN[-1] if NN else 1.0)
+                else:
+                    cl, mu, _ = rf.override(s)
                 if rf_cur is None:
                     rf_cur = {"t_s": t, "cause": hit[0], "ahead_s": hit[1], "h_m": hit[2],
                               "tip_m": hit[3], "v_ms": hit[4], "duration_s": 0.0, "energy_j": 0.0}
@@ -1903,7 +2195,7 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
         if n_limit:
             cl = n_limited_cl(ac, s[3], cl)       # commanded cl is held to the limit
         if motor:
-            T_cmd = (pl.t_max if rx_on else
+            T_cmd = ((T_rx if rf2 else pl.t_max) if rx_on else
                      float(np.clip(plan.thrust(t - t_plan), 0.0, pl.t_max)) if ready else 0.0)
             cl_a, mu_a = ((cl, mu) if actuators is None
                           else actuators.step(cl, mu, dt, s[3], thrust=T_cmd))
@@ -1989,9 +2281,12 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             "n": len(rf_events), "total_s": float(sum(e["duration_s"] for e in rf_events)),
             "energy_j": ej, "avg_power_w": ej / max(len(T) * dt, dt),
             "causes": {c: sum(1 for e in rf_events if e["cause"] == c)
-                       for c in ("centre", "tip", "stall")},
+                       for c in (Reflex2.CAUSES if rf2 else ("centre", "tip", "stall"))},
+            "version": "v2" if rf2 else "v1",
             "horizon_s": rf.horizon_s, "clearance_m": rf.clearance_m, "v_frac": rf.v_frac,
             "events": rf_events[:60]}
+    if tip_depth_m is not None:
+        out["tip_wet"] = {"depth_max_m": wet_depth, "wet_s": wet_s, "limit_m": float(tip_depth_m)}
     if use_est:
         out["t_ready_s"] = t_ready
         out["prelude_s"] = n_prelude * dt
@@ -2034,7 +2329,8 @@ def steady_entry(pt):
                         "period": P, "t": t, "x": [pt.vx * v for v in t], "y": [pt.vy * v for v in t],
                         "z": [st["height"]] * n, "V": [st["V"]] * n, "gamma": [0.0] * n, "psi": [psi] * n,
                         "cl": [st["cl"]] * n, "mu": [0.0] * n, "thrust": [st["thrust"]] * n,
-                        "power_avg_w": pt.power}
+                        "power_avg_w": pt.power, "datum": st.get("datum", "surface"),
+                        "heading_tau_s": float(st.get("heading_tau_s", 0.0))}
     return st["_entry"]
 
 
@@ -2053,7 +2349,8 @@ def _guide_for(cyc, world, t, s, psi, pl, wave_aware, guide_sig, wave_library, t
                               w_d=getattr(wave_library, "w_d", None) or pl.w_d,
                               sig=getattr(wave_library, "sig", None),
                               sig_theta=getattr(wave_library, "sig_theta", None), tau_hint=tau_hint,
-                              w_run=getattr(wave_library, "w_run", WAVE_W_RUN))
+                              w_run=getattr(wave_library, "w_run", WAVE_W_RUN),
+                              face=getattr(wave_library, "face", None))
     return CycleGuide(cyc, world, t, s, psi, pl.horizon_s, wave_aware=wave_aware, w_d=pl.w_d, sig=guide_sig,
                       tau_hint=tau_hint)
 NAV_UPDATE_S = 5.0          # the navigator is called this often (s)
@@ -3018,6 +3315,12 @@ def main():
     ap.add_argument("--wave-sense-exp", action="store_true", help="the planner's sea known with an error (sim.wavelib)")
     ap.add_argument("--wave-nav-exp", action="store_true", help="a navigation run over swell (sim.wavelib)")
     ap.add_argument("--rebuild-crest-rides", action="store_true", help="the wave library's crest rides afresh (sim.wavelib)")
+    ap.add_argument("--wave-leg-exp", action="store_true", help="the powered leg over swell in navigation (sim.wavelib)")
+    ap.add_argument("--leg-only", default="", help="cases of --wave-leg-exp by index, joined by commas")
+    ap.add_argument("--reflex-exp", action="store_true", help="constructed dives and contacts with the reflexes (sim.reflex)")
+    ap.add_argument("--wave-pilot-exp", action="store_true", help="the closed loop over swell with the pilot's trials (sim.wavelib)")
+    ap.add_argument("--pilot-reflex", default="", help="--wave-pilot-exp: fly the runs with this reflex (v2)")
+    ap.add_argument("--pilot-key", default="", help="--wave-pilot-exp: key of the out file for the runs")
     a = ap.parse_args()
     if a.wave_diagnosis:
         from sim.wavelib import diagnosis_main
@@ -3043,6 +3346,18 @@ def main():
     if a.wave_nav_exp:
         from sim.wavelib import wave_nav_main
         wave_nav_main(a)
+        return
+    if a.wave_leg_exp:
+        from sim.wavelib import wave_leg_main
+        wave_leg_main(a)
+        return
+    if a.reflex_exp:
+        from sim.reflex import reflex_exp_main
+        reflex_exp_main(a)
+        return
+    if a.wave_pilot_exp:
+        from sim.wavelib import wave_pilot_main
+        wave_pilot_main(a)
         return
     if a.build_margin_library:
         build_margin_library(workers=a.workers)

@@ -662,7 +662,7 @@ class WavePilot:
     with the largest dense-replay height. entry_filter: an optional callable(entry) -> bool."""
 
     def __init__(self, entries, preset, policy="energy", sig=None, sig_theta=None, entry_filter=None, w_run=None,
-                 w_d=None, flat_entries=None):
+                 w_d=None, flat_entries=None, face=None, choice=None):
         from sim.mpc import WAVE_W_RUN
         self.entries = [e for e in entries if e.get("success")]
         self.preset, self.policy = preset, policy
@@ -672,6 +672,8 @@ class WavePilot:
         self.w_d = w_d
         self.entry_filter = entry_filter
         self.flat_entries = flat_entries   # the flat library: a motor wave entry that needs more power is not flown
+        self.face = face                   # the forward-face guide of the crest rides (sim.mpc.WaveCycleGuide), None: off
+        self.choice = choice               # policy "trial": the key (entry_key) of the entry the trials chose, None: flat
         self._cache = {}
         self.last = None
 
@@ -703,6 +705,8 @@ class WavePilot:
     def choose(self, es, course_rel):
         if not es:
             return None
+        if self.policy == "trial":
+            return next((e for e in es if entry_key(e) == self.choice), None)
         if self.policy == "course":
             return min(es, key=lambda e: (abs((e["course_rel_deg"] - course_rel + 180.0) % 360.0 - 180.0),
                                           e["power_avg_w"]))
@@ -730,7 +734,7 @@ class WavePilot:
         e = self.choose(es, course_rel)
         if e is None:
             return None
-        if e["kind"] == "motor" and self.flat_entries is not None:
+        if e["kind"] == "motor" and self.flat_entries is not None and self.policy != "trial":
             f = flat_reference(self.flat_entries, name, min({x["u10"] for x in self.flat_entries
                                                              if x["aircraft"] == name}, key=lambda v: abs(v - u10)))
             if f is not None and e["power_avg_w"] >= f["power_avg_w"]:
@@ -741,6 +745,82 @@ class WavePilot:
             self._cache[key] = Cycle(e, mirror=mirror)
         self.last = e
         return self._cache[key]
+
+
+def entry_key(e):
+    """Identity of a wave entry within its sea and wind: kind, crest ride or not, course relative to the swell, along-crest
+    speed."""
+    return "%s|%s|%g|%g" % (e["kind"], "crest" if e.get("crest") else "cycle", round(float(e["course_rel_deg"]), 3),
+                            round(float((e.get("ride") or {}).get("v_c", 0.0)), 3))
+
+
+# ---- the pilot's choice by a closed-loop trial (Q-060) ---------------------------------------------------------------
+PILOT_TRIAL_S = 120.0       # s; a trial flies from the run's start for this long
+PILOT_TRIAL_SEED = 2        # the planner's seed in the trials (the runs fly seed 1)
+PILOT_INVALID_W = 1000.0    # W; added to the cost of a trial that broke a margin or left the band
+PILOT_UNREACHED_W = 1.0e5   # W; the cost of an entry the trial did not take (no phase match within the trial)
+PILOT_ENDED_W = 1.0e6       # W; the cost of a trial that ended on the water
+PILOT_FACE = {"sig_ahead": 0.3, "climb_behind": 0.0, "barrier_w": 200.0, "barrier_m": 0.3}
+PILOT_LEG = "msl_hold"      # the flat flight of the runs: the powered leg over swell (Q-073)
+PILOT_KEY = "wave_pilot_exp"
+PILOT_TRIALS_KEY = "wave_pilot_trials"
+
+
+def pilot_candidates(name, hs, d, u10, preset, path=WAVE_LIB_PATH):
+    """Keys of the entries the pilot tries at a sea and wind of the experiment (start along the swell's travel): every
+    entry of the library's nearest sea, one of each mirror pair (along, against and calm seas are symmetric about the
+    swell's travel, so an entry and its mirror image cost the same from that start), and None for the flat leg."""
+    pilot = WavePilot.load(preset, path=path)
+    env = swell_env(u10, hs, WAVE_EXP_TP, d, preset)
+    psi_w = float(np.arctan2(env.wind.ey, env.wind.ex))
+    es, _ = pilot.sea_entries(name, sea_of(env, psi_w), max(u10, CALM_U10))
+    if es and es[0]["direction"] == "across":
+        return sorted({entry_key(e) for e in es}) + [None]
+    pairs = {}
+    for e in sorted(es, key=lambda e: -e["course_rel_deg"]):       # the stored entry of course >= 0 first
+        k = (e["kind"], bool(e.get("crest")), round(abs(e["course_rel_deg"]), 3),
+             round(abs((e.get("ride") or {}).get("v_c", 0.0)), 3))
+        pairs.setdefault(k, entry_key(e))
+    return sorted(pairs.values()) + [None]
+
+
+def run_options(opts):
+    """The keyword settings of a run of the pilot experiment (opts: dict pilot, choice, face, leg, reflex)."""
+    return dict({"pilot": "trial", "choice": None, "face": PILOT_FACE, "leg": PILOT_LEG, "reflex": False}, **(opts or {}))
+
+
+def pilot_trial_job(job):
+    """One trial: (aircraft, hs, direction, u10, preset, key) flown from the run's start for PILOT_TRIAL_S with the entry
+    of that key forced (None: the flat leg), planner seed PILOT_TRIAL_SEED. Returns its summary and cost."""
+    name, hs, d, u10, preset, key = job[:6]
+    opts = dict(job[6]) if len(job) > 6 else {}
+    opts.update(choice=key)
+    r = run_wave_job((name, hs, d, u10, preset, PILOT_TRIAL_S, None, opts), seed=PILOT_TRIAL_SEED)
+    return {"aircraft": name, "hs": hs, "direction": d, "u10": u10, "preset": preset, "key": key,
+            "cost_w": trial_cost(r), "ended": r["ended"], "survival_s": r["survival_s"],
+            "valid": bool(r["margins"]["valid"]), "wingtip_min_m": r["margins"]["wingtip_min_m"],
+            "after_entry": r.get("after_entry"), "power_w": r["motor"]["avg_power_w"],
+            "entered": bool(r.get("wave_switches")), "wall_s": r["wall_s"]}
+
+
+def trial_cost(r):
+    """What the loop paid in a trial: the average electric power after the entry (over the whole trial for the flat
+    leg), with PILOT_INVALID_W added when a margin broke, PILOT_UNREACHED_W when the entry was not taken, and
+    PILOT_ENDED_W when the trial ended on the water."""
+    if r["ended"] != "complete":
+        return PILOT_ENDED_W
+    flat = r.get("choice") is None
+    a = r.get("after_entry")
+    if not flat and not a:
+        return PILOT_UNREACHED_W
+    P = float(r["motor"]["avg_power_w"] if flat else a["avg_power_w"])
+    return P + (0.0 if r["margins"]["valid"] else PILOT_INVALID_W)
+
+
+def pilot_choose(trials):
+    """The key of the trial of least cost (None: the flat leg); ties go to the flat leg, then to the key order."""
+    best = min(trials, key=lambda t: (t["cost_w"], t["key"] is not None, str(t["key"])))
+    return best["key"]
 
 
 # ---- the build -------------------------------------------------------------------------------------------------
@@ -903,32 +983,66 @@ def flat_reference(lib_entries, name, u10):
             "speed_along_chi": e["speed_along_chi"]}
 
 
-def flat_start_entry(ac, u10, course_deg):
+def crest_elevation(env, n=721):
+    """Elevation (m above the mean sea level) of the highest crest of the world's dominant swell component: the
+    largest surface elevation along one wavelength through the origin at t = 0 (the second-order crest of a regular
+    swell), 0 without waves."""
+    from sim.mpc import world_swell
+    sw = world_swell(env)
+    if sw is None:
+        return 0.0
+    k, om, dx, dy, ph, a = sw
+    sx = np.linspace(0.0, 2.0 * np.pi / k, n)
+    return float(np.max(np.asarray(env.surface(sx * dx, sx * dy, np.zeros(n))[0], float)))
+
+
+STEADY_HEADING_TAU_S = 2.0     # s; the heading hold of the steady leg over swell (sim.mpc.CycleGuide)
+
+
+def steady_model(ac, env=None, datum="surface", heading_tau_s=0.0):
+    """The navigation's steady motor leg model (sim.navigator.SteadyModel) of the aircraft; with datum "msl" its
+    reference height lies above the mean sea level, raised by the highest crest of env's swell, and with
+    heading_tau_s > 0 the planner's nominal corrects the heading error in about that time (Q-073)."""
+    from sim.navigator import SteadyModel
+    sm = SteadyModel.from_aircraft(ac)
+    if datum == "msl":
+        sm.datum, sm.crest_m = "msl", crest_elevation(env) if env is not None else 0.0
+    sm.heading_tau_s = float(heading_tau_s)
+    return sm
+
+
+def flat_start_entry(ac, u10, course_deg, model=None):
     """The flat flight the runs start from: the navigation's steady motor leg (sim.navigator.SteadyModel, level at
-    10 m above the local surface, the airspeed of least electric energy per metre) along the course (deg from the
-    wind's direction), as a library entry (sim.mpc.steady_entry)."""
+    10 m above the local surface, or with a model of datum "msl" at its height above the mean sea level, the
+    airspeed of least electric energy per metre) along the course (deg from the wind's direction), as a library
+    entry (sim.mpc.steady_entry)."""
     from sim.mpc import steady_entry
     from sim.navigator import HullPoint, SteadyModel
-    sm = SteadyModel.from_aircraft(ac)
+    sm = SteadyModel.from_aircraft(ac) if model is None else model
     c = np.radians(course_deg)
     lg = sm.leg(max(float(u10), CALM_U10), (float(np.cos(c)), float(np.sin(c))))
-    st = {"V": lg["V"], "cl": lg["cl"], "thrust": lg["thrust"], "heading": lg["heading"], "height": sm.height}
+    st = {"V": lg["V"], "cl": lg["cl"], "thrust": lg["thrust"], "heading": lg["heading"], "height": sm.ref_height(),
+          "datum": sm.datum, "heading_tau_s": sm.heading_tau_s}
     pt = HullPoint(lg["ground"][0], lg["ground"][1], lg["power"], "motor", "start", None, 1, st)
     return steady_entry(pt)
 
 
-def run_wave_job(job):
+def run_wave_job(job, seed=1):
     """One closed-loop run over swell: oracle sea (the planner flies the true sea of swell_env), truth state and
     wind, motor on at the middle energy weight, actuators pb2v, load-factor limit, stop on a wingtip contact, reflex
     off, the flat motor library for the start (entry from flat flight) and the wave library (WavePilot, policy
     "energy") over the swell. Returns the metrics of fly_mpc plus the margins (sim.mpc.flight_margins), the power
-    after the entry onto the wave library and the flat-sea comparison."""
+    after the entry onto the wave library and the flat-sea comparison.
+
+    job[7] (optional, run_options): the pilot experiment's settings: pilot "trial" with the chosen entry key (None:
+    stay on the flat leg), the forward-face guide (face), the flat leg (leg, a key of WAVE_LEGS) and the reflex."""
     import time
     from sim.aircraft import Actuators
     from sim.aircraft_models import by_name
     from sim import mpc
     name, hs, d, u10, preset, t_end = job[:6]
     err = job[6] if len(job) > 6 else None      # the planner's sea with an error: ("phase", rad) or ("height", factor)
+    opts = run_options(job[7]) if len(job) > 7 and job[7] is not None else None
     ac = by_name(name)
     env = swell_env(u10, hs, WAVE_EXP_TP, d, preset)
     pw = None
@@ -936,15 +1050,23 @@ def run_wave_job(job):
         pw = (swell_env(u10, hs, WAVE_EXP_TP, d, preset, phase=err[1]) if err[0] == "phase"
               else swell_env(u10, hs * err[1], WAVE_EXP_TP, d, preset))
     lib = mpc.CycleLibrary.from_keyword("motor")
-    pilot = WavePilot.load(preset, policy="energy", flat_entries=lib.entries)
     bearing = (env.wind.to_deg - SWELL_DIRS[d]) % 360.0      # start along the swell's travel
-    start = flat_start_entry(ac, u10, SWELL_DIRS[d])
+    if opts is None:
+        pilot = WavePilot.load(preset, policy="energy", flat_entries=lib.entries)
+        start = flat_start_entry(ac, u10, SWELL_DIRS[d])
+        reflex = False
+    else:
+        pilot = WavePilot.load(preset, policy=opts["pilot"], flat_entries=lib.entries, face=opts["face"],
+                               choice=opts["choice"])
+        datum, tau_h = WAVE_LEGS[opts["leg"]]
+        start = flat_start_entry(ac, u10, SWELL_DIRS[d], model=steady_model(ac, pw or env, datum, tau_h))
+        reflex = opts["reflex"]
     t0 = time.time()
-    r = mpc.fly_mpc(ac, env, "truth", [], t_end, bearing, max(u10, CALM_U10), seed=1, planner_kw=wave_pkw(),
+    r = mpc.fly_mpc(ac, env, "truth", [], t_end, bearing, max(u10, CALM_U10), seed=seed, planner_kw=wave_pkw(),
                     library=lib, state_source="truth", wind_source="truth",
                     actuators=Actuators(ac, rate_model="pb2v"), n_limit=True, stop_on_tip=True, wave_aware=False,
                     motor=True, w_energy=mpc.energy_weight(ac, "normal"), keep=True, wave_library=pilot,
-                    start_entry=start, planner_world=pw)
+                    start_entry=start, planner_world=pw, reflex=reflex)
     tr = r.pop("traj")
     T, ST, MU = np.asarray(tr["t"]), np.asarray(tr["state"]), np.asarray(tr["mu"])
     marg = mpc.flight_margins(ac, env, T, ST, MU, r)
@@ -970,6 +1092,8 @@ def run_wave_job(job):
     mot = r["motor"]
     mot["bursts"] = mot.get("bursts", [])[:10]
     out = {"aircraft": name, "hs": hs, "tp": WAVE_EXP_TP, "direction": d, "u10": u10, "preset": preset,
+           "options": opts, "choice": None if opts is None else opts["choice"], "seed": seed,
+           "reflex": r.get("reflex"),
            "t_end": t_end, "planner_sea_error": None if err is None else list(err), "ended": r["ended"], "survival_s": r["survival_s"], "wall_s": time.time() - t0,
            "margins": marg, "motor": mot, "after_entry": after, "entry": entry, "wave_switches": sw,
            "flat": flat_reference(lib.entries, name, u10), "cpu_mean_s": r["cpu_mean_s"],
@@ -1061,6 +1185,113 @@ def wave_exp_main(a):
             dump(False)
     print(wave_exp_table(rows))
     dump(True)
+
+
+# ---------------------------------------------------------------------------------------------
+# the pilot's choice by trial, the forward-face guide and the powered leg over swell (python -m sim.mpc --wave-pilot-exp)
+# ---------------------------------------------------------------------------------------------
+
+def _case_str(c):
+    return "%s,%g,%s,%g,%s" % tuple(c[:5])
+
+
+def wave_pilot_main(a):
+    """python -m sim.mpc --wave-pilot-exp [--wave-only cases] [--pilot-reflex v2] [--pilot-key key]: the closed loop over
+    swell with the pilot's choice by trial (Q-060), in two phases. Phase 1 flies, for every case, a trial of
+    PILOT_TRIAL_S from the run's start for each candidate entry (pilot_candidates, the flat leg among them), with
+    planner seed PILOT_TRIAL_SEED, the forward-face guide PILOT_FACE and the powered leg PILOT_LEG; the trials are kept
+    under PILOT_TRIALS_KEY of the out file and reused when they exist for the case. Phase 2 flies each case for the
+    experiment's time with the entry of least trial cost (pilot_choose), seed 1, and writes the runs under PILOT_KEY
+    (or --pilot-key), merged by case. --pilot-reflex v2 flies phase 2 with the redesigned reflex (sim.mpc.Reflex2)."""
+    import json
+    import time
+    from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
+    from sim import record
+    here = _os.path.dirname(__file__)
+    t_end = getattr(a, "wave_t_end", None) or WAVE_EXP_T_END
+    key_out = getattr(a, "pilot_key", "") or PILOT_KEY
+    reflex = getattr(a, "pilot_reflex", "") or False
+    cases = wave_exp_cases()
+    if a.wave_only:
+        want = set(a.wave_only.split(";"))
+        cases = [c for c in cases if _case_str(c) in want]
+    t0 = time.time()
+    cur = json.load(open(a.out)) if _os.path.exists(a.out) else {}
+    trials = list(cur.get(PILOT_TRIALS_KEY, {}).get("results", []))
+    have = {(_case_str((t["aircraft"], t["hs"], t["direction"], t["u10"], t["preset"])), t["key"]) for t in trials}
+    tjobs = [c + (k,) for c in cases for k in pilot_candidates(*c) if (_case_str(c), k) not in have]
+    files = [_os.path.join(here, "mpc.py"), __file__, WAVE_LIB_PATH, _os.path.join(here, "out", "mpc_library_motor.json"),
+             _os.path.join(here, "seawind.py"), _os.path.join(here, "aircraft.py"), _os.path.join(here, "navigator.py")]
+    tmeta = record.meta("python -m sim.mpc --wave-pilot-exp --workers %d" % a.workers, files)
+    tmeta.update({"trial_s": PILOT_TRIAL_S, "seed": PILOT_TRIAL_SEED, "face": PILOT_FACE, "leg": PILOT_LEG,
+                  "cost": "average electric power after the entry (the whole trial for the flat leg), plus %g W when a "
+                          "margin broke, %g W when the entry was not taken, %g W when the trial ended on the water"
+                          % (PILOT_INVALID_W, PILOT_UNREACHED_W, PILOT_ENDED_W)})
+
+    def dump_trials():
+        c2 = json.load(open(a.out)) if _os.path.exists(a.out) else {}
+        c2[PILOT_TRIALS_KEY] = {"meta": tmeta, "results": trials}
+        with open(a.out, "w", newline=chr(10)) as fh:
+            json.dump(mpc_no_nan(c2), fh, indent=1)
+            fh.write(chr(10))
+
+    with ProcessPoolExecutor(a.workers) as ex:
+        if tjobs:
+            pending = {ex.submit(pilot_trial_job, j): j for j in tjobs}
+            while pending:
+                done, _ = wait(pending, return_when=FIRST_COMPLETED)
+                for f in done:
+                    pending.pop(f)
+                    t = f.result()
+                    trials.append(t)
+                    print("trial %d/%d %s %s cost %.1f %s" % (len(trials), len(tjobs) + len(have),
+                                                              _case_str((t["aircraft"], t["hs"], t["direction"], t["u10"],
+                                                                         t["preset"])), t["key"], t["cost_w"], t["ended"]),
+                          flush=True)
+                dump_trials()
+        choice = {}
+        for c in cases:
+            ts = [t for t in trials if _case_str((t["aircraft"], t["hs"], t["direction"], t["u10"], t["preset"]))
+                  == _case_str(c)]
+            choice[_case_str(c)] = pilot_choose(ts)
+        cur = json.load(open(a.out)) if _os.path.exists(a.out) else {}
+        rows = [r for r in cur.get(key_out, {}).get("results", [])
+                if _case_str((r["aircraft"], r["hs"], r["direction"], r["u10"], r["preset"])) not in
+                {_case_str(c) for c in cases}]
+        order = {_case_str(c): i for i, c in enumerate(wave_exp_cases())}
+        meta = record.meta("python -m sim.mpc --wave-pilot-exp --workers %d" % a.workers
+                           + (" --pilot-reflex %s" % reflex if reflex else "")
+                           + (" --wave-only '%s'" % a.wave_only if a.wave_only else ""), files)
+        meta.update({"t_end": t_end, "seed": 1, "workers": a.workers, "planner_kw": wave_pkw(), "face": PILOT_FACE,
+                     "leg": PILOT_LEG, "reflex": reflex, "pilot": "trial: the entry of least trial cost (%s)" % PILOT_TRIALS_KEY,
+                     "sea": "as wave_loop_exp", "counts": "as wave_loop_exp"})
+
+        def dump(done_):
+            rows.sort(key=lambda r: order.get(_case_str((r["aircraft"], r["hs"], r["direction"], r["u10"], r["preset"])), 1e9))
+            c2 = json.load(open(a.out)) if _os.path.exists(a.out) else {}
+            c2[key_out] = {"meta": dict(meta, runtime_s=time.time() - t0, complete=done_), "results": rows}
+            with open(a.out, "w", newline=chr(10)) as fh:
+                json.dump(mpc_no_nan(c2), fh, indent=1)
+                fh.write(chr(10))
+
+        jobs = [c + (t_end, None, {"choice": choice[_case_str(c)], "reflex": reflex}) for c in cases]
+        pending = {ex.submit(run_wave_job, j): j for j in jobs}
+        while pending:
+            done, _ = wait(pending, return_when=FIRST_COMPLETED)
+            for f in done:
+                pending.pop(f)
+                r = f.result()
+                rows.append(r)
+                print("%d/%d %s %s %.0f counts %d P %.1f choice %s" % (len(rows), len(jobs), _case_str(
+                    (r["aircraft"], r["hs"], r["direction"], r["u10"], r["preset"])), r["ended"], r["survival_s"],
+                    r["margins"]["counts"], r["motor"]["avg_power_w"], r["choice"]), flush=True)
+            dump(False)
+    dump(True)
+
+
+def mpc_no_nan(d):
+    from sim.mpc import _no_nan
+    return _no_nan(d)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1168,6 +1399,22 @@ def nav_course_stats(r, tr, tgt, window_s=240.0):
             "since_change_at_dip_s": float(t_dip - before[-1]) if before else float(t_dip)}
 
 
+WAVE_LEG_KEY = "wave_leg_exp"
+WAVE_LEGS = {"surface": ("surface", 0.0), "surface_hold": ("surface", STEADY_HEADING_TAU_S),
+             "msl_hold": ("msl", STEADY_HEADING_TAU_S)}
+# (aircraft, Hs, swell direction, u10, preset, distance, target, leg): the powered leg over swell (Q-073). "across": the
+# target across the swell's travel (north; the leg runs along the crests); "against": upwind, against the swell's travel
+# (west; the leg meets the crests head on); "with": along the swell's travel (east; the soaring run, whose start is the
+# leg)
+WAVE_LEG_CASES = (("albatross-3m", 3.0, "along", 6.0, "p63", 5000.0, "across", "surface_hold"),
+                  ("albatross-3m", 3.0, "along", 6.0, "p63", 5000.0, "across", "msl_hold"),
+                  ("albatross-3m", 3.0, "along", 6.0, "p63", 5000.0, "against", "surface_hold"),
+                  ("albatross-3m", 3.0, "along", 6.0, "p63", 5000.0, "against", "msl_hold"),
+                  ("albatross-3m", 3.0, "along", 6.0, "p63", 5000.0, "against", "surface"),
+                  ("albatross-3m", 3.0, "along", 6.0, "p63", 5000.0, "with", "msl_hold"))
+TARGET_REL_DEG = {"across": 90.0, "with": 0.0, "against": 180.0}
+
+
 def run_wave_nav(job):
     """The navigated closed loop over swell: the velocity hull of the wave library's entries at the sea and wind
     (sim.navigator.HullSource; the mirror images are valid for a swell along or against the wind), the hull
@@ -1180,15 +1427,17 @@ def run_wave_nav(job):
     from sim.aircraft_models import by_name
     from sim import mpc
     from sim.navigator import HullNavigator, HullSource, SteadyModel, sail_hull
-    name, hs, d, u10, preset, dist, target = job
+    name, hs, d, u10, preset, dist, target = job[:7]
+    leg = job[7] if len(job) > 7 else "surface"
     ac = by_name(name)
     env = swell_env(u10, hs, WAVE_EXP_TP, d, preset)
     with open(WAVE_LIB_PATH) as fh:
         entries = json.load(fh)["entries"]
     es = wave_hull_entries(entries, name, preset, hs, WAVE_EXP_TP, d, u10)
     src = HullSource.from_entries(es, name)
-    steady = SteadyModel.from_aircraft(ac)
-    rel = np.radians(SWELL_DIRS[d] + (0.0 if target == "with" else 90.0))
+    datum, tau_h = WAVE_LEGS[leg]
+    steady = steady_model(ac, env, datum, tau_h)
+    rel = np.radians(SWELL_DIRS[d] + TARGET_REL_DEG[target])
     # the wind blows from the west (toward +x), so the swell's travel is at SWELL_DIRS[d] from +x
     tgt = (dist * float(np.cos(rel)), dist * float(np.sin(rel)))
     pred = sail_hull(src, lambda t: (u10, env.wind.from_deg), (0.0, 0.0), tgt,
@@ -1196,7 +1445,7 @@ def run_wave_nav(job):
     first = HullNavigator(src, arrival_radius=mpc.NAV_ARRIVAL_M, steady=steady).step(
         0.0, (0.0, 0.0), u10, env.wind.from_deg, tgt)
     t_end = min(2.0 * pred["time"] + 600.0, 7200.0) if pred["arrived"] else 3600.0
-    start = flat_start_entry(ac, u10, float(np.degrees(rel)))
+    start = flat_start_entry(ac, u10, float(np.degrees(rel)), model=steady)
     t0 = time.time()
     r = mpc.fly_mpc(ac, env, "truth", [], t_end, 0.0, max(u10, CALM_U10), seed=1, planner_kw=wave_pkw(),
                     library=mpc.CycleLibrary.from_keyword("motor"), state_source="truth", wind_source="truth",
@@ -1217,8 +1466,62 @@ def run_wave_nav(job):
                   "crest": bool((p.entry or {}).get("crest"))} for p in hull.points]
     r["course"] = mpc._no_nan(nav_course_stats(r, traj, tgt))
     return {"aircraft": name, "hs": hs, "tp": WAVE_EXP_TP, "direction": d, "u10": u10, "preset": preset,
-            "distance_m": dist, "target_rel_swell": target, "target": list(tgt),
+            "distance_m": dist, "target_rel_swell": target, "target": list(tgt), "leg": leg,
+            "leg_model": {"datum": steady.datum, "height_m": steady.height, "crest_m": steady.crest_m,
+                          "ref_height_m": steady.ref_height(), "heading_tau_s": steady.heading_tau_s},
             "hull_points": len(hull.points), **r}
+
+
+def wave_leg_main(a):
+    """python -m sim.mpc --wave-leg-exp [--leg-only i,j]: the navigation runs over swell with the powered legs of
+    WAVE_LEGS (key wave_leg_exp of sim/out/mpc.json, merged by case)."""
+    import json
+    import time
+    from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
+    from sim import record
+    here = _os.path.dirname(__file__)
+    t0 = time.time()
+    cases = list(WAVE_LEG_CASES)
+    if getattr(a, "leg_only", ""):
+        cases = [cases[int(i)] for i in a.leg_only.split(",")]
+    cur = json.load(open(a.out)) if _os.path.exists(a.out) else {}
+    keys = {(c[6], c[7]) for c in cases}
+    rows = [r for r in cur.get(WAVE_LEG_KEY, {}).get("results", []) if (r["target_rel_swell"], r["leg"]) not in keys]
+    meta = record.meta("python -m sim.mpc --wave-leg-exp --workers %d" % a.workers,
+                       [_os.path.join(here, "mpc.py"), __file__, WAVE_LIB_PATH, _os.path.join(here, "navigator.py"),
+                        _os.path.join(here, "out", "mpc_library_motor.json")])
+    meta.update({"cases": [list(c) for c in WAVE_LEG_CASES], "legs": {k: list(v) for k, v in WAVE_LEGS.items()},
+                 "planner_kw": wave_pkw(),
+                 "sea": "swell_env (oracle), wind from 270 deg, swell running east (along the wind); the target lies "
+                        "across the swell's travel (north), against it (west, upwind) or with it (east)",
+                 "legs_how": "surface: the steady leg 10 m above the local surface (as wave_nav_exp); surface_hold: the "
+                             "same with the heading hold of the planner's nominal (heading_tau_s); msl_hold: 10 m above "
+                             "the highest crest, held above the mean sea level, with the heading hold",
+                 "hull": "the wave library's entries at the sea and wind with their mirror images",
+                 "arrival": "within %g m; counts_as_arrived also needs the band and the margins" % 200.0})
+
+    def dump(done):
+        c2 = json.load(open(a.out)) if _os.path.exists(a.out) else {}
+        c2[WAVE_LEG_KEY] = {"meta": dict(meta, runtime_s=time.time() - t0, complete=done), "results": rows}
+        with open(a.out, "w", newline=chr(10)) as fh:
+            json.dump(c2, fh, indent=1)
+            fh.write(chr(10))
+
+    with ProcessPoolExecutor(min(a.workers, len(cases))) as ex:
+        pending = {ex.submit(run_wave_nav, c): c for c in cases}
+        while pending:
+            done, _ = wait(pending, return_when=FIRST_COMPLETED)
+            for f in done:
+                pending.pop(f)
+                r = f.result()
+                rows.append(r)
+                nv = r.get("nav") or {}
+                print(r["target_rel_swell"], r["leg"], r["ended"], nv.get("arrival_time_s"), nv.get("counts_as_arrived"),
+                      round(nv.get("mean_vmg_ms") or 0, 2), round(r["motor"]["energy_wh"], 2),
+                      nv.get("wingtip_min_m"), nv.get("below_stall_s"), (r.get("course") or {}).get("heading_off_max_deg"),
+                      flush=True)
+            dump(False)
+    dump(True)
 
 
 def wave_nav_main(a):
