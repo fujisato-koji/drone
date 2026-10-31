@@ -1331,6 +1331,18 @@ items:
     status: assumed
     basis:
       - Q-070
+  - key: ctrl.reflex2_lead_s
+    v: 1.0
+    unit: s
+    status: assumed
+    basis:
+      - Q-068
+  - key: ctrl.reflex2_tip_hold_s
+    v: 0.5
+    unit: s
+    status: assumed
+    basis:
+      - Q-068
   - key: nav.steady_heading_tau_s
     v: 2
     unit: s

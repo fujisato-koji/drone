@@ -176,19 +176,49 @@ class TestPilot(unittest.TestCase):
         self.assertIsNone(pilot.cycle("albatross-3m", Environment.flat(Wind(6.0, 270.0)), 6.0, 0.0, 0.0))
 
     def test_flat_sea_unchanged_with_a_wave_library(self):
+        # over a sea without a swell the wave library changes nothing but the first plan's start from the cycle's own
+        # controls and thrust, which it seeds whether the world has a swell or not (for a sea that is still being
+        # estimated); a run without a library seeded the same way flies the same trajectory to the bit
         ac = by_name("baseline-2m")
         lib = CycleLibrary.from_keyword("motor")
         pilot = WavePilot(crest_entries("baseline-2m", "p63", 3.0, 10.0, "along", 9.0), "p63")
         runs = []
-        for wl in (None, pilot):
+        for wl, seed in ((None, True), (pilot, None), (None, None)):
             env = Environment.flat(Wind(9.0, 270.0, roughness="coare35"))
             r = fly_mpc(ac, env, "flat", [], 4.0, env.wind.to_deg - 20.0, 9.0, seed=1, planner_kw=dict(NAV_PKW),
                         library=lib, actuators=Actuators(ac, rate_model="pb2v"), n_limit=True, stop_on_tip=True,
                         wave_aware=False, motor=True, w_energy=energy_weight(ac, "normal"), keep=True,
-                        wave_library=wl)
+                        wave_library=wl, seed_first_plan=seed)
             runs.append(r)
         self.assertTrue(np.array_equal(runs[0]["traj"]["state"], runs[1]["traj"]["state"]))
         self.assertEqual(runs[1]["wave_switches"], [])
+        self.assertFalse(np.array_equal(runs[2]["traj"]["state"], runs[1]["traj"]["state"]))   # the seed acts
+
+    def test_mirror_side_has_a_hysteresis(self):
+        from sim.wavelib import MIRROR_HYST_DEG, side_with_hysteresis
+        es = crest_entries("albatross-3m", "p63", 3.0, 10.0, "along", 6.0)
+        pilot = WavePilot(es, "p63", policy="course", mirror_hyst_deg=MIRROR_HYST_DEG)
+        mirrors, sides = [], []
+        for rel in (2.0, -3.0, 4.0, -5.0, 3.0):        # an estimated swell direction wandering about the wind's
+            env = swell_env(6.0, 3.0, 10.0, rel, "p63")
+            mirrors.append(pilot.cycle("albatross-3m", env, 6.0, np.radians(40.0), 0.0).mirror)
+            sides.append(pilot._sea_side)
+        self.assertEqual(len(set(mirrors)), 1)
+        self.assertEqual(sides, [False] * 5)
+        env = swell_env(6.0, 3.0, 10.0, -(MIRROR_HYST_DEG + 5.0), "p63")
+        pilot.cycle("albatross-3m", env, 6.0, np.radians(40.0), 0.0)
+        self.assertTrue(pilot._sea_side)               # past the hysteresis the side changes
+        # off by default: the strict sign of each call, no state carried between calls
+        p0 = WavePilot(es, "p63", policy="course")
+        p0.cycle("albatross-3m", swell_env(6.0, 3.0, 10.0, 3.0, "p63"), 6.0, np.radians(40.0), 0.0)
+        p0.cycle("albatross-3m", swell_env(6.0, 3.0, 10.0, -3.0, "p63"), 6.0, np.radians(40.0), 0.0)
+        self.assertTrue(p0._sea_side)
+        # without a previous side the strict sign decides, as before
+        self.assertTrue(side_with_hysteresis(None, -1.0))
+        self.assertFalse(side_with_hysteresis(None, 1.0))
+        self.assertFalse(side_with_hysteresis(None, -180.0))
+        self.assertTrue(side_with_hysteresis(True, 179.0))
+        self.assertFalse(side_with_hysteresis(True, 20.0))
 
 
 class TestK020Fixes(unittest.TestCase):

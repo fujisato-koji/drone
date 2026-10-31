@@ -1608,7 +1608,9 @@ class Reflex2:
     control step. It fires on
 
     - the prediction of the plan (the next ctrl.reflex_horizon_s with the plan's own schedule, in the planner's world,
-      so over waves it sees the waves the planner sees): the centre below ctrl.reflex_clearance_m ("centre"), a
+      so over waves it sees the waves the planner sees), when the first violation lies within ctrl.reflex2_lead_s
+      (further ahead the planner's next plans can still remove it; the plan's tail beyond its first replan is not what
+      will be flown): the centre below ctrl.reflex_clearance_m ("centre"), a
       wingtip in the water ("tip"), or a stall ("stall"): the airspeed below ctrl.reflex2_v_frac times the stall
       speed at the load factor the path needs, v_stall sqrt(cos gamma), the speed below which the wing at its
       largest lift coefficient no longer carries the weight across the path (the plan's own load factor cannot pass
@@ -1634,9 +1636,13 @@ class Reflex2:
     is ctrl.reflex2_gamma_stall_deg (unload to regain speed); the thrust is full at or below level flight and falls to
     zero at a climb of
     ctrl.reflex2_thrust_zero_deg, so there is no thrust past the vertical. Once fired it holds for at least
-    ctrl.reflex2_hold_s and returns control to the planner at the first step after that where nothing fires."""
+    ctrl.reflex2_hold_s (ctrl.reflex2_tip_hold_s after a range or wet firing, since the planner's sea is then wrong
+    under the tip and its next plans may bank into the same water) and returns control to the planner at the first step
+    after that where nothing fires."""
 
     CAUSES = ("centre", "tip", "stall", "range", "wet")
+    LEAD_OVERRIDE = None      # tests: a lead (s) in place of ctrl.reflex2_lead_s
+    TIP_HOLD_OVERRIDE = None  # tests: a hold (s) in place of ctrl.reflex2_tip_hold_s
 
     def __init__(self, aircraft, t_max, fold_dcd, n_limit=True, fold_switch="smooth", seed=0, sensor=True):
         from sim.record import value
@@ -1650,6 +1656,10 @@ class Reflex2:
         self.k_gamma = float(value("ctrl.reflex2_gamma_gain_per_rad", 3.0))
         self.gamma_T0 = float(np.radians(value("ctrl.reflex2_thrust_zero_deg", 30.0)))
         self.hold_s = float(value("ctrl.reflex2_hold_s", 0.2))
+        self.lead_s = float(self.LEAD_OVERRIDE if self.LEAD_OVERRIDE is not None
+                            else value("ctrl.reflex2_lead_s", 1.0))
+        self.tip_hold_s = float(self.TIP_HOLD_OVERRIDE if self.TIP_HOLD_OVERRIDE is not None
+                                else value("ctrl.reflex2_tip_hold_s", 0.5))
         self.n_frac = MARGIN_SETS[0][1][1]
         self.dt = REFLEX_DT
         self.n = int(round(self.horizon_s / self.dt))
@@ -1763,12 +1773,16 @@ class Reflex2:
         """The cause that fires now (the prediction first, then the tip sensors), "hold" while the last firing is
         held, or None: (cause, seconds ahead, centre height, tip height or reading, airspeed)."""
         hit = self.predict(world, t, s, knots_t, cl_k, mu_k, th_k, tau)
+        if hit is not None and hit[1] > self.lead_s + 1e-9:
+            hit = None           # further ahead than the lead: the planner's next plans can still remove it
         if hit is None:
             sh = self.tip_check(t)
             if sh is not None:
                 hit = (sh[0], 0.0, float("nan"), float(sh[1]), float(s[3]))
         if hit is not None:
-            self.on_until = t + self.hold_s
+            # a tip event of the sensors means the planner's sea is wrong under the tip, so its next plans may bank
+            # into the same water: the override is held longer (ctrl.reflex2_tip_hold_s)
+            self.on_until = max(self.on_until, t + (self.tip_hold_s if hit[0] in ("range", "wet") else self.hold_s))
             self.last_cause = hit[0]
             return hit
         if t < self.on_until - 1e-12:
@@ -1852,7 +1866,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             suite="standard", profile_fit="two_param", actuators=None, n_limit=False,
             log_every_s=5.0, stop_on_tip=False, library_path=None, motor=False, w_energy=None, reflex=False,
             true_fold_switch=None, target=None, navigator=None, nav_kw=None, nav_hull=None, guide_sig=None,
-            plan_hook=None, wave_library=None, start_entry=None, planner_world=None, tip_depth_m=None):
+            plan_hook=None, wave_library=None, start_entry=None, planner_world=None, tip_depth_m=None,
+            seed_first_plan=None):
     """Closed loop: true dynamics (rk4, dt), planner every replan_s in the chosen world model.
 
     world_model: "truth" | "flat" | "estimated". sensors: list of SurfaceSensor (used only for
@@ -1905,6 +1920,9 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
     reflexes, their causes, durations and electric energy (also counted in out["motor"]).
     reflex "v2": the redesigned Reflex2 (the tests of the plan's prediction in the planner's world, the range reading
     and the wet sensor at the low wingtip, an override scaled with the attitude), with the same record.
+
+    seed_first_plan (default None: with a navigator or a wave library): the very first plan assumes the actuators at
+    the guide's own controls and thrust (True forces it, False never).
 
     tip_depth_m (default None; with stop_on_tip): the run ends when the low wingtip is deeper in the water than this
     (the skid's depth, D-018) instead of at the first contact; out["tip_wet"] then holds the deepest immersion and the
@@ -2165,9 +2183,10 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
                 pl.act_state = (actuators.cl, actuators.mu) + actuators.cmd_last
                 if motor:
                     pl.act_state = pl.act_state + (actuators.T,)
-            elif ((nav is not None or (wave_library is not None and world_swell(world) is not None))
+            elif ((seed_first_plan if seed_first_plan is not None else (nav is not None or wave_library is not None))
                   and actuators is not None and motor and guide is not None):
-                # (only with a navigator or a wave library over a swell, so that the motor library and burst experiments are unchanged)
+                # (only with a navigator or a wave library, so that the motor library and burst experiments are unchanged;
+                # with a wave library also before the swell is known, as when the sea is estimated)
                 # the very first plan: the actuators have not moved yet and start at their first command, so the
                 # planner assumes the cycle's own controls and thrust (not zero thrust, which sank the nominal
                 # and kicked the aircraft off a steady reference at the start)

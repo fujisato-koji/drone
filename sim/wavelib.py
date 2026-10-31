@@ -650,6 +650,22 @@ def sea_of(world, psi_w):
     return 2.0 * a, 2.0 * np.pi / om, rel
 
 
+MIRROR_HYST_DEG = 10.0     # deg; a hysteresis of the mirror side for an estimated sea (WavePilot(mirror_hyst_deg=...))
+
+
+def side_with_hysteresis(prev, angle, hyst=MIRROR_HYST_DEG):
+    """True for the right side (angle in (-180, 0) deg), with a hysteresis about the axis (0 and +-180 deg): within hyst
+    of the axis the previous side is kept (prev None: the strict sign, as without hysteresis), so that an angle that
+    wanders about the axis (an estimated swell direction near 0 deg) does not flip the side from plan to plan."""
+    a = float((angle + 180.0) % 360.0 - 180.0)
+    strict = a < -1e-6 and abs(abs(a) - 180.0) > 1e-6
+    if prev is None or hyst <= 0.0:
+        return strict
+    if hyst < abs(a) < 180.0 - hyst:
+        return a < 0.0
+    return prev
+
+
 class WavePilot:
     """The wave library in the closed loop (fly_mpc(wave_library=...)): for the aircraft, the preset of the wave
     wind and the world's swell, it names the wave-synchronized cycle to fly, or None where the world has no
@@ -662,7 +678,7 @@ class WavePilot:
     with the largest dense-replay height. entry_filter: an optional callable(entry) -> bool."""
 
     def __init__(self, entries, preset, policy="energy", sig=None, sig_theta=None, entry_filter=None, w_run=None,
-                 w_d=None, flat_entries=None, face=None, choice=None):
+                 w_d=None, flat_entries=None, face=None, choice=None, mirror_hyst_deg=0.0):
         from sim.mpc import WAVE_W_RUN
         self.entries = [e for e in entries if e.get("success")]
         self.preset, self.policy = preset, policy
@@ -674,6 +690,11 @@ class WavePilot:
         self.flat_entries = flat_entries   # the flat library: a motor wave entry that needs more power is not flown
         self.face = face                   # the forward-face guide of the crest rides (sim.mpc.WaveCycleGuide), None: off
         self.choice = choice               # policy "trial": the key (entry_key) of the entry the trials chose, None: flat
+        # the side of the swell's direction relative to the wind and of the course relative to the swell, with a
+        # hysteresis of mirror_hyst_deg (0: the strict sign, no state; MIRROR_HYST_DEG for a sea that is estimated, whose
+        # direction wanders about the axis); the sides are kept per library sea and wind
+        self.mirror_hyst = float(mirror_hyst_deg or 0.0)
+        self._sea_side = self._course_side = self._side_key = None
         self._cache = {}
         self.last = None
 
@@ -699,6 +720,11 @@ class WavePilot:
         es = [e for e in es if e["u10_flown"] == u]
         if u <= CALM_U10 + 1e-9:
             return es, False
+        key = (name, h, p, u)
+        if key != self._side_key:
+            self._sea_side = self._course_side = None
+            self._side_key = key
+        mirror = self._sea_side = side_with_hysteresis(self._sea_side, rel, self.mirror_hyst)
         d = min({e["rel_deg"] for e in es}, key=lambda v: abs(v - abs(rel)))
         return [e for e in es if e["rel_deg"] == d], mirror
 
@@ -727,10 +753,14 @@ class WavePilot:
         es, mirror = self.sea_entries(name, sea, u10)
         sgn = -1.0 if mirror else 1.0
         course_rel = float((sgn * (np.degrees(chi) - sea[2]) + 180.0) % 360.0 - 180.0)
-        if es and es[0]["direction"] != "across" and course_rel < 0.0:
+        if es and es[0]["direction"] != "across":
             # along, against and calm seas are symmetric about the swell's travel: a course to the right of it
-            # flies the mirrored entry of the course to the left
-            mirror, course_rel = not mirror, -course_rel
+            # flies the mirrored entry of the course to the left (with the hysteresis of side_with_hysteresis)
+            right = self._course_side = side_with_hysteresis(self._course_side, course_rel, self.mirror_hyst)
+            if right:
+                mirror, course_rel = not mirror, abs(course_rel)
+            else:
+                course_rel = abs(course_rel)
         e = self.choose(es, course_rel)
         if e is None:
             return None

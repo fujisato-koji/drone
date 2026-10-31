@@ -151,6 +151,19 @@ class TestReflex2(unittest.TestCase):
         hit = rf.predict(w, 0.0, np.array([0.0, 0.0, 30.0, 0.9 * ac.v_stall, 1.2, 0.0]), *self.plan(0.1), 0.0)
         self.assertTrue(hit is None or hit[1] > 0.0)
 
+    def test_prediction_fires_only_within_the_lead(self):
+        ac, rf, w = self.ac, self.rf, self.world
+        kt, cl, mu, th = self.plan(0.05)
+        far = np.array([0.0, 0.0, 8.0, 12.0, -0.1, 0.0])         # a slow descent that meets the water late
+        hit = rf.predict(w, 0.0, far, kt, cl, mu, th, 0.0)
+        self.assertIsNotNone(hit)
+        self.assertGreater(hit[1], rf.lead_s)
+        rf.reset()
+        self.assertIsNone(rf.check(w, 0.0, far, kt, cl, mu, th, 0.0))
+        near = np.array([0.0, 0.0, 3.0, 12.0, -0.35, 0.0])
+        rf.reset()
+        self.assertEqual(rf.check(w, 0.0, near, kt, cl, mu, th, 0.0)[0], "centre")
+
     def test_override_is_scaled_with_the_attitude(self):
         ac, rf = self.ac, self.rf
         V = 1.5 * ac.v_stall
