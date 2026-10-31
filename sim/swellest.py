@@ -1613,7 +1613,11 @@ def _oracle_path_job(case):
 ERR_IRREGULAR = (("irregular", 3.0, 10.0, "along"), ("irregular", 2.0, 10.0, "along"),
                  ("swell_windsea", 3.0, 10.0, "along"), ("mixed", 3.0, 10.0, "along"), ("mixed", 3.0, 10.0, "across"))
 ERR_ORACLE = (("regular", 3.0, 10.0, "along"), ("regular", 2.0, 10.0, "along"))
-LOOP_SETS = ("radar_tips_rtk", "radar_tips_fwd_rtk", "radar_tips_fwd_baro", "radar_tips_baro")
+LOOP_SETS = ("radar_tips_rtk", "tips_rtk", "radar_tips_fwd_rtk", "radar_tips_fwd_baro", "radar_tips")
+ERRORS_DESCRIPTION = ("phase: estimated minus true linear phase of the dominant swell (the components within %s of its "
+                      "peak frequency) at the aircraft; height: |estimated amplitude minus the local amplitude| over the "
+                      "swell's amplitude (swell_a_ref); p90 and median pooled over the seeds' runs with an estimate and "
+                      "the %g s before each check")
 
 
 def error_jobs():
@@ -1722,11 +1726,7 @@ def errors_main(workers=2, out=OUT_PATH, quick=False, sets=None, paths=None):
                           "(the swell's phase speed, %g m/s along the crest, phase %g rad, %g m above the local "
                           "surface); oracle: the oracle closed loop's own path (no survey)"
                           % (SURVEY_START_S, math.degrees(SURVEY_RATE), RIDE_VC, RIDE_PHASE, RIDE_H),
-                 "errors": "phase: estimated minus true linear phase of the dominant swell (the components within "
-                           "%s of its peak frequency) at the aircraft; height: |estimated amplitude minus the local "
-                           "amplitude| over the swell's amplitude (swell_a_ref); p90 and median pooled over "
-                           "the seeds' runs with an estimate and the %g s "
-                           "before each check" % (list(TRUTH_BAND), 10.0)})
+                 "errors": ERRORS_DESCRIPTION % (list(TRUTH_BAND), 10.0)})
     runs = kept_runs + [{k: v for k, v in r.items() if k != "rows"} for r in results]
     if sets or paths:
         meta["rerun"] = {"sets": sorted(sets) if sets else "all", "paths": sorted(paths) if paths else "all",
@@ -1761,7 +1761,9 @@ def loop_main(workers=2, out=OUT_PATH, sets=LOOP_SETS, seeds=(0,), t_end=None):
                   "%.1f" % r["motor"]["avg_power_w"], (r.get("after_entry") or {}).get("avg_power_w"),
                   r["t_ready"], flush=True)
     here = HERE
-    meta = record.meta("python -m sim.swellest --loop --workers %d" % workers,
+    meta = record.meta("python -m sim.swellest --loop --sets %s --seeds %s --workers %d"
+                       % (",".join(sets), ",".join(str(v) for v in seeds), workers)
+                       + ("" if t_end is None else " --t-end %g" % t_end),
                        [__file__, _os.path.join(here, "mpc.py"), _os.path.join(here, "wavelib.py"),
                         _os.path.join(here, "out", "mpc_library_wave.json"),
                         _os.path.join(here, "out", "mpc_library_motor.json"), _os.path.join(here, "seawind.py")])

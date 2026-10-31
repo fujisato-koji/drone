@@ -2479,7 +2479,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | sense.radar_half_beam_deg | 15 | deg | calculated | docs/02-form.md#sea-estimation |
 | sense.radar_mass_g | 110 | g | sourced | M11 |
 | sense.radar_power_w | 2 | W | sourced | M11 |
-| sense.tip_radar_noise_m | 0.014 | m | sourced | P136 |
+| sense.tip_radar_noise_m | 0.014 | m | assumed | Q-074 |
 | sense.tip_radar_rate_hz | 50 | Hz | assumed | Q-074 |
 | sense.tip_radar_latency_s | 0.02 | s | assumed | Q-074 |
 | sense.tip_radar_half_beam_deg | 26.5 | deg | calculated | docs/02-form.md#sea-estimation |
@@ -2528,6 +2528,7 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | sense.baro_rate_hz | 10 | Hz | assumed | Q-074 |
 | sense.rtk_vert_white_m | 0.01 | m | assumed | Q-074 |
 | sense.rtk_horiz_white_m | 0.005 | m | assumed | Q-074 |
+| sense.rtk_baseline_max_km | 20 | km | sourced | M20 |
 | est.set_lidar_mass_g | 64.5 | g | calculated | docs/02-form.md#sea-estimation |
 | est.set_lidar_power_w | 0.69 | W | calculated | docs/02-form.md#sea-estimation |
 | est.set_radar_mass_g | 155.0 | g | calculated | docs/02-form.md#sea-estimation |

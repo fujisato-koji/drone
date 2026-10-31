@@ -145,7 +145,8 @@
     "second_order": true
    },
    "paths": "survey_ride: straight along the wind for 10 s, one level turn at 10 deg/s, then a crest ride (the swell's phase speed, 7 m/s along the crest, phase 0.9 rad, 10 m above the local surface); oracle: the oracle closed loop's own path (no survey)",
-   "errors": "phase: estimated minus true linear phase of the dominant swell (the components within [0.75, 1.33] of its peak frequency) at the aircraft; height: |estimated amplitude minus the local amplitude| over the swell's Hs / 2; p90 and median pooled over the seeds and the 10 s before each check"
+   "errors": "phase: estimated minus true linear phase of the dominant swell (the components within [0.75, 1.33] of its peak frequency) at the aircraft; height: |estimated amplitude minus the local amplitude| over the swell's amplitude (swell_a_ref); p90 and median pooled over the seeds' runs with an estimate and the 10 s before each check",
+   "meta_corrected": "K-021 round 2: this description replaces one that named the old height scale (Hs / 2) and pooling over all the seeds; the runs and summaries are those of the recorded command"
   },
   "summary": [
    {
@@ -28154,7 +28155,7 @@
  },
  "loop": {
   "meta": {
-   "tdr_run": "python -m sim.swellest --loop --workers 2",
+   "tdr_run": "python -m sim.swellest --loop --sets radar_tips_rtk,tips_rtk,radar_tips_fwd_rtk,radar_tips_fwd_baro,radar_tips --workers 2",
    "commit": "4b3a7cc",
    "stamp": "sha-2c4fe858dbbc",
    "runtime_s": 1800.357901096344,
@@ -28175,7 +28176,8 @@
     ]
    ],
    "t_end": 600.0,
-   "how": "as the oracle wave loop (sim.wavelib.run_wave_job) with fly_mpc's world model 'estimated': the rig's sensors every step, SwellEKF at every plan, the planner and the wave pilot in the estimated sea moved into the true frame by the navigation error; the pilot flies the start's steady leg for 10 s, then the survey circle (a level turn of 36 s at the leg's airspeed), until the estimate is ready (at most 240 s)"
+   "how": "as the oracle wave loop (sim.wavelib.run_wave_job) with fly_mpc's world model 'estimated': the rig's sensors every step, SwellEKF at every plan, the planner and the wave pilot in the estimated sea moved into the true frame by the navigation error; the pilot flies the start's steady leg for 10 s, then the survey circle (a level turn of 36 s at the leg's airspeed), until the estimate is ready (at most 240 s)",
+   "meta_corrected": "K-021 round 2: the command recorded at the run omitted its --sets (the sets of the rows); LOOP_SETS now holds them, so the default command runs the same rows"
   },
   "results": [
    {
