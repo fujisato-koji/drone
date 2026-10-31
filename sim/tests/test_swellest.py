@@ -18,6 +18,19 @@ class TestNavError(unittest.TestCase):
         self.assertLess(rtk.q_drift, alone.q_drift)
         self.assertEqual(len(rtk.at(10.0)), 4)
 
+    def test_barometer_reads_the_crest_as_height(self):
+        env = swell_env(6.0, 3.0, 10.0, "along", "p63", phase=0.0)
+        comps = se.swell_components(env)
+        lam = 2.0 * np.pi / comps["k"][0]
+        z = np.array([10.0, 10.0])
+        e = se.baro_wave_error(env, np.array([0.0, 0.5 * lam]), np.zeros(2), z, np.zeros(2))
+        self.assertGreater(e[0], 0.05)          # over the crest (theta 0): low pressure, read as height
+        self.assertLess(e[1], -0.05)            # over the trough
+        nav = se.NavError("baro", 30.0, seed=0)
+        r = se.BaroResponse(nav._gains)
+        out = [r.step(i, 1.0) for i in range(len(nav.t))]
+        self.assertGreater(out[-1], 0.5)        # a steady barometer offset passes into the height
+
     def test_error_does_not_depend_on_the_seed_layout(self):
         a = se.NavError("baro", 50.0, seed=1)
         b = se.NavError("baro", 50.0, seed=1)

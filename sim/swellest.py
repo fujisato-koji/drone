@@ -116,12 +116,16 @@ def nav_params(kind):
          "acc_bias": _v("sense.imu_vbias_sigma_ms2", 0.05), "acc_tau": _v("sense.imu_vbias_tau_s", 20.0),
          "baro": kind in ("baro", "rtk"),
          "baro_noise": _v("sense.baro_precision_m", 0.05), "baro_drift": _v("sense.baro_relative_m", 0.5),
-         "baro_tau": _v("sense.baro_drift_tau_s", 1800.0), "baro_static": _v("sense.baro_static_sigma_m", 0.1),
-         "baro_static_tau": _v("sense.baro_static_tau_s", 5.0), "baro_rate": 25.0,
+         "baro_tau": _v("sense.baro_drift_tau_s", 1800.0), "baro_static": _v("sense.baro_static_sigma_m", 0.03),
+         "baro_static_tau": _v("sense.baro_static_tau_s", 5.0), "baro_rate": _v("sense.baro_rate_hz", 10.0),
          "att_sigma": math.radians(_v("sense.att_sigma_deg", 0.5)), "att_tau": _v("sense.att_tau_s", 10.0)}
     if kind == "rtk":
-        p.update(gz_sigma=_v("sense.rtk_vert_sigma_m", 0.02), gz_tau=_v("sense.rtk_bias_tau_s", 60.0), gz_white=0.01,
-                 gh_sigma=_v("sense.rtk_horiz_sigma_m", 0.015), gh_white=0.005, gz_tau_h=60.0)
+        p.update(gz_sigma=_v("sense.rtk_vert_sigma_m", 0.02), gz_tau=_v("sense.rtk_bias_tau_s", 60.0),
+                 gz_white=_v("sense.rtk_vert_white_m", 0.01), gh_sigma=_v("sense.rtk_horiz_sigma_m", 0.015),
+                 gh_white=_v("sense.rtk_horiz_white_m", 0.005), gz_tau_h=_v("sense.rtk_bias_tau_s", 60.0),
+                 gz_inflate=False)
+    elif kind == "standalone_vw":
+        p.update(v_tau=_v("sense.gnss_vel_tau_white_s", 0.1))     # sensitivity: a white velocity error
     elif kind not in ("standalone", "baro"):
         raise ValueError("unknown navigation kind " + str(kind))
     return p
@@ -143,12 +147,14 @@ def _gm(rng, n, dt, sigma, tau):
     return out
 
 
-def _channel_error(rng, n, dt, p, axis):
+def _channel_error(rng, n, dt, p, axis, gains=None):
     """Error of the estimate of one position axis by a 3-state Kalman filter (position, velocity, accelerometer bias)
     on the IMU, GNSS position and velocity and (vertical axis, if p["baro"]) the barometer. The error of a linear
     filter does not depend on the true motion, so the truth is taken at rest and the filter's position estimate is
     its error. axis "z" or "h" (horizontal). The correlated GNSS and barometer errors are taken by the filter as
-    white noise of the same low-frequency density at their sample rate."""
+    white noise of the same low-frequency density at their sample rate. gains (a dict, optional) receives the
+    filter's gains at every step, so that its linear response to a further barometer error (the swell's own air
+    pressure, BaroResponse) can be added afterwards."""
     vert = axis == "z"
     g_sig, g_tau = (p["gz_sigma"], p["gz_tau"]) if vert else (p["gh_sigma"], p.get("gz_tau_h", p["gz_tau"]))
     g_white = p["gz_white"] if vert else p["gh_white"]
@@ -164,15 +170,17 @@ def _channel_error(rng, n, dt, p, axis):
                 p["baro_static_tau"]) + p["baro_noise"] * rng.standard_normal(n))
     phi = math.exp(-dt / p["acc_tau"])
     q1, q2 = p["acc_nd"] ** 2 * dt ** 3 / 4.0, p["acc_nd"] ** 2 * dt
+    q12 = p["acc_nd"] ** 2 * dt * dt / 2.0
     q3 = p["acc_bias"] ** 2 * (1.0 - phi * phi)
     dtg = 1.0 / p["rate"]
-    Rz = g_sig ** 2 + g_white ** 2
+    Rz = g_sig ** 2 * ((1.0 + 2.0 * g_tau / dtg) if p.get("gz_inflate", True) else 1.0) + g_white ** 2
     Rv = v_sig ** 2 * (1.0 + 2.0 * p["v_tau"] / dtg)
     Rb = 0.0
     if use_baro:
         dtb = 1.0 / p["baro_rate"]
-        Rb = (p["baro_noise"] ** 2 + p["baro_static"] ** 2 * (1.0 + 2.0 * p["baro_static_tau"] / dtb)
-              + p["baro_drift"] ** 2 * 0.05)
+        # the drift is slow and left out of the weight: it passes into the height as a slow bias, which the swell
+        # estimator's level takes up
+        Rb = p["baro_noise"] ** 2 + p["baro_static"] ** 2 * (1.0 + 2.0 * p["baro_static_tau"] / dtb)
     kg = max(1, int(round(dtg / dt)))
     kb = max(1, int(round(1.0 / (p["baro_rate"] * dt)))) if use_baro else 0
     # state z, v, b and the symmetric covariance (pzz, pzv, pzb, pvv, pvb, pbb), plain floats for speed
@@ -180,12 +188,16 @@ def _channel_error(rng, n, dt, p, axis):
     pzz, pzv, pzb, pvv, pvb, pbb = Rz, 0.0, 0.0, Rv, 0.0, p["acc_bias"] ** 2
     h = 0.5 * dt * dt
     out = np.empty(n)
+    if gains is not None:
+        for key in ("gz", "gv", "gb"):
+            gains[key] = np.zeros((n, 3))
+        gains.update(dt=dt, phi=phi)
     for i in range(n):
         a = acc_b[i] + acc_n[i] - b               # true acceleration zero; the filter removes its bias estimate
         z, v, b = z + v * dt + h * a, v + dt * a, phi * b
         # P = F P F' + Q with F = [[1, dt, -h], [0, 1, -dt], [0, 0, phi]]
         nzz = pzz + 2 * dt * pzv - 2 * h * pzb + dt * dt * pvv - 2 * dt * h * pvb + h * h * pbb + q1
-        nzv = pzv - dt * pzb + dt * pvv - dt * dt * pvb - h * pvb + h * dt * pbb
+        nzv = pzv - dt * pzb + dt * pvv - dt * dt * pvb - h * pvb + h * dt * pbb + q12
         nzb = phi * (pzb + dt * pvb - h * pbb)
         nvv = pvv - 2 * dt * pvb + dt * dt * pbb + q2
         nvb = phi * (pvb - dt * pbb)
@@ -196,6 +208,8 @@ def _channel_error(rng, n, dt, p, axis):
             s = pzz + Rz
             kz, kv, kb_ = pzz / s, pzv / s, pzb / s
             r = bias_g[i] + g_wn[i] - z
+            if gains is not None:
+                gains["gz"][i] = (kz, kv, kb_)
             z, v, b = z + kz * r, v + kv * r, b + kb_ * r
             pzz, pzv, pzb, pvv, pvb, pbb = (pzz - kz * pzz, pzv - kz * pzv, pzb - kz * pzb, pvv - kv * pzv,
                                             pvb - kv * pzb, pbb - kb_ * pzb)
@@ -203,6 +217,8 @@ def _channel_error(rng, n, dt, p, axis):
             s = pvv + Rv
             kz, kv, kb_ = pzv / s, pvv / s, pvb / s
             r = v_err[i] - v
+            if gains is not None:
+                gains["gv"][i] = (kz, kv, kb_)
             z, v, b = z + kz * r, v + kv * r, b + kb_ * r
             pzz, pzv, pzb, pvv, pvb, pbb = (pzz - kz * pzv, pzv - kz * pvv, pzb - kz * pvb, pvv - kv * pvv,
                                             pvb - kv * pvb, pbb - kb_ * pvb)
@@ -210,6 +226,8 @@ def _channel_error(rng, n, dt, p, axis):
             s = pzz + Rb
             kz, kv, kb_ = pzz / s, pzv / s, pzb / s
             r = baro[i] - z
+            if gains is not None:
+                gains["gb"][i] = (kz, kv, kb_)
             z, v, b = z + kz * r, v + kv * r, b + kb_ * r
             pzz, pzv, pzb, pvv, pvb, pbb = (pzz - kz * pzz, pzv - kz * pzv, pzb - kz * pzb, pvv - kv * pzv,
                                             pvb - kv * pzb, pbb - kb_ * pzb)
@@ -217,9 +235,65 @@ def _channel_error(rng, n, dt, p, axis):
     return out
 
 
+class BaroResponse:
+    """The vertical filter's linear response to an extra barometer error, stepped with the filter's own gains (the
+    filter is linear, so this response adds to its error). step(i, e) advances to step i with the extra error e."""
+
+    def __init__(self, gains):
+        self.g = gains
+        self.i, self.z, self.v, self.b = -1, 0.0, 0.0, 0.0
+
+    def step(self, i, e):
+        g = self.g
+        dt, phi = g["dt"], g["phi"]
+        h = 0.5 * dt * dt
+        z, v, b = self.z, self.v, self.b
+        while self.i < i:
+            self.i += 1
+            j = self.i
+            z, v, b = z + v * dt - h * b, v - dt * b, phi * b
+            kz, kv, kb = g["gz"][j]
+            if kz or kv or kb:
+                r = -z
+                z, v, b = z + kz * r, v + kv * r, b + kb * r
+            kz, kv, kb = g["gv"][j]
+            if kz or kv or kb:
+                r = -v
+                z, v, b = z + kz * r, v + kv * r, b + kb * r
+            kz, kv, kb = g["gb"][j]
+            if kz or kv or kb:
+                r = e - z
+                z, v, b = z + kz * r, v + kv * r, b + kb * r
+        self.z, self.v, self.b = z, v, b
+        return z
+
+
+def baro_wave_error(env, x, y, z, t):
+    """Height error (m) a barometer reads from the swell's own air pressure at (x, y, z, t): the linearized Bernoulli
+    of the sea model's wave-coherent air flow relative to the dominant wave, p' = -rho (U - c) u', with U the mean
+    wind and u' the wave-coherent wind along the wave's travel and c its phase speed; the barometer reads -p' / (rho
+    g) as height, so the low pressure over the crests reads as a positive height error."""
+    x, y, z, t = (np.atleast_1d(np.asarray(v, float)) for v in (x, y, z, t))
+    from sim.mpc import world_swell
+    sw = world_swell(env)
+    if sw is None:
+        return np.zeros(x.shape)
+    k, om, dx, dy, _, _ = sw
+    c = om / k
+    eta = np.asarray(env.surface(x, y, t)[0])
+    zl = np.maximum(z - eta, 2.0 * env.wind.z0)
+    w = np.asarray(env.wind_at(x, y, z, t)).reshape(-1, 3)
+    m = np.asarray(env._mean_vector(zl)).reshape(-1, 3)
+    u_wave = (w[:, 0] - m[:, 0]) * dx + (w[:, 1] - m[:, 1]) * dy
+    u_mean = m[:, 0] * dx + m[:, 1] * dy
+    return (u_mean - c) * u_wave / G
+
+
 class NavError:
     """The aircraft's navigation error over a run: (dx, dy, dz)(t) of the position filters and the bank error
-    dmu(t) of the attitude, sampled at dt from t = 0 to t_end; nav kind as nav_params."""
+    dmu(t) of the attitude, sampled at dt from t = 0 to t_end; nav kind as nav_params. With a barometer the
+    vertical filter also reads the swell's own air pressure (baro_wave_error): set_baro_extra adds the response to
+    a series known in advance (the open loop), baro_online (the closed loop) step by step."""
 
     def __init__(self, kind, t_end, seed=0, dt=0.02):
         self.kind, self.dt = kind, float(dt)
@@ -227,7 +301,11 @@ class NavError:
         rng = np.random.default_rng(int(seed) + 7919)
         n = int(math.ceil((t_end + 5.0) / dt)) + 1
         self.t = np.arange(n) * dt
-        self.dz = _channel_error(rng, n, dt, p, "z")
+        self.has_baro = bool(p["baro"])
+        self._gains = {} if self.has_baro else None
+        self.dz = _channel_error(rng, n, dt, p, "z", gains=self._gains)
+        self.dz_extra = np.zeros(n)
+        self._online = None
         self.dx = _channel_error(rng, n, dt, p, "h")
         self.dy = _channel_error(rng, n, dt, p, "h")
         self.dmu = _gm(rng, n, dt, p["att_sigma"], p["att_tau"])
@@ -238,15 +316,46 @@ class NavError:
         self.r_fast = float(np.var(self.dz[k05:] - self.dz[:-k05])) if n > k05 + 10 else 1e-4
 
     def at(self, t):
-        """(dx, dy, dz, dmu) at time t (linear interpolation)."""
+        """(dx, dy, dz, dmu) at time t (linear interpolation; dz with the barometer's swell response)."""
         f = min(max(float(t) / self.dt, 0.0), len(self.t) - 1.001)
         i = int(f)
         w = f - i
-        return tuple(float((1.0 - w) * a[i] + w * a[i + 1]) for a in (self.dx, self.dy, self.dz, self.dmu))
+        dx, dy, dz, dmu = (float((1.0 - w) * a[i] + w * a[i + 1]) for a in (self.dx, self.dy, self.dz, self.dmu))
+        return dx, dy, dz + float(self.dz_extra[i]), dmu
 
     def at_many(self, t):
         t = np.asarray(t, float)
-        return tuple(np.interp(t, self.t, a) for a in (self.dx, self.dy, self.dz, self.dmu))
+        dx, dy, dz, dmu = (np.interp(t, self.t, a) for a in (self.dx, self.dy, self.dz, self.dmu))
+        return dx, dy, dz + np.interp(t, self.t, self.dz_extra), dmu
+
+    def with_baro_extra(self, env, T, S):
+        """A copy with the barometer's response to the swell's air pressure along the path (T, S) (open loop)."""
+        import copy
+        out = copy.copy(self)
+        out.dz_extra = np.zeros(len(self.t))
+        if not self.has_baro:
+            return out
+        m = self.t <= T[-1]
+        e = np.zeros(len(self.t))
+        tt = self.t[m]
+        xs, ys, zs = (np.interp(tt, T, S[:, c]) for c in range(3))
+        e[m] = baro_wave_error(env, xs, ys, zs, tt)
+        r = BaroResponse(self._gains)
+        for i in range(len(self.t)):
+            out.dz_extra[i] = r.step(i, e[i])
+        return out
+
+    def baro_online(self, env, t, x, y, z):
+        """Advance the barometer's swell response to time t with the aircraft at (x, y, z) (closed loop)."""
+        if not self.has_baro:
+            return
+        if self._online is None:
+            self._online = BaroResponse(self._gains)
+        i = min(int(float(t) / self.dt), len(self.t) - 1)
+        if i > self._online.i:
+            e = float(baro_wave_error(env, x, y, z, t)[0])
+            self.dz_extra[i] = self._online.step(i, e)
+            self.dz_extra[i + 1:] = self.dz_extra[i]
 
 
 SENSOR_SETS = {
@@ -258,6 +367,9 @@ SENSOR_SETS = {
     "radar_tips_rtk": (("radar", "tip_r", "tip_l"), "rtk"),
     "lidar_rtk": (("lidar",), "rtk"),
     "radar_tips_fwd_baro": (("radar", "tip_r", "tip_l", "forward"), "baro"),
+    "radar_tips_vwhite": (("radar", "tip_r", "tip_l"), "standalone_vw"),
+    "radar_tips_fwd_rtk": (("radar", "tip_r", "tip_l", "forward"), "rtk"),
+    "tips_rtk": (("tip_r", "tip_l"), "rtk"),
 }
 SET_ORDER = tuple(SENSOR_SETS)
 
@@ -438,6 +550,8 @@ class SensorRig:
         self._next = [0.0] * len(self.sensors)
 
     def measure(self, state, mu, env, t, rng=None):
+        st = np.asarray(state, float)
+        self.nav.baro_online(env, t, st[0], st[1], st[2])
         got = []
         for j, sn in enumerate(self.sensors):
             if t + 1e-9 < self._next[j]:
@@ -459,7 +573,7 @@ def wrap(a):
 
 
 EKF_DEFAULTS = dict(
-    acquire_after_s=20.0,      # first grid search this long after the first sample
+    acquire_after_s=46.0,      # first grid search this long after the first sample (after the survey turn)
     acquire_every_s=10.0,      # and again this often while the estimate is not ready ...
     reacquire_n=12,            # ... at most this many times
     acquire_max_s=120.0,       # samples of at most this window enter the grid search
@@ -476,6 +590,9 @@ EKF_DEFAULTS = dict(
     ready_tp=0.3,              # s; one-sigma period
     ready_beta=math.radians(8.0),
     gate=4.0,                  # innovations beyond this many sigmas are dropped
+    adapt_tau_s=10.0,          # s; memory of the innovation statistics that scale the process and model noise
+    lam_max=60.0,              # largest scale of the process noise (an irregular sea needs it, a regular one not)
+    diverge_gated=0.5,         # a share of gated samples above this (over adapt_tau_s) starts a new grid search
     second_order=True,         # the model includes the second-order self term of the oracle surface
 )
 
@@ -483,9 +600,10 @@ EKF_DEFAULTS = dict(
 class SwellEKF:
     """Extended Kalman filter of one long-crested deep-water swell component and a mean level.
 
-    State [a, psi, omega, beta, b]: amplitude, phase at the reference point (x_r, y_r, t_r), angular frequency,
-    direction of travel (math angle), mean level in the navigation frame (absorbing the slow navigation height
-    error). The reference moves to the newest sample at each update, so the phase stays local. Model of a sample
+    State [a, psi, omega, beta, b, dmu]: amplitude, phase at the reference point (x_r, y_r, t_r), angular
+    frequency, direction of travel (math angle), mean level in the navigation frame (absorbing the slow navigation
+    height error) and the bank error of the navigation (which moves the tips' heights). The reference moves to
+    the newest sample at each update, so the phase stays local. Model of a sample
     at (x, y, t): eta = b + a cos(theta) + 0.5 a^2 k cos(2 theta), theta = psi + k (cos(beta) dx + sin(beta) dy)
     - omega dt, k = omega^2 / g. Started by a grid search over period and direction with a linear fit of the
     amplitude, phase, level and level trend at each grid point, then Gauss-Newton on all parameters.
@@ -494,8 +612,9 @@ class SwellEKF:
     navigation height); fit(t) processes the samples available by t and returns a SwellFit once the estimate is
     ready (its one-sigma errors below the ready limits), else None."""
 
-    def __init__(self, nav, preset="p63", q_drift=None, r_fast=None, **kw):
+    def __init__(self, nav, preset="p63", q_drift=None, r_fast=None, pre_world=False, **kw):
         self.o = dict(EKF_DEFAULTS, **kw)
+        self.pre_world = bool(pre_world)
         self.nav, self.preset = nav, preset
         self.q_b = float(nav.q_drift if q_drift is None else q_drift)
         self.r_fast = float(nav.r_fast if r_fast is None else r_fast)
@@ -511,6 +630,7 @@ class SwellEKF:
         self.P = None
         self.ref = None
         self.ready = False
+        self.was_ready = False
         self.t_first = None
         self.t_last = 0.0
         self.t_acq_next = None
@@ -521,7 +641,12 @@ class SwellEKF:
         self.n_gated = 0
         self.n_reacq = 0
         self.n_replaced = 0
+        self.n_diverged = 0
         self.fit_chi = None
+        self.lam = 1.0           # scale of the process noise
+        self.r_model = 0.0       # m^2; the sea the model leaves out (a wind sea, the rest of an irregular swell)
+        self.nis = 1.0           # running mean of the normalized innovation squared
+        self.gated = 0.0         # running share of gated samples
 
     # ---- fly_mpc interface --------------------------------------------------------------------------------------
     def add(self, samples, z=None):
@@ -532,8 +657,13 @@ class SwellEKF:
             self._buf.append(a)
 
     def fit(self, t):
+        """The estimate for the planner at t: None until it is first ready, then the current one (also when its
+        errors have grown past the ready limits since; the aircraft keeps its last estimate), None again only after a
+        divergence until the next grid search."""
         self.step(t)
-        return SwellFit(self, t) if self.ready else None
+        if self.x is not None and (self.ready or self.was_ready):
+            return SwellFit(self, t)
+        return PreFit(self, t) if self.pre_world else None
 
     # ---- the filter ----------------------------------------------------------------------------------------------
     def _take(self, t):
@@ -562,6 +692,12 @@ class SwellEKF:
             self._hist = self._hist[self._hist[:, 2] >= t - o["acquire_max_s"]]
         if self.x is not None and len(new):
             self._update(self._thin(new))
+        if self.x is not None and self.gated > o["diverge_gated"] and len(self._hist) >= 50:
+            # the filter has lost the sea: start again from a grid search over the window
+            self.n_diverged += 1
+            self.x, self.P, self.ready = None, None, False
+            self.gated, self.lam, self.nis = 0.0, 1.0, 1.0
+            self.t_acq_next = t
         due = self.t_acq_next is not None and t >= self.t_acq_next and len(self._hist) >= 50
         if due and (self.x is None or (not self.ready and self.n_reacq < o["reacquire_n"])):
             cand = self._acquire(self._hist)
@@ -581,6 +717,7 @@ class SwellEKF:
     def _set(self, cand):
         x, P, ref, chi = cand
         self.x, self.P, self.ref = x, P, ref
+        self.r_model = max(0.0, chi - 1.0) * self.r_mean
         if self.t_init is None:
             self.t_init = float(self.t_last)
         self.fit_chi = chi
@@ -700,6 +837,7 @@ class SwellEKF:
         p = np.array([a, psi, om, beta, lv[0], lv[2] if has_lever else 0.0, lv[1]])
         # Gauss-Newton on all samples of the window, with the prior of the bank error
         wa = 1.0 / (d[:, 4] + self.r_fast)
+        self.r_mean = float(np.mean(d[:, 4] + self.r_fast))
         prior = np.zeros(7)
         prior[5] = 1.0 / self.att_sigma ** 2
         for _ in range(10):
@@ -750,15 +888,19 @@ class SwellEKF:
         self.x[1] = float(wrap(psi + k * along - om * dt))
         self.x[5] = dmu * phi
         o = self.o
-        Q = np.diag([(o["q_a"] * max(a, 0.2)) ** 2 * dts, o["q_psi"] ** 2 * dts, o["q_om"] ** 2 * dts,
+        lam = self.lam
+        Q = np.diag([lam * (o["q_a"] * max(a, 0.2)) ** 2 * dts, lam * o["q_psi"] ** 2 * dts, o["q_om"] ** 2 * dts,
                      o["q_beta"] ** 2 * dts, self.q_b * dts, self.att_sigma ** 2 * (1.0 - phi * phi)])
         self.P = F @ self.P @ F.T + Q
         self.ref = tuple(ref_new)
 
     def _update(self, d):
         ref_new = (float(d[-1, 0]), float(d[-1, 1]), float(d[-1, 2]))
+        dt_up = max(ref_new[2] - self.ref[2], 0.0)
         self._propagate(ref_new)
-        R = d[:, 4] + self.r_fast
+        # the navigation error is common to the samples of an update, so its fast part is not added to each sample's
+        # noise (that would let the update average it away); the level's random walk carries it
+        R = d[:, 4] + self.r_model
         x0, P0 = self.x.copy(), self.P.copy()
         x = x0.copy()
         keep = np.ones(len(d), bool)
@@ -768,6 +910,13 @@ class SwellEKF:
                 S = np.einsum("ij,jk,ik->i", J, P0, J) + R
                 inno = d[:, 3] - pred
                 keep = np.abs(inno) <= self.o["gate"] * np.sqrt(S)
+                f = 1.0 - math.exp(-dt_up / self.o["adapt_tau_s"])
+                self.gated += f * (float(np.mean(~keep)) - self.gated)
+                self.nis += f * (float(np.mean(inno[keep] ** 2 / S[keep])) - self.nis) if keep.any() else 0.0
+                if self.nis > 2.0:
+                    self.lam = min(self.lam * 1.3, self.o["lam_max"])
+                elif self.nis < 1.2:
+                    self.lam = max(self.lam * 0.95, 1.0)
                 if not keep.any():
                     self.n_gated += len(d)
                     return
@@ -779,6 +928,11 @@ class SwellEKF:
         self.x = x
         self.P = (np.eye(6) - K @ Jk) @ P0
         self.P = 0.5 * (self.P + self.P.T)
+        # the model noise: what the residuals after the update leave beyond the sensors' own noise
+        post, _ = self._model(x, d[keep], self.ref)
+        excess = float(np.mean((d[keep, 3] - post) ** 2 - d[keep, 4]))
+        f = 1.0 - math.exp(-dt_up / self.o["adapt_tau_s"])
+        self.r_model = max(0.0, self.r_model + f * (excess - self.r_model))
         if self.x[0] < 0.0:
             self.x[0], self.x[1] = -self.x[0], self.x[1] + np.pi
         self.x[1] = float(wrap(self.x[1]))
@@ -800,8 +954,10 @@ class SwellEKF:
         sig_tp = 2.0 * np.pi / om ** 2 * s["om"]
         ok = (s["psi"] < o["ready_psi"] and s["a"] < o["ready_a"] * max(a, 0.1) and sig_tp < o["ready_tp"]
               and s["beta"] < o["ready_beta"] and a > 0.05)
-        if ok and not self.ready:
+        if ok and not self.ready and self.t_ready is None:
             self.t_ready = float(t)
+        if ok:
+            self.was_ready = True
         self.ready = bool(ok) or (self.ready and s["psi"] < 2.0 * o["ready_psi"])
 
     def snapshot(self, t):
@@ -866,6 +1022,29 @@ def estimated_world(state, u10, from_deg, preset, nav_shift):
     return ShiftedWorld(env, b - dz)
 
 
+class PreFit:
+    """What fit(t) hands fly_mpc before the estimate is ready (pre_world): a flat sea with a swell component of
+    negligible height (PRE_HS) along the wind, so that fly_mpc treats the run as a run over swell from its first
+    plan (it seeds the first plan's actuators and thrust only then, as in the oracle runs); the pilot does not see
+    it (SensingPilot flies the start and the survey until the estimate is ready)."""
+
+    def __init__(self, est, t):
+        self.est, self.t = est, float(t)
+        self.quality = float("nan")
+        self.n_samples = int(est.n_used)
+
+    def environment(self, u10, from_deg, decay=None):
+        from sim.wavelib import CALM_U10, RegularSwell, preset_amp_decay
+        from sim.seawind import Environment, Wind
+        wind = Wind(max(float(u10), CALM_U10), from_deg, roughness="coare35")
+        amp, dec = preset_amp_decay(self.est.preset)
+        return Environment(wind, [RegularSwell(PRE_HS, 10.0, wind.to_deg)], seed=1, decay=dec, wave_amp=amp,
+                           surface_model="stokes2")
+
+
+PRE_HS = 1e-6              # m; the pre-estimate world's swell
+
+
 class SwellFit:
     """What fit(t) hands fly_mpc: the estimate at t; environment() builds the planner's world."""
 
@@ -885,14 +1064,30 @@ class SwellFit:
 # truth of the swell for the error measures
 # ---------------------------------------------------------------------------------------------------------------
 
+TRUTH_BAND = (0.75, 1.33)   # the dominant swell: its components between these multiples of the peak frequency
+
+
 def swell_components(env, names=("swell",)):
-    """Linear components (a, k, omega, dx, dy, phase) of the swell trains of env (all trains if none is named
-    swell)."""
-    sl = [s for tr, s in zip(env.trains, env._train_slices) if getattr(tr, "name", "") in names]
-    if not sl:
-        sl = list(env._train_slices)
-    idx = np.concatenate([np.arange(s.start, s.stop) for s in sl])
-    return {k: env.c[k][idx] for k in ("a", "k", "omega", "dx", "dy", "phase")}
+    """Linear components (a, k, omega, dx, dy, phase) of the dominant swell of env: the components of the trains
+    named in names (all trains if none is), within TRUTH_BAND of the train's peak frequency; with "tp" and "beta",
+    the train's peak period and direction of travel (math angle)."""
+    pairs = [(tr, s_) for tr, s_ in zip(env.trains, env._train_slices) if getattr(tr, "name", "") in names]
+    if not pairs:
+        pairs = list(zip(env.trains, env._train_slices))
+    idx, tp, beta = [], None, None
+    for tr, s_ in pairs:
+        wp = 2.0 * np.pi / tr.tp
+        om = env.c["omega"][s_]
+        keep = (om >= TRUTH_BAND[0] * wp) & (om <= TRUTH_BAND[1] * wp)
+        idx.append(np.arange(s_.start, s_.stop)[keep])
+        if tp is None:
+            tp = float(tr.tp)
+            r = math.radians(tr.to_deg)
+            beta = math.atan2(math.cos(r), math.sin(r))
+    idx = np.concatenate(idx)
+    out = {k: env.c[k][idx] for k in ("a", "k", "omega", "dx", "dy", "phase")}
+    out["tp"], out["beta"] = tp, beta
+    return out
 
 
 def analytic(comps, x, y, t):
@@ -904,8 +1099,16 @@ def analytic(comps, x, y, t):
     return np.abs(z), np.angle(z)
 
 
+def swell_a_ref(comps):
+    """The scale of the height errors: the amplitude of the regular wave with the dominant swell's energy (for the
+    regular swell its amplitude, Hs / 2 in the oracle sea's convention)."""
+    return float(np.sqrt(np.sum(comps["a"] ** 2)))
+
+
 def swell_peak(comps):
-    """(period, direction beta) of the swell's energy-weighted peak component."""
+    """(peak period, direction of travel beta) of the dominant swell."""
+    if comps.get("tp") is not None:
+        return comps["tp"], comps["beta"]
     i = int(np.argmax(comps["a"]))
     return 2.0 * np.pi / comps["omega"][i], math.atan2(comps["dy"][i], comps["dx"][i])
 
@@ -919,7 +1122,7 @@ ERR_PRESET = "p63"
 ERR_HS = (3.0, 2.0)
 ERR_TP = (8.0, 10.0, 12.0)
 ERR_DIRS = ("along", "across", "against")
-ERR_T_END = 300.0
+ERR_T_END = 305.0          # s; the last check at 300 s and the 3 s ahead of it fit in
 ERR_SEEDS = (0, 1, 2)
 ERR_CHECKS = (30.0, 60.0, 120.0, 300.0)   # s since the start; errors over the 10 s before each
 PATH_DT = 0.01
@@ -929,8 +1132,11 @@ SURVEY_RATE = math.radians(10.0)
 RIDE_PHASE = 0.9           # rad; the ride's place on the forward face (the closed loop's 0.7 to 1.2)
 RIDE_H = 10.0              # m above the local surface (the closed loop's median about 9 to 11)
 RIDE_VC = 7.0              # m/s along the crest (the closed loop's slow ride)
-RIDE_SETTLE_S = 20.0       # s to move from the survey's end onto the ride's phase
-RIDE_BLEND_S = 6.0         # s to blend the survey's velocity into the ride's
+RIDE_SETTLE_S = 20.0       # s to move from the survey's end onto the ride's phase (the feedback's time scale)
+RIDE_RATE_MAX = 0.15       # rad/s; the fastest phase correction of the ride
+RIDE_TURN_RATE = math.radians(15.0)   # rad/s; the fastest turn of the air-relative velocity (about 18 deg of bank)
+RIDE_ACC = 1.5             # m/s2; the fastest change of airspeed
+RIDE_V_MIN = 11.0          # m/s; the lowest airspeed of the ride (the albatross-like glider stalls at about 10)
 RIDE_WANDER = (0.03, 20.0)  # rad, s: the ride's phase wander (the closed loop's spread about its median)
 LEG_V = 12.16              # m/s airspeed of the steady leg (sim.wavelib.flat_start_entry for the albatross-like glider)
 SPAN = 3.0                 # m; the albatross-like glider
@@ -951,12 +1157,51 @@ def error_sea(kind, hs, tp, direction, seed):
     if kind == "irregular":
         wind = Wind(ERR_U10, 270.0, roughness="coare35")
         to = (wind.to_deg - SWELL_DIRS[direction]) % 360.0
-        tr = WaveTrain(hs=hs, tp=tp, to_deg=to, gamma=7.0, n_omega=16, n_theta=1, name="swell")
+        tr = NarrowSwell(hs=hs, tp=tp, to_deg=to)
         return Environment(wind, [tr], seed=1000 + int(seed), decay=decay, wave_amp=amp), ("swell",)
     if kind == "mixed":
         h = mixed_history(direction).environment(MIXED_HOUR, seed=1000 + int(seed))
         return Environment(h.wind, h.trains, seed=1000 + int(seed), decay=decay, wave_amp=amp), ("swell",)
+    if kind == "swell_windsea":
+        # the narrow long-crested swell under the sea history's wind sea (the wind sea of the mixed sea)
+        h = mixed_history(direction).environment(MIXED_HOUR, seed=1000 + int(seed))
+        ws = [tr for tr in h.trains if tr.name == "wind sea"]
+        wind = Wind(ERR_U10, 270.0, roughness="coare35")
+        to = (wind.to_deg - SWELL_DIRS[direction]) % 360.0
+        return Environment(wind, ws + [NarrowSwell(hs=hs, tp=tp, to_deg=to)], seed=1000 + int(seed), decay=decay,
+                           wave_amp=amp), ("swell",)
     raise ValueError(kind)
+
+
+class NarrowSwell:
+    """A long-crested irregular swell: the JONSWAP spectrum of gamma 7 (the swell of sim.sea_history) between
+    NARROW_BAND times its peak frequency only (a swell far from its storm, without the wind sea's tail), in n
+    components of equal energy and random phase; Hs is that of the band."""
+
+    def __init__(self, hs, tp, to_deg, gamma=7.0, n=16, name="swell"):
+        self.hs, self.tp, self.to_deg, self.gamma, self.n, self.name = float(hs), float(tp), float(to_deg), gamma, n, name
+        self.hs_full = 0.0
+
+    @property
+    def growth_fraction(self):
+        return 1.0
+
+    def components(self, rng):
+        from sim.seawind import jonswap
+        wp = 2.0 * np.pi / self.tp
+        om = np.linspace(NARROW_BAND[0] * wp, NARROW_BAND[1] * wp, 2000)
+        sp = jonswap(om, 1.0, self.tp, self.gamma)
+        cum = np.concatenate([[0.0], np.cumsum(0.5 * (sp[1:] + sp[:-1]) * np.diff(om))])
+        idx = np.minimum((cum / cum[-1] * self.n).astype(int), self.n - 1)
+        omega = np.bincount(idx, weights=sp * om, minlength=self.n) / np.bincount(idx, weights=sp, minlength=self.n)
+        m0 = (self.hs / 4.0) ** 2
+        a = np.full(self.n, math.sqrt(2.0 * m0 / self.n))
+        r = math.radians(self.to_deg)
+        return {"a": a, "k": omega ** 2 / G, "omega": omega, "dx": np.full(self.n, math.sin(r)),
+                "dy": np.full(self.n, math.cos(r)), "phase": rng.uniform(0.0, 2.0 * np.pi, self.n)}
+
+
+NARROW_BAND = (0.8, 1.25)
 
 
 def mixed_history(direction):
@@ -969,10 +1214,11 @@ def mixed_history(direction):
 
 def path_states(path, env, comps, t_end, seed, dt=PATH_DT, u_wind=ERR_U10):
     """Kinematic flight over the sea: (T, S (n, 6) = [x, y, z, V, gamma, psi], MU). path "survey_ride": straight
-    along the wind for SURVEY_START_S, one level turn at SURVEY_RATE, then a crest ride (moving with the swell's
-    peak component at RIDE_VC along its crest, reaching RIDE_PHASE on the forward face within RIDE_SETTLE_S, with a
-    phase wander); "survey_leg": the same survey, then straight on; "leg": straight along the wind throughout;
-    "ride": the ride from the start. The height is RIDE_H above the local surface; the air-relative heading, the
+    along the wind for SURVEY_START_S, one level turn at SURVEY_RATE, then a crest ride (a limited turn onto the
+    velocity that moves with the swell at its peak's phase speed and RIDE_VC along its crest, a phase feedback that
+    holds the local phase at the aircraft at RIDE_PHASE on the forward face plus a slow wander); "survey_leg": the
+    same survey, then straight on; "leg": straight along the wind throughout; "ride": the ride from the start.
+    The height is RIDE_H above the local surface; the air-relative heading, the
     climb angle and the bank follow from the ground track and the wind (u_wind toward +x)."""
     rng = np.random.default_rng(int(seed) + 31)
     n = int(round(t_end / dt)) + 1
@@ -990,6 +1236,7 @@ def path_states(path, env, comps, t_end, seed, dt=PATH_DT, u_wind=ERR_U10):
     per_w = np.array([23.0, 41.0, 67.0])
     wander_rate = (amp_w * 2.0 * np.pi / per_w[None, :]
                    * np.cos(2.0 * np.pi * T[:, None] / per_w[None, :] + ph_w[None, :])).sum(1)
+    wander = (amp_w * np.sin(2.0 * np.pi * T[:, None] / per_w[None, :] + ph_w[None, :])).sum(1)
     if path == "ride":
         i_s = 0
     elif path == "leg":
@@ -1004,26 +1251,31 @@ def path_states(path, env, comps, t_end, seed, dt=PATH_DT, u_wind=ERR_U10):
     pos = np.zeros((n, 2))
     pos[1:] = np.cumsum(vel[1:] * dt, axis=0)
     if path in ("survey_ride", "ride"):
+        # the ride: the air-relative velocity turns (at most RIDE_TURN_RATE) and changes speed (at most RIDE_ACC,
+        # never below RIDE_V_MIN) towards the one that moves with the swell at its phase speed and RIDE_VC along its
+        # crest, with a feedback that brings the local phase of the swell at the aircraft (the analytic signal) to
+        # RIDE_PHASE plus the wander within about RIDE_SETTLE_S
         if path == "ride":
             th_start = float(analytic(comps, 0.0, 0.0, 0.0)[1][0])
             pos[0] = float(wrap(RIDE_PHASE - th_start)) / k * dvec
-            i0, dth = 0, 0.0
+            va_cur = c * dvec + RIDE_VC * perp - U
+            i_from = 0
         else:
-            i0 = i_s - 1
-            th0 = float(analytic(comps, pos[i0, 0], pos[i0, 1], T[i0])[1][0])
-            dth = float(wrap(RIDE_PHASE - th0))
-        tt = T[i0 + 1:] - T[i0]
-        # the settle: a raised-cosine move of the phase by dth over RIDE_SETTLE_S, and the velocity blended from the
-        # survey's over RIDE_BLEND_S (a smooth start for the attitude the sensors see)
-        sv = np.clip(tt / RIDE_SETTLE_S, 0.0, 1.0)
-        th_rate = dth * np.pi / (2.0 * RIDE_SETTLE_S) * np.sin(np.pi * sv) * (tt < RIDE_SETTLE_S)
-        th_rate = th_rate + wander_rate[i0 + 1:]
-        v = (c + th_rate / k)[:, None] * dvec[None, :] + RIDE_VC * perp[None, :]
-        if path == "survey_ride":
-            wb = np.clip(tt / RIDE_BLEND_S, 0.0, 1.0)
-            wb = (wb * wb * (3.0 - 2.0 * wb))[:, None]
-            v = (1.0 - wb) * vel[i0][None, :] + wb * v
-        pos[i0 + 1:] = pos[i0] + np.cumsum(v * dt, axis=0)
+            i_from = i_s - 1
+            va_cur = vel[i_from] - U
+        tau_c = RIDE_SETTLE_S / 3.0
+        for i in range(i_from + 1, n):
+            th = float(analytic(comps, pos[i - 1, 0], pos[i - 1, 1], T[i - 1])[1][0])
+            err = float(wrap(RIDE_PHASE + wander[i - 1] - th))
+            rate = float(np.clip(err / tau_c, -RIDE_RATE_MAX, RIDE_RATE_MAX)) + wander_rate[i - 1]
+            va_need = (c + rate / k) * dvec + RIDE_VC * perp - U
+            h_cur, h_need = math.atan2(va_cur[1], va_cur[0]), math.atan2(va_need[1], va_need[0])
+            h = h_cur + float(np.clip(wrap(h_need - h_cur), -RIDE_TURN_RATE * dt, RIDE_TURN_RATE * dt))
+            sp_cur = float(np.hypot(*va_cur))
+            sp = sp_cur + float(np.clip(max(float(np.hypot(*va_need)), RIDE_V_MIN) - sp_cur, -RIDE_ACC * dt,
+                                        RIDE_ACC * dt))
+            va_cur = sp * np.array([math.cos(h), math.sin(h)])
+            pos[i] = pos[i - 1] + (va_cur + U) * dt
     vg = np.gradient(pos, dt, axis=0)
     va = vg - U[None, :]
     psi = np.unwrap(np.arctan2(va[:, 1], va[:, 0]))
@@ -1141,6 +1393,9 @@ def error_job(job):
     kind, hs, tp, direction, path, set_name, seed, t_end = job
     t0 = time.time()
     env, names = error_sea(kind, hs, tp, direction, seed)
+    if path == "oracle":
+        from sim.wavelib import swell_env
+        env = swell_env(ERR_U10, hs, tp, direction, ERR_PRESET)     # the oracle loop's own sea (phase 0)
     comps = swell_components(env, names)
     if path == "oracle":
         T, S, MU = oracle_path(hs)
@@ -1148,12 +1403,13 @@ def error_job(job):
         T, S, MU = T[m], S[m], MU[m]
     else:
         T, S, MU = path_states(path, env, comps, t_end, seed)
-    nav = nav_error(SENSOR_SETS[set_name][1], t_end, seed)
+    nav = nav_error(SENSOR_SETS[set_name][1], t_end, seed).with_baro_extra(env, T, S)
     d = sample_path(set_name, env, T, S, MU, nav, seed)
     est = run_estimator(SwellEKF(nav, ERR_PRESET), d, t_end)
     rows = evaluate(est, env, comps, T, S, nav)
     return {"sea": kind, "hs": hs, "tp": tp, "direction": direction, "path": path, "set": set_name, "seed": seed,
-            "t_end": t_end, "t_init": est.t_init, "t_ready": est.t_ready, "n_samples": int(len(d)),
+            "t_end": t_end, "a_ref": swell_a_ref(comps), "n_diverged": est.n_diverged,
+            "t_init": est.t_init, "t_ready": est.t_ready, "n_samples": int(len(d)),
             "n_used": est.n_used, "n_gated": est.n_gated, "n_reacq": est.n_reacq, "n_replaced": est.n_replaced,
             "rows": [[round(float(v), 5) for v in r] for r in rows], "wall_s": time.time() - t0}
 
@@ -1164,31 +1420,51 @@ def error_job(job):
 
 LOOP_CASES = (("albatross-3m", 3.0, "along", 6.0, "p63"), ("albatross-3m", 2.0, "along", 6.0, "p63"))
 LOOP_T_END = 600.0
-SURVEY_LEG_S = 6.0         # each leg of the survey circle in the closed loop
-SURVEY_STEP_DEG = 60.0     # course step between the legs (one circle in 6 legs)
 SURVEY_GIVE_UP_S = 240.0   # without a ready estimate by then, fly the start's flat leg on
+SIDE_HYST_DEG = 10.0       # deg; hysteresis of the side of the wind the estimated swell travels (SensingPilot)
+
+
+def survey_entry(ac, u10, period=None, height=10.0, n=37):
+    """Library-entry dict of the survey circle: a level turn to the left at the steady leg's airspeed
+    (sim.wavelib.flat_start_entry), one full turn in period s (SURVEY_TURN_S), with the bank, lift coefficient and
+    thrust of a steady turn, drifting with the wind at 10 m. Not a steady entry, so the guide matches its phase by the
+    heading with its normal tolerances."""
+    from sim.wavelib import flat_start_entry
+    P = float(SURVEY_TURN_S if period is None else period)
+    lg = flat_start_entry(ac, u10, 0.0)
+    V, cl0, th0 = float(lg["V"][0]), float(lg["cl"][0]), float(lg["thrust"][0])
+    om = 2.0 * np.pi / P
+    mu = math.atan(V * om / G)
+    cl = cl0 / math.cos(mu)
+    thrust = th0 * float(ac.cd(cl)) / float(ac.cd(cl0))
+    R = V / om
+    t = np.linspace(0.0, P, n)
+    psi = om * t
+    u = max(float(u10), 0.1)
+    return {"aircraft": "survey", "u10": u10, "chi_deg": 0.0, "margin_set": "survey", "success": True,
+            "kind": "motor", "period": P, "t": t.tolist(), "x": (R * np.sin(psi) + u * t).tolist(),
+            "y": (R * (1.0 - np.cos(psi))).tolist(), "z": [height] * n, "V": [V] * n, "gamma": [0.0] * n,
+            "psi": psi.tolist(), "cl": [cl] * n, "mu": [mu] * n, "thrust": [thrust] * n,
+            "power_avg_w": float(lg.get("power_avg_w", 0.0))}
 
 
 class SensingPilot:
     """The wave library's pilot behind the swell estimate: until the estimator is ready, the start's steady leg for
-    SURVEY_START_S, then a survey circle of steady legs (SURVEY_STEP_DEG apart, SURVEY_LEG_S each, repeated until
-    SURVEY_GIVE_UP_S); once ready, the wave library (sim.wavelib.WavePilot) on the estimated sea. The guide's
-    settings are the inner pilot's."""
+    SURVEY_START_S, then the survey circle (survey_entry, a level turn of SURVEY_TURN_S, repeated until
+    SURVEY_GIVE_UP_S); once ready, the wave library (sim.wavelib.WavePilot) on the estimated sea, and from then on
+    while the estimator has a state (after a divergence, until its next grid search, the survey circle before
+    SURVEY_GIVE_UP_S and the start's steady leg after it). The guide's settings are the inner pilot's."""
 
     def __init__(self, pilot, est, ac, u10, start_entry, start_course_deg, survey=True):
         from sim.mpc import Cycle
-        from sim.wavelib import flat_start_entry
         self.pilot, self.est = pilot, est
         self.start = Cycle(start_entry)
-        self.legs = []
-        if survey:
-            for i in range(1, int(round(360.0 / SURVEY_STEP_DEG)) + 1):
-                c = (start_course_deg + i * SURVEY_STEP_DEG) % 360.0
-                self.legs.append(Cycle(flat_start_entry(ac, u10, c)))
+        self.legs = [Cycle(survey_entry(ac, u10))] if survey else []
         self.used_wave = False
+        self.side = None
 
     def __getattr__(self, name):
-        if name in ("pilot", "est", "start", "legs", "used_wave"):
+        if name in ("pilot", "est", "start", "legs", "used_wave", "side"):
             raise AttributeError(name)
         return getattr(self.pilot, name)
 
@@ -1196,15 +1472,39 @@ class SensingPilot:
     def last(self):
         return self.pilot.last
 
+    def _pilot_world(self, world, psi_w):
+        """The world as the pilot sees it, with hysteresis on the side of the wind the swell's travel lies: the
+        pilot mirrors its entries by the sign of that angle, and an estimated direction near the wind's would flip
+        the entry from plan to plan. The side is kept until the angle passes SIDE_HYST_DEG the other way."""
+        from sim.mpc import dominant_wave
+        w = dominant_wave(world)
+        if w is None:
+            return world
+        a, k, dx, dy, ph, om = w
+        rel = float(wrap(math.atan2(dy, dx) - psi_w))
+        far = abs(rel) > math.radians(SIDE_HYST_DEG) and abs(abs(rel) - math.pi) > math.radians(SIDE_HYST_DEG)
+        if self.side is None or (far and rel * self.side < 0.0):
+            self.side = 1.0 if rel >= 0.0 else -1.0
+        rel_used = self.side * abs(rel)
+        ang = psi_w + rel_used
+        c = {key: np.array([v]) for key, v in (("a", a), ("k", k), ("omega", om), ("phase", ph))}
+        c["dx"], c["dy"] = np.array([math.cos(ang)]), np.array([math.sin(ang)])
+
+        class _Seen:
+            pass
+        seen = _Seen()
+        seen.c, seen.wind = c, world.wind
+        return seen
+
     def cycle(self, name, world, u10, chi, psi_w):
         t = self.est.t_last
-        if self.est.ready and (self.used_wave or t < SURVEY_GIVE_UP_S):
+        has = getattr(self.est, "x", 0) is not None
+        if has and (self.used_wave or (self.est.ready and t < SURVEY_GIVE_UP_S)):
             self.used_wave = True
-            return self.pilot.cycle(name, world, u10, chi, psi_w)
+            return self.pilot.cycle(name, self._pilot_world(world, psi_w), u10, chi, psi_w)
         if not self.legs or t < SURVEY_START_S or t >= SURVEY_GIVE_UP_S:
             return self.start
-        i = int((t - SURVEY_START_S) // SURVEY_LEG_S) % len(self.legs)
-        return self.legs[i]
+        return self.legs[0]
 
 
 def loop_job(job):
@@ -1228,7 +1528,7 @@ def loop_job(job):
     start = wl.flat_start_entry(ac, u10, wl.SWELL_DIRS[d])
     nav = NavError(SENSOR_SETS[set_name][1], t_end, seed)
     rig = SensorRig(set_name, nav, u10, ac.span, seed)
-    est = SwellEKF(nav, preset)
+    est = SwellEKF(nav, preset, pre_world=True)
     sp = SensingPilot(pilot, est, ac, u10, start, wl.SWELL_DIRS[d], survey=survey)
     t0 = time.time()
     r = mpc.fly_mpc(ac, env, "estimated", [rig], t_end, bearing, max(u10, wl.CALM_U10), seed=1,
@@ -1268,6 +1568,7 @@ def loop_job(job):
            "cpu_mean_s": r["cpu_mean_s"], "max_n_flown": r["max_n_flown"],
            "min_clear_wingtip": r.get("min_clear_wingtip"), "eta_pred_rms": r.get("eta_pred_rms"),
            "fit_available_frac": r.get("fit_available_frac"), "fit_cpu_mean_s": r.get("fit_cpu_mean_s"),
+           "a_ref": swell_a_ref(comps), "n_diverged": est.n_diverged,
            "t_init": est.t_init, "t_ready": est.t_ready, "n_used": est.n_used, "n_gated": est.n_gated,
            "n_reacq": est.n_reacq, "n_replaced": est.n_replaced,
            "rows": [[round(float(v), 5) for v in row] for row in rows]}
@@ -1276,7 +1577,7 @@ def loop_job(job):
 
 def oracle_paths_main(workers=2):
     """Rerun the oracle closed loop of LOOP_CASES with the trajectory kept, for the error experiment's oracle path
-    (sim/out/swellest_oracle_hs<H>.npz)."""
+    (sim/cache/swellest_oracle_hs<H>.npz, not committed)."""
     from concurrent.futures import ProcessPoolExecutor
     with ProcessPoolExecutor(workers) as ex:
         for res in ex.map(_oracle_path_job, LOOP_CASES):
@@ -1303,3 +1604,202 @@ def _oracle_path_job(case):
     tr = r.pop("traj")
     np.savez_compressed(ORACLE_PATH % hs, t=tr["t"], state=tr["state"], mu=tr["mu"])
     return hs, r["ended"], r["survival_s"], r["motor"]["avg_power_w"]
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# the experiments (python -m sim.swellest --errors | --loop | --oracle-paths)
+# ---------------------------------------------------------------------------------------------------------------
+
+ERR_IRREGULAR = (("irregular", 3.0, 10.0, "along"), ("irregular", 2.0, 10.0, "along"),
+                 ("swell_windsea", 3.0, 10.0, "along"), ("mixed", 3.0, 10.0, "along"), ("mixed", 3.0, 10.0, "across"))
+ERR_ORACLE = (("regular", 3.0, 10.0, "along"), ("regular", 2.0, 10.0, "along"))
+LOOP_SETS = ("radar_tips_rtk", "radar_tips_fwd_rtk", "radar_tips_fwd_baro", "radar_tips_baro")
+
+
+def error_jobs():
+    """The open-loop grid: the regular seas (ERR_HS x ERR_TP x ERR_DIRS) on the survey path, the irregular and mixed
+    seas on the survey path, and the two closed-loop seas on the oracle loop's own path (no survey), each for every
+    sensor set and seed."""
+    jobs = []
+    for s_ in SET_ORDER:
+        for seed in ERR_SEEDS:
+            for hs in ERR_HS:
+                for tp in ERR_TP:
+                    for d in ERR_DIRS:
+                        jobs.append(("regular", hs, tp, d, "survey_ride", s_, seed, ERR_T_END))
+            for kind, hs, tp, d in ERR_IRREGULAR:
+                jobs.append((kind, hs, tp, d, "survey_ride", s_, seed, ERR_T_END))
+            for kind, hs, tp, d in ERR_ORACLE:
+                jobs.append((kind, hs, tp, d, "oracle", s_, seed, ERR_T_END))
+    return jobs
+
+
+def summarize_rows(results, checks=ERR_CHECKS, window_s=10.0):
+    """Per check time: p90 and median of |phase error| (rad), of |height error| (relative to the swell's amplitude) and
+    the median surface error ahead (m) and wave-wind error (m/s) over the window_s before it, pooled over the runs;
+    the share of the runs with a ready estimate at the check and with any estimate."""
+    out = {}
+    for tc in checks:
+        ph, hh, ah, ww, rdy, have = [], [], [], [], [], []
+        for r in results:
+            rows = np.asarray(r["rows"], float)
+            a_ref = r["a_ref"]
+            if not len(rows):
+                rdy.append(0.0)
+                have.append(0.0)
+                continue
+            m = (rows[:, 0] > tc - window_s) & (rows[:, 0] <= tc)
+            if not m.any():
+                rdy.append(0.0)
+                have.append(0.0)
+                continue
+            have.append(1.0)
+            rdy.append(float(rows[m, 7][-1]))
+            ph.extend(np.abs(rows[m, 1]))
+            a_est = (rows[m, 2] + 1.0) * rows[m, 8]
+            hh.extend(np.abs(a_est - rows[m, 8]) / a_ref)
+            ah.extend(rows[m, 5])
+            ww.extend(np.abs(rows[m, 6]))
+        f = lambda v, q: float(np.percentile(v, q)) if len(v) else None
+        out["%g" % tc] = {"phase_p90": f(ph, 90), "phase_median": f(ph, 50), "height_p90": f(hh, 90),
+                          "height_median": f(hh, 50), "ahead_median_m": f(ah, 50), "wave_w_median_ms": f(ww, 50),
+                          "ready_share": float(np.mean(rdy)) if rdy else 0.0,
+                          "estimate_share": float(np.mean(have)) if have else 0.0}
+    return out
+
+
+def _dump(path, key, block):
+    import json
+    d = json.load(open(path)) if _os.path.exists(path) else {}
+    d[key] = block
+    with open(path, "w", newline="\n") as fh:
+        json.dump(d, fh, indent=1)
+        fh.write("\n")
+
+
+def errors_main(workers=2, out=OUT_PATH, quick=False, sets=None, paths=None):
+    """The open-loop error experiment, key "errors" of out: every run (without its rows) and the summaries by sea,
+    path and sensor set. sets, paths: rerun only the runs of these sets (all if None) on these paths (all if None)
+    and keep the others' runs and summaries."""
+    import json
+    import time
+    from concurrent.futures import ProcessPoolExecutor
+    from sim import record
+    t0 = time.time()
+    jobs = error_jobs()
+    if quick:
+        jobs = [j for j in jobs if j[6] == 0][:: max(1, len(jobs) // 40)]
+    kept_runs, kept_summ = [], []
+    if sets or paths:
+        sel = lambda set_name, path: (not sets or set_name in sets) and (not paths or path in paths)
+        jobs = [j for j in jobs if sel(j[5], j[4])]
+        old = (json.load(open(out)) if _os.path.exists(out) else {}).get("errors", {})
+        kept_runs = [r for r in old.get("runs", []) if not sel(r["set"], r["path"])]
+        kept_summ = [x for x in old.get("summary", []) if not sel(x["set"], x["path"])]
+    results = []
+    with ProcessPoolExecutor(workers) as ex:
+        for i, r in enumerate(ex.map(error_job, jobs, chunksize=2)):
+            results.append(r)
+            if i % 25 == 0:
+                print("%d/%d %.0f s" % (i + 1, len(jobs), time.time() - t0), flush=True)
+    groups = {}
+    for r in results:
+        groups.setdefault((r["sea"], r["hs"], r["tp"], r["direction"], r["path"], r["set"]), []).append(r)
+    summ = [{"sea": k[0], "hs": k[1], "tp": k[2], "direction": k[3], "path": k[4], "set": k[5],
+             "t_ready_median": (float(np.median([r["t_ready"] for r in v if r["t_ready"] is not None]))
+                                if any(r["t_ready"] is not None for r in v) else None),
+             "n_runs": len(v), "checks": summarize_rows(v)} for k, v in groups.items()]
+    here = HERE
+    meta = record.meta("python -m sim.swellest --errors --workers %d" % workers,
+                       [__file__, _os.path.join(here, "seawind.py"), _os.path.join(here, "wavelib.py"),
+                        _os.path.join(here, "sea_history.py")])
+    meta.update({"runtime_s": time.time() - t0, "t_end": ERR_T_END, "seeds": list(ERR_SEEDS),
+                 "checks_s": list(ERR_CHECKS), "window_s": 10.0, "u10": ERR_U10, "preset": ERR_PRESET,
+                 "sets": {k: {"range": list(v[0]), "nav": v[1], "mass_g": set_mass_power(k)[0],
+                              "power_w": set_mass_power(k)[1]} for k, v in SENSOR_SETS.items()},
+                 "ekf": {k: (list(v) if isinstance(v, tuple) else v) for k, v in EKF_DEFAULTS.items()},
+                 "paths": "survey_ride: straight along the wind for %g s, one level turn at %g deg/s, then a crest ride "
+                          "(the swell's phase speed, %g m/s along the crest, phase %g rad, %g m above the local "
+                          "surface); oracle: the oracle closed loop's own path (no survey)"
+                          % (SURVEY_START_S, math.degrees(SURVEY_RATE), RIDE_VC, RIDE_PHASE, RIDE_H),
+                 "errors": "phase: estimated minus true linear phase of the dominant swell (the components within "
+                           "%s of its peak frequency) at the aircraft; height: |estimated amplitude minus the local "
+                           "amplitude| over the swell's amplitude (swell_a_ref); p90 and median pooled over "
+                           "the seeds' runs with an estimate and the %g s "
+                           "before each check" % (list(TRUTH_BAND), 10.0)})
+    runs = kept_runs + [{k: v for k, v in r.items() if k != "rows"} for r in results]
+    if sets or paths:
+        meta["rerun"] = {"sets": sorted(sets) if sets else "all", "paths": sorted(paths) if paths else "all",
+                         "kept_from": (old.get("meta") or {}).get("commit")}
+    _dump(out, "errors", {"meta": meta, "summary": kept_summ + summ, "runs": runs})
+    return summ
+
+
+def loop_jobs(sets=LOOP_SETS, seeds=(0,)):
+    return [c + (LOOP_T_END, s_, seed) for s_ in sets for c in LOOP_CASES for seed in seeds]
+
+
+def loop_main(workers=2, out=OUT_PATH, sets=LOOP_SETS, seeds=(0,), t_end=None):
+    """The closed loop with the estimated sea, key "loop" of out (merged by case and set)."""
+    import json
+    import time
+    from concurrent.futures import ProcessPoolExecutor
+    from sim import record
+    t0 = time.time()
+    jobs = loop_jobs(sets, seeds)
+    if t_end is not None:
+        jobs = [j[:5] + (float(t_end),) + j[6:] for j in jobs]
+    d = json.load(open(out)) if _os.path.exists(out) else {}
+    kept = d.get("loop", {}).get("results", [])
+    key = lambda r: (r["aircraft"], r["hs"], r["direction"], r["u10"], r["preset"], r["set"], r["seed"])
+    new_keys = {(j[0], j[1], j[2], j[3], j[4], j[6], j[7]) for j in jobs}
+    rows = [r for r in kept if key(r) not in new_keys]
+    with ProcessPoolExecutor(workers) as ex:
+        for r in ex.map(loop_job, jobs, chunksize=1):
+            rows.append(r)
+            print(r["set"], r["hs"], r["ended"], r["survival_s"], r["margins"]["counts"],
+                  "%.1f" % r["motor"]["avg_power_w"], (r.get("after_entry") or {}).get("avg_power_w"),
+                  r["t_ready"], flush=True)
+    here = HERE
+    meta = record.meta("python -m sim.swellest --loop --workers %d" % workers,
+                       [__file__, _os.path.join(here, "mpc.py"), _os.path.join(here, "wavelib.py"),
+                        _os.path.join(here, "out", "mpc_library_wave.json"),
+                        _os.path.join(here, "out", "mpc_library_motor.json"), _os.path.join(here, "seawind.py")])
+    meta.update({"runtime_s": time.time() - t0, "cases": [list(c) for c in LOOP_CASES], "t_end": LOOP_T_END,
+                 "how": "as the oracle wave loop (sim.wavelib.run_wave_job) with fly_mpc's world model "
+                        "'estimated': the rig's sensors every step, SwellEKF at every plan, the planner and the wave "
+                        "pilot in the estimated sea moved into the true frame by the navigation error; the pilot "
+                        "flies the start's steady leg for %g s, then the survey circle (a level turn of %g s at the "
+                        "leg's airspeed), until the estimate is ready (at most %g s)"
+                        % (SURVEY_START_S, SURVEY_TURN_S, SURVEY_GIVE_UP_S)})
+    rows.sort(key=lambda r: (r["set"], -r["hs"], r["seed"]))
+    _dump(out, "loop", {"meta": meta, "results": rows})
+
+
+def main():
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__.split(chr(10))[0])
+    ap.add_argument("--errors", action="store_true")
+    ap.add_argument("--loop", action="store_true")
+    ap.add_argument("--oracle-paths", action="store_true")
+    ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--workers", type=int, default=2)
+    ap.add_argument("--sets", default=None, help="comma-separated sensor sets (the closed loop's, or the error runs "
+                                                 "to redo)")
+    ap.add_argument("--paths", default=None, help="comma-separated paths of the error runs to redo")
+    ap.add_argument("--seeds", default="0")
+    ap.add_argument("--t-end", type=float, default=None)
+    ap.add_argument("--out", default=OUT_PATH)
+    a = ap.parse_args()
+    if a.oracle_paths:
+        oracle_paths_main(a.workers)
+    if a.errors:
+        errors_main(a.workers, a.out, quick=a.quick, sets=tuple(a.sets.split(",")) if a.sets else None,
+                    paths=tuple(a.paths.split(",")) if a.paths else None)
+    if a.loop:
+        sets = tuple(a.sets.split(",")) if a.sets else LOOP_SETS
+        loop_main(a.workers, a.out, sets, tuple(int(v) for v in a.seeds.split(",")), a.t_end)
+
+
+if __name__ == "__main__":
+    main()
