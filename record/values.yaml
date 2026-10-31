@@ -1133,6 +1133,84 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#viewer
+  - key: mpc.js_wave_plan_node_ms
+    v: 33
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_plan_browser_ms
+    v: 58
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_late_share
+    v: 0.11
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_flight_s
+    v: 191
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_power_w
+    v: 1.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_power_after_w
+    v: 1.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_motor_share
+    v: 0.034
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_motor_share_after
+    v: 0.017
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_height_median_m
+    v: 10.3
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_py_t_s
+    v: 180
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_py_power_w
+    v: 2.3
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_py_power_after_w
+    v: 1.8
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: mpc.js_wave_py_motor_share
+    v: 0.035
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
   - key: mpc.burst_baseline_u11_normal_w
     v: 8.8
     unit: W
