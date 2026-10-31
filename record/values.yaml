@@ -18340,6 +18340,84 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#wave-loop
+  - key: wave.pilot_face_trials
+    v: 73
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_face_ended
+    v: 22
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_face_broke
+    v: 10
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_face_kept
+    v: 41
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_noface_trials
+    v: 73
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_noface_ended
+    v: 28
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_noface_broke
+    v: 5
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_noface_kept
+    v: 40
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_face_lower
+    v: 18
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_face_higher
+    v: 8
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_face_kept_both
+    v: 39
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_face_kept_both_median_w
+    v: 4.9
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
+  - key: wave.pilot_noface_kept_both_median_w
+    v: 4.5
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#wave-loop
   - key: wave.leg_across_surface_track_off_min_deg
     v: 69.0
     unit: deg
