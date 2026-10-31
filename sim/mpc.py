@@ -1626,11 +1626,13 @@ class Reflex2:
       skid.sense_process_s.
 
     The override is scaled with the attitude, never a fixed lift coefficient with full thrust: wings level (the
-    actuators roll at their full rate), a load factor from the flight path, n = cos gamma + k (gamma* - gamma) with
-    k ctrl.reflex2_gamma_gain_per_rad and gamma* ctrl.reflex2_gamma_target_deg (below it, for a tip event, at least
-    the present load factor is held, as the skim study's time budget assumes), at most 0.8 n_max, so the aircraft
-    climbs away at a moderate angle and does not zoom; for a stall gamma* is ctrl.reflex2_gamma_stall_deg (unload
-    to regain speed); the thrust is full at or below level flight and falls to zero at a climb of
+    actuators roll at their full rate); while descending towards the water the full load factor the margins allow
+    (0.8 n_max, the lift coefficient up to cl_max); once level or climbing a load factor from the flight path,
+    n = cos gamma + k (gamma* - gamma) with k ctrl.reflex2_gamma_gain_per_rad and gamma* ctrl.reflex2_gamma_target_deg
+    (below gamma*, for a tip event, at least the present load factor is held, as the skim study's time budget
+    assumes), at most 0.8 n_max, so the aircraft climbs away at a moderate angle and does not zoom; for a stall gamma*
+    is ctrl.reflex2_gamma_stall_deg (unload to regain speed); the thrust is full at or below level flight and falls to
+    zero at a climb of
     ctrl.reflex2_thrust_zero_deg, so there is no thrust past the vertical. Once fired it holds for at least
     ctrl.reflex2_hold_s and returns control to the planner at the first step after that where nothing fires."""
 
@@ -1783,6 +1785,8 @@ class Reflex2:
         g_star = self.gamma_s if cause == "stall" else self.gamma_t
         n_path = float(np.cos(g) + self.k_gamma * (g_star - g))
         n_cmd = max(n_path, float(n_now)) if (cause in ("range", "wet", "tip") and g < g_star) else n_path
+        if cause != "stall" and g < 0.0:
+            n_cmd = self.n_frac * ac.n_max        # descending towards the water: the full pull the margins allow
         n_cmd = float(np.clip(n_cmd, 0.0, self.n_frac * ac.n_max))
         q = 0.5 * ac.rho * V * V * ac.wing_area
         cl = float(np.clip(n_cmd * ac.mass * G / max(q, 1e-9), ac.cl_min, ac.cl_max))
