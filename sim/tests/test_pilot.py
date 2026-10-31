@@ -232,6 +232,21 @@ class TestReflex2(unittest.TestCase):
         self.assertEqual(rf.tip_check(0.02)[0], "wet")
 
 
+class TestReflex2InTheLoop(unittest.TestCase):
+    def test_fly_mpc_records_the_redesigned_reflex(self):
+        from sim import mpc
+        from sim.aircraft import Actuators
+        ac = by_name("albatross-3m")
+        env = Environment.flat(Wind(9.0, 270.0, roughness="coare35"))
+        r = mpc.fly_mpc(ac, env, "flat", [], 3.0, env.wind.to_deg - 20.0, 9.0, seed=1, planner_kw=dict(mpc.NAV_PKW),
+                        library=mpc.CycleLibrary.from_keyword("motor"), actuators=Actuators(ac, rate_model="pb2v"),
+                        n_limit=True, stop_on_tip=True, wave_aware=False, motor=True,
+                        w_energy=mpc.energy_weight(ac, "normal"), reflex="v2")
+        self.assertEqual(r["reflex"]["version"], "v2")
+        self.assertEqual(r["reflex"]["cl_frac"], 0.97)
+        self.assertEqual(set(r["reflex"]["causes"]), set(Reflex2.CAUSES))
+
+
 class TestReflexHarness(unittest.TestCase):
     def test_a_constructed_contact_is_rescued_by_the_range_trigger(self):
         from sim.reflex import run_reflex_case

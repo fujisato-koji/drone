@@ -2337,7 +2337,8 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             "causes": {c: sum(1 for e in rf_events if e["cause"] == c)
                        for c in (Reflex2.CAUSES if rf2 else ("centre", "tip", "stall"))},
             "version": "v2" if rf2 else "v1",
-            "horizon_s": rf.horizon_s, "clearance_m": rf.clearance_m, "v_frac": rf.v_frac,
+            "horizon_s": rf.horizon_s, "clearance_m": rf.clearance_m, "v_frac": getattr(rf, "v_frac", None),
+            "cl_frac": getattr(rf, "cl_frac", None),
             "events": rf_events[:60]}
     if tip_depth_m is not None:
         out["tip_wet"] = {"depth_max_m": wet_depth, "wet_s": wet_s, "limit_m": float(tip_depth_m)}
