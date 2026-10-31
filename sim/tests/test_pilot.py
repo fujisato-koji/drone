@@ -136,20 +136,29 @@ class TestReflex2(unittest.TestCase):
         kt = np.linspace(0.0, 6.0, 24)
         return kt, np.full(24, cl), np.full(24, mu), np.zeros(24)
 
-    def test_fires_on_a_dive_quiet_in_level_flight_and_slow_unloaded_flight(self):
+    def test_fires_on_a_dive_quiet_in_level_flight_and_on_the_wing_s_limit(self):
         ac, rf, w = self.ac, self.rf, self.world
         hit = rf.predict(w, 0.0, np.array([0.0, 0.0, 3.0, 12.0, -0.35, 0.0]), *self.plan(0.05), 0.0)
         self.assertEqual(hit[0], "centre")
         self.assertIsNone(rf.predict(w, 0.0, np.array([0.0, 0.0, 12.0, 11.0, -0.05, 0.0]),
                                      *self.plan(ac.cl_best_ld), 0.0))
-        # just below the old threshold (1.05 stall speeds) in level flight: quiet; below 0.95 stall speeds: a stall
-        self.assertIsNone(rf.predict(w, 0.0, np.array([0.0, 0.0, 30.0, 1.0 * ac.v_stall, 0.0, 0.0]),
-                                     *self.plan(ac.cl_max), 0.0))
+        # the normal top turn of a soaring cycle: 62 deg of bank at 1.2 stall speeds with the lift coefficient at 0.86
+        # of cl_max (the best cycles fly 1.0 of 1.16): the path curves down, but the wing is not at its limit
+        top = np.array([0.0, 0.0, 30.0, 1.2 * ac.v_stall, 0.1, 0.0])
+        self.assertIsNone(rf.predict(w, 0.0, top, *self.plan(0.86 * ac.cl_max, np.radians(62.0)), 0.0))
+        # a 60 deg turn at 1.2 stall speeds with the wing at cl_max needs 2 g and gets 1.44: a stall (the earlier test
+        # on the wings-level load factor missed it, K-022)
+        hit = rf.predict(w, 0.0, np.array([0.0, 0.0, 30.0, 1.2 * ac.v_stall, 0.0, 0.0]),
+                         *self.plan(ac.cl_max, np.radians(60.0)), 0.0)
+        self.assertEqual(hit[0], "stall")
+        # slow, wings level, the wing at cl_max: a stall; the same airspeed at a low lift coefficient (a zoom's top,
+        # unloaded) is not
         hit = rf.predict(w, 0.0, np.array([0.0, 0.0, 30.0, 0.9 * ac.v_stall, 0.0, 0.0]), *self.plan(ac.cl_max), 0.0)
         self.assertEqual(hit[0], "stall")
-        # the same airspeed in a steep climb (the path needs little lift): not a stall now
-        hit = rf.predict(w, 0.0, np.array([0.0, 0.0, 30.0, 0.9 * ac.v_stall, 1.2, 0.0]), *self.plan(0.1), 0.0)
-        self.assertTrue(hit is None or hit[1] > 0.0)
+        self.assertTrue(rf.stalls(0.9 * ac.v_stall, ac.cl_max, -0.1))
+        self.assertFalse(rf.stalls(0.9 * ac.v_stall, 0.3 * ac.cl_max, -0.1))
+        self.assertFalse(rf.stalls(1.2 * ac.v_stall, ac.cl_max, 0.05))      # at cl_max but the path still rises
+        self.assertTrue(rf.stalls(0.4 * ac.v_stall, 0.1, 0.1))               # the planner's departure
 
     def test_prediction_fires_only_within_the_lead(self):
         ac, rf, w = self.ac, self.rf, self.world

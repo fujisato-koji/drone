@@ -1611,11 +1611,13 @@ class Reflex2:
       so over waves it sees the waves the planner sees), when the first violation lies within ctrl.reflex2_lead_s
       (further ahead the planner's next plans can still remove it; the plan's tail beyond its first replan is not what
       will be flown): the centre below ctrl.reflex_clearance_m ("centre"), a
-      wingtip in the water ("tip"), or a stall ("stall"): the airspeed below ctrl.reflex2_v_frac times the stall
-      speed at the load factor the path needs, v_stall sqrt(cos gamma), the speed below which the wing at its
-      largest lift coefficient no longer carries the weight across the path (the plan's own load factor cannot pass
-      the wing's in the point mass, so the test is on what the path needs; 0.95 lies below the planner's own speed
-      floor of 1.1 stall speeds, K-015);
+      wingtip in the water ("tip"), or a stall ("stall", stalls): the plan holds the wing at its largest lift
+      coefficient (at least ctrl.reflex2_cl_frac of cl_max, not cut by the load-factor limit) while the flight path
+      still falls, so the path asks for more lift than the wing has at that airspeed, whatever the bank and the
+      curvature; or the airspeed below half the stall speed, the planner's own departure (K-022: the earlier test on
+      the airspeed at the load factor of wings-level flight left out the bank and the curvature, so a banked turn at
+      cl_max did not fire it; a test on the load factor a level turn needs would fire in the normal top turn of a
+      soaring cycle, which is not level);
     - the range reading from the low wingtip to the water ("range", the primary tip trigger of D-019): the truth plus
       Gaussian noise of skid.req_range_accuracy_m, sampled at skid.req_range_rate_hz and read
       skid.req_range_latency_s plus skid.sense_process_s late; it fires when the reading is below the trigger gap of
@@ -1650,7 +1652,7 @@ class Reflex2:
         self.fold_switch = fold_switch
         self.horizon_s = float(value("ctrl.reflex_horizon_s", 1.5))
         self.clearance_m = float(value("ctrl.reflex_clearance_m", 0.3))
-        self.v_frac = float(value("ctrl.reflex2_v_frac", 0.95))
+        self.cl_frac = float(value("ctrl.reflex2_cl_frac", 0.97))
         self.gamma_t = float(np.radians(value("ctrl.reflex2_gamma_target_deg", 10.0)))
         self.gamma_s = float(np.radians(value("ctrl.reflex2_gamma_stall_deg", -5.0)))
         self.k_gamma = float(value("ctrl.reflex2_gamma_gain_per_rad", 3.0))
@@ -1751,15 +1753,14 @@ class Reflex2:
             x, y, z, V, g, _ = st[:, 0]
             h = z - float(world.surface(x, y, tt)[0])
             tip = h - 0.5 * ac.span * np.sin(abs(mu[2 * i])) * np.cos(g)
-            v_lim = self.v_frac * ac.v_stall * np.sqrt(max(np.cos(g), 0.0))
+            k1 = derivatives_vec(tt, st, ac, world, cl[2 * i:2 * i + 1], mu[2 * i:2 * i + 1],
+                                 thrust=T[2 * i], fold_dcd=fd[2 * i], **kw)
             cause = ("centre" if h < self.clearance_m else "tip" if tip < 0.0
-                     else "stall" if V < v_lim else None)
+                     else "stall" if self.stalls(V, cl[2 * i], float(k1[4, 0])) else None)
             if cause is not None:
                 return (cause, i * dt, float(h), float(tip), float(V))
             if i == n:
                 break
-            k1 = derivatives_vec(tt, st, ac, world, cl[2 * i:2 * i + 1], mu[2 * i:2 * i + 1],
-                                 thrust=T[2 * i], fold_dcd=fd[2 * i], **kw)
             km = derivatives_vec(tt + dt / 2, st + dt / 2 * k1, ac, world,
                                  cl[2 * i + 1:2 * i + 2], mu[2 * i + 1:2 * i + 2],
                                  thrust=T[2 * i + 1], fold_dcd=fd[2 * i + 1], **kw)
@@ -1767,6 +1768,21 @@ class Reflex2:
             if not np.all(np.isfinite(st)):
                 return ("stall", (i + 1) * dt, float("nan"), float("nan"), float("nan"))
         return None
+
+    def stalls(self, V, cl_cmd, g_dot):
+        """The stall test of the prediction at one step (airspeed, the plan's lift coefficient, the rate of the flight-
+        path angle): the plan holds the wing at its largest lift coefficient, at least ctrl.reflex2_cl_frac of cl_max
+        and not cut by the load-factor limit, while the path still falls (the flight-path angle decreasing), so the
+        path asks for more lift than the wing has; or the airspeed is below half the stall speed, where the planner's
+        own rollouts count a departure."""
+        ac = self.ac
+        if V < 0.5 * ac.v_stall:
+            return True
+        cl_fl = cl_cmd
+        if self.n_limit:
+            cl_fl = min(cl_cmd, ac.n_max * ac.mass * G / (0.5 * ac.rho * V * V * ac.wing_area))
+        lim = self.cl_frac * ac.cl_max
+        return bool(cl_cmd >= lim and cl_fl >= lim and g_dot < 0.0)
 
     # -- the supervisor ---------------------------------------------------------------------
     def check(self, world, t, s, knots_t, cl_k, mu_k, th_k, tau):

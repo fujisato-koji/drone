@@ -175,7 +175,7 @@ class TestPilot(unittest.TestCase):
         self.assertTrue(right.mirror)
         self.assertIsNone(pilot.cycle("albatross-3m", Environment.flat(Wind(6.0, 270.0)), 6.0, 0.0, 0.0))
 
-    def test_flat_sea_unchanged_with_a_wave_library(self):
+    def test_flat_sea_with_a_wave_library_differs_only_by_the_seeded_first_plan(self):
         # over a sea without a swell the wave library changes nothing but the first plan's start from the cycle's own
         # controls and thrust, which it seeds whether the world has a swell or not (for a sea that is still being
         # estimated); a run without a library seeded the same way flies the same trajectory to the bit

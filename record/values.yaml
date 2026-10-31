@@ -1331,6 +1331,12 @@ items:
     status: assumed
     basis:
       - Q-070
+  - key: ctrl.reflex2_cl_frac
+    v: 0.97
+    unit: 1
+    status: assumed
+    basis:
+      - Q-068
   - key: ctrl.reflex2_lead_s
     v: 1.0
     unit: s
