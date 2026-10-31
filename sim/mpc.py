@@ -1560,6 +1560,7 @@ REFLEX2_TRIGGER_W = tuple(0.25 * i for i in range(13))     # closing rates (m/s)
 REFLEX2_TRIGGER_BANK_DEG = (15.0, 30.0, 45.0, 62.0)          # banks of the table (the last near 0.9 of the limit)
 REFLEX2_TRIGGER_V = (1.2, 1.6, 2.2)                          # airspeeds of the table, in stall speeds
 REFLEX2_RATE_WINDOW_S = 0.05     # the closing rate is the change of the range reading over this window
+REFLEX2_ARM_SIGMAS = 3.0         # the range trigger arms when the water is this many sensor sigmas above the planner's sea
 _TRIGGER_TABLES = {}
 
 
@@ -1616,8 +1617,11 @@ class Reflex2:
     - the range reading from the low wingtip to the water ("range", the primary tip trigger of D-019): the truth plus
       Gaussian noise of skid.req_range_accuracy_m, sampled at skid.req_range_rate_hz and read
       skid.req_range_latency_s plus skid.sense_process_s late; it fires when the reading is below the trigger gap of
-      the closing rate read over REFLEX2_RATE_WINDOW_S (tip_trigger_table), and never above
-      skid.req_range_span_m;
+      the closing rate read over REFLEX2_RATE_WINDOW_S (tip_trigger_table), never above skid.req_range_span_m, and only
+      while the water stands higher than the planner's sea at the same point and time by more than
+      REFLEX2_ARM_SIGMAS of the sensor's accuracy (the time budget of the trigger is for a sea that rises above the
+      plan; a tip that comes down to the water as the plan intends is the plan's, and a plan that puts it into the
+      water is the prediction's "tip");
     - the wet sensor at the tip ("wet", the last resort): the tip in the water for skid.req_wet_latency_s plus
       skid.sense_process_s.
 
@@ -1658,7 +1662,7 @@ class Reflex2:
         self.reset()
 
     def reset(self):
-        self.hist_t, self.hist_g = [], []         # true gap of the low tip at each step
+        self.hist_t, self.hist_g, self.hist_w = [], [], []    # true gap of the low tip, and the planner's, at each step
         self.reads = []                           # (time of the reading, reading m)
         self.next_read = 0.0
         self.wet_since = None
@@ -1668,20 +1672,27 @@ class Reflex2:
         self.bank, self.V = 0.0, 1.2 * self.ac.v_stall
 
     # -- sensors ----------------------------------------------------------------------------
-    def sense(self, t, gap, bank=0.0, V=None):
+    def sense(self, t, gap, bank=0.0, V=None, gap_world=None):
         """Feed the true gap of the low tip (m above the local surface, negative in the water) at time t, with the
-        bank and the airspeed (for the trigger gap); samples the range sensor at its rate with its latency and noise
-        and tracks the time the tip is wet."""
+        bank and the airspeed (for the trigger gap) and the gap the planner's world gives at the same state (None:
+        the trigger is always armed); samples the range sensor at its rate with its latency and noise and tracks the
+        time the tip is wet."""
         self.bank, self.V = float(bank), float(self.ac.v_stall * 1.2 if V is None else V)
         self.hist_t.append(float(t))
         self.hist_g.append(float(gap))
+        self.hist_w.append(np.nan if gap_world is None else float(gap_world))
         if len(self.hist_t) > 400:
             del self.hist_t[:200]
             del self.hist_g[:200]
+            del self.hist_w[:200]
         while self.next_read <= t + 1e-12:
             tr = self.next_read - self.lat
-            g = float(np.interp(tr, self.hist_t, self.hist_g)) if self.hist_t[0] <= tr else self.hist_g[0]
-            self.reads.append((self.next_read, g + self.sigma * float(self.rng.standard_normal())))
+            if self.hist_t[0] <= tr:
+                g = float(np.interp(tr, self.hist_t, self.hist_g))
+                gw = float(np.interp(tr, self.hist_t, self.hist_w))
+            else:
+                g, gw = self.hist_g[0], self.hist_w[0]
+            self.reads.append((self.next_read, g + self.sigma * float(self.rng.standard_normal()), gw))
             self.next_read += 1.0 / self.rate_hz
         if len(self.reads) > 200:
             del self.reads[:100]
@@ -1696,12 +1707,14 @@ class Reflex2:
             return None
         if self.wet_since is not None and t - self.wet_since >= self.wet_lat - 1e-12:
             return ("wet", self.reads[-1][1], 0.0)
-        tr, g = self.reads[-1]
+        tr, g, gw = self.reads[-1]
         old = [r for r in self.reads if r[0] <= tr - REFLEX2_RATE_WINDOW_S + 1e-12]
         w = 0.0 if not old else (old[-1][1] - g) / (tr - old[-1][0])
         self.last_reading = (g, w)
         if g > self.span_r:
             return None
+        if np.isfinite(gw) and gw - g <= REFLEX2_ARM_SIGMAS * self.sigma:
+            return None          # the water is where the planner's sea has it: the plan's own approach
         trig = tip_trigger_gap(self.ac, self.table, self.bank, self.V, w)
         if g < max(trig, 2.0 * self.sigma):
             return ("range", g, w)
@@ -2175,7 +2188,9 @@ def fly_mpc(aircraft, env_true, world_model, sensors, t_end, target_bearing_deg,
             cl, mu = ac.cl_best_ld, np.radians(20.0) * (1.0 if int(t // 10.0) % 2 == 0 else -1.0)
         rx_on = False
         if reflex and rf2:
-            rf.sense(t, tip_now, mu_a, s[3])
+            gw_ = (wingtip_height(ac, s[2], float(world.surface(s[0], s[1], t)[0]), s[4], mu_a)
+                   if world is not None else None)
+            rf.sense(t, tip_now, mu_a, s[3], gw_)
         if reflex and ready:
             if rf2:
                 hit = rf.check(world, t, s, plan.knots_t, plan.cl_knots, plan.mu_knots, plan.thrust_knots, t - t_plan)
@@ -3157,7 +3172,8 @@ def run_nav_job(job):
     from sim.aircraft import Actuators
     from sim.aircraft_models import by_name
     from sim.navigator import HullNavigator, HullSource, sail_hull
-    name, u10, direction, dist, t_end = job
+    name, u10, direction, dist, t_end = job[:5]
+    reflex = job[5] if len(job) > 5 else False       # "v2": the redesigned reflex (Q-068)
     ac = by_name(name)
     env = _make_env_coare("flat", u10)
     lib = CycleLibrary.from_keyword("motor")
@@ -3178,7 +3194,7 @@ def run_nav_job(job):
                 actuators=Actuators(ac, rate_model="pb2v"), n_limit=True, stop_on_tip=True,
                 wave_aware=False, motor=True, w_energy=energy_weight(ac, "normal"),
                 target=tgt, navigator=True, nav_hull=src, guide_sig=NAV_GUIDE_SIG,
-                nav_kw={"steady": steady})
+                nav_kw={"steady": steady}, reflex=reflex)
     r["wall_s"] = time.time() - t0
     r = _no_nan(r)
     r["motor"]["bursts"] = r["motor"].get("bursts", [])[:20]
@@ -3217,7 +3233,8 @@ def nav_exp_main(a):
     from sim import record
     from sim.record import value
     dist = a.nav_dist
-    jobs = [(n, u, d, dist, None) for n, u, d in NAV_CASES]
+    reflex = getattr(a, "nav_reflex", "") or False
+    jobs = [(n, u, d, dist, None, reflex) for n, u, d in NAV_CASES]
     if a.nav_only:
         keys = set(a.nav_only.split(";"))
         jobs = [j for j in jobs if "%s,%g,%s" % (j[0], j[1], j[2]) in keys]
@@ -3229,8 +3246,8 @@ def nav_exp_main(a):
     print("runtime %.0f s" % runtime)
     d = json.load(open(a.out)) if os.path.exists(a.out) else {}
     d[a.nav_key] = {
-        "meta": {**record.meta("python -m sim.mpc --nav-exp --nav-dist %g --workers %d"
-                               % (dist, a.workers),
+        "meta": {**record.meta("python -m sim.mpc --nav-exp --nav-dist %g --workers %d" % (dist, a.workers)
+                               + (" --nav-reflex %s --nav-key %s" % (reflex, a.nav_key) if reflex else ""),
                                [__file__, LIB_MOTOR_PATH, os.path.join(os.path.dirname(__file__), "navigator.py"),
                                 os.path.join(os.path.dirname(__file__), "out", "ds_polar.json")]),
                  "planner_kw": NAV_PKW, "runtime_s": runtime, "distance_m": dist, "seed": 1,
@@ -3238,7 +3255,7 @@ def nav_exp_main(a):
                  "energy_level": "normal (k = %g)" % W_ENERGY_LEVELS["normal"],
                  "sea": "flat, Wind(u10, 270, roughness='coare35'); wind from the west, toward +x",
                  "targets": "upwind = (-D, 0), across = (0, D) from the start at the origin",
-                 "state_source": "truth", "wind_source": "truth", "reflex": False,
+                 "state_source": "truth", "wind_source": "truth", "reflex": reflex,
                  "actuators": "rate_model pb2v", "n_limit": True, "stop_on_tip": True,
                  "navigator": "sim.navigator.HullNavigator on the velocity hull of the library entries "
                               "(HullSource, nearest library wind), arrival radius %g m, called every %g s "
@@ -3303,6 +3320,7 @@ def main():
     ap.add_argument("--nav-dist", type=float, default=10000.0)
     ap.add_argument("--nav-key", default="nav_exp", help="key of sim/out/mpc.json the nav experiment writes")
     ap.add_argument("--nav-only", default="", help="cases as 'aircraft,u10,direction' joined by ;")
+    ap.add_argument("--nav-reflex", default="", help="--nav-exp: fly with this reflex (v2)")
     ap.add_argument("--margin-exp", action="store_true")
     ap.add_argument("--burst-exp", action="store_true")
     ap.add_argument("--motor-lib-exp", action="store_true")

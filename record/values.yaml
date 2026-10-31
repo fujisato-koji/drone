@@ -1211,6 +1211,78 @@ items:
     status: assumed
     basis:
       - Q-055
+  - key: ctrl.reflex2_v_frac
+    v: 0.95
+    unit: 1
+    status: assumed
+    basis:
+      - Q-068
+  - key: ctrl.reflex2_gamma_target_deg
+    v: 10
+    unit: deg
+    status: assumed
+    basis:
+      - Q-068
+  - key: ctrl.reflex2_gamma_stall_deg
+    v: -5
+    unit: deg
+    status: assumed
+    basis:
+      - Q-068
+  - key: ctrl.reflex2_gamma_gain_per_rad
+    v: 3
+    unit: 1/rad
+    status: assumed
+    basis:
+      - Q-068
+  - key: ctrl.reflex2_thrust_zero_deg
+    v: 30
+    unit: deg
+    status: assumed
+    basis:
+      - Q-068
+  - key: ctrl.reflex2_hold_s
+    v: 0.2
+    unit: s
+    status: assumed
+    basis:
+      - Q-068
+  - key: ctrl.reflex2_tip_depth_m
+    v: 0.01
+    unit: m
+    status: assumed
+    basis:
+      - Q-070
+  - key: nav.steady_heading_tau_s
+    v: 2
+    unit: s
+    status: assumed
+    basis:
+      - Q-073
+  - key: wave.pilot_trial_s
+    v: 120
+    unit: s
+    status: assumed
+    basis:
+      - Q-060
+  - key: wave.pilot_face_sig_ahead_rad
+    v: 0.3
+    unit: rad
+    status: assumed
+    basis:
+      - Q-060
+  - key: wave.pilot_face_barrier_w
+    v: 200
+    unit: 1/s
+    status: assumed
+    basis:
+      - Q-060
+  - key: wave.pilot_face_barrier_m_rad
+    v: 0.3
+    unit: rad
+    status: assumed
+    basis:
+      - Q-060
   - key: mpc.burst_costly_baseline_u11_w
     v: 6.42
     unit: W

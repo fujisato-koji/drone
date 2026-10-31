@@ -87,7 +87,7 @@ def reflex_trial(ac, env, world, s0, plan, version, t_end=REFLEX_TRIAL_S, dt=0.0
         T = float(np.clip(np.interp(t, kt, thk), 0.0, t_max))
         hit = None
         if version == "v2":
-            rf.sense(t, tip, mu_a, s[3])
+            rf.sense(t, tip, mu_a, s[3], mpc.wingtip_height(ac, s[2], float(world.surface(s[0], s[1], t)[0]), s[4], mu_a))
             hit = rf.check(world, t, s, kt, clk, muk, thk, t)
         elif version == "v1":
             hit = rf.predict(world, t, s, kt, clk, muk, thk, t)
