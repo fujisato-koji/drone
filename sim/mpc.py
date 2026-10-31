@@ -1611,10 +1611,11 @@ class Reflex2:
       so over waves it sees the waves the planner sees), when the first violation lies within ctrl.reflex2_lead_s
       (further ahead the planner's next plans can still remove it; the plan's tail beyond its first replan is not what
       will be flown): the centre below ctrl.reflex_clearance_m ("centre"), a
-      wingtip in the water ("tip"), or a stall ("stall", stalls): the plan holds the wing at its largest lift
-      coefficient (at least ctrl.reflex2_cl_frac of cl_max, not cut by the load-factor limit) while the flight path
-      still falls, so the path asks for more lift than the wing has at that airspeed, whatever the bank and the
-      curvature; or the airspeed below half the stall speed, the planner's own departure (K-022: the earlier test on
+      wingtip in the water ("tip"), or a stall ("stall", stalls): below the planner's own speed floor the plan holds
+      the wing at its largest lift coefficient (at least ctrl.reflex2_cl_frac of cl_max, not cut by the load-factor
+      limit) while the flight path still falls, so the path asks for more lift than the wing has at that airspeed,
+      whatever the bank and the curvature; or the airspeed below half the stall speed, the planner's own departure
+      (K-022: the earlier test on
       the airspeed at the load factor of wings-level flight left out the bank and the curvature, so a banked turn at
       cl_max did not fire it; a test on the load factor a level turn needs would fire in the normal top turn of a
       soaring cycle, which is not level);
@@ -1653,6 +1654,7 @@ class Reflex2:
         self.horizon_s = float(value("ctrl.reflex_horizon_s", 1.5))
         self.clearance_m = float(value("ctrl.reflex_clearance_m", 0.3))
         self.cl_frac = float(value("ctrl.reflex2_cl_frac", 0.97))
+        self.v_floor = float(value("ctrl.reflex2_v_floor_frac", 1.1))
         self.gamma_t = float(np.radians(value("ctrl.reflex2_gamma_target_deg", 10.0)))
         self.gamma_s = float(np.radians(value("ctrl.reflex2_gamma_stall_deg", -5.0)))
         self.k_gamma = float(value("ctrl.reflex2_gamma_gain_per_rad", 3.0))
@@ -1771,13 +1773,17 @@ class Reflex2:
 
     def stalls(self, V, cl_cmd, g_dot):
         """The stall test of the prediction at one step (airspeed, the plan's lift coefficient, the rate of the flight-
-        path angle): the plan holds the wing at its largest lift coefficient, at least ctrl.reflex2_cl_frac of cl_max
-        and not cut by the load-factor limit, while the path still falls (the flight-path angle decreasing), so the
-        path asks for more lift than the wing has; or the airspeed is below half the stall speed, where the planner's
-        own rollouts count a departure."""
+        path angle): below the planner's own speed floor (ctrl.reflex2_v_floor_frac stall speeds, the floor of its cost)
+        the plan holds the wing at its largest lift coefficient, at least ctrl.reflex2_cl_frac of cl_max and not cut by
+        the load-factor limit, while the path still falls (the flight-path angle decreasing), so the path asks for more
+        lift than the wing has; or the airspeed is below half the stall speed, where the planner's own rollouts count a
+        departure. Above the floor the wing at its limit is the cycles' own: the optimizer's wave cycles ride cl_max in
+        their turns at 1.2 to 1.4 stall speeds for up to a second each cycle."""
         ac = self.ac
         if V < 0.5 * ac.v_stall:
             return True
+        if V >= self.v_floor * ac.v_stall:
+            return False         # at the planner's own speed or above: the library's cycles ride the wing's limit there
         cl_fl = cl_cmd
         if self.n_limit:
             cl_fl = min(cl_cmd, ac.n_max * ac.mass * G / (0.5 * ac.rho * V * V * ac.wing_area))

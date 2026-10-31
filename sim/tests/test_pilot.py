@@ -146,18 +146,20 @@ class TestReflex2(unittest.TestCase):
         # of cl_max (the best cycles fly 1.0 of 1.16): the path curves down, but the wing is not at its limit
         top = np.array([0.0, 0.0, 30.0, 1.2 * ac.v_stall, 0.1, 0.0])
         self.assertIsNone(rf.predict(w, 0.0, top, *self.plan(0.86 * ac.cl_max, np.radians(62.0)), 0.0))
-        # a 60 deg turn at 1.2 stall speeds with the wing at cl_max needs 2 g and gets 1.44: a stall (the earlier test
+        # a 60 deg turn at 1.05 stall speeds with the wing at cl_max needs 2 g and gets 1.1: a stall (the earlier test
         # on the wings-level load factor missed it, K-022)
-        hit = rf.predict(w, 0.0, np.array([0.0, 0.0, 30.0, 1.2 * ac.v_stall, 0.0, 0.0]),
+        hit = rf.predict(w, 0.0, np.array([0.0, 0.0, 30.0, 1.05 * ac.v_stall, 0.0, 0.0]),
                          *self.plan(ac.cl_max, np.radians(60.0)), 0.0)
         self.assertEqual(hit[0], "stall")
+        # the same turn at 1.25 stall speeds, where the optimizer's wave cycles ride cl_max in their turns: not at once
+        self.assertFalse(rf.stalls(1.25 * ac.v_stall, ac.cl_max, -0.2))
         # slow, wings level, the wing at cl_max: a stall; the same airspeed at a low lift coefficient (a zoom's top,
         # unloaded) is not
         hit = rf.predict(w, 0.0, np.array([0.0, 0.0, 30.0, 0.9 * ac.v_stall, 0.0, 0.0]), *self.plan(ac.cl_max), 0.0)
         self.assertEqual(hit[0], "stall")
         self.assertTrue(rf.stalls(0.9 * ac.v_stall, ac.cl_max, -0.1))
         self.assertFalse(rf.stalls(0.9 * ac.v_stall, 0.3 * ac.cl_max, -0.1))
-        self.assertFalse(rf.stalls(1.2 * ac.v_stall, ac.cl_max, 0.05))      # at cl_max but the path still rises
+        self.assertFalse(rf.stalls(1.05 * ac.v_stall, ac.cl_max, 0.05))     # at cl_max but the path still rises
         self.assertTrue(rf.stalls(0.4 * ac.v_stall, 0.1, 0.1))               # the planner's departure
 
     def test_prediction_fires_only_within_the_lead(self):
