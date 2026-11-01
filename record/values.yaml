@@ -26847,3 +26847,81 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#world-map
+  - key: viewer.wind_grid_n
+    v: 13
+    unit: 1
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_grid_half_m
+    v: 150
+    unit: m
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_grid_mast_h_m
+    v: 10
+    unit: m
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_grid_low_h_m
+    v: 2
+    unit: m
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_arrow_s
+    v: 1
+    unit: s
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_section_half_m
+    v: 150
+    unit: m
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_section_top_m
+    v: 25
+    unit: m
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_section_exag
+    v: 5
+    unit: 1
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_section_cap_m
+    v: 8
+    unit: m
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_w_max_ms
+    v: 0.5
+    unit: m/s
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_refresh_s
+    v: 0.25
+    unit: s
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.cam_fov_deg
+    v: 70
+    unit: deg
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.cam_tau_s
+    v: 0.15
+    unit: s
+    status: assumed
+    basis:
+      - Q-080

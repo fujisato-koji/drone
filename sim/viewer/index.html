@@ -39,6 +39,10 @@
   .card canvas#strip { height: 96px; }
   .ctl input[type=number] { width: 64px; }
   .ctl input[type=checkbox] { margin: 0 4px 0 0; }
+  .ctl.ind { padding-left: 18px; }
+  .ctl.ind label:not(.auto) { width: 94px; }
+  .card .cn { padding: 0 6px 5px; font-size: 11px; line-height: 1.35; }
+  .card canvas#wdLeg { height: 46px; }
   #mapPanel { position: fixed; right: 10px; bottom: 10px; width: min(560px, calc(100vw - 330px)); box-sizing: border-box;
               background: #fcfcfb; color: #52514e; border-radius: 4px; padding: 6px 8px; font-size: 12px; line-height: 1.4;
               box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25); z-index: 5; }
@@ -100,7 +104,7 @@
       <div class="warn" id="wWarn"></div>
       <div class="dim" id="wNote" data-i="worldNote"></div>
     </div>
-    <div class="ctl"><label class="auto" id="varyLbl" data-t="varyTip"><input id="vary" type="checkbox" data-t="varyTip"><span data-i="vary"></span></label></div>
+    <div class="ctl"><label class="auto" id="varyLbl" data-t="varyTip"><input id="vary" type="checkbox" checked data-t="varyTip"><span data-i="vary"></span></label></div>
     <div id="varCtl" style="display:none">
       <div class="dim" id="varWorldNote" data-i="varWorldNote" style="display:none"></div>
       <div class="ctl" id="slowCtl"><label for="slowKind" data-i="slowKind" data-t="slowKindTip"></label><select id="slowKind" data-t="slowKindTip"><option value="calm" data-i="skCalm"></option><option value="cell" data-i="skCell"></option></select></div>
@@ -125,7 +129,7 @@
       <div class="ctl step"><label for="flPw" data-i="stPw" data-t="flPwTip"></label><select id="flPw" data-t="flPwTip"><option value="free" data-i="pwFree"></option><option value="normal" data-i="pwNormal" selected></option><option value="costly" data-i="pwCostly"></option></select></div>
       <div class="ctl"><label class="auto" data-t="flReflexTip"><input id="flReflex" type="checkbox" data-t="flReflexTip"> <span data-i="reflex"></span></label></div>
       <div class="ctl"><button id="flGo" type="button" data-i="go" data-t="goTip"></button><button id="flStop" type="button" data-i="stop" data-t="stopTip"></button></div>
-      <div class="ctl"><label class="auto" data-t="chaseTip"><input id="flChase" type="checkbox" data-t="chaseTip"> <span data-i="chase"></span></label></div>
+      <div class="ctl"><label for="flCam" data-i="cam" data-t="camTip"></label><select id="flCam" data-t="camTip"><option value="free" data-i="camFree"></option><option value="chase" data-i="camChase"></option><option value="fwd" data-i="camFwd"></option><option value="tip" data-i="camTipV"></option></select></div>
       <div class="dim" id="swlFixed" style="display:none" data-i="swlFixed"></div>
       <table id="flro"></table>
       <div class="sub" id="wvHead" style="display:none" data-i="wvHead" data-t="wvHeadTip"></div>
@@ -138,8 +142,16 @@
   <details class="sec" open>
     <summary data-i="sec3" data-t="sec3Tip"></summary>
     <div class="ctl"><label for="spd" data-i="spd" data-t="spdTip"></label><input id="spd" type="range" min="0" max="4" step="0.1" value="1" data-t="spdTip"><span class="val" id="spdv"></span></div>
-    <div class="ctl"><label class="auto" data-t="pauseTip"><input id="pause" type="checkbox" data-t="pauseTip"> <span data-i="pause"></span></label>
-      <label class="auto" data-t="ptcTip"><input id="ptc" type="checkbox" checked data-t="ptcTip"> <span data-i="ptc"></span></label></div>
+    <div class="ctl"><label class="auto" data-t="pauseTip"><input id="pause" type="checkbox" data-t="pauseTip"> <span data-i="pause"></span></label></div>
+    <div class="sub" data-i="wdHead" data-t="wdHeadTip"></div>
+    <div class="ctl"><label class="auto" data-t="wdGridTip"><input id="wdGrid" type="checkbox" checked data-t="wdGridTip"> <span data-i="wdGrid"></span></label></div>
+    <div class="ctl ind"><label class="auto" data-t="wdLowTip"><input id="wdLow" type="checkbox" data-t="wdLowTip"> <span data-i="wdLow"></span></label></div>
+    <div class="ctl"><label class="auto" data-t="wdSecTip"><input id="wdSec" type="checkbox" checked data-t="wdSecTip"> <span data-i="wdSec"></span></label></div>
+    <div class="ctl ind"><label for="wdDir" data-i="wdDir" data-t="wdDirTip"></label><select id="wdDir" data-t="wdDirTip"><option value="wind" data-i="wdDirWind"></option><option value="travel" data-i="wdDirSwell"></option></select></div>
+    <div class="ctl ind"><label class="auto" data-t="wdStreamTip"><input id="wdStream" type="checkbox" data-t="wdStreamTip"> <span data-i="wdStream"></span></label></div>
+    <div class="ctl ind"><label for="wdFrame" data-i="wdFrame" data-t="wdFrameTip"></label><select id="wdFrame" data-t="wdFrameTip"><option value="sea" data-i="wdFrameSea"></option><option value="wave" data-i="wdFrameWave"></option></select></div>
+    <div class="card"><div class="ct" data-i="wdLegT" data-t="wdLegTip"></div><canvas id="wdLeg" width="280" height="46" data-t="wdLegTip"></canvas><div class="cn" id="wdNote"></div></div>
+    <div class="ctl"><label class="auto" data-t="ptcTip"><input id="ptc" type="checkbox" data-t="ptcTip"> <span data-i="ptc"></span></label></div>
     <div class="ctl"><label class="auto" data-t="seaFollowTip"><input id="seaFollow" type="checkbox" checked data-t="seaFollowTip"> <span data-i="seaFollow"></span></label></div>
     <div class="dim" id="mastpos"></div>
     <div class="sub" data-i="mastVals"></div>
@@ -187,6 +199,7 @@
 <script src="gust.js"></script>
 <script src="mpc.js"></script>
 <script src="navigator.js"></script>
+<script src="windvis.js"></script>
 <script src="wave/index.js"></script>
 <script src="wave.js"></script>
 <script src="worlddata.js"></script>
@@ -216,7 +229,7 @@ const I18N = {
     swHs: 'うねりの波高', swHsTip: 'うねりの波高です。',
     swTp: 'うねりの周期', swTpTip: 'うねりの周期です。長いほど波長が長くなります。',
     swFrom: 'うねりの向き', swFromTip: 'うねりが来る方位です。0 deg が北、90 deg が東です。',
-    vary: '変動を加える', varyTip: '平均の風が時間とともにゆっくり変わり、突風が吹き、短い波が平均の風の変化に遅れてついていきます。「世界の海」では、回廊の値に突風を加えます。平均の風のゆっくりした変化は回廊のデータ自身の時間変化だけで、二つ目の変化は加えません。短い波は、補間した平均の風に合わせて作り直されます。どちらでも、時間は実時間の秒で進みます。',
+    vary: '変動を加える', varyTip: '平均の風が時間とともにゆっくり変わり、突風が吹き、短い波が平均の風の変化に遅れてついていきます。「世界の海」では、回廊の値に突風を加えます。平均の風のゆっくりした変化は回廊のデータ自身の時間変化だけで、二つ目の変化は加えません。短い波は、補間した平均の風に合わせて作り直されます。どちらでも、時間は実時間の秒で進みます。はじめから入っています。規則波では切れ、規則波をやめると元に戻ります。',
     varyRegTip: '規則波は波の表の海（Python の実行と同じ海）なので、変動は加えられません。',
     varyLockTip: '飛行中は変動の有無を変えられません。',
     varWorldNote: '回廊の値に突風を加えています。平均の風のゆっくりした変化は、回廊のデータの時間変化だけです。',
@@ -242,11 +255,36 @@ const I18N = {
     reflex: '危ないときの反射（モータ）', flReflexTip: '毎制御ステップ、計画どおりに飛んだ場合の 1.5 秒先を予測し、中心か翼端が水面上 0.3 m を割る、または失速速度の 1.05 倍を割ると予測されたら、全推力と引き起こし（揚力係数を余裕の限界へ、バンクは水平へ）に切り替えます。予測が解消されたら MPC に戻します。モータ補助が「あり」のときだけ有効です。',
     f_rf: '反射', f_rf_tip: '反射が働いた回数と、そのあいだに使った電力量です。「危ないときの反射」がオンのときに表示します。',
     go: '発進', goTip: '選んだ条件で機体を発進させます。', stop: '止める', stopTip: '飛行を止めます。機体と軌跡はそのまま残ります。',
-    chase: '機体を追いかけるカメラ', chaseTip: 'カメラの注目点を機体に合わせ続けます。',
-    sec3: '③ 表示', sec3Tip: '波と粒子の見せ方を変えます。飛行や風は変わりません。',
+    cam: 'カメラ', camTip: '「自由（マウス）」はマウスで回します。「追いかける」は、注目点を機体に合わせ続けます。「機上（前方）」は機体の位置から、空気に対して進む向きを見ます。バンクで傾き、経路角で上下します。「機上（翼端の下）」は、低いほうの翼の上から、翼端の下の水面を見ます。機上の二つは縦の視野 70 deg で、地平線と、水面からの高さと対気速度を重ねて表示し、バンクの変化で揺れないよう向きを少しなめらかにします。翼端の高さは、着水の判定と同じ式です。発進前は、観測柱の位置で、発進の向きと最初の周期の高さに置き、観測柱は隠します。機上では、機体のまわりの風の矢印と断面は隠します（断面と機体の高さの格子は視点を通り、水面近くの層は真横から見えるため）。',
+    camFree: '自由（マウス）', camChase: '追いかける', camFwd: '機上（前方）', camTipV: '機上（翼端の下）',
+    hudH: (h) => '水面から ' + h + ' m', hudV: (v) => '対気速度 ' + v + ' m/s', hudTip: (h) => '低い翼端 ' + h + ' m', hudPre: '発進前（観測柱）',
+    sec3: '③ 表示', sec3Tip: '波と風の見せ方を変えます。飛行や風は変わりません。',
     spd: '波の動きの速さ', spdTip: '波のアニメーションの速さです。0 で止まります。',
     pause: '波を止める', pauseTip: '波の動きを止めます。',
-    ptc: '風の粒子を表示', ptcTip: '風に流される粒子を表示します。',
+    ptc: '風の粒子を表示', ptcTip: '風に流される粒子を表示します。空気がどう動くかを時間とともに見られますが、読み取りにくく重いので、ふだんは切ってあります。',
+    wdHead: '機体のまわりの風', wdHeadTip: '機体のまわり（飛んでいないときは観測柱のまわり）の風を、矢印の格子と縦の断面で表示します。機体が飛ぶ風と同じ式（設定の海と風、うねり、変動、規則波の表の海、世界の海）から、1 秒に 4 回計算し直します。',
+    wdGrid: '水平の風の矢印（格子）',
+    wdGridTip: '機体を中心に、約 ±150 m の範囲に 13 × 13 本の矢印を並べます。高さは機体の水面からの高さで（飛んでいないときは水面から 10 m）、どの点でもその場の水面から同じ高さです。矢印は水平の風で、長さは風が 1 秒に進む距離（10 m/s で 10 m）です。色は上下の風で、上向きが赤、下向きが青、0 が灰色です。',
+    wdLow: '水面近く（2 m）の層も表示', wdLowTip: 'その場の水面から 2 m の高さにも、同じ格子の矢印を表示します。波の峰の上と谷の上で、水面近くの風がどう変わるかが見えます。',
+    wdSec: '縦の断面（平均の風からのずれ）',
+    wdSecTip: '機体を通る縦の断面に、約 ±150 m、水面から 25 m までの矢印を並べます。平均の風が大きく、そのままでは波による流れが見えないので、矢印は平均の対数分布からのずれ（波による流れと、変動を加えたときは突風）を、格子の矢印の 5 倍の長さで表します（1 m/s で 5 m）。断面の中の成分だけを描きます。黒い線は断面での水面です。色は上下の風です。',
+    wdDir: '断面の向き', wdDirTip: '断面を、風の進む向きに沿わせるか、うねりの進む向き（うねりがなければ風浪の向き）に沿わせるかを選びます。規則波では、うねりの進む向きに決まっています。',
+    wdDirLockTip: '規則波では、断面はうねりの進む向きに決まっています。',
+    wdDirWind: '風に沿う', wdDirSwell: 'うねりに沿う',
+    wdStream: '断面の流線', wdStreamTip: '断面の中の流れを線で表します。断面に直角な成分は除きます。断面で計算した風を補間してたどった、その瞬間の流線です。小さな山形の印が流れの向きです。',
+    wdFrame: '流線の座標',
+    wdFrameTip: '「海に固定」は、海から見た流れです。「うねりと動く」は、うねりの峰の位相速度で動く座標から見た流れで、峰のまわりの流れがいちばん分かりやすくなります。規則波ではその波、不規則波ではうねりのピーク周期、うねりがなければ風浪のピーク周期の峰です。断面がうねりに沿わないときは、その速度の断面に沿う成分で動きます。',
+    wdFrameOffTip: '流線を表示すると選べます。',
+    wdFrameSea: '海に固定', wdFrameWave: 'うねりと動く',
+    wdLegT: '矢印の色: 上下の風', wdLegTip: '格子と断面の矢印の色です。上向きが赤、下向きが青、0 が灰色です。端の値を超えると端の色のままです。',
+    wdDown: '下向き', wdUp: '上向き',
+    wdNoteGrid: (ac, h, sc, d) => '格子: ' + (ac ? '機体' : '観測柱') + 'のまわり、水面から ' + h + ' m の高さ。矢印は 1 m/s で ' + sc + ' m、間隔 ' + d + ' m。',
+    wdNoteLow: (h) => '水面近くの層: 水面から ' + h + ' m。',
+    wdNoteSec: (dir, k, sc, cap) => '断面: ' + (dir === 'travel' ? 'うねりに沿う' : '風に沿う') + '。矢印は平均の対数分布からのずれを ' + k + ' 倍（1 m/s で ' + sc + ' m、長さは ' + cap + ' m まで）。',
+    wdNoteOnboard: '機上のカメラでは、機体のまわりの風の表示を隠しています。',
+    wdNoteSea: '流線: 海に固定した座標。',
+    wdNoteWave: (kind, tp, c, vs) => '流線: ' + (kind === 'swell' ? 'うねり' : '風浪') + 'の峰（周期 ' + tp + ' s、位相速度 ' + c + ' m/s）と動く座標（断面に沿って ' + vs + ' m/s）。',
+    wdNoteNoWave: '流線: 波がないので、海に固定した座標。',
     seaFollow: '海の表示範囲を機体に合わせて動かす', seaFollowTip: '飛行中、描く海と粒子の範囲を機体の下へ動かします。波の位置は変わりません。切ると、機体が範囲の外へ出たとき海が描かれません。',
     mastPos: (x, y) => '観測柱の位置: (' + x + ', ' + y + ') m。矢印キーで動かせます。',
     mastVals: '観測柱の値',
@@ -260,7 +298,7 @@ const I18N = {
     help1: 'マウスのドラッグで回転、ホイールで拡大と縮小。',
     help2: '矢印キーで観測柱を 5 m ずつ動かします。上が北、右が東です。機体は観測柱の位置から発進します。',
     help3: '黄色の棒が 10 m、赤い線が東、緑の線が北です。',
-    help4: '矢印と粒子と軌跡の色は、水面からの高さです。低いほど暗い赤、高いほど明るい黄色です。',
+    help4: '観測柱の矢印と粒子と軌跡の色は、水面からの高さです。低いほど暗い赤、高いほど明るい黄色です。機体のまわりの格子と断面の矢印の色は上下の風で、上向きが赤、下向きが青です。',
     help5: '海と風は ① の設定で決まります。「自由設定」ではスライダーで、「世界の海」では世界地図で選んだ場所と時刻で決まります。',
     noData: 'データなし',
     noField: 'window.FIELD がありません。index.html の隣に field.js がありません。',
@@ -397,7 +435,7 @@ const I18N = {
     swHs: 'Swell height', swHsTip: 'Significant height of the swell.',
     swTp: 'Swell period', swTpTip: 'Peak period of the swell. Longer means a longer wavelength.',
     swFrom: 'Swell from', swFromTip: 'Direction the swell comes from. 0 deg is north, 90 deg is east.',
-    vary: 'Add variation', varyTip: 'The mean wind changes slowly in time, gusts blow, and the short waves follow the change of the mean wind with a delay. In "World seas" the gusts are added to the corridor values; the slow change of the mean wind is only the corridor data\'s own change in time, with no second slow change on top, and the short waves are rebuilt for the interpolated mean wind. In both, time runs in real seconds.',
+    vary: 'Add variation', varyTip: 'The mean wind changes slowly in time, gusts blow, and the short waves follow the change of the mean wind with a delay. In "World seas" the gusts are added to the corridor values; the slow change of the mean wind is only the corridor data\'s own change in time, with no second slow change on top, and the short waves are rebuilt for the interpolated mean wind. In both, time runs in real seconds. On by default; the regular swell turns it off, and leaving the regular swell brings it back as it was.',
     varyRegTip: 'The regular swell is the sea of the wave library (the sea of the Python runs), so no variation can be added.',
     varyLockTip: 'Variation cannot be switched while flying.',
     varWorldNote: 'Gusts are added to the corridor values; the slow change of the mean wind is only the corridor data\'s own change in time.',
@@ -423,11 +461,36 @@ const I18N = {
     reflex: 'Reflex when in danger (motor)', flReflexTip: 'At every control step, predicts the next 1.5 s of the plan as commanded; if the centre or a wingtip is predicted below 0.3 m above the surface, or the airspeed below 1.05 stall speeds, it switches to full thrust and a pull-up (lift coefficient to its margin limit, wings level) until the prediction clears, then hands back to the MPC. Active only when Motor assist is On.',
     f_rf: 'Reflexes', f_rf_tip: 'Number of reflexes and the electric energy they used. Filled when the reflex is on.',
     go: 'Launch', goTip: 'Launches the aircraft with the chosen settings.', stop: 'Stop', stopTip: 'Stops the flight. The aircraft and trail stay.',
-    chase: 'Chase camera', chaseTip: 'Keeps the camera target on the aircraft.',
-    sec3: '3. Display', sec3Tip: 'Changes how waves and particles are shown. Flight and wind are unchanged.',
+    cam: 'Camera', camTip: '"Free (mouse)" orbits with the mouse. "Chase" keeps the camera target on the aircraft. "On board (forward)" looks from the aircraft along its air-relative velocity, rolled with the bank and pitched with the flight-path angle. "On board (under the wingtip)" looks from above the lower wing down past its tip at the water under it. Both onboard views have a vertical field of view of 70 deg, overlay a horizon line, the height above the surface and the airspeed, and smooth the orientation a little so that bank changes do not shake the view. Before a launch they stand at the mast at the launch heading and the height of the first cycle, and hide the mast. The low wingtip\'s height is the one the contact check uses. On board, the wind arrows and the section around the aircraft are hidden (the section and the grid at the aircraft\'s height pass through the eye, and the near-surface layer is seen edge on).',
+    camFree: 'Free (mouse)', camChase: 'Chase', camFwd: 'On board (forward)', camTipV: 'On board (under the wingtip)',
+    hudH: (h) => 'height ' + h + ' m', hudV: (v) => 'airspeed ' + v + ' m/s', hudTip: (h) => 'low wingtip ' + h + ' m', hudPre: 'before launch (mast)',
+    sec3: '3. Display', sec3Tip: 'Changes how the waves and the wind are shown. Flight and wind are unchanged.',
     spd: 'Wave speed', spdTip: 'Speed of the wave animation. 0 stops it.',
     pause: 'Freeze waves', pauseTip: 'Stops the wave motion.',
-    ptc: 'Show wind particles', ptcTip: 'Shows particles carried by the wind.',
+    ptc: 'Show wind particles', ptcTip: 'Shows particles carried by the wind. They show how the air moves over time, but they are hard to read and heavy, so they are off by default.',
+    wdHead: 'Wind around the aircraft', wdHeadTip: 'Shows the wind around the aircraft (around the mast when nothing flies) as a grid of arrows and a vertical section. It comes from the same formulas the aircraft flies in (the setting\'s sea and wind, the swell, the variation, the regular swell\'s table sea, the world seas) and is recomputed four times a second.',
+    wdGrid: 'Horizontal wind arrows (grid)',
+    wdGridTip: 'Puts 13 x 13 arrows over about +-150 m centred on the aircraft. Their height is the aircraft\'s height above the surface (10 m above it when nothing flies), the same height above the local surface at every point. Each arrow is the horizontal wind; its length is the distance the wind travels in one second (10 m at 10 m/s). The colour is the vertical wind: red up, blue down, grey zero.',
+    wdLow: 'Also a layer near the surface (2 m)', wdLowTip: 'Adds the same grid of arrows 2 m above the local surface, where the wind over the crests and over the troughs differs most.',
+    wdSec: 'Vertical section (deviation from the mean wind)',
+    wdSecTip: 'Puts arrows on a vertical section through the aircraft, about +-150 m long and from the surface to 25 m. The mean wind is so much larger than the flow the waves make that it would hide it, so each arrow is the deviation from the mean log profile (the wave-induced flow, and the gusts when the variation is on), drawn five times the grid\'s scale (5 m for 1 m/s). Only the components in the section are drawn. The black line is the surface along the section. The colour is the vertical wind.',
+    wdDir: 'Section direction', wdDirTip: 'Lays the section along the wind\'s travel, or along the swell\'s travel (the wind sea\'s without a swell). Over the regular swell it always follows the swell\'s travel.',
+    wdDirLockTip: 'Over the regular swell the section always follows the swell\'s travel.',
+    wdDirWind: 'Along the wind', wdDirSwell: 'Along the swell',
+    wdStream: 'Streamlines in the section', wdStreamTip: 'Draws the flow in the section as lines, without the component across the section. They are the streamlines of the moment, traced through the wind sampled on the section. The small chevrons show the direction of the flow.',
+    wdFrame: 'Streamline frame',
+    wdFrameTip: '"Fixed to the sea" shows the flow as seen from the sea. "Moving with the swell" shows it from a frame moving at the phase speed of the swell\'s crests, where the flow over the crests reads best: the regular swell\'s wave, the irregular swell\'s peak period, or the wind sea\'s peak without a swell. When the section does not follow the swell the frame moves at that speed\'s component along the section.',
+    wdFrameOffTip: 'Available when the streamlines are on.',
+    wdFrameSea: 'Fixed to the sea', wdFrameWave: 'Moving with the swell',
+    wdLegT: 'Arrow colour: vertical wind', wdLegTip: 'The colour of the grid and section arrows: red up, blue down, grey zero. Beyond the end values the colour stays at the end.',
+    wdDown: 'down', wdUp: 'up',
+    wdNoteGrid: (ac, h, sc, d) => 'Grid: around the ' + (ac ? 'aircraft' : 'mast') + ', ' + h + ' m above the surface. Arrows ' + sc + ' m for 1 m/s, ' + d + ' m apart.',
+    wdNoteLow: (h) => 'Near-surface layer: ' + h + ' m above the surface.',
+    wdNoteSec: (dir, k, sc, cap) => 'Section: along the ' + (dir === 'travel' ? 'swell' : 'wind') + '. Arrows are the deviation from the mean log profile, ' + k + ' times (' + sc + ' m for 1 m/s, at most ' + cap + ' m long).',
+    wdNoteOnboard: 'The onboard cameras hide the wind display around the aircraft.',
+    wdNoteSea: 'Streamlines: frame fixed to the sea.',
+    wdNoteWave: (kind, tp, c, vs) => 'Streamlines: frame moving with the ' + (kind === 'swell' ? 'swell' : 'wind sea') + '\'s crests (period ' + tp + ' s, phase speed ' + c + ' m/s; ' + vs + ' m/s along the section).',
+    wdNoteNoWave: 'Streamlines: no waves, so the frame is fixed to the sea.',
     seaFollow: 'Move the drawn sea with the aircraft', seaFollowTip: 'While flying, moves the drawn sea and particles under the aircraft. Waves stay where they are in the world. When off, the aircraft can leave the drawn area.',
     mastPos: (x, y) => 'Mast at sim (' + x + ', ' + y + ') m. Arrow keys move it.',
     mastVals: 'Values at the mast',
@@ -441,7 +504,7 @@ const I18N = {
     help1: 'Drag with the mouse to orbit, wheel to zoom.',
     help2: 'Arrow keys move the mast in 5 m steps (up = north, right = east). The aircraft launches at the mast.',
     help3: 'Yellow bar = 10 m, red line = east, green line = north.',
-    help4: 'Arrow, particle and trail colours show height above the surface: dark red is low, light yellow is high.',
+    help4: 'The mast arrows, the particles and the trail are coloured by height above the surface: dark red is low, light yellow is high. The grid and section arrows around the aircraft are coloured by the vertical wind: red up, blue down.',
     help5: 'Sea and wind follow the setting of section 1: the sliders in "Free setting", the place and time chosen on the world map in "World seas".',
     noData: 'no data',
     noField: 'window.FIELD missing: field.js not found next to index.html',
@@ -641,7 +704,7 @@ function meanSpeed(h) { return h > W.z0 ? (W.ustar / C.karman) * Math.log(h / W.
 //   their period (gust.js). The dominant sea keeps the set amplitudes.
 // In the world seas the variation adds only the gusts: the mean wind changes only as the corridor does (over hours),
 // and every rebuild of the sea makes the short waves for the interpolated wind, so there is no second slow change.
-const ENV = { mode: 'free', regular: false, vary: false, slow: null, gust: null, gox: 0, goy: 0, gt0: 0,
+const ENV = { mode: 'free', regular: false, vary: false, varyHeld: null, slow: null, gust: null, gox: 0, goy: 0, gt0: 0,
   u0: 0, us0: 0, t0: 0, tLast: 0, U: 0, du: 0,
   a0: null, sIdx: [], tau: [], lag: null, dirty: false, trains: [], samples: [], nextSample: 0, w10: 0 };
 const GV = [0, 0, 0];
@@ -847,6 +910,7 @@ pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
 const points = new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 2.5, sizeAttenuation: false, vertexColors: true }));
 points.frustumCulled = false;
 scene.add(points);
+points.visible = $('ptc').checked;   // off by default: the grid and the section around the aircraft replace them
 
 // ---------------------------------------------------------------- flight (live, uses flight.js)
 const AIRCRAFT = window.AIRCRAFT || null;
@@ -1153,7 +1217,7 @@ const renderFl = () => {
 dyn.push(renderFl);
 if (!AIRCRAFT || !Object.keys(AIRCRAFT).length) {
   flNoteFn = () => tx('aircraftMissing');
-  for (const id of ['flAc', 'flHead', 'flTgt', 'flMotor', 'flPw', 'flGo', 'flStop', 'flChase']) $(id).disabled = true;
+  for (const id of ['flAc', 'flHead', 'flTgt', 'flMotor', 'flPw', 'flGo', 'flStop', 'flCam']) $(id).disabled = true;
 } else {
   const names = Object.keys(AIRCRAFT).filter((n) => n !== 'flyingwing-2m'
     && (!HAVE_MPC || (libFor(n, true) || []).length || (libFor(n, false) || []).length));
@@ -1416,7 +1480,7 @@ function updateFlightView() {
     } else splashLbl.style.display = 'none';
   }
   // chase camera: keep the orbit offset, move the target onto the aircraft
-  if ($('flChase').checked) {
+  if (camMode() === 'chase') {
     _fd.copy(flightMesh.position).sub(controls.target);
     camera.position.add(_fd); controls.target.copy(flightMesh.position);
   }
@@ -1610,14 +1674,17 @@ function syncEnvCtl() {
   for (const el of [ageEl, ageEl.previousElementSibling]) { el.dataset.t = reg ? 'ageRegTip' : 'ageTip'; el.title = tx(el.dataset.t); }
 }
 // Apply section 1: the setting, the swell type and the variation; the wind's range; the flight settings the regular
-// swell fixes; then the sea. The page has no stored setting: it starts in the free setting whatever the browser brings
-// back into the controls (the world seas start from the map's "Enter 3D here"), and without the wave library the
-// regular swell falls back to none.
+// swell fixes; then the sea. The page has no stored setting: it starts in the free setting with the variation on
+// whatever the browser brings back into the controls (the world seas start from the map's "Enter 3D here"), and
+// without the wave library the regular swell falls back to none.
 function applyEnv(init) {
   if (init || modeEl.value !== 'world') modeEl.value = 'free';
+  if (init) { varyEl.checked = true; ENV.varyHeld = null; }
   if (swTypeEl.value === 'regular' && !HAVE_WAVE) swTypeEl.value = 'none';
   const world = modeEl.value === 'world', reg = !world && swTypeEl.value === 'regular';
-  if (reg) varyEl.checked = false;   // the regular swell is the sea of the Python runs, without variation
+  // the regular swell is the sea of the Python runs, without variation; leaving it brings the switch back as it was
+  if (reg) { if (ENV.varyHeld === null) ENV.varyHeld = varyEl.checked; varyEl.checked = false; }
+  else if (ENV.varyHeld !== null) { varyEl.checked = ENV.varyHeld; ENV.varyHeld = null; }
   ENV.mode = world ? 'world' : 'free'; ENV.regular = reg; ENV.vary = varyEl.checked;
   ENV.gust = null; ENV.slow = null; W.adv = undefined;
   // the regular swell's wind: 0 to 12 m/s in whole m/s (the pilot's nearest library wind then has no ties)
@@ -2244,6 +2311,541 @@ window.viewerWorldProject = (la, lo) => { const r = $('wmCv').getBoundingClientR
 window.viewerWorld = () => ({ mode: ENV.mode, entry: WORLD.entry, now: WORLD.now && { ll: WORLD.now.ll, tw: WORLD.now.tw, set: WORLD.now.set, inside: WORLD.now.s.inside },
   ac: WORLD.ac, trail: WORLD.trail.length, cur: WORLD.curKey, T, W: { u10: W.u10, from: W.from_deg }, N, fl: { on: FL.on, el: FL.el, end: FL.end } });
 
+// ---------------------------------------------------------------- wind around the aircraft (windvis.js)
+// A grid of arrows that follows the aircraft (the mast without a flight) at its height above the local surface, an
+// optional layer near the surface, and a vertical section through it with the deviation from the mean log profile and
+// optional streamlines. All are sampled with the viewer's own surface and wind (wdColumn gives what fSurface and fWind
+// give: the free setting's sea with its swell and variation, the regular swell's oracle world, the world seas) every
+// WV.refreshS of real time. One piece of work per frame: the grid in one frame, the near-surface layer in the next,
+// then the section in pieces of about WV.secChunkMs (all at the grid's sea time), then its arrows and streamlines.
+const WV = WindVis.DEFAULTS;
+const WDS = { last: -1e9, job: null, lowJob: false, dirty: true, grid: null, low: null, pts: null, sec: null, lines: [], vs: 0, c: 0,
+  peak: null, cx: 0, cy: 0, h: WV.mastH, ac: false, t: 0, dirUser: null, gridIdx: [], lowIdx: [], secIdx: [], msCol: 0.05,
+  timing: { gridMs: 0, secMs: 0, gridMax: 0, secMax: 0, frameMax: 0, n: 0, nSec: 0 } };
+const wdv = { u: 0, v: 0, w: 0 };
+// the column sampler of windvis.js on the viewer's own functions: fSurface and fWind at the heights hs above the surface
+function wdColumn(x, y, t, hs, n, U, V, Wo) {
+  if (SWL.world) {
+    const e = SWL.world.eta(x, y, t);
+    for (let j = 0; j < n; j++) { SWL.world.windAt(x, y, e + hs[j], t, fv3); U[j] = fv3[0]; V[j] = fv3[1]; Wo[j] = fv3[2]; }
+    return e;
+  }
+  const e = surface(x, y, t).eta;
+  for (let j = 0; j < n; j++) { windAt(hs[j], wdv, x, y, t); U[j] = wdv.u; V[j] = wdv.v; Wo[j] = wdv.w; }
+  return e;
+}
+// the mean log profile the wind function adds its waves (and gusts) to: speed at h and direction
+function wdMean() {
+  if (SWL.world) {
+    const w = SWL.world.wind, k = SWL.world.kar;
+    return { f: (h) => (h > w.z0 ? (w.ustar / k) * Math.log(h / w.z0) : 0), ex: w.ex, ey: w.ey };
+  }
+  return { f: meanSpeed, ex: W.ex, ey: W.ey };
+}
+// the crest the wave frame moves with: the regular swell, else the swell train, else the wind sea's peak
+function wdPeak() {
+  if (ENV.regular) {
+    const sw = SWL.spec && SWL.spec.swell;
+    return sw && sw.hs > 0 && sw.toDeg !== null ? { kind: 'swell', toDeg: sw.toDeg, tp: sw.tp } : null;
+  }
+  const tr = ENV.trains || [];
+  if (tr[1] && tr[1].hs > 0) return { kind: 'swell', toDeg: tr[1].to_deg, tp: tr[1].tp };
+  if (tr[0] && tr[0].hs > 0) return { kind: 'sea', toDeg: tr[0].to_deg, tp: tr[0].tp };
+  return null;
+}
+// the switches; the onboard views hide the whole display (the section and the grid at the aircraft's height pass
+// through the eye, and the near-surface layer is seen edge on)
+function wdCfg() {
+  const ob = onboard(), g = $('wdGrid').checked && !ob, s = $('wdSec').checked && !ob;
+  return { grid: g, low: g && $('wdLow').checked, sec: s, stream: s && $('wdStream').checked,
+    frame: $('wdFrame').value, dir: ENV.regular ? 'travel' : $('wdDir').value, onboard: ob };
+}
+// a flat arrow centred on its point: x along it from -0.5 to 0.5 with the head from 0.15, y across (shaft +-0.5);
+// the grid's arrows have an outline (1 px lines, so it reads at any distance over the light and the dark sea), and
+// their fill is pushed back a little so that the outline wins the depth test; the section's lie on its light sheet
+const GLYPH = [-0.5, -0.5, 0.15, -0.5, 0.15, -1.5, 0.5, 0, 0.15, 1.5, 0.15, 0.5, -0.5, 0.5];   // outline, in order
+const wdGlyph = new THREE.BufferGeometry();
+wdGlyph.setAttribute('position', new THREE.Float32BufferAttribute([-0.5, -0.5, 0, 0.15, -0.5, 0, 0.15, 0.5, 0, -0.5, 0.5, 0,
+  0.15, -1.5, 0, 0.5, 0, 0, 0.15, 1.5, 0], 3));
+wdGlyph.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6]);
+function wdArrowMesh(cap, outline) {
+  const m = new THREE.InstancedMesh(wdGlyph, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide,
+    polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }), cap);
+  m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3);
+  m.instanceColor.setUsage(THREE.DynamicDrawUsage);
+  m.count = 0; m.frustumCulled = false; m.visible = false;
+  scene.add(m);
+  if (!outline) return m;
+  const pos = new Float32Array(cap * 14 * 3), g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+  m.userData.outline = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x0b0b0b, transparent: true, opacity: 0.55 }));
+  m.userData.outline.frustumCulled = false; m.userData.outline.visible = false;
+  scene.add(m.userData.outline); return m;
+}
+const WD_NC = 2 * Math.round(WV.secHalf / WV.secDs) + 1;
+const WD_AL = WV.secArrowLevels.map((h) => WV.secLevels.indexOf(h));   // the levels that carry an arrow
+const gridMesh = wdArrowMesh(WV.gridN * WV.gridN, true), lowMesh = wdArrowMesh(WV.gridN * WV.gridN, true);
+const secMesh = wdArrowMesh(Math.ceil(WD_NC / WV.secArrowEvery) * WD_AL.length);
+// the section's sheet (light, behind the arrows), the surface along it, and the streamlines with their chevrons
+const WD_TOP = WV.secLevels[WV.secLevels.length - 1] + 1;
+const sheetPos = new Float32Array(WD_NC * 6);
+const sheetGeo = new THREE.BufferGeometry();
+sheetGeo.setAttribute('position', new THREE.BufferAttribute(sheetPos, 3));
+{ const ix = []; for (let i = 0; i < WD_NC - 1; i++) ix.push(2 * i, 2 * i + 2, 2 * i + 1, 2 * i + 1, 2 * i + 2, 2 * i + 3); sheetGeo.setIndex(ix); }
+const secSheet = new THREE.Mesh(sheetGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45,
+  side: THREE.DoubleSide, depthWrite: false, polygonOffset: true, polygonOffsetFactor: 4, polygonOffsetUnits: 4 }));
+const secSurfPos = new Float32Array(WD_NC * 3);
+const secSurfGeo = new THREE.BufferGeometry();
+secSurfGeo.setAttribute('position', new THREE.BufferAttribute(secSurfPos, 3));
+const secSurf = new THREE.Line(secSurfGeo, new THREE.LineBasicMaterial({ color: 0x0b0b0b }));
+const WD_SCAP = WV.streamSeeds.length * (2 * WV.streamMaxSteps + 4 * Math.ceil(WV.streamMaxSteps * WV.streamStep / WV.chevronEvery + 1));
+const streamPos = new Float32Array(WD_SCAP * 3);
+const streamGeo = new THREE.BufferGeometry();
+streamGeo.setAttribute('position', new THREE.BufferAttribute(streamPos, 3));
+const streamLines = new THREE.LineSegments(streamGeo, new THREE.LineBasicMaterial({ color: 0x1b1b1b }));
+for (const o of [secSheet, secSurf, streamLines]) { o.frustumCulled = false; o.visible = false; scene.add(o); }
+secSheet.renderOrder = 1;
+const _wm = new THREE.Matrix4(), _wc = [0, 0, 0];
+function wdColour(mesh, k, w) {
+  WindVis.divColor(w, WV.wMax, _wc);
+  tmpC.setRGB(_wc[0], _wc[1], _wc[2], THREE.SRGBColorSpace);
+  mesh.setColorAt(k, tmpC);
+}
+// close a mesh's update: its count, and the outline of every arrow from its instance matrix
+function wdDone(mesh, k) {
+  mesh.count = k; mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
+  if (!mesh.userData.outline) return;
+  const ol = mesh.userData.outline, pos = ol.geometry.attributes.position.array, M = mesh.instanceMatrix.array;
+  let n = 0;
+  for (let i = 0; i < k; i++) {
+    const e = 16 * i;
+    for (let c = 0; c < 7; c++) {
+      for (const q of [c, (c + 1) % 7]) {
+        const lx = GLYPH[2 * q], ly = GLYPH[2 * q + 1];
+        pos[n++] = M[e] * lx + M[e + 4] * ly + M[e + 12];
+        pos[n++] = M[e + 1] * lx + M[e + 5] * ly + M[e + 13];
+        pos[n++] = M[e + 2] * lx + M[e + 6] * ly + M[e + 14];
+      }
+    }
+  }
+  ol.geometry.setDrawRange(0, n / 3); ol.geometry.attributes.position.needsUpdate = true;
+}
+function wdShow(mesh, on) { mesh.visible = on; if (mesh.userData.outline) mesh.userData.outline.visible = on; }
+// grid arrows: horizontal, length by the horizontal speed, centred on the point; idx maps an instance to its point
+function wdGridArrows(mesh, g, idx) {
+  let k = 0;
+  idx.length = 0;
+  for (let p = 0; p < g.n; p++) {
+    const sp = Math.hypot(g.u[p], g.v[p]), L = sp * WV.arrowScale;
+    if (L < 0.01) continue;
+    const ax = g.u[p] / sp, az = -g.v[p] / sp, wid = Math.min(0.8, 0.12 * L);   // three: x east, z south
+    _wm.set(ax * L, -az * wid, 0, WDS.pts.x[p], 0, 0, 1, g.z[p], az * L, ax * wid, 0, -WDS.pts.y[p], 0, 0, 0, 1);
+    mesh.setMatrixAt(k, _wm); wdColour(mesh, k, g.w[p]); idx[k] = p; k++;
+  }
+  wdDone(mesh, k);
+}
+function wdUpdateGrid(cfg) {
+  const t0 = performance.now();
+  if (FL.on) {
+    WDS.cx = FL.s[0]; WDS.cy = FL.s[1]; WDS.ac = true;
+    WDS.h = Math.max(WV.minH, FL.s[2] - fSurface(FL.s[0], FL.s[1], T));
+  } else { WDS.cx = mx; WDS.cy = my; WDS.h = WV.mastH; WDS.ac = false; }
+  WDS.t = T;
+  if (cfg.grid || cfg.low) WDS.pts = WindVis.gridPoints(WDS.cx, WDS.cy, WV);
+  if (cfg.grid) { WDS.grid = WindVis.sampleGrid(WDS.pts, WDS.h, wdColumn, T, WDS.grid); wdGridArrows(gridMesh, WDS.grid, WDS.gridIdx); }
+  wdShow(gridMesh, cfg.grid);
+  if (!cfg.low) wdShow(lowMesh, false);
+  wdTime('grid', performance.now() - t0);
+}
+// the near-surface layer, at the grid's points and sea time
+function wdUpdateLow() {
+  const t0 = performance.now();
+  WDS.low = WindVis.sampleGrid(WDS.pts, WV.lowH, wdColumn, WDS.t, WDS.low); wdGridArrows(lowMesh, WDS.low, WDS.lowIdx);
+  wdShow(lowMesh, true);
+  WDS.timing.frameMax = Math.max(WDS.timing.frameMax, performance.now() - t0);
+}
+// three.js position of the section point at s along it and z above the mean sea level
+function wdSecPos(r, s, z, out, k) {
+  out[3 * k] = s * r.ex - r.p * r.ey; out[3 * k + 1] = z; out[3 * k + 2] = -(s * r.ey + r.p * r.ex);
+}
+// start a section at the grid's centre and sea time: its direction, the frame's speed along it, its columns
+function wdStartSection(cfg) {
+  const mean = wdMean(), pk = wdPeak();
+  let ex = mean.ex, ey = mean.ey;
+  if (cfg.dir === 'travel' && pk) { const r = pk.toDeg * Math.PI / 180; ex = Math.sin(r); ey = Math.cos(r); }
+  const r = WindVis.sectionLayout({ cx: WDS.cx, cy: WDS.cy, ex: ex, ey: ey, mean: mean.f, wx: mean.ex, wy: mean.ey }, WV);
+  let vs = 0, c = 0;
+  if (cfg.frame === 'wave' && pk) {
+    const q = pk.toDeg * Math.PI / 180;
+    c = Flight.G * pk.tp / (2 * Math.PI);
+    vs = c * (Math.sin(q) * ex + Math.cos(q) * ey);
+  }
+  WDS.job = { r: r, cfg: cfg, t: WDS.t, peak: pk, vs: vs, c: c, ms: 0 };
+}
+// one piece of the section; returns true when the section is complete
+function wdSectionPiece() {
+  const j = WDS.job, t0 = performance.now();
+  const n = Math.max(8, Math.floor(WV.secChunkMs / Math.max(1e-3, WDS.msCol)));
+  const i0 = j.r.done;
+  WindVis.sampleColumns(j.r, wdColumn, j.t, i0, i0 + n);
+  const ms = performance.now() - t0;
+  WDS.msCol = ms / Math.max(1, j.r.done - i0);
+  j.ms += ms;
+  WDS.timing.frameMax = Math.max(WDS.timing.frameMax, ms);
+  return j.r.done >= j.r.nc;
+}
+// draw a complete section: the arrows in its plane, the sheet and the surface, the streamlines
+function wdFinishSection() {
+  const t0 = performance.now(), j = WDS.job, r = j.r, cfg = j.cfg;
+  WDS.job = null; WDS.sec = r; WDS.peak = j.peak; WDS.vs = j.vs; WDS.c = j.c;
+  const ex = r.ex, ey = r.ey, nl = r.nl, sc = WV.arrowScale * WV.secExag;
+  // arrows in the section's plane: along (ex, 0, -ey) and up (0, 1, 0) in three.js; normal (ey, 0, ex)
+  let k = 0;
+  WDS.secIdx.length = 0;
+  for (let i = 0; i < r.nc; i += WV.secArrowEvery) {
+    for (const jl of WD_AL) {
+      const q = i * nl + jl, ds = r.dev[q], dz = r.w[q], m = Math.hypot(ds, dz), L = Math.min(WV.secCap, m * sc);
+      if (L < 0.01) continue;
+      const al = ds / m, be = dz / m, wid = Math.min(0.3, 0.12 * L);
+      _wm.set(al * ex * L, -be * ex * wid, ey, r.x[i],
+        be * L, al * wid, 0, r.eta[i] + r.levels[jl],
+        -al * ey * L, be * ey * wid, ex, -r.y[i], 0, 0, 0, 1);
+      secMesh.setMatrixAt(k, _wm); wdColour(secMesh, k, dz); WDS.secIdx[k] = q; k++;
+    }
+  }
+  wdDone(secMesh, k);
+  for (let i = 0; i < r.nc; i++) {
+    wdSecPos(r, r.s[i], r.eta[i], sheetPos, 2 * i); wdSecPos(r, r.s[i], r.eta[i] + WD_TOP, sheetPos, 2 * i + 1);
+    wdSecPos(r, r.s[i], r.eta[i] + 0.08, secSurfPos, i);
+  }
+  sheetGeo.attributes.position.needsUpdate = true; secSurfGeo.attributes.position.needsUpdate = true;
+  // streamlines of the in-plane flow relative to the frame, with a chevron every chevronEvery of arc length
+  let nv = 0;
+  if (cfg.stream) {
+    WDS.lines = WindVis.streamlines(r, WDS.vs, WV);
+    const ca = Math.cos(0.45), sa = Math.sin(0.45), cl = WV.chevronLen;
+    for (const ln of WDS.lines) {
+      let acc = 0;
+      for (let n = 1; n < ln.s.length && nv + 6 <= WD_SCAP; n++) {
+        wdSecPos(r, ln.s[n - 1], ln.z[n - 1], streamPos, nv++); wdSecPos(r, ln.s[n], ln.z[n], streamPos, nv++);
+        const dsn = ln.s[n] - ln.s[n - 1], dzn = ln.z[n] - ln.z[n - 1], l = Math.hypot(dsn, dzn);
+        acc += l;
+        if (acc >= WV.chevronEvery && l > 0) {
+          acc = 0;
+          const ts = dsn / l, tz = dzn / l;
+          for (const sg of [1, -1]) {
+            wdSecPos(r, ln.s[n], ln.z[n], streamPos, nv++);
+            wdSecPos(r, ln.s[n] - cl * (ca * ts - sg * sa * tz), ln.z[n] - cl * (ca * tz + sg * sa * ts), streamPos, nv++);
+          }
+        }
+      }
+    }
+    streamGeo.setDrawRange(0, nv); streamGeo.attributes.position.needsUpdate = true;
+  } else WDS.lines = [];
+  wdShow(secMesh, true); secSheet.visible = secSurf.visible = true;
+  streamLines.visible = cfg.stream && nv > 0;
+  const ms = performance.now() - t0;
+  WDS.timing.frameMax = Math.max(WDS.timing.frameMax, ms);
+  wdTime('sec', j.ms + ms);
+  renderWdNote();
+}
+function wdHideSection() { wdShow(secMesh, false); secSheet.visible = secSurf.visible = streamLines.visible = false; }
+function wdTime(part, ms) {
+  const tm = WDS.timing, a = 0.2;
+  if (part === 'grid') { tm.gridMs = tm.n ? tm.gridMs + a * (ms - tm.gridMs) : ms; tm.gridMax = Math.max(tm.gridMax, ms); tm.frameMax = Math.max(tm.frameMax, ms); tm.n++; }
+  else { tm.secMs = tm.nSec ? tm.secMs + a * (ms - tm.secMs) : ms; tm.secMax = Math.max(tm.secMax, ms); tm.nSec++; }
+}
+// every frame, one piece of work at most: the next piece of a section under way, else the grid when WV.refreshS has
+// passed (or a switch changed), which starts the next section
+function wdTick(now) {
+  const cfg = wdCfg();
+  if (!cfg.grid && !cfg.low && !cfg.sec) { wdShow(gridMesh, false); wdShow(lowMesh, false); wdHideSection(); WDS.job = null; return; }
+  if (WDS.lowJob && !WDS.dirty) { WDS.lowJob = false; if (cfg.low) wdUpdateLow(); return; }
+  if (WDS.job && !WDS.dirty) {
+    if (!cfg.sec) { WDS.job = null; wdHideSection(); return; }
+    if (wdSectionPiece()) wdFinishSection();
+    return;
+  }
+  if (now - WDS.last < WV.refreshS * 1000 && !WDS.dirty) return;
+  WDS.last = now; WDS.dirty = false; WDS.job = null;
+  wdUpdateGrid(cfg);
+  WDS.lowJob = cfg.low;
+  if (cfg.sec) wdStartSection(cfg); else wdHideSection();
+  renderWdNote();
+}
+// which switches can be used: the near-surface layer with the grid, the direction and streamlines with the section,
+// the frame with the streamlines; over the regular swell the section follows the swell's travel
+function wdSyncCtl() {
+  const g = $('wdGrid').checked, s = $('wdSec').checked, st = s && $('wdStream').checked, dsel = $('wdDir');
+  if (ENV.regular && dsel.value !== 'travel') { WDS.dirUser = dsel.value; dsel.value = 'travel'; }
+  if (!ENV.regular && WDS.dirUser) { dsel.value = WDS.dirUser; WDS.dirUser = null; }
+  $('wdLow').disabled = !g;
+  dsel.disabled = !s || ENV.regular; dsel.title = tx(ENV.regular ? 'wdDirLockTip' : 'wdDirTip');
+  $('wdStream').disabled = !s;
+  $('wdFrame').disabled = !st; $('wdFrame').title = tx(st ? 'wdFrameTip' : 'wdFrameOffTip');
+}
+for (const id of ['wdGrid', 'wdLow', 'wdSec', 'wdDir', 'wdStream', 'wdFrame']) $(id).addEventListener('change', () => { WDS.dirty = true; wdSyncCtl(); });
+// the legend: the diverging scale of the vertical wind, and the scales and frames in words
+const gLeg = (() => {
+  const cv = $('wdLeg'), r = Math.min(devicePixelRatio || 1, 2);
+  cv.width = CW * r; cv.height = 46 * r;
+  const g = cv.getContext('2d'); g.setTransform(r, 0, 0, r, 0, 0); return g;
+})();
+function drawWdLegend() {
+  const g = gLeg, x0 = 34, x1 = CW - 34, y0 = 4, hb = 12;
+  g.clearRect(0, 0, CW, 46);
+  for (let i = 0; i < 120; i++) {
+    WindVis.divColor(-WV.wMax + 2 * WV.wMax * (i + 0.5) / 120, WV.wMax, _wc);
+    g.fillStyle = 'rgb(' + Math.round(255 * _wc[0]) + ',' + Math.round(255 * _wc[1]) + ',' + Math.round(255 * _wc[2]) + ')';
+    g.fillRect(x0 + (x1 - x0) * i / 120, y0, (x1 - x0) / 120 + 0.5, hb);
+  }
+  g.font = '11px system-ui, sans-serif'; g.fillStyle = CS.text2; g.strokeStyle = CS.axis; g.textBaseline = 'top';
+  const ticks = [[-WV.wMax, (-WV.wMax).toFixed(1)], [0, '0'], [WV.wMax, '+' + WV.wMax.toFixed(1) + ' m/s']];
+  for (const [v, lab] of ticks) {
+    const x = x0 + (x1 - x0) * (v + WV.wMax) / (2 * WV.wMax);
+    g.beginPath(); g.moveTo(x + 0.5, y0 + hb); g.lineTo(x + 0.5, y0 + hb + 3); g.stroke();
+    g.textAlign = v < 0 ? 'left' : v > 0 ? 'right' : 'center';
+    g.fillText(lab, v < 0 ? x - 2 : v > 0 ? x + 2 : x, y0 + hb + 4);
+  }
+  g.fillStyle = CS.text1; g.textAlign = 'left'; g.fillText(tx('wdDown'), x0, y0 + hb + 18);
+  g.textAlign = 'right'; g.fillText(tx('wdUp'), x1, y0 + hb + 18);
+}
+function renderWdNote() {
+  const cfg = wdCfg(), d = 2 * WV.gridHalf / (WV.gridN - 1), lines = [];
+  if (cfg.onboard && ($('wdGrid').checked || $('wdSec').checked)) lines.push(tx('wdNoteOnboard'));
+  if (cfg.grid) lines.push(tx('wdNoteGrid', WDS.ac, WDS.h.toFixed(1), WV.arrowScale, d));
+  if (cfg.low) lines.push(tx('wdNoteLow', WV.lowH));
+  if (cfg.sec) lines.push(tx('wdNoteSec', cfg.dir === 'travel' && WDS.peak ? 'travel' : 'wind', WV.secExag, WV.arrowScale * WV.secExag, WV.secCap));
+  if (cfg.stream) {
+    if (cfg.frame === 'sea') lines.push(tx('wdNoteSea'));
+    else if (!WDS.peak) lines.push(tx('wdNoteNoWave'));
+    else lines.push(tx('wdNoteWave', WDS.peak.kind, WDS.peak.tp.toFixed(1), WDS.c.toFixed(1), WDS.vs.toFixed(1)));
+  }
+  $('wdNote').textContent = lines.join(' ');
+}
+dyn.push(() => { drawWdLegend(); renderWdNote(); wdSyncCtl(); });
+// for the headless checks: the display's state, and a check that samples now and compares every arrow (its values
+// and its drawn instance) with fSurface and fWind at its point
+window.viewerWindVis = () => ({ timing: WDS.timing, cfg: wdCfg(), centre: [WDS.cx, WDS.cy, WDS.h], ac: WDS.ac, vs: WDS.vs, c: WDS.c,
+  peak: WDS.peak, dir: WDS.sec ? [WDS.sec.ex, WDS.sec.ey] : null, note: $('wdNote').textContent,
+  counts: { grid: gridMesh.count, low: lowMesh.count, sec: secMesh.count, streams: WDS.lines.length,
+    streamPts: WDS.lines.reduce((a, l) => a + l.s.length, 0) },
+  visible: { grid: gridMesh.visible, low: lowMesh.visible, sec: secMesh.visible, sheet: secSheet.visible, stream: streamLines.visible, ptc: points.visible } });
+window.viewerWindVisCheck = () => {
+  const cfg = Object.assign(wdCfg(), { grid: true, low: true, sec: true });
+  wdUpdateGrid(cfg); wdUpdateLow(); WDS.lowJob = false; wdStartSection(cfg);
+  while (!wdSectionPiece()) { /* all pieces now, at the grid's sea time */ }
+  wdFinishSection(); WDS.dirty = true;
+  const e = (a, b) => Math.abs(a - b), res = { T: T, mode: ENV.mode, regular: ENV.regular, world: !!SWL.world };
+  for (const [name, g, mesh, idx] of [['grid', WDS.grid, gridMesh, WDS.gridIdx], ['low', WDS.low, lowMesh, WDS.lowIdx]]) {
+    let dv = 0, dz = 0, dd = 0, dp = 0, wmax = 0;
+    for (let p = 0; p < g.n; p++) {
+      const x = WDS.pts.x[p], y = WDS.pts.y[p], q = fWind(x, y, g.z[p], T);
+      dz = Math.max(dz, e(g.z[p], fSurface(x, y, T) + g.h));
+      dv = Math.max(dv, e(q[0], g.u[p]), e(q[1], g.v[p]), e(q[2], g.w[p]));
+      wmax = Math.max(wmax, Math.abs(q[2]));
+    }
+    for (let k = 0; k < mesh.count; k++) {   // the drawn arrow: its first column is the wind times the scale
+      mesh.getMatrixAt(k, _wm);
+      const el = _wm.elements, p = idx[k];
+      dd = Math.max(dd, e(el[0] / WV.arrowScale, g.u[p]), e(-el[2] / WV.arrowScale, g.v[p]));
+      dp = Math.max(dp, e(el[12], WDS.pts.x[p]), e(el[13], g.z[p]), e(-el[14], WDS.pts.y[p]));   // centred on its point
+    }
+    res[name] = { n: g.n, drawn: mesh.count, h: g.h, maxWindDiff: dv, maxHeightDiff: dz, maxDrawnDiff: dd, maxDrawnPosDiff: dp, maxAbsW: wmax };
+  }
+  {
+    const r = WDS.sec, m = wdMean(), proj = m.ex * r.ex + m.ey * r.ey, sc = WV.arrowScale * WV.secExag;
+    let dv = 0, dd = 0, dl = 0, dw = 0, wmax = 0, devmax = 0, capped = 0;
+    for (let i = 0; i < r.nc; i++) {
+      dl = Math.max(dl, e(-r.x[i] * r.ey + r.y[i] * r.ex, -WDS.cx * r.ey + WDS.cy * r.ex));   // on the line through the centre
+      for (let j = 0; j < r.nl; j++) {
+        const k = i * r.nl + j, q = fWind(r.x[i], r.y[i], r.eta[i] + r.levels[j], T);
+        dv = Math.max(dv, e(q[0], r.u[k]), e(q[1], r.v[k]), e(q[2], r.w[k]));
+        dd = Math.max(dd, e(q[0] * r.ex + q[1] * r.ey - m.f(r.levels[j]) * proj, r.dev[k]));
+        wmax = Math.max(wmax, Math.abs(q[2])); devmax = Math.max(devmax, Math.abs(r.dev[k]));
+      }
+    }
+    for (let k = 0; k < secMesh.count; k++) {   // the drawn arrow: (deviation along the section, up) times the scale, capped
+      secMesh.getMatrixAt(k, _wm);
+      const el = _wm.elements, q = WDS.secIdx[k], L = Math.hypot(r.dev[q], r.w[q]) * sc, f = Math.min(1, WV.secCap / L);
+      if (f < 1) capped++;
+      dw = Math.max(dw, e((el[0] * r.ex - el[2] * r.ey) / sc, f * r.dev[q]), e(el[1] / sc, f * r.w[q]));
+    }
+    res.sec = { columns: r.nc, levels: r.nl, drawn: secMesh.count, capped: capped, dir: [r.ex, r.ey], maxWindDiff: dv, maxDevDiff: dd,
+      maxDrawnDiff: dw, maxOffLine: dl, maxAbsW: wmax, maxAbsDev: devmax,
+      surfDiff: Math.max(...Array.from(r.eta, (v, i) => e(v, fSurface(r.x[i], r.y[i], T)))) };
+  }
+  return res;
+};
+window.viewerCamera = (pos, target) => {
+  camera.position.copy(toThree(pos[0], pos[1], pos[2])); controls.target.copy(toThree(target[0], target[1], target[2]));
+  controls.update(); return [camera.position.x, camera.position.y, camera.position.z];
+};
+
+// ---------------------------------------------------------------- camera modes
+// free: the mouse orbits; chase: the orbit's target stays on the aircraft; fwd: on board, at the aircraft's position
+// looking along its air-relative velocity, rolled with the bank mu and pitched with the flight-path angle gamma of the
+// point mass; tip: on board, above the lower wing, looking down past the lower wingtip at the water under it. The two
+// onboard views use a vertical field of view of CAM.fov, smooth the orientation (and the tip view's offset) with the
+// time constant CAM.tau of real time, and overlay a horizon line and the heights and the airspeed. Before a flight they
+// stand at the mast at the launch heading and the start height of the planner's first cycle. In them the section and
+// the grid at the aircraft's height are hidden (they pass through the eye); the near-surface layer stays when it is on.
+const CAM = { mode: 'free', saved: null, q: new THREE.Quaternion(), off: new THREE.Vector3(), init: false, side: 1,
+  last: performance.now(), fov: 70, tau: 0.15, preH: 10, pv: { key: '', c: null }, shapeFor: null, hud: null, info: null };
+const camMode = () => (AIRCRAFT ? $('flCam').value : 'free');
+const onboard = () => { const m = camMode(); return m === 'fwd' || m === 'tip'; };
+const _cq = new THREE.Quaternion(), _cm = new THREE.Matrix4(), _cx = new THREE.Vector3(), _cy = new THREE.Vector3(),
+  _cz = new THREE.Vector3(), _ce = new THREE.Vector3(), _ct = new THREE.Vector3(), _cu = new THREE.Vector3();
+const s2t = (v, out) => out.set(v[0], v[2], -v[1]);   // a sim vector (east, north, up) in three.js axes
+// the planner's start before a flight: heading relative to the wind and height above the surface (cached per case)
+function camPreview() {
+  const name = $('flAc').value, ac = AIRCRAFT && AIRCRAFT[name], motor = $('flMotor').value === 'on';
+  const key = [name, motor, ENV.regular, W.u10.toFixed(1), ENV.regular && SWL.rel].join('|');
+  if (CAM.pv.key !== key) {
+    CAM.pv.key = key; CAM.pv.c = null;
+    try {
+      if (ENV.regular && ac && HAVE_WAVE) {
+        const st = WAVE.flatStartEntry(NAV, MPC.makeAircraft(Object.assign({ name: name }, ac)), W.u10, SWL.rel);
+        if (st) CAM.pv.c = { z: st.z[0], psi: st.psi[0], gam: st.gamma[0] };
+      } else if (HAVE_MPC && ac) {
+        const lib = libFor(name, motor);
+        if (lib && lib.length) {
+          const c0 = MPC.pickCycle(lib, W.u10, MPC_CHI * Math.PI / 180);
+          let k = 0;
+          for (let i = 1; i < c0.z.length; i++) if (c0.z[i] > c0.z[k]) k = i;
+          CAM.pv.c = { z: c0.z[k], psi: c0.psi[k], gam: c0.g[k] };
+        }
+      }
+    } catch (e) { CAM.pv.c = null; }
+  }
+  const c = CAM.pv.c, psiW = Math.atan2(W.ey, W.ex), head = $('flHead').value;
+  let psi = psiW + Math.PI;   // as launch() and launchSwell() set it
+  if (ENV.regular) psi = psiW + (c ? c.psi : 0);
+  else if (head === 'down') psi = psiW;
+  else if (head === 'left') psi = psiW + Math.PI / 2;
+  else if (head === 'right') psi = psiW - Math.PI / 2;
+  else if ((head === 'ref' || tgtMode()) && c && c.psi !== null) psi = psiW + c.psi;
+  return { psi: psi, h: c ? c.z : CAM.preH, gam: c ? c.gam : 0 };
+}
+// the pose the onboard views use: the flying (or last) state, else the mast before a flight
+function camPose() {
+  if (FL.started) { const s = FL.s; return { x: s[0], y: s[1], z: s[2], V: s[3], gam: s[4], psi: s[5], mu: FL.mu, pre: false, ac: FL.ac }; }
+  const p = camPreview(), ac = AIRCRAFT && AIRCRAFT[$('flAc').value];
+  return { x: mx, y: my, z: fSurface(mx, my, T) + p.h, V: NaN, gam: p.gam, psi: p.psi, mu: 0, pre: true, ac: ac };
+}
+function camEnter() {
+  CAM.saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov };
+  controls.enabled = false; CAM.init = false;
+  camera.fov = CAM.fov; camera.updateProjectionMatrix();
+}
+function camLeave() {
+  if (CAM.saved) { camera.position.copy(CAM.saved.pos); controls.target.copy(CAM.saved.target); camera.fov = CAM.saved.fov; }
+  camera.updateProjectionMatrix(); controls.enabled = true; CAM.saved = null; camHud(null);
+}
+$('flCam').addEventListener('change', () => {
+  const was = CAM.mode === 'fwd' || CAM.mode === 'tip', now = onboard();
+  if (now && !was) camEnter(); else if (!now && was) camLeave(); else CAM.init = false;
+  CAM.mode = camMode(); WDS.dirty = true;
+});
+// every frame, before the render; returns whether an onboard view owns the camera
+function camUpdate(nowMs) {
+  const dt = Math.min(0.25, Math.max(0, (nowMs - CAM.last) / 1000)); CAM.last = nowMs;
+  const m = camMode();
+  flightMesh.visible = m !== 'fwd' && (FL.started || (m === 'tip' && !!AIRCRAFT));
+  const showMast = (on) => { if (mastLine.visible !== on) { mastLine.visible = on; for (const a of arrows) a.visible = on; } };
+  if (m !== 'fwd' && m !== 'tip') { showMast(true); return false; }
+  const p = camPose(), b = p.ac ? p.ac.span : 3;
+  showMast(!p.pre);   // before a launch the eye stands in the mast, among its arrows
+  if (p.pre && m === 'tip' && p.ac && CAM.shapeFor !== $('flAc').value) { buildShape(p.ac); CAM.shapeFor = $('flAc').value; }
+  if (p.pre && m === 'tip') { flightMesh.position.set(p.x, p.z, -p.y); flightMesh.rotation.set(-p.mu, p.psi, p.gam); }
+  // body axes (sim): forward along the air-relative velocity, up along the lift, left = up x forward
+  const cg = Math.cos(p.gam), sg = Math.sin(p.gam), cp = Math.cos(p.psi), sp = Math.sin(p.psi), cm = Math.cos(p.mu), sm = Math.sin(p.mu);
+  const f = [cg * cp, cg * sp, sg], up = [-sg * cp * cm - sp * sm, -sg * sp * cm + cp * sm, cg * cm];
+  const left = [up[1] * f[2] - up[2] * f[1], up[2] * f[0] - up[0] * f[2], up[0] * f[1] - up[1] * f[0]];
+  const a = CAM.init ? 1 - Math.exp(-dt / CAM.tau) : 1;
+  s2t([p.x, p.y, p.z], _ce);
+  if (m === 'fwd') {
+    s2t(f, _cz).negate(); s2t(up, _cy); _cx.crossVectors(_cy, _cz);
+    _cm.makeBasis(_cx, _cy, _cz); _cq.setFromRotationMatrix(_cm);
+    camera.position.copy(_ce); CAM.info = null;
+  } else {
+    // the lower wing, with a little hysteresis about wings level
+    if (left[2] < -0.02) CAM.side = 1; else if (left[2] > 0.02) CAM.side = -1;
+    const sd = left.map((v) => v * CAM.side);
+    const off = [0, 1, 2].map((i) => 0.3 * b * sd[i] + 0.3 * b * up[i] - 0.35 * b * f[i]);
+    s2t(off, _ct);
+    if (CAM.init) CAM.off.lerp(_ct, a); else CAM.off.copy(_ct);
+    camera.position.copy(_ce).add(CAM.off);
+    // look past the tip at the water ahead of it, farther ahead the higher the tip (the horizon stays in view), along
+    // the water in a skim
+    const tip = [p.x + 0.5 * b * sd[0], p.y + 0.5 * b * sd[1], p.z + 0.5 * b * sd[2]], fh = Math.hypot(f[0], f[1]) || 1;
+    const la = 3 * b + 1.5 * Math.max(0, tip[2] - fSurface(tip[0], tip[1], T));
+    const ax = tip[0] + la * f[0] / fh, ay = tip[1] + la * f[1] / fh;
+    s2t([ax, ay, fSurface(ax, ay, T)], _ct);
+    s2t(up, _cu);
+    _cm.lookAt(camera.position, _ct, _cu); _cq.setFromRotationMatrix(_cm);
+    CAM.info = { tipH: p.z - fSurface(p.x, p.y, T) - 0.5 * b * Math.sin(Math.abs(p.mu)) * Math.cos(p.gam) };
+  }
+  if (CAM.init) CAM.q.slerp(_cq, a); else CAM.q.copy(_cq);
+  CAM.init = true;
+  camera.quaternion.copy(CAM.q);
+  camera.updateMatrixWorld();
+  camHud(p, m);
+  return true;
+}
+// the overlay of the onboard views: a short horizon line through the horizon ahead, the flight-path mark at the centre
+// of the forward view, and the readouts
+function camHud(p, m) {
+  let cv = CAM.hud;
+  if (!cv) {
+    cv = CAM.hud = document.createElement('canvas'); cv.id = 'hud';
+    cv.style.cssText = 'position:fixed;inset:0;pointer-events:none;';
+    document.body.insertBefore(cv, $('panel'));
+  }
+  const r = Math.min(devicePixelRatio || 1, 2), Wd = innerWidth, Hd = innerHeight;
+  if (cv.width !== Math.round(Wd * r) || cv.height !== Math.round(Hd * r)) { cv.width = Math.round(Wd * r); cv.height = Math.round(Hd * r); }
+  const g = cv.getContext('2d');
+  g.setTransform(r, 0, 0, r, 0, 0); g.clearRect(0, 0, Wd, Hd);
+  if (!p) { cv.style.display = 'none'; return; }
+  cv.style.display = 'block';
+  _cz.set(0, 0, -1).applyQuaternion(camera.quaternion); _cz.y = 0;
+  if (_cz.lengthSq() > 0.01) {
+    _cz.normalize(); _cx.set(-_cz.z, 0, _cz.x);
+    const p0 = _ct.copy(camera.position).addScaledVector(_cz, 2000).project(camera);
+    if (p0.z < 1) {
+      const x0 = (p0.x + 1) / 2 * Wd, y0 = (1 - p0.y) / 2 * Hd;
+      const p1 = _cu.copy(camera.position).addScaledVector(_cz, 2000).addScaledVector(_cx, 400).project(camera);
+      const x1 = (p1.x + 1) / 2 * Wd, y1 = (1 - p1.y) / 2 * Hd, l = Math.hypot(x1 - x0, y1 - y0) || 1;
+      const ux = (x1 - x0) / l, uy = (y1 - y0) / l, hl = 150;
+      for (const [col, w] of [['rgba(11,11,11,0.55)', 4], ['#ffffff', 2]]) {
+        g.strokeStyle = col; g.lineWidth = w; g.beginPath();
+        g.moveTo(x0 - hl * ux, y0 - hl * uy); g.lineTo(x0 - 14 * ux, y0 - 14 * uy);
+        g.moveTo(x0 + 14 * ux, y0 + 14 * uy); g.lineTo(x0 + hl * ux, y0 + hl * uy); g.stroke();
+      }
+    }
+  }
+  if (m === 'fwd') {   // the flight-path mark: the camera looks along the air-relative velocity
+    const cx = Wd / 2, cy = Hd / 2;
+    for (const [col, w] of [['rgba(11,11,11,0.55)', 4], ['#f2c200', 2]]) {
+      g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(cx, cy, 6, 0, 2 * Math.PI);
+      g.moveTo(cx - 20, cy); g.lineTo(cx - 6, cy); g.moveTo(cx + 6, cy); g.lineTo(cx + 20, cy); g.moveTo(cx, cy - 6); g.lineTo(cx, cy - 13); g.stroke();
+    }
+  }
+  const h = p.z - fSurface(p.x, p.y, T);
+  const parts = [tx('hudH', h.toFixed(2)), tx('hudV', Number.isFinite(p.V) ? p.V.toFixed(1) : '-')];
+  if (m === 'tip' && CAM.info) parts.push(tx('hudTip', CAM.info.tipH.toFixed(2)));
+  if (p.pre) parts.unshift(tx('hudPre'));
+  const text = parts.join('   ');
+  g.font = '600 13px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const tw = g.measureText(text).width + 16, bx = Math.max(310 + tw / 2, Wd / 2), by = Hd - 26;
+  g.fillStyle = 'rgba(11,11,11,0.62)'; g.fillRect(bx - tw / 2, by - 12, tw, 24);
+  g.fillStyle = '#f0efec'; g.fillText(text, bx, by);
+}
+window.viewerCam = () => ({ mode: camMode(), onboard: onboard(), fov: camera.fov, pos: camera.position.toArray(),
+  q: camera.quaternion.toArray(), side: CAM.side, info: CAM.info, controls: controls.enabled, aircraftVisible: flightMesh.visible,
+  hud: CAM.hud ? CAM.hud.style.display : 'none' });
+
 // keep a particle inside the box of side SEA around the sea centre
 function wrapParticle(i) {
   px[i] = seaC.x + (((px[i] - seaC.x + HALF) % SEA) + SEA) % SEA - HALF;
@@ -2296,6 +2898,7 @@ function loop(now) {
     const lockSw = FL.on && ENV.regular;
     for (const id of ['swlHs', 'swlTp', 'swlDir', 'swlPre']) { $(id).disabled = lockSw; $(id).title = tx(lockSw ? 'swlLockTip' : id + 'Tip'); }
     fromEl.disabled = lockSw;
+    wdSyncCtl();
   }
   // the drawn sea follows the aircraft while it flies (display only; the flight model is analytic)
   {
@@ -2340,7 +2943,8 @@ function loop(now) {
   drawCharts();
 
   updateFlightView();
-  controls.update();
+  wdTick(now);
+  if (!camUpdate(now)) controls.update();   // the onboard views own the camera
   renderer.render(scene, camera);
 }
 uiReady = true; applyLang();

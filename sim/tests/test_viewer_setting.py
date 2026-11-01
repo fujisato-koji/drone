@@ -47,6 +47,7 @@ class PanelTest(unittest.TestCase):
         self.assertEqual(options(self.page, "envMode"), ["free", "world"])
         self.assertEqual(options(self.page, "swType"), ["none", "irregular", "regular"])
         self.assertIn('id="vary"', self.page)
+        self.assertRegex(self.page, r'<input id="vary" type="checkbox" checked')   # the variation is on by default
 
     def test_removed_controls(self):
         """The scenario's hour and playback, the separate varying and swell modes, and the launch-point choice are gone."""

@@ -933,3 +933,12 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-11-01
+  - id: Q-080
+    kind: question
+    text: "The wind display and the camera modes of the viewer (docs/02-form.md#viewer) follow the owner's requests of 2026-11-01 as relayed to the assistant: arrows of the horizontal wind on a grid of about 13 by 13 over about 150 m each way that follows the aircraft at its height above the local surface (the mast without a flight), coloured by the vertical wind, with an optional layer about 2 m above the surface; a vertical section through the aircraft along the wind (along the swell's travel over the regular swell), about 150 m each way and up to about 25 m, drawing the deviation from the mean log profile with a set exaggeration, with optional streamlines fixed to the sea or moving with the swell's phase speed; updates a few times a second; onboard views forward and under the wingtip with a field of view of about 70 deg. The assistant chose the rest: the layer's height without a flight (viewer.wind_grid_mast_h_m), the arrows' scale (viewer.wind_arrow_s), the exaggeration (viewer.wind_section_exag) and the cap on the section's arrows (viewer.wind_section_cap_m), the colour scale's end (viewer.wind_w_max_ms), the refresh interval (viewer.wind_refresh_s), a choice of the section's direction outside the regular swell, the particles kept as an option that is off, the field of view taken as vertical (viewer.cam_fov_deg), the smoothing (viewer.cam_tau_s), and hiding the section and the grid at the aircraft's height in the onboard views. Confirm these as a decision, or change them."
+    waits_for: owner
+    affects:
+      - Q-064
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-01

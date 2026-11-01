@@ -4481,6 +4481,19 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | world.js_plan_mean_ms | 81.3 | ms | calculated | docs/02-form.md#world-map |
 | world.js_late_plans | 0 | 1 | calculated | docs/02-form.md#world-map |
 | world.js_console_errors | 0 | 1 | calculated | docs/02-form.md#world-map |
+| viewer.wind_grid_n | 13 | 1 | assumed | Q-080 |
+| viewer.wind_grid_half_m | 150 | m | assumed | Q-080 |
+| viewer.wind_grid_mast_h_m | 10 | m | assumed | Q-080 |
+| viewer.wind_grid_low_h_m | 2 | m | assumed | Q-080 |
+| viewer.wind_arrow_s | 1 | s | assumed | Q-080 |
+| viewer.wind_section_half_m | 150 | m | assumed | Q-080 |
+| viewer.wind_section_top_m | 25 | m | assumed | Q-080 |
+| viewer.wind_section_exag | 5 | 1 | assumed | Q-080 |
+| viewer.wind_section_cap_m | 8 | m | assumed | Q-080 |
+| viewer.wind_w_max_ms | 0.5 | m/s | assumed | Q-080 |
+| viewer.wind_refresh_s | 0.25 | s | assumed | Q-080 |
+| viewer.cam_fov_deg | 70 | deg | assumed | Q-080 |
+| viewer.cam_tau_s | 0.15 | s | assumed | Q-080 |
 <!-- tdr:end -->
 
 ## Requirements for the dynamic soaring drone {#ds-requirements}
