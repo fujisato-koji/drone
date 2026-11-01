@@ -434,7 +434,7 @@
   // Of a cycle and its mirror image that make good the same, the one on the side of the wind the aircraft flies is
   // taken, so that a change of course does not cross the wind when it need not.
   // flown names the cycle the planner flies ({kind, u10, chi_deg, mirror}, 'steady' or null). The kind of leg does
-  // not change in flight (Q-066, Q-081: in node closed loops a soaring flight turned into a steady leg lost the
+  // not change in flight (Q-066, Q-084: in node closed loops a soaring flight turned into a steady leg lost the
   // aircraft, and a steady leg turned into a soaring cycle fell below the stall speed): a soaring flight flies a
   // course that only the motor makes good on the soaring cycle that gets furthest along it, a steady flight flies a
   // steady leg along any course, and the command says held. A steady leg's track turns towards a new course by at

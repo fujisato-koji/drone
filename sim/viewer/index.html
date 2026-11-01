@@ -1089,7 +1089,7 @@ const legCycle = (cmd) => new MPC.Cycle(cmd.point.steady ? NAV.steadyEntry(cmd.p
 // state (MPC.Controller, SWITCH_MATCH_MAX for at most SWITCH_MAX_WAIT_S), and FreeCourse chains it through cycles
 // that match pairwise (MPC.cycleLink within COURSE_LINK_FRAC of SWITCH_MATCH_MAX, so that the aircraft's own deviation
 // from its cycle leaves room); the kind of leg does not change in flight, and a steady leg turns at a limited rate
-// (viewer.steady_turn_deg_per_s, Q-081).
+// (viewer.steady_turn_deg_per_s, Q-084).
 // 'ref' is the course of the Python experiments, MPC_CHI off downwind, launched on its first cycle's heading.
 const COURSE_DIR = { up: [-1, 0], down: [1, 0], left: [0, 1], right: [0, -1],
   ref: [Math.cos(MPC_CHI * Math.PI / 180), Math.sin(MPC_CHI * Math.PI / 180)] };   // wind frame: x downwind, y to its left
