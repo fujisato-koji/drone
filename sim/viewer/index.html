@@ -121,7 +121,6 @@
         <div class="ctl"><label for="tgtDist" data-i="tgtDist" data-t="tgtDistTip"></label><input id="tgtDist" type="number" min="100" max="20000" step="100" value="1000" style="width:64px" data-t="tgtDistTip"><select id="tgtDir" data-t="tgtDistTip"><option value="up" data-i="tdUp"></option><option value="down" data-i="tdDown"></option><option value="across" data-i="tdAcross"></option></select><button id="tgtSet" type="button" data-i="tgtSet" data-t="tgtDistTip"></button></div>
         <div class="card"><div class="ct" data-i="hullT" data-t="hullTip"></div><canvas id="hullCv" width="280" height="200" data-t="hullTip"></canvas></div>
       </div>
-      <div class="ctl step"><label for="flWorld" data-i="stWorld" data-t="flWorldTip"></label><select id="flWorld" data-t="flWorldTip"><option value="flat" data-i="worldFlat"></option><option value="truth" data-i="worldTruth"></option></select></div>
       <div class="ctl step"><label for="flMotor" data-i="stMotor" data-t="flMotorTip"></label><select id="flMotor" data-t="flMotorTip"><option value="off" data-i="motorOff"></option><option value="on" data-i="motorOn"></option></select></div>
       <div class="ctl step"><label for="flPw" data-i="stPw" data-t="flPwTip"></label><select id="flPw" data-t="flPwTip"><option value="free" data-i="pwFree"></option><option value="normal" data-i="pwNormal" selected></option><option value="costly" data-i="pwCostly"></option></select></div>
       <div class="ctl"><label class="auto" data-t="flReflexTip"><input id="flReflex" type="checkbox" data-t="flReflexTip"> <span data-i="reflex"></span></label></div>
@@ -232,12 +231,10 @@ const I18N = {
     swTypeLockTip: '飛行中は、規則波への切り替えと規則波からの切り替えはできません。',
     u10: '10 m の風速', u10Tip: '高さ 10 m の風速です。海の状態もこれに合わせて変わります。',
     from: '風の吹いてくる向き', fromTip: '風が吹いてくる方位です。0 deg が北、90 deg が東です。',
-    sec2: '② 機体を飛ばす', sec2Tip: '上から順に選んで、発進を押します。機体は観測柱の位置から発進します。',
+    sec2: '② 機体を飛ばす', sec2Tip: '上から順に選んで、発進を押します。機体は観測柱の位置から発進します。MPC は、いま表示している波（強い順に 48 成分）と、いまの平均の風を使って先の飛行を予測します。先の突風は知りません。',
     stAc: '1. 機体', flAcTip: '飛ばす機体を選びます。',
     stHead: '2. 向き', flHeadTip: '発進するときの機体の向きです。風を基準に決まります。',
     hUp: '風上へ', hDown: '風下へ', hLeft: '風を横切って左へ', hRight: '風を横切って右へ', hRef: '参照軌道の向き',
-    stWorld: 'MPC から見た海', flWorldTip: 'MPC が先の飛行を予測するときに使う海です。「平らと仮定」は、海面を高さ 0 の平らな面とし、風を対数の分布にします。「真の波」は、いま表示している波と、いまの平均の風を使います。どちらも、先の突風は知りません。',
-    worldFlat: '平らと仮定', worldTruth: '真の波',
     stMotor: '3. モータ補助', flMotorTip: 'モータの推力を、MPC が選ぶ三つ目の操作に加えます。「あり」にすると、MPC は必要な場面でだけ短くモータを回して、飛行を延ばします。プロペラは、回していないときは折りたたまれ、その分の抵抗が加わります。',
     motorOff: 'なし', motorOn: 'あり',
     stPw: '電力の重み', flPwTip: 'モータで使う電力量に付ける重みです。「惜しまない」はほとんど気にせず、「ふつう」は中間、「節約」は強く惜しみます。節約にしすぎると、MPC は必要な場面でもモータを使わず、着水することがあります。モータ補助が「あり」のときだけ有効です。',
@@ -415,12 +412,10 @@ const I18N = {
     swTypeLockTip: 'While flying the swell cannot be switched to or from the regular swell.',
     u10: 'Wind at 10 m', u10Tip: 'Wind speed at 10 m height. The sea state follows it.',
     from: 'Wind from', fromTip: 'Direction the wind comes from. 0 deg is north, 90 deg is east.',
-    sec2: '2. Fly an aircraft', sec2Tip: 'Choose from the top down, then press Launch. The aircraft launches at the mast.',
+    sec2: '2. Fly an aircraft', sec2Tip: 'Choose from the top down, then press Launch. The aircraft launches at the mast. The MPC predicts the flight with the waves on screen (the 48 strongest components) and the mean wind of the moment; it does not know the gusts ahead.',
     stAc: '1. Aircraft', flAcTip: 'Chooses the aircraft to fly.',
     stHead: '2. Heading', flHeadTip: 'Heading at launch, relative to the wind.',
     hUp: 'Upwind', hDown: 'Downwind', hLeft: 'Crosswind, left', hRight: 'Crosswind, right', hRef: 'Reference heading (rotated into the wind)',
-    stWorld: 'Sea as MPC sees it', flWorldTip: 'The sea the MPC uses to predict the flight. "Assume flat" takes the surface as a flat plane at height 0 with a log wind profile. "True waves" uses the waves on screen and the mean wind of the moment. Neither knows the gusts ahead.',
-    worldFlat: 'Assume flat', worldTruth: 'True waves',
     stMotor: '3. Motor assist', flMotorTip: 'Adds the motor thrust as a third control the MPC chooses. With "On" the MPC runs the motor in short bursts only where needed, to extend the flight. The propeller is folded when the motor is off, which adds drag.',
     motorOff: 'Off', motorOn: 'On',
     stPw: 'Power weight', flPwTip: 'The weight on the electric energy the motor uses. "Spare no power" hardly cares, "Normal" is in between, "Save power" cares a lot. Too much saving and the MPC does not use the motor even when it is needed, and may splash. Active only when Motor assist is On.',
@@ -931,7 +926,7 @@ function mpcEnsureWorker() {
 // post the state at sea time t; if the previous request is still running the plan is late
 function mpcRequest(t) {
   if (MP.busy) { if (MP.plan) MP.late++; return; }
-  const a = FL.act, kind = $('flWorld').value;
+  const a = FL.act, kind = 'truth';   // the planner sees the true waves (the strongest MPC_MAXC components) and the mean wind
   if (FL.wave) {   // regular swell: the oracle sea (the planner flies the true swell), the course along the swell's travel
     MP.busy = true;
     MP.worker.postMessage({ type: 'plan', id: MP.flight, req: { t: t, s: FL.s.slice(),
@@ -1158,7 +1153,7 @@ const renderFl = () => {
 dyn.push(renderFl);
 if (!AIRCRAFT || !Object.keys(AIRCRAFT).length) {
   flNoteFn = () => tx('aircraftMissing');
-  for (const id of ['flAc', 'flHead', 'flTgt', 'flWorld', 'flMotor', 'flPw', 'flGo', 'flStop', 'flChase']) $(id).disabled = true;
+  for (const id of ['flAc', 'flHead', 'flTgt', 'flMotor', 'flPw', 'flGo', 'flStop', 'flChase']) $(id).disabled = true;
 } else {
   const names = Object.keys(AIRCRAFT).filter((n) => n !== 'flyingwing-2m'
     && (!HAVE_MPC || (libFor(n, true) || []).length || (libFor(n, false) || []).length));
@@ -1773,10 +1768,10 @@ $('flAc').addEventListener('change', () => { if (ENV.regular) { preloadSea(); up
 function syncSwellFlightCtl() {
   const sw = ENV.regular, noAc = !AIRCRAFT || !Object.keys(AIRCRAFT).length;
   if (sw) {
-    $('flMotor').value = 'on'; $('flPw').value = 'normal'; $('flReflex').checked = false; $('flWorld').value = 'truth';
+    $('flMotor').value = 'on'; $('flPw').value = 'normal'; $('flReflex').checked = false;
     $('flTgt').value = 'none';
   }
-  for (const id of ['flMotor', 'flWorld', 'flHead', 'flTgt']) $(id).disabled = sw || noAc;
+  for (const id of ['flMotor', 'flHead', 'flTgt']) $(id).disabled = sw || noAc;
   if (HAVE_WAVE) for (const o of $('flAc').options) o.disabled = sw && !WIX.grid.aircraft.includes(o.value);
   if (sw && HAVE_WAVE && !WIX.grid.aircraft.includes($('flAc').value)) $('flAc').value = WIX.grid.aircraft[0];
   syncCtl();
