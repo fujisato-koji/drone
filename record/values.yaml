@@ -26558,4 +26558,292 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#world-map
+  - key: world.so_winter_low_u10_mean_ms
+    v: 14.3
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_winter_low_u10_max_ms
+    v: 23.5
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_winter_low_hs_mean_m
+    v: 5.58
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_winter_low_hs_max_m
+    v: 10.44
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_winter_low_swell_mean_m
+    v: 2.11
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_winter_low_tp_mean_s
+    v: 12.5
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_winter_low_clipped
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_summer_quiet_u10_mean_ms
+    v: 4.5
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_summer_quiet_u10_max_ms
+    v: 15.2
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_summer_quiet_hs_mean_m
+    v: 1.95
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_summer_quiet_hs_max_m
+    v: 4.62
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_summer_quiet_swell_mean_m
+    v: 1.74
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_summer_quiet_tp_mean_s
+    v: 11.9
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.so_summer_quiet_clipped
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_winter_u10_mean_ms
+    v: 11.7
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_winter_u10_max_ms
+    v: 24.2
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_winter_hs_mean_m
+    v: 4.65
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_winter_hs_max_m
+    v: 8.94
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_winter_swell_mean_m
+    v: 2.49
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_winter_tp_mean_s
+    v: 12.1
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_winter_clipped
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_summer_calm_u10_mean_ms
+    v: 3.5
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_summer_calm_u10_max_ms
+    v: 8.2
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_summer_calm_hs_mean_m
+    v: 1.29
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_summer_calm_hs_max_m
+    v: 1.8
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_summer_calm_swell_mean_m
+    v: 1.21
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_summer_calm_tp_mean_s
+    v: 12.9
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.np_summer_calm_clipped
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.trade_wind_u10_mean_ms
+    v: 10.3
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.trade_wind_u10_max_ms
+    v: 13.2
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.trade_wind_hs_mean_m
+    v: 3.12
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.trade_wind_hs_max_m
+    v: 4.02
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.trade_wind_swell_mean_m
+    v: 1.55
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.trade_wind_tp_mean_s
+    v: 11.4
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.trade_wind_clipped
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.swell_no_wind_u10_mean_ms
+    v: 3.2
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.swell_no_wind_u10_max_ms
+    v: 9.7
+    unit: m/s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.swell_no_wind_hs_mean_m
+    v: 1.74
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.swell_no_wind_hs_max_m
+    v: 2.76
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.swell_no_wind_swell_mean_m
+    v: 1.69
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.swell_no_wind_tp_mean_s
+    v: 11.1
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.swell_no_wind_clipped
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.scenario_file_max_bytes
+    v: 55247
+    unit: B
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.index_bytes
+    v: 2218
+    unit: B
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
   # generated by python -m sim.world_keys: end
+  - key: world.js_flight_s
+    v: 61.2
+    unit: s
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.js_plan_mean_ms
+    v: 81.3
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.js_late_plans
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map
+  - key: world.js_console_errors
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#world-map

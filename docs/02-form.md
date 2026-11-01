@@ -201,6 +201,12 @@ The six cases, each three days from its start (UTC), with the wind and heights o
 <!-- world_keys scenarios begin -->
 | case | start (UTC) | centre | mean wind | largest wind | mean height | largest height | mean swell | mean swell period |
 |---|---|---|---|---|---|---|---|---|
+| Southern Ocean, winter, a low passing | 2023-07-12T03:00Z | 50 S 58 E | world.so_winter_low_u10_mean_ms | world.so_winter_low_u10_max_ms | world.so_winter_low_hs_mean_m | world.so_winter_low_hs_max_m | world.so_winter_low_swell_mean_m | world.so_winter_low_tp_mean_s |
+| Southern Ocean, summer, a quiet spell | 2022-01-02T18:00Z | 45 S 52 E | world.so_summer_quiet_u10_mean_ms | world.so_summer_quiet_u10_max_ms | world.so_summer_quiet_hs_mean_m | world.so_summer_quiet_hs_max_m | world.so_summer_quiet_swell_mean_m | world.so_summer_quiet_tp_mean_s |
+| North Pacific transition zone, winter | 2022-01-05T21:00Z | 40 N 170 W | world.np_winter_u10_mean_ms | world.np_winter_u10_max_ms | world.np_winter_hs_mean_m | world.np_winter_hs_max_m | world.np_winter_swell_mean_m | world.np_winter_tp_mean_s |
+| North Pacific, summer, calm under the subtropical high | 2023-07-10T21:00Z | 35 N 150 W | world.np_summer_calm_u10_mean_ms | world.np_summer_calm_u10_max_ms | world.np_summer_calm_hs_mean_m | world.np_summer_calm_hs_max_m | world.np_summer_calm_swell_mean_m | world.np_summer_calm_tp_mean_s |
+| South Atlantic trade-wind belt | 2023-07-07T15:00Z | 15 S 10 W | world.trade_wind_u10_mean_ms | world.trade_wind_u10_max_ms | world.trade_wind_hs_mean_m | world.trade_wind_hs_max_m | world.trade_wind_swell_mean_m | world.trade_wind_tp_mean_s |
+| Eastern Pacific doldrums, swell without wind | 2023-07-13T06:00Z | 8 N 110 W | world.swell_no_wind_u10_mean_ms | world.swell_no_wind_u10_max_ms | world.swell_no_wind_hs_mean_m | world.swell_no_wind_hs_max_m | world.swell_no_wind_swell_mean_m | world.swell_no_wind_tp_mean_s |
 <!-- world_keys scenarios end -->
 
 - Southern Ocean winter low: a passage of a low at the climate point so_2 in July 2023 (the wind's peak in the middle of the three days, rising before and falling after), one of the strongest of the twenty winters' passages with a full calm at np_1 within eight days.
@@ -223,6 +229,8 @@ The aircraft's position goes back to latitude and longitude by the same projecti
 "Fetch the forecast now" calls Open-Meteo from the page, which works from a page opened as a file because the APIs allow any origin.
 The note beside the button says that the chosen coordinates go to Open-Meteo and what the calls cost; the global snapshot is kept in the browser's storage for its 3-hour step.
 A fetched forecast can be saved to a file and loaded again from a file, which the page reads locally only; that is the way to fly a private place without putting it into the repository.
+In headless Chrome without a graphics processor, with the map drawn, the Southern Ocean winter case loaded, a place chosen by a click on the map and 3D entered there, the baseline with the motor on and the flat-world planner flew world.js_flight_s; its plans took world.js_plan_mean_ms on average with world.js_late_plans late, and the console showed world.js_console_errors errors.
+In the same run the forecast now came back to the page opened as a file, a forecast answered by a local stand-in for Open-Meteo filled the map, and a file written by `python -m sim.world now` loaded through "From file".
 `sim/tests/test_world.py` checks the quantization (within half a step), the geometry, the interpolation, the packing, the batches, cache and pace against a fake service and a trimmed real response, and the privacy guard.
 `sim/tests/test_world_js.py` requires `worlddata.js` to decode exactly as Python and to give the same geometry, samples, forecast corridor, request URLs and byte codes, development hours that reproduce the wind sea's height, and phases that stay continuous at a point when the sea is rebuilt.
 

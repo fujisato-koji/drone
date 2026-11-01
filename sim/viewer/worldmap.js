@@ -159,7 +159,7 @@
       const cellPx = G ? G.step_deg * st.k : 0;
       const corPx = C ? C.step_km / 111.2 * st.k : 0;
       if (G && cellPx >= 5) {
-        const every = cellPx < 9 ? 2 : 1, len = Math.min(cellPx * 0.9, 22);
+        const every = cellPx < 9 ? 2 : 1, len = Math.min(cellPx * every * 0.75, 22);
         for (let i = 0; i < G.nlat; i += every) for (let j = 0; j < G.nlon; j += every) {
           const n = i * G.nlon + j;
           if (!G.mask[n]) continue;
@@ -167,15 +167,15 @@
           if (X < -20 || X > st.W + 20 || Y < -20 || Y > st.H + 20) continue;
           if (C && corPx >= 6) { const ij = WD.corridorIndex(C, la, lo); if (ij[0] >= -0.5 && ij[0] <= C.na - 0.5 && ij[1] >= -0.5 && ij[1] <= C.nc - 0.5) continue; }
           const u = G.grid.u10[n], v = G.grid.v10[n];
-          arrow(X, Y, u, v, len * Math.min(1.4, Math.hypot(u, v) / 10));
+          arrow(X, Y, u, v, len * Math.min(1.3, Math.hypot(u, v) / 12));
         }
       }
       if (C) {
         if (corPx >= 6) {
-          const every = corPx < 11 ? 2 : 1, len = Math.min(corPx * every * 0.9, 26);
+          const every = corPx < 11 ? 2 : 1, len = Math.min(corPx * every * 0.75, 26);
           for (let i = 0; i < C.na; i += every) for (let j = 0; j < C.nc; j += every) {
             const n = i * C.nc + j, X = px(cPts.lon[n]), Y = py(cPts.lat[n]);
-            arrow(X, Y, cv0.u10[n], cv0.v10[n], len * Math.min(1.4, Math.hypot(cv0.u10[n], cv0.v10[n]) / 10));
+            arrow(X, Y, cv0.u10[n], cv0.v10[n], len * Math.min(1.3, Math.hypot(cv0.u10[n], cv0.v10[n]) / 12));
           }
         }
         g.strokeStyle = COL.corridor; g.lineWidth = 2; g.beginPath();
