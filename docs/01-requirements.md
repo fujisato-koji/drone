@@ -5968,6 +5968,8 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | route.cmp_run10_albatross_u16_upwind_ratio | 0.95 | 1 | calculated | docs/02-form.md#route-planning |
 | route.cmp_run10_albatross_u16_across_plan_ms | 12.67 | m/s | calculated | docs/02-form.md#route-planning |
 | route.cmp_run10_albatross_u16_across_ratio | 1.01 | 1 | calculated | docs/02-form.md#route-planning |
+| viewer.steady_turn_deg_per_s | 10 | deg/s | assumed | Q-084 |
+| viewer.course_link_frac | 0.5 | 1 | assumed | Q-084 |
 <!-- tdr:end -->
 
 ## Requirements for the dynamic soaring drone {#ds-requirements}

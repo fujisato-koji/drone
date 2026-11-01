@@ -192,7 +192,8 @@ After that, only a flight test can close it: low turns over a lake or a calm sea
   In node a plan over the swell took mpc.js_wave_plan_node_ms; in a headless browser without a graphics processor the plans took mpc.js_wave_plan_browser_ms on average and mpc.js_wave_late_share of them were late.
   There the albatross-like glider over a 3 m swell of 10 s along a 6 m/s wind, launched at the wave phase the Python run starts at, flew mpc.js_wave_flight_s at mpc.js_wave_power_w (mpc.js_wave_power_after_w after the entry) with the motor on mpc.js_wave_motor_share of the time (mpc.js_wave_motor_share_after after the entry) and a median height of mpc.js_wave_height_median_m, and it counts.
   The Python run of the same case gives wave.loop_albatross_hs3_along_u6_p63_power_w, wave.loop_albatross_hs3_along_u6_p63_power_after_w and wave.loop_albatross_hs3_along_u6_p63_motor_share over its ten minutes, and mpc.js_wave_py_power_w, mpc.js_wave_py_power_after_w and mpc.js_wave_py_motor_share over a run of mpc.js_wave_py_t_s.
-- The target is fixed at 20 deg off downwind as in the Python experiments, and the wave-aware phase shift, the estimators and the sensors are not ported yet.
+- Without a destination the panel's heading is the course relative to the wind ("ref" the 20 deg off downwind of the Python experiments), flown as the navigator's straight leg along it and changed in flight from the next plan, between soaring cycles only at a phase match and through cycles that match one another where the new one matches at no phase (MPC.cycleLink within viewer.course_link_frac of the planner's threshold), but never between a soaring cycle and a steady leg, whose track turns by at most viewer.steady_turn_deg_per_s (Q-084, `sim/tests/test_navigator_js.py`).
+  The wave-aware phase shift, the estimators and the sensors are not ported yet.
 
 #### World map and the world sea (`sim/world.py`, `sim/viewer/worldmap.js`) {#world-map}
 
