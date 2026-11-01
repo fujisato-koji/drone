@@ -1,4 +1,4 @@
-"""Export the wave library (sim/out/mpc_library_wave.json) for the viewer's swell mode.
+"""Export the wave library (sim/out/mpc_library_wave.json) for the viewer's regular swell.
 
 python -m sim.export_wave_library writes sim/viewer/wave/index.js (window.WAVE_INDEX, small: the grid, the presets of
 the wave wind, the constants of the oracle sea, the planner settings of the wave runs, the flat-sea reference powers,

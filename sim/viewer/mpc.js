@@ -11,7 +11,7 @@
 // library mode of the margin experiment does not use them): the wave-aware phase shift of the
 // guide (wave_aware False there), the non-library cost terms (progress, smoothness), and the
 // estimators. The smooth perturbation modes, a guide's running cost and the wave wind of a preset are
-// mirrored for the swell mode (wave.js).
+// mirrored for the regular swell of the viewer (wave.js).
 function mpcFactory() {
   'use strict';
   var G = 9.81, H = 0.05, DT = 0.01, TWO_PI = 2 * Math.PI;
