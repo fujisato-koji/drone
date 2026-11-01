@@ -16,6 +16,8 @@ NODE = shutil.which("node")
 COARSE_POPS = 20000     # labels taken at most in the coarse-graph comparison
 REPLAN = 10             # experiments replanned in Python
 REPLAN_POPS = 30000     # ... among those whose searches took at most this many labels
+COUNT_SLACK = 20        # label counts may differ by this many between the languages
+COUNT_SHARE = 1e-3      # ... or by this share of the count
 
 SNIPPET = r"""
 const path = require('path'), fs = require('fs');
@@ -47,10 +49,14 @@ for (const c of inp.cases) {
       if (c.settings && c.settings.max_pops) { o.maxPops = c.settings.max_pops; o.relaxPops = c.settings.relax_pops; }
       const r = ROUTE.plan(field, graph, legs, en, p[0], p[1], o);
       const rt = r.route || r.closest;
-      out.push({ ok: r.ok, reason: r.reason, relaxation: r.closest ? r.closest.relaxation : null,
+      const cl = r.closest;
+      out.push({ ok: r.ok, reason: r.reason, relaxation: cl ? cl.relaxation : null,
         nodes: rt ? rt.waypoints.map(w => w.node) : null, times: rt ? rt.waypoints.map(w => w.t) : null,
         socs: rt ? rt.waypoints.map(w => w.soc_wh) : null, summary: rt ? rt.summary : null,
-        pops: r.stats ? r.stats.pops : null, startNeed: r.start_need_wh === undefined ? null : r.start_need_wh });
+        pops: r.stats ? r.stats.pops : null, labels: r.stats ? r.stats.labels : null,
+        cpops: cl ? cl.stats.pops : null, clabels: cl ? cl.stats.labels : null,
+        margins: cl ? [cl.reserve_margin_wh, cl.night_margin_wh, cl.allowance_margin_wh] : null,
+        startNeed: r.start_need_wh === undefined ? null : r.start_need_wh });
     }
   }
 }
@@ -71,11 +77,23 @@ def run_node(inp):
 
 def py_row(r):
     rt = r["route"] or r.get("closest")
-    return {"ok": r["ok"], "reason": r["reason"], "relaxation": r["closest"]["relaxation"] if r.get("closest") else None,
+    cl = r.get("closest")
+    return {"ok": r["ok"], "reason": r["reason"], "relaxation": cl["relaxation"] if cl else None,
             "nodes": [w["node"] for w in rt["waypoints"]] if rt else None,
             "times": [w["t"] for w in rt["waypoints"]] if rt else None,
             "socs": [w["soc_wh"] for w in rt["waypoints"]] if rt else None, "summary": rt["summary"] if rt else None,
-            "pops": r["stats"]["pops"] if r.get("stats") else None}
+            "pops": r["stats"]["pops"] if r.get("stats") else None,
+            "labels": r["stats"]["labels"] if r.get("stats") else None,
+            "cpops": cl["stats"]["pops"] if cl else None, "clabels": cl["stats"]["labels"] if cl else None,
+            "margins": [cl["reserve_margin_wh"], cl["night_margin_wh"], cl["allowance_margin_wh"]] if cl else None}
+
+
+def counts_close(a, b):
+    """Label counts of the two languages: equal, or within COUNT_SLACK in a large search (K-023 found counts that
+    differ slightly where a floating-point tie at a tolerance falls differently; the routes do not)."""
+    if a is None or b is None:
+        return a == b
+    return abs(a - b) <= max(COUNT_SLACK, COUNT_SHARE * max(a, b))
 
 
 @unittest.skipUnless(NODE, "node not available")
@@ -88,8 +106,12 @@ class TestRouteJs(unittest.TestCase):
             self.assertEqual(p["reason"], j["reason"], msg)
             self.assertEqual(p["relaxation"], j["relaxation"], msg)
             self.assertEqual(p["nodes"], j["nodes"], msg)
-            if p["pops"] is not None:
-                self.assertEqual(p["pops"], j["pops"], msg)
+            for f in ("pops", "labels", "cpops", "clabels"):
+                self.assertTrue(counts_close(p[f], j[f]), f"{msg} {f}: {p[f]} {j[f]}")
+            self.assertEqual(p["margins"] is None, j["margins"] is None, msg)
+            if p["margins"]:
+                for a, b in zip(p["margins"], j["margins"]):
+                    self.assertAlmostEqual(a, b, delta=1e-6, msg=f"{msg} margins")
             if p["times"]:
                 for a, b in zip(p["times"], j["times"]):
                     self.assertAlmostEqual(a, b, delta=1e-6, msg=msg)

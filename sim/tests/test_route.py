@@ -111,7 +111,7 @@ class TestLegModel(unittest.TestCase):
         for u10, rel in ((16.0, 0.0), (16.0, 60.0), (16.0, 180.0), (3.0, 90.0), (13.0, 120.0), (12.0, 0.0)):
             vs, vm, pw = lm.leg(u10, rel)
             d = (math.cos(math.radians(rel)), math.sin(math.radians(rel)))
-            pl = lm.hull_below(u10).plan_pair(d, R.MIN_VMG, motor_ok=False)
+            pl = lm.hull_for(u10).plan_pair(d, R.MIN_VMG, motor_ok=False)
             self.assertAlmostEqual(vs, pl["r"] if pl is not None else 0.0, places=12)
             lg = lm.steady.leg(u10, d, R.MIN_VMG)
             self.assertAlmostEqual(vm, lg["along"] if lg is not None else 0.0, places=12)
@@ -125,7 +125,11 @@ class TestLegModel(unittest.TestCase):
         self.assertEqual(lm.hull_below(11.0).u10, 11.0)
         self.assertEqual(lm.hull_below(30.0).u10, max(lm.winds))
         self.assertEqual(lm.leg(10.6, 0.0)[0], 0.0)            # no soaring cycle at the 9 m/s library wind
-        self.assertGreater(lm.leg(11.0, 0.0)[0], 0.0)
+        # the hull is at or below every wind of the rounding step: 11.0 m/s stands for winds from 10.95 m/s
+        self.assertEqual(lm.hull_for(11.0).u10, 9.0)
+        self.assertEqual(lm.leg(11.0, 0.0)[0], 0.0)
+        self.assertEqual(lm.hull_for(11.1).u10, 11.0)
+        self.assertGreater(lm.leg(11.1, 0.0)[0], 0.0)
 
 
 class TestEnergy(unittest.TestCase):
@@ -231,7 +235,8 @@ class TestSearch(unittest.TestCase):
         return R.plan(cf, g, self.lm, en, a, b), g
 
     def test_downwind_soaring(self):
-        f = small_corridor(u10=16.0, wind_from=270.0, t0=T_BASE + 10 * 3600)     # wind from the west, local morning
+        # wind from the west, local morning; 16.1 m/s takes the 16 m/s hull (the hull is at or below the whole step)
+        f = small_corridor(u10=16.1, wind_from=270.0, t0=T_BASE + 10 * 3600)
         a, b = W.aeqd_inverse(f["lat"], f["lon"], -120.0, 0.0), W.aeqd_inverse(f["lat"], f["lon"], 120.0, 0.0)
         r, g = self.plan(f, (float(a[0]), float(a[1])), (float(b[0]), float(b[1])))
         self.assertTrue(r["ok"], r.get("reason_text"))
@@ -239,7 +244,7 @@ class TestSearch(unittest.TestCase):
         self.assertEqual(sm["motor_h"], 0.0)
         self.assertEqual(sm["wait_h"], 0.0)
         v = r["dist_km"] * 1000.0 / (sm["time_h"] * 3600.0)
-        best = max(self.lm.leg(16.0, 0.0)[:2])
+        best = max(self.lm.leg(16.1, 0.0)[:2])
         self.assertLessEqual(v, best + 1e-6)
         self.assertGreater(v, 0.8 * best)
         # the battery follows the balance of each leg: solar less draw less motor, at most the capacity
@@ -439,6 +444,39 @@ class TestDominanceWindow(unittest.TestCase):
                 ta = merged["route"]["waypoints"][-1]["t"]
                 tb = split["route"]["waypoints"][-1]["t"]
                 self.assertLessEqual(abs(ta - tb), R.DOM_WINDOW_S)
+
+    def test_midnight_inside_the_window(self):
+        """K-023's case M: the two labels at X lie inside the window with local midnight between them while their
+        days of the allowance agree (a label's day is that of its last sub-step's start); comparing the local days of
+        the two times keeps them apart."""
+        lon0 = -10.0
+        t_m = 1688169600 + 30 * 60
+
+        class Stub:
+            t0, nt = 0, 10 ** 9
+
+            def __init__(self):
+                self.day0 = math.floor((t_m + lon0 * 240.0) / 86400.0)
+
+            def locate(self, la, lo):
+                return None
+
+            def hour_mean(self, loc, th):
+                tl = th + 1800.0 + lon0 * 240.0
+                d = math.floor(tl / 86400.0)
+                h = (tl - d * 86400.0) / 3600.0
+                return 600.0 if (d >= self.day0 + 1 and 7.0 <= h < 17.0) else 0.0
+
+        en = dict(R.energy_defaults("albatross-3m"), capacity_wh=300.0, soc0_wh=300.0, reserve_wh=10.0)
+        nodes = [(0.0, 0.0), (-10.0, 0.0), (-5.0, 8.0), (20.0, 0.0), (-10.0, 0.0)]
+        for horizon in (3000.0, 3600.0, 3900.0):
+            nt = int(horizon / 300.0) + 1
+            fld = self.corridor(t_m, nt, 16.1, 90.0, lambda x, y, dt: 1.0)      # the 16 m/s hull, as K-023 built it
+            merged, split = self.both(fld, nodes, en, Stub(), t_m)
+            self.assertTrue(split["ok"])
+            self.assertEqual(merged["ok"], split["ok"])
+            self.assertLessEqual(abs(merged["route"]["waypoints"][-1]["t"] - split["route"]["waypoints"][-1]["t"]),
+                                 R.DOM_WINDOW_S)
 
 
 if __name__ == "__main__":

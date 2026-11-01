@@ -14,10 +14,11 @@ markers (the prose cites the keys, never the numbers).
   P51's point, against lit.insolation_50s_june_kwh_m2_day), route.solar_calls, route.solar_file_max_bytes: calculated;
 - per case c: route.<c>_night_h (the astronomical night at the corridor's centre on its first day) and
   route.<c>_night_wh (that at route.night_draw_w, a lower bound of the rule), route.<c>_night_rule_wh (the planner's
-  night rule at the centre: what the first run of hours below the flight draw after the start draws beyond the solar
-  energy, albatross-like glider), route.<c>_night_carried (1 when the usable capacity less the reserve carries it),
-  route.<c>_capacity_needed_wh and route.<c>_battery_needed_kg (the capacity and battery that would carry it with the
-  reserve), route.<c>_draw_day_wh (a day of the flight draw by day and night, mean of the case's three days),
+  night rule at the centre: what a run of hours below the flight draw draws beyond the solar energy, the larger of
+  the rest of the run the start lies in and the first run after it, albatross-like glider), route.<c>_night_carried
+  (1 when the usable capacity less the reserve carries it), route.<c>_capacity_needed_wh and
+  route.<c>_battery_needed_kg (the capacity that would carry it with the reserve, and the battery in whole P45B cells
+  beside route.pack_overhead_kg), route.<c>_draw_day_wh (a day of the flight draw by day and night, mean of the case's three days),
   route.<c>_solar_day_<a>_wh (the panel's daily solar energy at the centre, mean of the three days),
   route.<c>_day_covered (1 when the albatross-like glider's covers the draw), route.<c>_ghi_layer_mean_w_m2 and
   route.<c>_ghi_model_mean_w_m2 (the layer and the fitted model over the solar points and the three days),
@@ -73,7 +74,7 @@ def case_keys():
     en = {a: RT.energy_defaults(a) for a in RT.AIRCRAFT}
     e0 = en[RT.AIRCRAFT[0]]
     avail = e0["capacity_wh"] - e0["reserve_wh"]
-    per_kg = record.value("lit.cell_p45b_wh_per_kg") * RT.USABLE_DEPTH
+    cell_kg = record.value("lit.cell_p45b_mass_g") / 1000.0
     fit = RT.solar_fit()
     sizes = []
     for s in W.SCENARIOS:
@@ -83,25 +84,35 @@ def case_keys():
         lay = RT.SolarLayer.load(i)
         nh = RT.night_hours(f["lat"], f["lon"], t0)
         nwh = nh * e0["night_draw_w"]
-        # the planner's night at the centre: the first run of hours whose solar energy is below the flight draw that
-        # begins after the case's start (the albatross-like glider's panel), and what it draws beyond the solar energy
+        # the planner's night at the centre (the albatross-like glider's panel): what a run of hours whose solar energy
+        # is below the flight draw draws beyond the solar energy, the larger of the rest of the run the start lies in
+        # (from the start) and the first run that begins after it
         tab, field = centre_tables(f, RT.AIRCRAFT[0], lay)
         P, F = tab.P[0], tab.F[0]
         k = tab._hour(t0)
+        first = 0.0
+        if P[k] - F[k] < 0:
+            first = (F[k] - P[k]) * (tab.T0 + 3600.0 * (k + 1) - t0) / 3600.0
+            k += 1
+            while k < tab.K and P[k] - F[k] < 0:
+                first += F[k] - P[k]
+                k += 1
         while k < tab.K and not (P[k] - F[k] < 0 <= P[k - 1] - F[k - 1]):
             k += 1
-        rule = 0.0
+        nxt = 0.0
         while k < tab.K and P[k] - F[k] < 0:
-            rule += F[k] - P[k]
+            nxt += F[k] - P[k]
             k += 1
+        rule = max(first, nxt)
         need = rule / (1.0 - RT.RESERVE_FRACTION)
+        cells = int(math.ceil(need / (record.value("lit.cell_p45b_wh_per_kg") * RT.USABLE_DEPTH * cell_kg) - 1e-9))
         k0 = tab._hour(t0)
         draw_day = sum(F[k0:k0 + 72]) / 3.0
         out += [(f"route.{i}_night_h", _num(nh, 1), "h", c), (f"route.{i}_night_wh", _num(nwh, 1), "Wh", c),
                 (f"route.{i}_night_rule_wh", _num(rule, 1), "Wh", c),
                 (f"route.{i}_night_carried", int(rule <= avail), "1", c),
                 (f"route.{i}_capacity_needed_wh", _num(need, 1), "Wh", c),
-                (f"route.{i}_battery_needed_kg", _num(need / per_kg + RT.PACK_OVERHEAD_KG, 2), "kg", c),
+                (f"route.{i}_battery_needed_kg", _num(cells * cell_kg + RT.PACK_OVERHEAD_KG, 2), "kg", c),
                 (f"route.{i}_draw_day_wh", _num(draw_day, 1), "Wh", c)]
         for a in RT.AIRCRAFT:
             ta, _ = centre_tables(f, a, lay) if a != RT.AIRCRAFT[0] else (tab, field)
@@ -184,6 +195,8 @@ def keys():
           ("route.max_pops", RT.MAX_POPS, "1", a, q), ("route.relax_pops", RT.RELAX_POPS, "1", a, q),
           ("route.relax_below_1", RT.RELAX_BELOW[0], "1", a, q), ("route.relax_below_2", RT.RELAX_BELOW[1], "1", a, q),
           ("route.start_window_h", RT.START_WINDOW_H, "h", a, q), ("route.edge_margin_km", RT.EDGE_MARGIN_KM, "km", a, q),
+          ("route.exp_capacity_low", min(RT.EXP_CAPACITY), "1", a, q), ("route.exp_capacity_high", max(RT.EXP_CAPACITY), "1", a, q),
+          ("route.sun_steps_per_hour", len(RT.QUARTERS), "1", a, q),
           ("route.q_ghi_w_m2", RT.SOLAR_Q, "W/m2", a, q), ("route.solar_every", RT.SOLAR_EVERY, "1", a, q),
           ("route.motor_share", RT.MOTOR_SHARE, "1", d, ["D-021"])]
     st = [(k, _num(v, 4), u, s_, b) for k, v, u, s_, b in st]
@@ -199,6 +212,7 @@ def keys():
                 ("route.sensor_day_w", _num(e0["flight_draw_w"] - e0["water_draw_w"], 3), "W", c, B),
                 ("route.flight_draw_w", _num(e0["flight_draw_w"], 2), "W", c, B),
                 ("route.flight_draw_rtk_w", _num(rtk["flight_draw_w"], 2), "W", c, B),
+                ("route.flight_draw_noradar_w", _num(e0["flight_draw_w"] - record.value("sense.radar_power_w"), 2), "W", c, B),
                 ("route.node_step_km", _num(W.CORRIDOR["step_km"] / RT.REFINE, 1), "km", c, B)]
     for x in RT.AIRCRAFT:
         out += [(f"route.panel_{RT.SHORT[x]}_m2", _num(en[x]["panel_m2"], 4), "m2", c, B),
@@ -268,7 +282,8 @@ def table_exp(ks):
 def table_settings(ks):
     rows = [("battery (D-023): mass, overhead, whole cells, the cells' share", "route.battery_mass_kg, route.pack_overhead_kg, route.pack_cells, route.pack_fraction"),
             ("battery: usable depth, reserve share, usable capacity, reserve", "route.usable_depth, route.reserve_fraction, route.capacity_wh, route.reserve_wh"),
-            ("draw by day: the sensor set beyond the avionics, in flight (open sea), in flight with RTK (coast)", "route.sensor_day_w, route.flight_draw_w, route.flight_draw_rtk_w"),
+            ("draw by day: the sensor set beyond the avionics, in flight (open sea), in flight with RTK (coast), without the radar altimeter (unevaluated)", "route.sensor_day_w, route.flight_draw_w, route.flight_draw_rtk_w, route.flight_draw_noradar_w"),
+            ("the sun's elevation: points per hour (the model's mean and the night's share)", "route.sun_steps_per_hour"),
             ("draw by night (D-023), flying or afloat", "route.night_draw_w"),
             ("motor's share of the day's solar generation", "route.motor_share"),
             ("solar panel (area times coverage times efficiency)", "route.panel_albatross_m2, route.panel_baseline_m2"),
@@ -280,7 +295,7 @@ def table_settings(ks):
             ("longest wait, look-ahead after the data", "route.wait_h, route.lookahead_h"),
             ("dominance: window, tolerance of the charge and of the slack", "route.dom_window_s, route.eps_soc_wh, route.eps_slack_wh"),
             ("labels taken at most: strict, each relaxed search; the relaxed reserves (capacities below)", "route.max_pops, route.relax_pops, route.relax_below_1, route.relax_below_2"),
-            ("experiments: start window, margin to the corridor's edge", "route.start_window_h, route.edge_margin_km")]
+            ("experiments: start window, margin to the corridor's edge, capacities", "route.start_window_h, route.edge_margin_km, route.exp_capacity_low, route.exp_capacity_high")]
     L = [_row(["item", "key"]), "|---|---|"]
     for a, b in rows:
         L.append(_row([a, b]))

@@ -15,7 +15,7 @@
   var NAV = root.NAV || (typeof require !== 'undefined' ? require('./navigator.js') : null);
   var WD = root.WorldData || (typeof require !== 'undefined' ? require('./worlddata.js') : null);
   var R_EARTH_KM = 6371.0088;
-  var D2R = Math.PI / 180;
+  var D2R = Math.PI / 180, R2D = 180 / Math.PI;
 
   var DEFAULTS = { refine: 3, rings: 2, sub_km: 10, wait_s: 3600, lookahead_h: 36, u_q: 0.1, a_q: 1,
     eps_soc: 0.25, eps_slack: 0.25, min_vmg: 0.3, dom_window_s: 600, max_pops: 300000, relax_pops: 150000,
@@ -30,9 +30,9 @@
     3: 'the closest route keeps the reserve on its way but cannot carry the next night',
     4: "the closest route's draw takes the battery below the reserve",
     5: "the closest route keeps the battery's rules but its motor needs more than the day's allowance",
-    6: "no route reaches the destination within the field's time even with the rules relaxed (the seas, the field's end, or more energy than the relaxed rules allow)",
+    6: "no route reaches the destination within the field's time even with the rules relaxed (the seas, the field's end, more energy than the relaxed rules allow, or a relaxed search's limit of labels)",
     7: "only the relaxed search found a route, and it keeps the rules (the strict search's approximations missed it)",
-    8: 'the search stopped at its limit of labels (route.max_pops, or route.relax_pops for a relaxed search) without a route' };
+    8: 'the strict search stopped at its limit of labels (route.max_pops) without a route, so none is ruled out' };
 
   function settingsOf(s) { var o = {}, k; for (k in DEFAULTS) o[k] = (s && s[k] !== undefined) ? s[k] : DEFAULTS[k]; return o; }
 
@@ -171,14 +171,14 @@
     if (om < 1e-12) return [lat1, lon1];
     var sa = Math.sin((1 - f) * om) / Math.sin(om), sb = Math.sin(f * om) / Math.sin(om);
     var x = sa * a[0] + sb * b[0], y = sa * a[1] + sb * b[1], z = sa * a[2] + sb * b[2];
-    return [Math.atan2(z, Math.sqrt(x * x + y * y)) / D2R, Math.atan2(y, x) / D2R];
+    return [Math.atan2(z, Math.sqrt(x * x + y * y)) * R2D, Math.atan2(y, x) * R2D];
   }
   function wrap360(x) { var r = x % 360.0; return r < 0 ? r + 360.0 : r; }
   function wrap180(x) { return wrap360(x + 180.0) - 180.0; }
   function gcBearing(lat1, lon1, lat2, lon2) {
     var p1 = lat1 * D2R, p2 = lat2 * D2R, dl = (lon2 - lon1) * D2R;
     var y = Math.sin(dl) * Math.cos(p2), x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
-    return wrap360(Math.atan2(y, x) / D2R);
+    return wrap360(Math.atan2(y, x) * R2D);
   }
   function ringOffsets(rings) {
     function gcd(a, b) { while (b) { var t = a % b; a = b; b = t; } return a; }
@@ -292,7 +292,7 @@
     var key = iu * 1000 + ia, r = this.cache.get(key);
     if (r === undefined) {
       var uq = iu * this.st.u_q, aq = ia * this.st.a_q * D2R, d = [Math.cos(aq), Math.sin(aq)];
-      var pl = this.hullBelow(uq).planPair(d, this.st.min_vmg, false);
+      var pl = this.hullBelow(uq - 0.5 * this.st.u_q).planPair(d, this.st.min_vmg, false);
       var lg = this.steady.leg(uq, d, this.st.min_vmg);
       r = [pl !== null ? pl.r : 0.0, lg !== null ? lg.along : 0.0, lg !== null ? lg.power : 0.0];
       this.cache.set(key, r);
@@ -458,6 +458,8 @@
     // label a at least as good as label b at node n (sim.route.search: dom)
     function dom(n, ta, sa, ka, da, wa, tb, sb, kb, db, wb) {
       if (ta > tb || tb - ta > WIN || da !== db || wa !== wb) return false;
+      var lo = graph.lon[n];
+      if (localDay(ta, lo) !== localDay(tb, lo)) return false;
       var x = sa, sol = 0.0;
       if (tb > ta) { var e = tab.energy(n, ta, tb, wa); sol = e[0]; x = Math.min(C, sa + sol - e[1]); }
       if (x < sb - EPS_SOC) return false;
@@ -508,7 +510,7 @@
     // one leg (sim.route.search: fly): [[arrival, charge, slack, day, edge] or null, soared]
     function fly(n, m, subM, steps, t, soc, slack, day, water, steadyFirst) {
       var tt = t, s2 = soc, k2 = slack, d2 = day, lonN = graph.lon[n];
-      var motor = 0.0, draw = 0.0, solTot = 0.0, to = 0.0, modes = [], days = new Map(), soared = false, dd, z, q;
+      var motor = 0.0, draw = 0.0, solTot = 0.0, to = 0.0, modes = [], days = new Map(), soared = false, dd, z, q, sMin = soc;
       if (water) {
         dd = localDay(tt, lonN);
         if (dd > d2) {
@@ -521,6 +523,7 @@
         motor += to;
         days.set(d2, [0.0, to]);
         tt += en.takeoff_s;
+        sMin = Math.min(sMin, s2);
         if (s2 < R - 1e-9) { why.reserve++; return [null, soared]; }
       }
       for (z = 0; z < steps.length; z++) {
@@ -528,7 +531,7 @@
         if (tt > H) { why.horizon++; return [null, soared]; }
         var smp = field.sample(lc, tt), u = smp[0], v = smp[1], hs = smp[2];
         if (!(hs <= avoid)) { why.seas++; return [null, soared]; }
-        var sp = Math.sqrt(u * u + v * v), wf = wrap360(Math.atan2(-u, -v) / D2R);
+        var sp = Math.sqrt(u * u + v * v), wf = wrap360(Math.atan2(-u, -v) * R2D);
         var lg = legs.leg(sp, brg - wf - 180.0), mode, vs, pw;
         if (!steadyFirst && lg[0] > 0.0) { mode = 'soaring'; vs = lg[0]; pw = 0.0; }
         else if (lg[1] > 0.0) { mode = 'motor'; vs = lg[1]; pw = lg[2]; }
@@ -553,6 +556,7 @@
         ed[0] += sol; ed[1] += mo;
         motor += mo; draw += dr; solTot += sol; tt += dt;
         modes.push(mode);
+        sMin = Math.min(sMin, s2);
         if (s2 < R - 1e-9) { why.reserve++; return [null, soared]; }
         if (useSlack) {
           var rest = localDay(tt, lonN) === d2 ? tab.restAt(n, tt) : 0.0;
@@ -562,7 +566,7 @@
       if (!(field.sample(graph.loc[m], tt)[2] <= avoid)) { why.seas++; return [null, soared]; }
       if (!okAfter(m, tt, s2, k2, d2)) return [null, soared];
       var dl2 = Array.from(days.keys()).sort(function (a, b) { return a - b; }).map(function (d) { var x = days.get(d); return [d, x[0], x[1]]; });
-      return [[tt, s2, k2, d2, ['leg', n, m, t, tt, modes, motor, draw, solTot, to, dl2]], soared];
+      return [[tt, s2, k2, d2, ['leg', n, m, t, tt, modes, motor, draw, solTot, to, dl2, sMin]], soared];
     }
     var seq = 0, soc0 = Math.min(C, en.soc0_wh);
     var k0 = useSlack ? sh * (tab.dayTotal(start, t0) - tab.restAt(start, t0)) : 0.0;
@@ -591,7 +595,7 @@
             s2 = Math.min(C, soc + sol - dr);
             k2 = k2 + (useSlack ? sh * sol : 0.0);
             if (s2 >= R - 1e-9 && okAfter(n, te, s2, k2, d2) && !(n === dest)) {
-              e = ['wait', n, n, t, te, ['waiting'], 0.0, dr, sol, 0.0, [[d2, sol, 0.0]]];
+              e = ['wait', n, n, t, te, ['waiting'], 0.0, dr, sol, 0.0, [[d2, sol, 0.0]], Math.min(soc, s2)];
               j = add(n, te, s2, k2, d2, true, li, e);
               if (j !== null) { seq++; heap.push([te + heur(n), seq, j]); }
             }
@@ -629,7 +633,7 @@
       var modes = e[5], uniq = modes.filter(function (m, i) { return modes.indexOf(m) === i; });
       legs.push({ from: e[1], to: e[2], t0: e[3], t1: e[4], mode: e[0] === 'wait' ? 'waiting' : (uniq.length === 1 ? modes[0] : 'mixed'),
         modes: modes.slice(), motor_wh: e[6], draw_wh: e[7], solar_wh: e[8], takeoff_wh: e[9], soc_end_wh: labels.LS[x],
-        days: e[10].map(function (d) { return d.slice(); }) });
+        soc_min_wh: e[11], days: e[10].map(function (d) { return d.slice(); }) });
     });
     return { waypoints: wps, legs: legs };
   }
@@ -655,6 +659,7 @@
   function strictMargin(graph, tab, en, wps, legs) {
     var R = en.reserve_wh, socM = Infinity, nightM = Infinity;
     wps.forEach(function (w) { socM = Math.min(socM, w.soc_wh - R); nightM = Math.min(nightM, tab.flyOnMin(w.node, w.t, w.soc_wh) - R); });
+    legs.forEach(function (lg) { socM = Math.min(socM, lg.soc_min_wh - R); });
     var s0 = wps[0], s1 = wps[wps.length - 1], sol = new Map(), mot = new Map();
     sol.set(s0.day, tab.dayTotal(s0.node, s0.t) - tab.restAt(s0.node, s0.t));
     legs.forEach(function (lg) {
@@ -706,7 +711,7 @@
       var rv = R - kw.below * C;
       var tab2 = new Tables(graph, field, en, layer, { reserve: rv, tStart: tab.T0, hours: tab.K, settings: o.settings });
       var r2 = search(graph, field, legs, tab2, en, s, d, t0, { vMax: vm, maxPops: o.relaxPops || st.relax_pops, reserve: rv, share: kw.share, settings: o.settings });
-      if (r2.li === null) { skip = r2.stats.pruned.reserve === 0 && r2.stats.pruned.night === 0; capped = capped || r2.stats.capped; continue; }
+      if (r2.li === null) { skip = r2.stats.pruned.reserve === 0 && r2.stats.pruned.night === 0; continue; }
       var rt2 = routeOf(graph, r2.labels, r2.li), mg = strictMargin(graph, tab, en, rt2.waypoints, rt2.legs);
       out.closest = { relaxation: name, waypoints: rt2.waypoints, legs: rt2.legs, summary: summarize(rt2.legs, rt2.waypoints, t0),
         reserve_margin_wh: mg[0], night_margin_wh: mg[1], allowance_margin_wh: mg[2], stats: r2.stats };

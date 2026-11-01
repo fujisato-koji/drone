@@ -373,20 +373,44 @@ items:
     target:
       - route.capacity_wh
       - route.reserve_wh
+      - route.pack_cells
+      - route.pack_fraction
+      - route.sensor_day_w
       - route.flight_draw_w
+      - route.flight_draw_rtk_w
+      - route.night_draw_w
       - route.takeoff_albatross_wh
       - route.takeoff_baseline_wh
       - route.panel_albatross_m2
       - route.panel_baseline_m2
       - route.solar_fit_w_m2
       - route.solar_fit_june_kwh_m2_day
+      - route.dom_window_s
+      - route.eps_soc_wh
+      - route.eps_slack_wh
+      - route.u_q_ms
       - route.so_winter_low_night_h
-      - route.so_summer_quiet_night_h
-      - route.so_summer_quiet_capacity_needed_wh
-      - route.so_winter_low_capacity_needed_wh
+      - route.so_winter_low_night_rule_wh
+      - route.so_winter_low_night_carried
+      - route.np_winter_night_rule_wh
+      - route.np_winter_capacity_needed_wh
+      - route.np_winter_battery_needed_kg
+      - route.trade_wind_draw_day_wh
+      - route.trade_wind_solar_day_albatross_wh
+      - route.so_summer_quiet_downwind_albatross_half_reason
+      - route.trade_wind_upwind_baseline_default_reason
+      - route.trade_wind_across_baseline_default_reason
+      - route.np_winter_across_albatross_double_reason
       - route.np_summer_calm_upwind_albatross_default_reason
-      - route.np_summer_calm_upwind_albatross_default_night_short_wh
+      - route.np_summer_calm_downwind_albatross_default_arrival_h
+      - route.np_summer_calm_downwind_albatross_default_motor_h
+      - route.np_summer_calm_downwind_albatross_default_wait_h
+      - route.trade_wind_downwind_albatross_default_arrival_h
+      - route.trade_wind_downwind_albatross_default_soaring_h
       - route.trade_wind_downwind_albatross_double_soaring_h
+      - route.so_winter_low_across_albatross_double_soaring_h
+      - route.so_winter_low_across_albatross_double_motor_h
+      - route.swell_no_wind_across_albatross_default_arrival_h
       - route.cmp_run5_baseline_u16_upwind_ratio
       - route.cmp_run5_albatross_u16_across_ratio
       - route.cmp_run5_albatross_u16_downwind_ratio
@@ -394,5 +418,5 @@ items:
     method: independent_model
     result: partial
     by: checker
-    date: 2026-11-01
-    detail: "A separate checker, told to refute, worked on d6bce73 with its own code: a literal NOAA implementation and an Almanac sun, a brute-force forward simulation of the night rule, an LP over the hull's soaring points and a continuous steady leg, a forward re-simulation of routes with its own bookkeeping, constructed graphs, and its own node driver. Confirmed: the capacity, reserve, draws, take-offs and panels by hand; P174 to 2e-15 and the night lengths within 0.03 h of a root finding; the solar layer equals the raw ERA5 responses to its 5 W/m2 step at the stamp one hour after each hour's start, and the daily irradiance centroids fall within minutes of solar noon; the fit 618.5 W/m2 and its June mean; the backward night table at 72,000 points; the leg model's modes and speeds at 3,692 wind and course pairs and the A* bound; ten experiments replanned in Python and six in node with the same nodes, label counts, times and charges, and all 88 closest-route margins; the closed-loop ratios; tdr check, the cited keys and 441 tests. Refuted: the first label taken at the destination is the earliest feasible arrival, because the dominance lets an earlier label stand for a later one by holding on until its time, which the search cannot do; two constructed graphs (a sea window on the next leg, and local midnight renewing the allowance between the two labels) arrive 377 and 872 s later than routes the planner accepts when the labels are kept apart, and with a shorter horizon find no route at all (reasons 6 and 5); a ten-minute window changed none of 14 experiments. Partial: reason 2 is tested with the raw need, so the six default-capacity North Pacific calm plans are reason 3 though their coming night needs more than the capacity; the night shortfall column lifts the capacity's limit and differs from a clipped fly-on shortfall by -12 to +41 Wh; the allowance credits the rest of the arrival day's solar at the destination, which the allowance shortfall column leaves out (routes found would show up to 54 Wh); the planner's night (hours below the draw, 12 to 20 h, 43 to 72 Wh) is longer than the night table's astronomical night, so the capacity needed understates the rule; winds from 10.05 m/s fly the 11 m/s cycles (all the trade wind's soaring), the leg soars where the steady leg is faster, and the destination's seas are not tested; the RTK link of the sensor set has no base station at sea and the GNSS and IMU may be counted twice; node is 10 to 17 times faster, not tens of times; prose numbers (N-01). A second checker on d6bce73 also found that reason 4 could not be assigned (the night margin was never above the reserve margin), that the search's charge and slack tolerances lost arrivals 0.32 and 0.60 h earlier on a coarse graph and that loosening a rule made 6 of its arrivals later by up to 0.255 h, that at the default capacity routes did keep the rules from starts in the small hours (which Q-083 had denied), and that the relaxed search's count of labels created differed by one between Python and node in 2 of 108 plans. The document was corrected. After the check the planner was changed: a label dominates another only within route.dom_window_s, in the same local day and state; the leg takes the hull of the library wind at or below the wind and the search tries both soaring and the steady leg; the seas are tested where a step crosses a grid line and at the destination; reason 2 uses the strict requirement and reason 4 comes before 3; the closest route's night shortfall comes from a clipped fly-on simulation and its allowance counts the arrival day's remaining solar as the search does; the draws are D-023's by night and the open sea's forward-radar set without RTK by day, and the battery is D-023's; the 108 experiments were rerun with route.js in node, a sample was replanned in Python with the same results, and the checker's two graphs are tests."
+    date: 2026-11-02
+    detail: "A separate checker, told to refute, worked in two rounds with its own code. Round 1 (d6bce73: a literal NOAA sun and an Almanac sun, a brute-force night rule, an LP over the hull and a continuous steady leg, a forward re-simulation of routes, constructed graphs, its own node driver) confirmed the energy arithmetic, the sun, the solar layer against the raw ERA5 responses, the fit, the backward night table, the leg speeds, the A* bound, sampled replans in both languages and the closed-loop ratios, and refuted that the first label at the destination is the earliest feasible arrival (a sea window and a local midnight between two merged labels gave arrivals 377 and 872 s late or no route); a second checker added that reason 4 could not be assigned, that the tolerances lost earlier arrivals on a coarse graph, and that the relaxed searches' label counts differed in 2 of 108 plans. Round 2 (e131ec8, after the planner was changed) confirmed the battery (four P45B cells, 51.74 Wh, reserve 10.35 Wh), the draws (6.758 W by day over the open sea, 3.758 W with RTK, 3 W afloat, 1.5 W at night by quarter hours), the night table at the six centres with its own decoding of the layer (to rounding with the NOAA sun; an Almanac sun moves the Southern Ocean low's rule night by one quarter hour), the counts of plans that keep the rules (none of 36 at half, 19 at the default, 20 at double) and the routes cited, all 108 plans replanned in Python with the same reasons, nodes, times, charges, summaries and margins as node, a forward re-simulation of all 67 routes and closest routes with the same waypoint times, charges and night and allowance margins, the leg model at 6,954 wind and course pairs per aircraft, the round-1 graphs agreeing with their controls, tdr check, the cited keys and 458 tests. It refuted that a route found is the earliest to within route.dom_window_s: inside the window, constructed graphs arrived 1062 s later (local midnight between labels whose day fields agree, since a label's day is that of its last sub-step's start), 2713 s later (a sea easing through ds.survival_hs_m between the two passing times, on hourly frames), 9068 s later (the wind at the node crossing the lowest soaring hull in an evening without allowance) and 3555 s later (the charge tolerance), or found no route with a shorter horizon (reasons 5 and 6), and on the stored experiments a 120 s window with 0.05 Wh tolerances found earlier arrivals for 6 of 28 routes, by up to 0.23 h; and that node gives the same label counts as Python (labels created differ in 8 of 108 plans and labels taken in 4). Partial: the hull is that of the wind rounded to route.u_q_ms, so winds from 10.95 m/s fly the 11 m/s cycles, which carry 2.3 of the 6.1 soaring hours of the trade wind's downwind route at the default (a hull below every wind of the step arrives 0.9 and 1.3 h later at the default and double capacities), and the library's hulls do not grow with the wind on every course, so the weaker hull is not always conservative; a constructed step reading 3.9 m at both ends was flown through 4.4 m in its middle because the field changes during a step, though along the stored routes the untested points were within 1e-4 m of the tested ones; reason 8 is given to 7 plans whose strict search ended without a route below its limit, because a relaxed search reached route.relax_pops; the reserve shortfall is taken at the waypoints, up to 0.53 Wh above the charge within the legs; two routes found exceed a day's allowance within route.eps_slack_wh; the night table skips a run below the draw that the start lies in, so it marks the Southern Ocean low carried though its start lies in a run of 74 Wh that the default battery does not carry, and its battery needed counts the cells' mass rather than whole cells (the North Pacific winter shows 0.34 kg against a 0.35 kg battery that does not carry it); the forward-radar set holds the 2 W radar altimeter, which the only evaluated forward-radar set includes but docs/02-form.md#sea-estimation finds of little gain; in the trade wind and the doldrums a day's solar energy covers the draw but not the draw and the full allowance; prose that calls a route with motor all soaring, reason 8 described as searches stopped at their limit where the strict searches had ended, and counts restated in prose (N-01). The document was corrected. After round 2 the planner compares the local days of the two times at the node in its dominance (the case at local midnight inside the window is a test), gives reason 8 only to a capped strict search, takes the reserve at every step, counts the night table's battery in whole cells and the run the start lies in, and takes the hull at or below every wind of the rounding step; rerun in node, the counts of plans that keep the rules stayed at none, 19 and 20 of 36, the trade wind's downwind albatross routes arrive later (at the default capacity with less soaring), the plans formerly given reason 8 for a relaxed search's limit now carry 4 or 6, and the Southern Ocean low's night table no longer marks its night carried."

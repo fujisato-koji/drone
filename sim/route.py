@@ -41,10 +41,11 @@ ds.avionics_power_w; with the sun below the horizon the low-power night draw of 
 Search: a label-setting search with labels (time, state of charge, the day's motor slack, on the water or not),
 the labels of a node that no other label of the same node dominates, a priority queue on time plus a lower bound of
 the time to go (distance over the fastest speed of the leg model). A label dominates another only if it is at most
-DOM_WINDOW_S earlier, in the same local day and the same state, and holding on until the other's time keeps the
-other's charge and slack; the search cannot hold on, so the first label popped at the destination is the earliest
-arrival to within that window, where holding on that long would cost no more than counted and the sea does not close
-meanwhile (K-023 found that a dominance over a whole hour lost routes). Waiting on the water is
+DOM_WINDOW_S earlier, with the same day of the allowance and both times in the same local day at the node, in the
+same state, and holding on until the other's time keeps the other's charge and slack. The search cannot hold on, so
+this is an approximation that the window does not bound: where the sea is still too high, the wind still below a
+soaring threshold or the allowance not yet renewed at the earlier time, or where the later label's charge or slack
+within the tolerances is needed, the earlier label's best route can be much later, or there is none (K-023). Waiting on the water is
 an edge to the end of the hour of the tables (at most WAIT_S); the first leg after a wait pays the take-off. When no
 route keeps the rules, the planner names the reason and searches again with the rules relaxed in the steps of RELAX;
 the first route found is the closest route. sim/viewer/route.js is the same planner, operation for operation
@@ -124,9 +125,9 @@ REASONS = {0: "ok", 1: "the start lies outside the field, on land or in seas abo
            3: "the closest route keeps the reserve on its way but cannot carry the next night",
            4: "the closest route's draw takes the battery below the reserve",
            5: "the closest route keeps the battery's rules but its motor needs more than the day's allowance",
-           6: "no route reaches the destination within the field's time even with the rules relaxed (the seas, the field's end, or more energy than the relaxed rules allow)",
+           6: "no route reaches the destination within the field's time even with the rules relaxed (the seas, the field's end, more energy than the relaxed rules allow, or a relaxed search's limit of labels)",
            7: "only the relaxed search found a route, and it keeps the rules (the strict search's approximations missed it)",
-           8: "the search stopped at its limit of labels (route.max_pops, or route.relax_pops for a relaxed search) without a route"}
+           8: "the strict search stopped at its limit of labels (route.max_pops) without a route, so none is ruled out"}
 
 
 # ================================================================ sun and solar yield
@@ -357,7 +358,7 @@ def gc_point(lat1, lon1, lat2, lon2, f):
         return lat1, lon1
     sa, sb = math.sin((1 - f) * om) / math.sin(om), math.sin(f * om) / math.sin(om)
     x, y, z = (sa * a[0] + sb * b[0], sa * a[1] + sb * b[1], sa * a[2] + sb * b[2])
-    return math.degrees(math.atan2(z, math.sqrt(x * x + y * y))), math.degrees(math.atan2(y, x))
+    return math.atan2(z, math.sqrt(x * x + y * y)) * R2D, math.atan2(y, x) * R2D
 
 
 def gc_bearing(lat1, lon1, lat2, lon2):
@@ -366,7 +367,10 @@ def gc_bearing(lat1, lon1, lat2, lon2):
     dl = math.radians(lon2 - lon1)
     y = math.sin(dl) * math.cos(p2)
     x = math.cos(p1) * math.sin(p2) - math.sin(p1) * math.cos(p2) * math.cos(dl)
-    return wrap360(math.degrees(math.atan2(y, x)))
+    return wrap360(math.atan2(y, x) * R2D)
+
+
+R2D = 180.0 / math.pi      # degrees per radian, as route.js computes it (math.degrees rounds differently)
 
 
 def wrap360(x):
@@ -493,6 +497,10 @@ class LegModel:
                 k = q
         return self.source.hulls[k]
 
+    def hull_for(self, uq):
+        """The hull for the winds rounded to uq: at or below every wind of the step (from uq - U_Q / 2)."""
+        return self.hull_below(uq - 0.5 * U_Q)
+
     def leg(self, u10, rel_deg):
         """(soaring speed made good, steady speed made good, steady electric power) along the course; a speed is 0
         where that way makes no way (below MIN_VMG)."""
@@ -503,7 +511,7 @@ class LegModel:
         if r is None:
             uq, aq = iu * U_Q, math.radians(ia * A_Q)
             d = (math.cos(aq), math.sin(aq))
-            pl = self.hull_below(uq).plan_pair(d, MIN_VMG, motor_ok=False)
+            pl = self.hull_for(uq).plan_pair(d, MIN_VMG, motor_ok=False)
             lg = self.steady.leg(uq, d, MIN_VMG)
             r = (pl["r"] if pl is not None else 0.0, lg["along"] if lg is not None else 0.0,
                  lg["power"] if lg is not None else 0.0)
@@ -775,11 +783,15 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
     WIN = DOM_WINDOW_S
 
     def dom(n, ta, sa, ka, da, wa, tb, sb, kb, db, wb):
-        """Label a is at least as good as label b at node n: not later and at most DOM_WINDOW_S earlier, in the same
-        local day (no renewal of the allowance between them) and the same state (afloat or flying), and holding on
-        until b's time (the node's solar energy and draw, at most the capacity) it has b's charge to EPS_SOC and b's
-        motor slack to EPS_SLACK. The search cannot hold on, so a route found is the earliest to within the window."""
+        """Label a is at least as good as label b at node n: not later and at most DOM_WINDOW_S earlier, with the same
+        day of the allowance and both times in the same local day at the node (no renewal of the allowance between
+        them), in the same state (afloat or flying), and holding on until b's time (the node's solar energy and draw,
+        at most the capacity) it has b's charge to EPS_SOC and b's motor slack to EPS_SLACK. The search cannot hold
+        on, so this is an approximation that the window does not bound (docs/02-form.md#route-planning, K-023)."""
         if ta > tb or tb - ta > WIN or da != db or wa != wb:
+            return False
+        lo = graph.lon[n]
+        if local_day(ta, lo) != local_day(tb, lo):
             return False
         x, sol = sa, 0.0
         if tb > ta:
@@ -844,6 +856,7 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
         motor = draw = sol_tot = to = 0.0
         modes, days = [], {}
         soared = False
+        s_min = soc
         if water:
             dd = local_day(tt, lon_n)
             if dd > d2:
@@ -857,6 +870,7 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
             motor += to
             days[d2] = [0.0, to]
             tt += en["takeoff_s"]
+            s_min = min(s_min, s2)
             if s2 < R - 1e-9:
                 why["reserve"] += 1
                 return None, soared
@@ -869,7 +883,7 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
                 why["seas"] += 1
                 return None, soared
             sp = math.sqrt(u * u + v * v)
-            wf = wrap360(math.degrees(math.atan2(-u, -v)))
+            wf = wrap360(math.atan2(-u, -v) * R2D)
             vs_soar, vs_mot, pw_mot = legs.leg(sp, brg - wf - 180.0)
             if not steady_first and vs_soar > 0.0:
                 mode, vs, pw = "soaring", vs_soar, 0.0
@@ -905,6 +919,7 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
             sol_tot += sol
             tt += dt
             modes.append(mode)
+            s_min = min(s_min, s2)
             if s2 < R - 1e-9:
                 why["reserve"] += 1
                 return None, soared
@@ -919,7 +934,7 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
         if not ok_after(m, tt, s2, k2, d2):
             return None, soared
         e = ("leg", n, m, t, tt, tuple(modes), motor, draw, sol_tot, to,
-             tuple((d, v[0], v[1]) for d, v in sorted(days.items())))
+             tuple((d, v[0], v[1]) for d, v in sorted(days.items())), s_min)
         return (tt, s2, k2, d2, e), soared
 
     seq = 0
@@ -962,7 +977,7 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
                     s2 = min(C, soc + sol - dr)
                     k2 = k2 + (sh * sol if use_slack else 0.0)
                     if s2 >= R - 1e-9 and ok_after(n, te, s2, k2, d2) and not (n == dest):
-                        e = ("wait", n, n, t, te, ("waiting",), 0.0, dr, sol, 0.0, ((d2, sol, 0.0),))
+                        e = ("wait", n, n, t, te, ("waiting",), 0.0, dr, sol, 0.0, ((d2, sol, 0.0),), min(soc, s2))
                         j = add(n, te, s2, k2, d2, True, li, e)
                         if j is not None:
                             seq += 1
@@ -1000,11 +1015,11 @@ def route_of(graph, labels, li):
         e = LE[li]
         if e is None:
             continue
-        kind, a, b, ta, tb, modes, motor, draw, sol, to, days = e
+        kind, a, b, ta, tb, modes, motor, draw, sol, to, days, smin = e
         mode = "waiting" if kind == "wait" else (modes[0] if len(set(modes)) == 1 else "mixed")
         legs.append({"from": a, "to": b, "t0": ta, "t1": tb, "mode": mode, "modes": list(modes), "motor_wh": motor,
                      "draw_wh": draw, "solar_wh": sol, "takeoff_wh": to, "soc_end_wh": LS[li],
-                     "days": [list(x) for x in days]})
+                     "soc_min_wh": smin, "days": [list(x) for x in days]})
     return wps, legs
 
 
@@ -1034,12 +1049,12 @@ def summarize(legs, wps, t0):
 
 def strict_margin(graph, tab, en, wps, legs):
     """Lowest margins of a route against the strict rules (negative: the shortfall), Wh, by the same bookkeeping as
-    the search: the charge above the reserve at its waypoints; the lowest charge above the reserve flying on from each
+    the search: the charge above the reserve at its waypoints and at every sub-step of its legs; the lowest charge above the reserve flying on from each
     waypoint without the motor to the end of the next night, the capacity's limit applied (Tables.fly_on_min); and
     the worst local day's allowance less its motor and take-off energy (the start's day with its solar energy before
     the start, the arrival day with the rest of that day's solar energy at the destination, as the search counts)."""
     R = en["reserve_wh"]
-    soc_m = min(w["soc_wh"] - R for w in wps)
+    soc_m = min([w["soc_wh"] - R for w in wps] + [lg["soc_min_wh"] - R for lg in legs])
     night_m = min(tab.fly_on_min(w["node"], w["t"], w["soc_wh"]) - R for w in wps)
     s0, s1 = wps[0], wps[-1]
     sol = {s0["day"]: tab.day_total(s0["node"], s0["t"]) - tab.rest_at(s0["node"], s0["t"])}
@@ -1106,7 +1121,6 @@ def plan(field, graph, legs, en, start_ll, dest_ll, t0=None, layer=None, tables=
                                  reserve=rv, share=kw.get("share"))
         if li is None:
             skip = st2["pruned"]["reserve"] == 0 and st2["pruned"]["night"] == 0
-            capped = capped or st2["capped"]
             continue
         wps, lg = route_of(graph, labels, li)
         sm, nm, am = strict_margin(graph, tab, en, wps, lg)

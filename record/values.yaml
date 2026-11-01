@@ -27138,6 +27138,24 @@ items:
     status: assumed
     basis:
       - Q-082
+  - key: route.exp_capacity_low
+    v: 0.5
+    unit: 1
+    status: assumed
+    basis:
+      - Q-082
+  - key: route.exp_capacity_high
+    v: 2
+    unit: 1
+    status: assumed
+    basis:
+      - Q-082
+  - key: route.sun_steps_per_hour
+    v: 4
+    unit: 1
+    status: assumed
+    basis:
+      - Q-082
   - key: route.q_ghi_w_m2
     v: 5
     unit: W/m2
@@ -27194,6 +27212,12 @@ items:
       - docs/02-form.md#route-planning
   - key: route.flight_draw_rtk_w
     v: 3.76
+    unit: W
+    status: calculated
+    basis:
+      - docs/02-form.md#route-planning
+  - key: route.flight_draw_noradar_w
+    v: 4.76
     unit: W
     status: calculated
     basis:
@@ -27265,25 +27289,25 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.so_winter_low_night_rule_wh
-    v: 38.3
+    v: 73.9
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.so_winter_low_night_carried
-    v: 1
+    v: 0
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.so_winter_low_capacity_needed_wh
-    v: 47.9
+    v: 92.4
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.so_winter_low_battery_needed_kg
-    v: 0.3
+    v: 0.6
     unit: kg
     status: calculated
     basis:
@@ -27361,7 +27385,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.so_summer_quiet_battery_needed_kg
-    v: 0.25
+    v: 0.32
     unit: kg
     status: calculated
     basis:
@@ -27439,7 +27463,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.np_winter_battery_needed_kg
-    v: 0.34
+    v: 0.39
     unit: kg
     status: calculated
     basis:
@@ -27517,7 +27541,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.np_summer_calm_battery_needed_kg
-    v: 0.22
+    v: 0.25
     unit: kg
     status: calculated
     basis:
@@ -27595,7 +27619,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_battery_needed_kg
-    v: 0.23
+    v: 0.25
     unit: kg
     status: calculated
     basis:
@@ -27673,7 +27697,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.swell_no_wind_battery_needed_kg
-    v: 0.22
+    v: 0.25
     unit: kg
     status: calculated
     basis:
@@ -29041,7 +29065,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.so_summer_quiet_downwind_albatross_half_reason
-    v: 8
+    v: 4
     unit: 1
     status: calculated
     basis:
@@ -29095,7 +29119,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.so_summer_quiet_downwind_albatross_half_reserve_short_wh
-    v: 75.6
+    v: 75.8
     unit: Wh
     status: calculated
     basis:
@@ -29251,7 +29275,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.so_summer_quiet_across_albatross_half_reserve_short_wh
-    v: 36.7
+    v: 37.1
     unit: Wh
     status: calculated
     basis:
@@ -30943,7 +30967,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.np_winter_across_albatross_double_reason
-    v: 8
+    v: 6
     unit: 1
     status: calculated
     basis:
@@ -31591,7 +31615,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.np_winter_across_baseline_double_reason
-    v: 8
+    v: 6
     unit: 1
     status: calculated
     basis:
@@ -32995,55 +33019,55 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_half_closest_h
-    v: 19.1
+    v: 20
     unit: h
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_half_soaring_h
-    v: 5.7
+    v: 3.6
     unit: h
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_half_motor_h
-    v: 2.5
+    v: 3.1
     unit: h
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_half_wait_h
-    v: 10.9
+    v: 13.3
     unit: h
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_half_motor_wh
-    v: 56.3
+    v: 65
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_half_solar_wh
-    v: 51.3
+    v: 66.4
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_half_min_soc_wh
-    v: -31.8
+    v: -32.9
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_half_reserve_short_wh
-    v: 37
+    v: 38.1
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_half_night_short_wh
-    v: 37
+    v: 38.1
     unit: Wh
     status: calculated
     basis:
@@ -33217,7 +33241,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_default_arrival_h
-    v: 19.6
+    v: 20.5
     unit: h
     status: calculated
     basis:
@@ -33229,37 +33253,37 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_default_soaring_h
-    v: 6.1
+    v: 4.8
     unit: h
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_default_motor_h
-    v: 1.6
+    v: 2.4
     unit: h
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_default_wait_h
-    v: 11.9
+    v: 13.3
     unit: h
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_default_motor_wh
-    v: 37.6
+    v: 50.2
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_default_solar_wh
-    v: 60.1
+    v: 76.9
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_default_min_soc_wh
-    v: 16.1
+    v: 12.8
     unit: Wh
     status: calculated
     basis:
@@ -33433,7 +33457,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_double_arrival_h
-    v: 18
+    v: 19.3
     unit: h
     status: calculated
     basis:
@@ -33445,37 +33469,37 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_double_soaring_h
-    v: 4.7
+    v: 4.8
     unit: h
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_double_motor_h
-    v: 3.4
+    v: 3.6
     unit: h
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_double_wait_h
-    v: 9.9
+    v: 10.9
     unit: h
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_double_motor_wh
-    v: 74.4
+    v: 80.2
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_double_solar_wh
-    v: 37.5
+    v: 55
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_downwind_albatross_double_min_soc_wh
-    v: 21.1
+    v: 24.2
     unit: Wh
     status: calculated
     basis:
@@ -33931,7 +33955,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_upwind_baseline_default_reason
-    v: 8
+    v: 6
     unit: 1
     status: calculated
     basis:
@@ -34003,7 +34027,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.trade_wind_across_baseline_default_reason
-    v: 8
+    v: 4
     unit: 1
     status: calculated
     basis:
@@ -34297,7 +34321,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.swell_no_wind_downwind_albatross_half_reason
-    v: 8
+    v: 4
     unit: 1
     status: calculated
     basis:
@@ -34351,7 +34375,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.swell_no_wind_downwind_albatross_half_reserve_short_wh
-    v: 77
+    v: 77.2
     unit: Wh
     status: calculated
     basis:
@@ -34507,7 +34531,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.swell_no_wind_across_albatross_half_reserve_short_wh
-    v: 37.2
+    v: 37.7
     unit: Wh
     status: calculated
     basis:
@@ -34957,7 +34981,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.swell_no_wind_downwind_baseline_half_reason
-    v: 8
+    v: 4
     unit: 1
     status: calculated
     basis:
@@ -35137,13 +35161,13 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.swell_no_wind_across_baseline_half_motor_wh
-    v: 105.5
+    v: 105.9
     unit: Wh
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.swell_no_wind_across_baseline_half_solar_wh
-    v: 142.5
+    v: 144.3
     unit: Wh
     status: calculated
     basis:
@@ -35161,7 +35185,7 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.swell_no_wind_across_baseline_half_night_short_wh
-    v: 37.7
+    v: 38.2
     unit: Wh
     status: calculated
     basis:
@@ -35653,13 +35677,13 @@ items:
     basis:
       - docs/02-form.md#route-planning
   - key: route.cmp_run5_albatross_u16_downwind_plan_ms
-    v: 28.91
+    v: 22.16
     unit: m/s
     status: calculated
     basis:
       - docs/02-form.md#route-planning
   - key: route.cmp_run5_albatross_u16_downwind_ratio
-    v: 0.93
+    v: 1.21
     unit: 1
     status: calculated
     basis:
