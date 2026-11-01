@@ -26865,38 +26865,32 @@ items:
     status: assumed
     basis:
       - Q-080
-  - key: viewer.wind_grid_low_h_m
+  - key: viewer.wind_arrow_s
+    v: 0.5
+    unit: s
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_layer_low_h_m
     v: 2
     unit: m
     status: assumed
     basis:
       - Q-080
-  - key: viewer.wind_arrow_s
-    v: 1
-    unit: s
-    status: assumed
-    basis:
-      - Q-080
-  - key: viewer.wind_section_half_m
-    v: 150
-    unit: m
-    status: assumed
-    basis:
-      - Q-080
-  - key: viewer.wind_section_top_m
-    v: 25
-    unit: m
-    status: assumed
-    basis:
-      - Q-080
-  - key: viewer.wind_section_exag
+  - key: viewer.wind_layer_mid_h_m
     v: 5
+    unit: m
+    status: assumed
+    basis:
+      - Q-080
+  - key: viewer.wind_arrow_width_ratio
+    v: 0.08
     unit: 1
     status: assumed
     basis:
       - Q-080
-  - key: viewer.wind_section_cap_m
-    v: 8
+  - key: viewer.wind_arrow_width_max_m
+    v: 0.35
     unit: m
     status: assumed
     basis:
@@ -26932,7 +26926,7 @@ items:
     basis:
       - docs/02-form.md#viewer
   - key: viewer.fps_free_after
-    v: 60.1
+    v: 60.0
     unit: Hz
     status: calculated
     basis:
@@ -26944,7 +26938,7 @@ items:
     basis:
       - docs/02-form.md#viewer
   - key: viewer.fps_flight_after
-    v: 60.1
+    v: 60.0
     unit: Hz
     status: calculated
     basis:
@@ -26956,7 +26950,7 @@ items:
     basis:
       - docs/02-form.md#viewer
   - key: viewer.fps_regular_after
-    v: 60.1
+    v: 60.0
     unit: Hz
     status: calculated
     basis:
@@ -26968,19 +26962,13 @@ items:
     basis:
       - docs/02-form.md#viewer
   - key: viewer.script_share_free_after
-    v: 0.29
+    v: 0.065
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#viewer
-  - key: viewer.wind_section_ms
-    v: 34
-    unit: ms
-    status: calculated
-    basis:
-      - docs/02-form.md#viewer
   - key: viewer.wind_frame_max_ms
-    v: 12.6
+    v: 5.9
     unit: ms
     status: calculated
     basis:
