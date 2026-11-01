@@ -967,3 +967,12 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-11-01
+  - id: Q-080
+    kind: question
+    text: "The wind display and the camera modes of the viewer (docs/02-form.md#viewer) follow the owner's requests of 2026-11-01 as relayed to the assistant: arrows of the horizontal wind on a grid of about 13 by 13 over about 150 m each way that follows the aircraft (the mast without a flight), coloured by the vertical wind; after the first version (PR #25) the arrows markedly smaller and thinner with their outline kept, the vertical section with its streamlines removed, and instead switchable layers of arrows at fixed heights above the local surface (about 2 m and 5 m) and at the aircraft's height; updates a few times a second; onboard views forward and under the wingtip with a field of view of about 70 deg; the variation on by default. The assistant chose the rest: the aircraft layer's height without a flight (viewer.wind_grid_mast_h_m), the arrows' length per speed (viewer.wind_arrow_s, between a third and a half of the first version's) and width (viewer.wind_arrow_width_ratio, viewer.wind_arrow_width_max_m), which layers are on at first (the aircraft's and the one at viewer.wind_layer_low_h_m), the colour scale's end (viewer.wind_w_max_ms), the refresh interval (viewer.wind_refresh_s), the particles kept as an option that is off, the field of view taken as vertical (viewer.cam_fov_deg), the smoothing (viewer.cam_tau_s), and hiding the arrows in the onboard views. Confirm these as a decision, or change them."
+    waits_for: owner
+    affects:
+      - Q-064
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-01

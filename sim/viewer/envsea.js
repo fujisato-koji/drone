@@ -1,5 +1,6 @@
 // The sea of the free wind setting: wind speed, direction, growth time and an optional swell go in,
-// wave components of the viewer (a, k, omega, phase, dx, dy, urel) come out, built with seagen.js.
+// wave components of the viewer (a, k, omega, phase, dx, dy, urel) come out, built with seagen.js;
+// and the snap between the irregular swell and the regular swell of the wave library.
 // Classic script: attaches EnvSea to globalThis, and sets module.exports under node (which needs
 // seagen.js next to it).
 (function (root) {
@@ -29,7 +30,31 @@
   // Hours since the wind began for the slider index 0..5: 0 is fully developed
   var AGE_HOURS = [0, 1, 3, 6, 12, 24];
 
-  var EnvSea = { build: build, AGE_HOURS: AGE_HOURS };
+  // The swell of the free setting is none, irregular (built above) or regular (the oracle swell of the wave library,
+  // sim/viewer/wave.js). The regular swell's direction is relative to the wind, as wave.js swellSea takes it: the swell
+  // travels to the wind's compass direction less rel (0 along, 90 across to the left facing downwind, 180 against),
+  // so rel = windFrom - swellFrom.
+  var pymod = function (a, n) { return ((a % n) + n) % n; };
+  var angDist = function (a, b) { var d = pymod(a - b, 360); return Math.min(d, 360 - d); };
+  function nearest(list, v, dist) {   // the first of the nearest on a tie
+    var best = list[0];
+    for (var i = 1; i < list.length; i++) if (dist(list[i], v) < dist(best, v)) best = list[i];
+    return best;
+  }
+  // The regular swell nearest to an irregular one ({hs, tp, fromDeg} under a wind from windFromDeg) on the grid of
+  // the wave library (WAVE_INDEX.grid: hs, tp, directions {name: rel deg}): {hs, tp, direction}
+  function snapRegular(windFromDeg, sw, grid) {
+    var lin = function (a, b) { return Math.abs(a - b); };
+    var names = Object.keys(grid.directions), rel = pymod(windFromDeg - sw.fromDeg, 360);
+    var dir = nearest(names, rel, function (n, r) { return angDist(grid.directions[n], r); });
+    return { hs: nearest(grid.hs, sw.hs, lin), tp: nearest(grid.tp, sw.tp, lin), direction: dir };
+  }
+  // and back: the irregular swell's height, period and compass direction of a regular swell {hs, tp, direction}
+  function irregularOf(windFromDeg, reg, grid) {
+    return { hs: reg.hs, tp: reg.tp, fromDeg: pymod(windFromDeg - grid.directions[reg.direction], 360) };
+  }
+
+  var EnvSea = { build: build, AGE_HOURS: AGE_HOURS, snapRegular: snapRegular, irregularOf: irregularOf };
   root.EnvSea = EnvSea;
   if (typeof module !== 'undefined' && module.exports) module.exports = EnvSea;
 })(typeof window !== 'undefined' ? window : globalThis);
