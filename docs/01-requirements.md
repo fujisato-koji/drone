@@ -4502,6 +4502,8 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | viewer.script_share_free_before | 0.98 | 1 | calculated | docs/02-form.md#viewer |
 | viewer.script_share_free_after | 0.065 | 1 | calculated | docs/02-form.md#viewer |
 | viewer.wind_frame_max_ms | 5.9 | ms | calculated | docs/02-form.md#viewer |
+| viewer.steady_turn_deg_per_s | 10 | deg/s | assumed | Q-081 |
+| viewer.course_link_frac | 0.5 | 1 | assumed | Q-081 |
 <!-- tdr:end -->
 
 ## Requirements for the dynamic soaring drone {#ds-requirements}

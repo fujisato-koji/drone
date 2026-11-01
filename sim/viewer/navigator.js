@@ -426,6 +426,131 @@
       t: t, x: x, y: y, z: z, V: V, gamma: g, psi: psi, cl: cl, mu: mu, thrust: th, power_avg_w: pt.power };
   }
 
+  // Free course (viewer only; sim/navigator.py has no twin). Without a destination the viewer flies one leg along a
+  // course set relative to the wind (the panel's heading). The leg is the navigator's straight leg towards that
+  // direction (as in _approach, without the target): the soaring cycle of the largest speed made good along it
+  // (the present one kept within 2 %), else, with a steady model, a steady motor leg aimed along the course by the
+  // wind triangle; when nothing makes progress, the cycle that gets furthest along the course ('no progress').
+  // Of a cycle and its mirror image that make good the same, the one on the side of the wind the aircraft flies is
+  // taken, so that a change of course does not cross the wind when it need not.
+  // flown names the cycle the planner flies ({kind, u10, chi_deg, mirror}, 'steady' or null). The kind of leg does
+  // not change in flight (Q-066, Q-081: in node closed loops a soaring flight turned into a steady leg lost the
+  // aircraft, and a steady leg turned into a soaring cycle fell below the stall speed): a soaring flight flies a
+  // course that only the motor makes good on the soaring cycle that gets furthest along it, a steady flight flies a
+  // steady leg along any course, and the command says held. A steady leg's track turns towards a new course by at
+  // most turnDeg a call (an at-once turn of 180 deg stalled the aircraft). From a soaring cycle, with opt.link (the
+  // least match distance of two points' cycles over their phases, MPC.cycleLink), a change of cycle goes through the
+  // fewest cycles each of which matches the one before at some phase within opt.linkMax, since the planner changes
+  // between soaring cycles only where the new one matches the state (MPC.Controller, at most SWITCH_MAX_WAIT_S) and
+  // two cycles on either side of the wind often match at no phase at all; without such a chain the change is
+  // commanded at once and the planner's wait applies, as for the navigator.
+  // The command's point is the cycle to fly next, its goal the cycle of the course.
+  function FreeCourse(source, opt) {
+    opt = opt || {};
+    this.source = source;
+    this.steady = opt.steady || null;
+    this.minVmg = opt.minVmg !== undefined ? opt.minVmg : MIN_VMG;
+    this.link = opt.link || null;
+    this.linkMax = opt.linkMax !== undefined ? opt.linkMax : 1.0;
+    this.turnDeg = opt.turnDeg !== undefined ? opt.turnDeg : 10;   // viewer.steady_turn_deg_per_s, a call a second
+    this._links = {};
+    this.reset();
+  }
+  FreeCourse.prototype.reset = function () { this.leg = null; this.side = 0; this.dir = null; };
+  FreeCourse.prototype._find = function (flown) {   // the hull point (of any wind) of the cycle flown
+    if (!flown) return null;
+    if (flown === 'steady') return 'steady';
+    for (var h = 0; h < this.source.hulls.length; h++) {
+      var ps = this.source.hulls[h].points;
+      for (var k = 0; k < ps.length; k++) {
+        var p = ps[k];
+        if (p.kind === flown.kind && p.entry.u10 === flown.u10 && p.entry.chi_deg === flown.chi_deg && (p.side < 0) === !!flown.mirror) return p;
+      }
+    }
+    return null;
+  };
+  FreeCourse.prototype._linkOf = function (a, b) {
+    var key = a.key < b.key ? a.key + '|' + b.key : b.key + '|' + a.key;
+    if (this._links[key] === undefined) this._links[key] = this.link(a, b);
+    return this._links[key];
+  };
+  // the next point from a towards b over the fewest changes, each within linkMax (ties: the smaller sum of distances)
+  FreeCourse.prototype._next = function (a, b, pts) {
+    if (this.link === null || a === b || this._linkOf(a, b) <= this.linkMax) return b;
+    var nodes = [a], k, i;
+    for (k = 0; k < pts.length; k++) if (pts[k].kind === 'soaring' && pts[k] !== a) nodes.push(pts[k]);
+    var n = nodes.length, dist = [], from = [], done = [];
+    for (i = 0; i < n; i++) { dist.push(Infinity); from.push(-1); done.push(false); }
+    dist[0] = 0;
+    for (;;) {
+      var u = -1;
+      for (i = 0; i < n; i++) if (!done[i] && dist[i] < Infinity && (u < 0 || dist[i] < dist[u])) u = i;
+      if (u < 0 || nodes[u] === b) break;
+      done[u] = true;
+      for (i = 0; i < n; i++) {
+        if (done[i]) continue;
+        var l = this._linkOf(nodes[u], nodes[i]);
+        if (l <= this.linkMax && dist[u] + 1 + 1e-3 * l < dist[i]) { dist[i] = dist[u] + 1 + 1e-3 * l; from[i] = u; }
+      }
+    }
+    var j = nodes.indexOf(b);
+    if (j < 0 || from[j] < 0) return b;
+    while (from[j] !== 0) j = from[j];
+    return nodes[j];
+  };
+  // d: the course as a unit vector in the wind frame; returns a command as HullNavigator.step does (mode 'course' or
+  // 'no progress', distance, cross and corridor null) with goal and held
+  FreeCourse.prototype.step = function (t, u10, windFrom, d, flown) {
+    var psi = psiOf(windFrom), hull = this.source.at(u10), pts = hull.points, k, pk = -1, c;
+    var f = this._find(flown), fs = f !== null && f !== 'steady';
+    for (k = 0; k < pts.length; k++) if (pts[k].key === this.leg) pk = k;
+    var prev = this.leg, sg = hull.bestSingle(d, this.minVmg, null, null, pk >= 0 ? pk : null), held = false;
+    var wantSteady = this.steady !== null && (sg === null || pts[sg.index].kind === 'motor');
+    if (this.steady !== null && (fs ? false : f === 'steady' ? true : wantSteady)) {   // the kind does not change in flight
+      var dg = d;
+      if (this.turnDeg !== null && f === 'steady' && this.dir !== null) {   // the steady track turns by at most turnDeg a call
+        var cr = this.dir[0] * d[1] - this.dir[1] * d[0], dt0 = this.dir[0] * d[0] + this.dir[1] * d[1];
+        var ang = Math.atan2(cr, dt0), lim = this.turnDeg * Math.PI / 180;
+        if (Math.abs(ang) > lim) {
+          var ra = (ang > 0 ? 1 : -1) * lim, cs = Math.cos(ra), sn = Math.sin(ra);
+          dg = [this.dir[0] * cs - this.dir[1] * sn, this.dir[0] * sn + this.dir[1] * cs];
+        }
+      }
+      var lg = this.steady.leg(u10, dg, this.minVmg);
+      if (lg !== null) {
+        this.dir = dg;
+        var sp = { vx: lg.ground[0], vy: lg.ground[1], power: lg.power, kind: 'motor', key: 'steady', entry: null, side: 1,
+          steady: { V: lg.V, cl: lg.cl, thrust: lg.thrust, heading: lg.heading, height: this.steady.height } };
+        this.leg = 'steady'; this.side = 0;
+        c = HullNavigator.prototype._command(psi, sp, 'course', lg.along, prev !== null && prev !== 'steady', null, lg.perM, null, null);
+        c.goal = sp; c.held = !wantSteady;
+        return c;
+      }
+    }
+    held = fs && wantSteady;
+    var mode = 'course', bi = -1, va = [];
+    for (k = 0; k < pts.length; k++) va.push(pts[k].vx * d[0] + pts[k].vy * d[1]);
+    if (sg !== null && !held) bi = sg.index;
+    else {   // nothing makes progress (or only a powered leg, not taken): the point that gets furthest, the present one on a tie
+      mode = 'no progress';
+      for (k = 0; k < pts.length; k++) if ((!held || pts[k].kind === 'soaring') && (bi < 0 || va[k] > va[bi])) bi = k;
+      if (pk >= 0 && (!held || pts[pk].kind === 'soaring') && va[pk] >= va[bi] - 1e-9) bi = pk;
+    }
+    var side = fs ? (f.vy > 0 ? 1 : f.vy < 0 ? -1 : 0) : this.side;
+    if (side !== 0 && bi !== pk && pts[bi].vy * side < 0) {   // its mirror image, if it makes good as much
+      for (k = 0; k < pts.length; k++) {
+        if (pts[k].entry === pts[bi].entry && pts[k].side === -pts[bi].side && va[k] >= va[bi] - 1e-9) { bi = k; break; }
+      }
+    }
+    var goal = pts[bi];
+    this.leg = goal.key; this.side = goal.vy > 0 ? 1 : goal.vy < 0 ? -1 : this.side;
+    var pt = fs && goal.kind === 'soaring' ? this._next(f, goal, pts) : goal;
+    c = HullNavigator.prototype._command(psi, pt, mode, mode === 'course' ? va[bi] : 0, prev !== null && goal.key !== prev,
+      null, va[bi] > 0 ? goal.power / va[bi] : 0, null, null);
+    c.goal = goal; c.held = held;
+    return c;
+  };
+
   // kinematic run, as sail_hull
   function sailHull(source, windFn, start, target, nav, o) {
     o = o || {};
@@ -459,7 +584,7 @@
   }
 
   var NAV = { MIN_VMG: MIN_VMG, VelocityHull: VelocityHull, HullSource: HullSource,
-    HullNavigator: HullNavigator, SteadyModel: SteadyModel, steadyParams: steadyParams, steadyEntry: steadyEntry, sailHull: sailHull, pointsFromEntries: pointsFromEntries,
+    HullNavigator: HullNavigator, SteadyModel: SteadyModel, steadyParams: steadyParams, steadyEntry: steadyEntry, FreeCourse: FreeCourse, sailHull: sailHull, pointsFromEntries: pointsFromEntries,
     toWind: toWind, toWorld: toWorld, psiOf: psiOf };
   globalThis.NAV = NAV;
   if (typeof module !== 'undefined' && module.exports) module.exports = NAV;

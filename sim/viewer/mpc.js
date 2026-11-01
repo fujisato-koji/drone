@@ -407,6 +407,24 @@ function mpcFactory() {
       this.dEc = cycle.energy(te) - this.E0;
     }   // a steady reference holds an energy level (see sim.mpc.CycleGuide)
   }
+  // The least match distance of two cycles over their phases (n of each): the distance of the guide's match
+  // (Guide, sim.mpc.CycleGuide) between the states of the two, with the tolerances sig = [h, V, gamma, heading].
+  // The viewer's free course (navigator.js FreeCourse) chains its changes of cycle through pairs that match.
+  function cycleLink(a, b, sig, n) {
+    n = n || 60;
+    var sa = [], sb = [], i, j, best = Infinity;
+    for (i = 0; i < n; i++) { sa.push(a.state(i * a.T / n)); sb.push(b.state(i * b.T / n)); }
+    for (i = 0; i < n; i++) {
+      var p = sa[i];
+      for (j = 0; j < n; j++) {
+        var q = sb[j];
+        var d = Math.pow((p[0] - q[0]) / sig[0], 2) + Math.pow((p[1] - q[1]) / sig[1], 2) +
+          Math.pow((p[2] - q[2]) / sig[2], 2) + Math.pow(wrap(p[3] - q[3]) / sig[3], 2);
+        if (d < best) best = d;
+      }
+    }
+    return best;
+  }
   // nominal controls at the knot times: Float64Array [cl knots..., mu knots...]
   Guide.prototype.nominal = function (knotsT) {
     var n = knotsT.length, out = new Float64Array(2 * n);
@@ -978,7 +996,8 @@ function mpcFactory() {
   return { G: G, wrap: wrap, interp: interp, linspace: linspace, unwrap: unwrap, clamp: clamp, DEFAULTS: DEFAULTS, makeAircraft: makeAircraft,
     SeaWorld: SeaWorld, flatWorld: flatWorld, makeWorld: makeWorld, limitComponents: limitComponents,
     Actuators: Actuators, actuatorParams: actuatorParams, nLimitedCl: nLimitedCl,
-    Cycle: Cycle, pickCycle: pickCycle, Guide: Guide, Planner: Planner, Controller: Controller,
+    Cycle: Cycle, pickCycle: pickCycle, Guide: Guide, Planner: Planner, Controller: Controller, cycleLink: cycleLink,
+    SWITCH_MATCH_MAX: SWITCH_MATCH_MAX, SWITCH_MAX_WAIT_S: SWITCH_MAX_WAIT_S,
     planControls: planControls, planThrust: planThrust, Reflex: Reflex, REFLEX: REFLEX, SUSTAIN: SUSTAIN, foldEffective: foldEffective, MOTOR: MOTOR, ENERGY_K: ENERGY_K, workerMain: workerMain, Gauss: Gauss };
 }
 

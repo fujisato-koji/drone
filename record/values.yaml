@@ -26973,3 +26973,15 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#viewer
+  - key: viewer.steady_turn_deg_per_s
+    v: 10
+    unit: deg/s
+    status: assumed
+    basis:
+      - Q-081
+  - key: viewer.course_link_frac
+    v: 0.5
+    unit: 1
+    status: assumed
+    basis:
+      - Q-081
