@@ -190,7 +190,6 @@
 <button id="mapShow" type="button" data-i="mapShow" data-t="mapShowTip"></button>
 
 <script src="field.js"></script>
-<script src="traj.js"></script>
 <script src="flight.js"></script>
 <script src="aircraft.js"></script>
 <script src="library.js"></script>
@@ -946,47 +945,6 @@ pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
 const points = new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 2.5, sizeAttenuation: false, vertexColors: true }));
 points.frustumCulled = false;
 scene.add(points);
-
-// trajectory (optional)
-let traj = null, glider = null;
-if (window.TRAJ && window.TRAJ.x && window.TRAJ.x.length > 1) {
-  const TJ = window.TRAJ, n = TJ.x.length;
-  traj = TJ;
-  const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
-  let zmin = Infinity, zmax = -Infinity;
-  for (let i = 0; i < n; i++) { zmin = Math.min(zmin, TJ.z[i]); zmax = Math.max(zmax, TJ.z[i]); }
-  for (let i = 0; i < n; i++) {
-    pos.set([TJ.x[i], TJ.z[i], -TJ.y[i]], i * 3);
-    const s = (TJ.z[i] - zmin) / Math.max(1e-6, zmax - zmin);
-    ramp(0.3 * Math.pow(40 / 0.3, s), tmpC); col.set([tmpC.r, tmpC.g, tmpC.b], i * 3);
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const tl = new THREE.Line(g, new THREE.LineBasicMaterial({ vertexColors: true }));
-  tl.frustumCulled = false; scene.add(tl);
-  glider = new THREE.Group();
-  glider.rotation.order = 'YXZ';
-  const wm = new THREE.MeshLambertMaterial({ color: 0x222222 });
-  for (const sgn of [-1, 1]) {
-    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.04, 1.0), wm);
-    wing.position.set(0, 0.07, sgn * 0.5);
-    wing.rotation.x = -sgn * 0.15;  // small dihedral, flat V
-    glider.add(wing);
-  }
-  scene.add(glider);
-}
-function updateGlider(t) {
-  if (!traj) return;
-  const n = traj.x.length, dur = traj.dt * (n - 1);
-  const f = (((t % dur) + dur) % dur) / traj.dt;
-  const i = Math.min(n - 2, Math.floor(f)), s = f - i;
-  const L = (a) => a[i] + (a[i + 1] - a[i]) * s;
-  const dang = (a) => { let d = a[i + 1] - a[i]; d -= 2 * Math.PI * Math.round(d / (2 * Math.PI)); return a[i] + d * s; };
-  glider.position.set(L(traj.x), L(traj.z), -L(traj.y));
-  glider.rotation.y = dang(traj.psi);
-  glider.rotation.x = L(traj.mu);
-}
 
 // ---------------------------------------------------------------- flight (live, uses flight.js)
 const AIRCRAFT = window.AIRCRAFT || null;
@@ -2506,7 +2464,6 @@ function loop(now) {
   $('mastpos').textContent = tx('mastPos', mx, my);
   drawCharts();
 
-  updateGlider(T);
   updateFlightView();
   controls.update();
   renderer.render(scene, camera);

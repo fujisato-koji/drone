@@ -145,7 +145,7 @@ After that, only a flight test can close it: low turns over a lake or a calm sea
 ### Viewer (`sim/viewer/index.html`) {#viewer}
 
 - `python -m sim.export_field --u10 10 --from 270` writes `sim/viewer/field.js` with the wind parameters and the wave components.
-- Opening `sim/viewer/index.html` in a browser shows the sea, a wind mast with arrows at twelve heights above the local surface, particles advected by the wind, the wind-speed and vertical-wind profiles at the mast, and an aircraft trajectory when `sim/viewer/traj.js` exists.
+- Opening `sim/viewer/index.html` in a browser shows the sea, a wind mast with arrows at twelve heights above the local surface, particles advected by the wind, and the wind-speed and vertical-wind profiles at the mast; the looped sample trajectory of the first search (`traj.js`) was removed, since the live flight under the planner replaced it.
 - The viewer mirrors the Python formulas; it is a picture of the model, not a second model.
 - Play runs the sea and the wind of the storm scenario through its hours; the Flight panel launches an aircraft at any moment of it, at the mast or at a clicked point of the sea, with a chosen candidate, cycle and heading, and can hold the scenario hour while it flies.
 - The aircraft in the viewer is the same point mass as `sim/aircraft.py`, ported to `sim/viewer/flight.js`; a test runs the same flight in Python and in the browser code and requires the states to agree (`sim/tests/test_flight_js.py`). Its parameters come from `sim/viewer/aircraft.js` (`python -m sim.export_aircraft`).

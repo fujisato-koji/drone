@@ -264,7 +264,7 @@ if __name__ == "__main__":
     _summary(c)
     e = full_env_trajectory(BASELINE, c, 10)
     print("waved env gains", [round(g, 2) for g in e["gains"]], "min_h %.2f" % e["min_h"])
-    export_traj(e["result"], "sim/viewer/traj.js")
+    export_traj(e["result"], "sim/out/dsearch_traj.js")   # no longer read by the viewer
     for u in (6, 8, 12):
         t0 = time.time()
         cu = find_cycle(BASELINE, u, maxiter=15, popsize=8)
