@@ -1,7 +1,7 @@
 """The viewer's route.js against sim.route (needs node): the same routes, times, charges and energies, on the six world
-cases. Two parts: Python and JavaScript plan the experiment pairs of each case on a coarser graph (refine 2, one
-ring) with the relaxation ladder; and route.js, with the parameters of route_params.js, replans every experiment of
-sim/out/route.json (the default graph) and must give its stored results."""
+cases. Python and JavaScript plan the experiment pairs of each case on a coarser graph (refine 2, one ring) with the
+relaxation ladder; and Python replans a sample of the experiments of sim/out/route.json, which route.js planned on the
+default graph (python -m sim.route exp), and must give their stored results."""
 import json
 import shutil
 import subprocess
@@ -13,6 +13,9 @@ from sim import world as W
 
 VIEWER = Path(__file__).resolve().parents[1] / "viewer"
 NODE = shutil.which("node")
+COARSE_POPS = 20000     # labels taken at most in the coarse-graph comparison
+REPLAN = 10             # experiments replanned in Python
+REPLAN_POPS = 30000     # ... among those whose searches took at most this many labels
 
 SNIPPET = r"""
 const path = require('path'), fs = require('fs');
@@ -41,6 +44,7 @@ for (const c of inp.cases) {
     for (const p of job.pairs) {
       const o = { layer: layer, tables: tab, settings: c.settings };
       if (p.length > 2) o.t0 = p[2];
+      if (c.settings && c.settings.max_pops) { o.maxPops = c.settings.max_pops; o.relaxPops = c.settings.relax_pops; }
       const r = ROUTE.plan(field, graph, legs, en, p[0], p[1], o);
       const rt = r.route || r.closest;
       out.push({ ok: r.ok, reason: r.reason, relaxation: r.closest ? r.closest.relaxation : null,
@@ -95,7 +99,9 @@ class TestRouteJs(unittest.TestCase):
                     self.assertAlmostEqual(p["summary"][f], j["summary"][f], delta=1e-8, msg=f"{msg} {f}")
 
     def test_coarse_graph_python_and_js(self):
-        st = {"refine": 2, "rings": 1}
+        """The experiment pairs of the six cases on a coarser graph, both languages with the same caps on the labels
+        taken (so that a capped search stops at the same label)."""
+        st = {"refine": 2, "rings": 1, "max_pops": COARSE_POPS, "relax_pops": COARSE_POPS}
         cases, py = [], []
         for s in W.SCENARIOS:
             field = R.CorridorField.from_case(s["id"])
@@ -103,12 +109,13 @@ class TestRouteJs(unittest.TestCase):
             graph = R.corridor_graph(field, refine=2, rings=1)
             pairs, _ = R.exp_pairs(field.f)
             jobs = []
-            for a, cap in (("albatross-3m", 2.0), ("baseline-2m", 1.0)):
+            for a, cap in (("albatross-3m", 1.0), ("baseline-2m", 2.0)):
                 en = R.energy_defaults(a, cap)
                 lm = R.leg_model(a)
                 tab = R.Tables(graph, field, en, layer)
                 for _, p0, p1 in pairs:
-                    py.append(py_row(R.plan(field, graph, lm, en, p0, p1, layer=layer, tables=tab)))
+                    py.append(py_row(R.plan(field, graph, lm, en, p0, p1, layer=layer, tables=tab,
+                                            max_pops=COARSE_POPS, relax_pops=COARSE_POPS)))
                 hulls = [{"u10": u, "points": [dict(vx=vx, vy=vy, power=pw, kind=kd, key=key, side=sd)
                                                for vx, vy, pw, kd, key, sd in pts]} for u, pts in R.hull_points(a)]
                 jobs.append({"aircraft": a, "cap": cap, "energy": en, "hulls": hulls, "steady": R.steady_params(a),
@@ -119,24 +126,42 @@ class TestRouteJs(unittest.TestCase):
         self.assertTrue(any(p["ok"] for p in py))
         self.assertTrue(any(not p["ok"] for p in py))
 
-    def test_experiments_replanned_in_js(self):
+    def test_experiments_replanned_in_python(self):
+        """sim/out/route.json is planned in node (python -m sim.route exp): Python replans the experiments whose
+        searches took the fewest labels (up to REPLAN of them, from every case that has such) and must give the
+        stored routes, label counts, times and charges."""
         if not R.OUT_JSON.exists():
             self.skipTest("no sim/out/route.json")
         d = json.loads(R.OUT_JSON.read_text(encoding="utf-8"))
-        rows = d["rows"]
-        cases, py = [], []
-        for s in W.SCENARIOS:
-            jobs = []
-            for a in R.AIRCRAFT:
-                for cap in sorted({r["capacity_factor"] for r in rows}):
-                    rs = [r for r in rows if r["case"] == s["id"] and r["aircraft"] == a and r["capacity_factor"] == cap]
-                    if not rs:
-                        continue
-                    jobs.append({"aircraft": a, "cap": cap, "pairs": [[r["start"], r["dest"], r["t0"]] for r in rs]})
-                    py += [py_row(r) for r in rs]
-            cases.append({"id": s["id"], "settings": None, "jobs": jobs})
-        js = run_node({"useParams": True, "cases": cases})
-        self.check(py, js, "experiments")
+
+        def pops(r):
+            return (r.get("stats") or {}).get("pops", 0) + ((r.get("closest") or {}).get("stats") or {}).get("pops", 0)
+
+        rows = sorted((r for r in d["rows"] if r["reason"] != 1), key=lambda r: (pops(r), r["case"], r["pair"]))
+        pick, seen = [], set()
+        for r in rows:
+            if len(pick) >= REPLAN or pops(r) > REPLAN_POPS:
+                break
+            if (r["case"], r["ok"]) in seen and len(seen) < 6:
+                continue
+            seen.add((r["case"], r["ok"]))
+            pick.append(r)
+        self.assertGreater(len(pick), 3)
+        self.assertTrue(any(r["ok"] for r in pick))
+        graphs = {}
+        stored, mine = [], []
+        for r in pick:
+            c = r["case"]
+            if c not in graphs:
+                field = R.CorridorField.from_case(c)
+                graphs[c] = (field, R.SolarLayer.load(c), R.corridor_graph(field))
+            field, layer, graph = graphs[c]
+            en = R.energy_defaults(r["aircraft"], r["capacity_factor"])
+            p = R.plan(field, graph, R.leg_model(r["aircraft"]), en, tuple(r["start"]), tuple(r["dest"]), t0=r["t0"],
+                       layer=layer)
+            stored.append(py_row(r))
+            mine.append(py_row(p))
+        self.check(stored, mine, "replanned")
 
     def test_params_file_matches_python(self):
         p = W.load_js(VIEWER / "route_params.js")

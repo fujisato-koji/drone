@@ -1,8 +1,8 @@
 // Strategic layer for the viewer: a JavaScript mirror of the route planner in sim/route.py (read its module notes
-// first). The earliest arrival from a start to a destination over a world sea, under the owner's energy rules (D-021):
-// an hourly battery (solar yield less the avionics with the sensor set, the motor and the take-offs) kept within the
-// usable capacity and above the reserve, the next night carried from any moment, and the motor's daily allowance
-// (a share of the solar energy the route collects that day). Nodes have latitude and longitude, legs are
+// first). The earliest arrival from a start to a destination over a world sea, under the owner's energy rules (D-021,
+// D-023): an hourly battery (solar yield less the draw by day or the low-power draw by night, the motor and the
+// take-offs) kept within the usable capacity and above the reserve, the next night carried from any moment, and the
+// motor's daily allowance (a share of the solar energy the route collects that day). Nodes have latitude and longitude, legs are
 // great-circle arcs flown in sub-steps, the field is pluggable (CorridorField for the corridor files), legs that
 // touch land are left out, waiting on the water is an edge.
 //
@@ -18,15 +18,21 @@
   var D2R = Math.PI / 180;
 
   var DEFAULTS = { refine: 3, rings: 2, sub_km: 10, wait_s: 3600, lookahead_h: 36, u_q: 0.1, a_q: 1,
-    eps_soc: 0.25, eps_slack: 0.25, min_vmg: 0.3 };
-  var RELAX = [['reserve_minus_1.5_capacity', { below: 1.5 }], ['reserve_minus_3_capacity_no_allowance', { below: 3, share: Infinity }]];
+    eps_soc: 0.25, eps_slack: 0.25, min_vmg: 0.3, dom_window_s: 600, max_pops: 300000, relax_pops: 150000,
+    relax_below: [1.5, 3] };
+  // the relaxation ladder (sim.route.RELAX): the reserve lowered by relax_below capacities, the second also without
+  // the motor's allowance
+  function relaxOf(st) {
+    return [['reserve_lowered_1', { below: st.relax_below[0] }], ['reserve_lowered_2_no_allowance', { below: st.relax_below[1], share: Infinity }]];
+  }
   var REASONS = { 0: 'ok', 1: 'the start lies outside the field, on land or in seas above the avoidance height',
     2: 'the battery cannot carry the coming night from the start',
-    3: 'the night drains the battery below the reserve on every route found',
-    4: "the route's draw takes the battery below the reserve",
-    5: "the motor allowance (its share of the day's solar generation) does not cover the motor legs needed",
-    6: "no route reaches the destination within the field's time (seas above the avoidance height, or too slow)",
-    7: "only the relaxed search found a route, and it keeps the rules (the strict search's approximations missed it)" };
+    3: 'the closest route keeps the reserve on its way but cannot carry the next night',
+    4: "the closest route's draw takes the battery below the reserve",
+    5: "the closest route keeps the battery's rules but its motor needs more than the day's allowance",
+    6: "no route reaches the destination within the field's time even with the rules relaxed (the seas, the field's end, or more energy than the relaxed rules allow)",
+    7: "only the relaxed search found a route, and it keeps the rules (the strict search's approximations missed it)",
+    8: 'the search stopped at its limit of labels (route.max_pops, or route.relax_pops for a relaxed search) without a route' };
 
   function settingsOf(s) { var o = {}, k; for (k in DEFAULTS) o[k] = (s && s[k] !== undefined) ? s[k] : DEFAULTS[k]; return o; }
 
@@ -95,6 +101,28 @@
     var ij = WD.corridorIndex(this.f, lat, lon), fi = ij[0], fj = ij[1];
     if (fi >= -1e-9 && fi <= this.na - 1 + 1e-9 && fj >= -1e-9 && fj <= this.nc - 1 + 1e-9) return [fi, fj, corners(this.na, this.nc, fi, fj)];
     return null;
+  };
+  // the points where the segment from location a to location b (grid indices) crosses a line of the grid,
+  // [[fraction along, location], ...] in order (sim.route.CorridorField.crossings)
+  CorridorField.prototype.crossings = function (a, b) {
+    var fi0 = a[0], fj0 = a[1], fi1 = b[0], fj1 = b[1], fs = [], pairs = [[fi0, fi1], [fj0, fj1]], q, out = [], prev = null;
+    for (q = 0; q < 2; q++) {
+      var x0 = pairs[q][0], x1 = pairs[q][1];
+      if (x1 !== x0) {
+        var g = Math.floor(Math.min(x0, x1)) + 1;
+        while (g < Math.max(x0, x1)) { fs.push((g - x0) / (x1 - x0)); g += 1; }
+      }
+    }
+    fs.sort(function (x, y) { return x - y; });
+    for (q = 0; q < fs.length; q++) {
+      var f = fs[q];
+      if (f > 0.0 && f < 1.0 && f !== prev) {
+        var fi = fi0 + (fi1 - fi0) * f, fj = fj0 + (fj1 - fj0) * f;
+        out.push([f, [fi, fj, corners(this.na, this.nc, fi, fj)]]);
+        prev = f;
+      }
+    }
+    return out;
   };
   CorridorField.prototype.at = function (g, off, loc) {
     var tot = 0.0, ws = 0.0, c = loc[2], k;
@@ -183,7 +211,8 @@
     };
   }
 
-  // the graph of a corridor (sim.route.corridor_graph); land: rings or null for none
+  // the graph of a corridor (sim.route.corridor_graph); land: rings or null for none. A step is [location, course,
+  // checks]: the checks are the points where the step crosses a line of the field's grid (field.crossings).
   function corridorGraph(field, st, land) {
     st = settingsOf(st);
     var f = field.f, na = f.na, nc = f.nc, step = f.step_km, refine = st.refine;
@@ -214,13 +243,19 @@
           for (k = 0; k < ns && !bad; k++) { var c = gcPoint(lat[n], lon[n], lat[m], lon[m], (k + 0.5) / ns); if (onLand(c[0], c[1])) bad = true; }
         }
         if (bad) continue;
-        var steps = [];
+        var locs = [];
         for (k = 0; k < ns; k++) {
           var lc = field.locate(pts[k][0], pts[k][1]);
           if (lc === null) { bad = true; break; }
-          steps.push([lc, gcBearing(pts[k][0], pts[k][1], lat[m], lon[m])]);
+          locs.push(lc);
         }
-        if (!bad) edges[n].push([m, L * 1000.0 / ns, steps]);
+        if (bad) continue;
+        var steps = [];
+        for (k = 0; k < ns; k++) {
+          var end = k + 1 < ns ? locs[k + 1] : loc[m];
+          steps.push([locs[k], gcBearing(pts[k][0], pts[k][1], lat[m], lon[m]), field.crossings(locs[k], end)]);
+        }
+        edges[n].push([m, L * 1000.0 / ns, steps]);
       }
     }
     return { lat: lat, lon: lon, loc: loc, edges: edges, stepKm: h };
@@ -240,28 +275,33 @@
     st = settingsOf(st);
     this.st = st;
     this.source = NAV.HullSource.fromPoints(hulls);
+    this.winds = this.source.hulls.map(function (hh) { return hh.u10; });
     this.steady = new NAV.SteadyModel({ mass: steady.mass, wingArea: steady.wing_area, cd0: steady.cd0, kInduced: steady.k_induced,
       rho: steady.rho, clMax: steady.cl_max, vStall: steady.v_stall, vBestLd: steady.v_best_ld, tMax: steady.t_max, eta: steady.eta, g: steady.g });
     this.cache = new Map();
   }
+  // the hull of the highest library wind at or below u (the lowest when u is below all): conservative
+  LegModel.prototype.hullBelow = function (u) {
+    var k = 0, q;
+    for (q = 0; q < this.winds.length; q++) if (this.winds[q] <= u + 1e-9) k = q;
+    return this.source.hulls[k];
+  };
+  // [soaring speed made good, steady speed made good, steady electric power] along the course (0: no way)
   LegModel.prototype.leg = function (u10, relDeg) {
     var iu = Math.floor(u10 / this.st.u_q + 0.5), ia = Math.floor(Math.abs(wrap180(relDeg)) / this.st.a_q + 0.5);
     var key = iu * 1000 + ia, r = this.cache.get(key);
     if (r === undefined) {
       var uq = iu * this.st.u_q, aq = ia * this.st.a_q * D2R, d = [Math.cos(aq), Math.sin(aq)];
-      var pl = this.source.at(uq).planPair(d, this.st.min_vmg, false);
-      if (pl !== null) r = ['soaring', pl.r, 0.0];
-      else {
-        var lg = this.steady.leg(uq, d, this.st.min_vmg);
-        r = lg !== null ? ['motor', lg.along, lg.power] : ['none', 0.0, 0.0];
-      }
+      var pl = this.hullBelow(uq).planPair(d, this.st.min_vmg, false);
+      var lg = this.steady.leg(uq, d, this.st.min_vmg);
+      r = [pl !== null ? pl.r : 0.0, lg !== null ? lg.along : 0.0, lg !== null ? lg.power : 0.0];
       this.cache.set(key, r);
     }
     return r;
   };
   LegModel.prototype.vMax = function (u10Max) {
     var v = 0;
-    this.source.hulls.forEach(function (h) { h.points.forEach(function (p) { var s = Math.sqrt(p.vx * p.vx + p.vy * p.vy); if (s > v) v = s; }); });
+    this.source.hulls.forEach(function (hh) { hh.points.forEach(function (p) { var s = Math.sqrt(p.vx * p.vx + p.vy * p.vy); if (s > v) v = s; }); });
     for (var u = 0.0; u <= u10Max + 1.0; u += 0.5) {
       var lg = this.steady.leg(u, [1.0, 0.0], this.st.min_vmg);
       if (lg !== null && lg.along > v) v = lg.along;
@@ -271,6 +311,7 @@
 
   // ------------------------------------------------------------ battery tables (sim.route.Tables)
   function localDay(t, lon) { return Math.floor((t + lon * 240.0) / 86400.0); }
+  var QUARTERS = [0.125, 0.375, 0.625, 0.875];
 
   function Tables(graph, field, en, layer, opt) {
     opt = opt || {};
@@ -278,23 +319,32 @@
     this.T0 = opt.tStart === undefined ? Math.floor(field.t0 / 3600.0) * 3600.0 - 86400.0 : opt.tStart;
     this.K = opt.hours === undefined ? Math.ceil((field.tEnd - this.T0) / 3600.0) + st.lookahead_h : opt.hours;
     this.en = en;
-    var fit = en.solar_fit_w_m2, R = opt.reserve === undefined ? en.reserve_wh : opt.reserve, C = en.capacity_wh, D = en.flight_draw_w;
-    this.P = []; this.need = []; this.needRaw = []; this.rest = []; this.dayStart = [];
-    var n, k;
+    var fit = en.solar_fit_w_m2, R = opt.reserve === undefined ? en.reserve_wh : opt.reserve, C = en.capacity_wh;
+    var fd = en.flight_draw_w, wd = en.water_draw_w, nd = en.night_draw_w;
+    this.P = []; this.F = []; this.Wd = []; this.need = []; this.needRaw = []; this.rest = []; this.dayStart = [];
+    var n, k, q;
     for (n = 0; n < graph.lat.length; n++) {
-      if (graph.loc[n] === null) { this.P.push(null); this.need.push(null); this.needRaw.push(null); this.rest.push(null); this.dayStart.push(null); continue; }
-      var la = graph.lat[n], lo = graph.lon[n], ll = layer ? layer.locate(la, lo) : null, P = new Float64Array(this.K);
-      for (k = 0; k < this.K; k++) {
-        var th = this.T0 + 3600.0 * k, g = layer ? layer.hourMean(ll, th) : null;
-        if (g === null) g = modelHourMean(la, lo, th, fit);
-        P[k] = g * en.panel_m2;
+      if (graph.loc[n] === null) {
+        this.P.push(null); this.F.push(null); this.Wd.push(null); this.need.push(null); this.needRaw.push(null);
+        this.rest.push(null); this.dayStart.push(null); continue;
       }
-      this.P.push(P);
+      var la = graph.lat[n], lo = graph.lon[n], ll = layer ? layer.locate(la, lo) : null;
+      var P = new Float64Array(this.K), F = new Float64Array(this.K), Wd = new Float64Array(this.K);
+      for (k = 0; k < this.K; k++) {
+        var th = this.T0 + 3600.0 * k, s4 = [], nneg = 0;
+        for (q = 0; q < 4; q++) { var x = sunSinElev(la, lo, th + QUARTERS[q] * 3600.0); s4.push(x); if (x < 0.0) nneg++; }
+        var nf = nneg / 4.0, g = layer ? layer.hourMean(ll, th) : null;
+        if (g === null) { var s = 0.0; for (q = 0; q < 4; q++) s += Math.max(0.0, s4[q]); g = fit * s / 4.0; }
+        P[k] = g * en.panel_m2;
+        F[k] = nf * nd + (1.0 - nf) * fd;
+        Wd[k] = nf * nd + (1.0 - nf) * wd;
+      }
+      this.P.push(P); this.F.push(F); this.Wd.push(Wd);
       var need = new Float64Array(this.K), cap = new Float64Array(this.K), short = new Float64Array(this.K), req = R, rc = R, sh = 0.0, net;
       for (k = this.K - 1; k >= 0; k--) {
-        net = P[k] - D;
-        if (net < 0 && (k + 1 === this.K || P[k + 1] - D >= 0)) { req = R; rc = R; sh = 0.0; }
-        if (net >= 0 && k + 1 < this.K && P[k + 1] - D < 0) { sh = Math.max(0.0, rc - C); rc = Math.min(rc, C); }
+        net = P[k] - F[k];
+        if (net < 0 && (k + 1 === this.K || P[k + 1] - F[k + 1] >= 0)) { req = R; rc = R; sh = 0.0; }
+        if (net >= 0 && k + 1 < this.K && P[k + 1] - F[k + 1] < 0) { sh = Math.max(0.0, rc - C); rc = Math.min(rc, C); }
         need[k] = req; cap[k] = rc; short[k] = sh;
         var rs = Math.max(R, req - net);
         req = rs > C + 1e-9 ? Infinity : rs;
@@ -320,22 +370,40 @@
     }
   }
   Tables.prototype.hour = function (t) { return Math.floor((t - this.T0) / 3600.0); };
-  Tables.prototype.solarWh = function (n, ta, tb) {
-    var P = this.P[n], s = 0.0, t = ta;
+  // [solar energy, draw] in Wh at node n from ta to tb, afloat or flying
+  Tables.prototype.energy = function (n, ta, tb, water) {
+    var P = this.P[n], D = water ? this.Wd[n] : this.F[n], s = 0.0, d = 0.0, t = ta;
     while (t < tb - 1e-9) {
       var k = this.hour(t), te = Math.min(tb, this.T0 + 3600.0 * (k + 1));
-      if (k >= 0 && k < this.K) s += P[k] * (te - t) / 3600.0;
+      if (k >= 0 && k < this.K) { s += P[k] * (te - t) / 3600.0; d += D[k] * (te - t) / 3600.0; }
+      else d += (water ? this.en.water_draw_w : this.en.flight_draw_w) * (te - t) / 3600.0;
       t = te;
     }
-    return s;
+    return [s, d];
   };
   Tables.prototype.needAt = function (n, t, reserve, raw) {
     var k = this.hour(t);
     if (k < 0 || k >= this.K) return reserve;
-    var D = this.en.flight_draw_w, frac = (this.T0 + 3600.0 * (k + 1) - t) / 3600.0;
-    if (!raw) return Math.max(reserve, this.need[n][k] - (this.P[n][k] - D) * frac);
+    var frac = (this.T0 + 3600.0 * (k + 1) - t) / 3600.0, net = this.P[n][k] - this.F[n][k];
+    if (!raw) return Math.max(reserve, this.need[n][k] - net * frac);
     var cr = this.needRaw[n];
-    return Math.max(reserve, cr[0][k] - (this.P[n][k] - D) * frac) + cr[1][k];
+    return Math.max(reserve, cr[0][k] - net * frac) + cr[1][k];
+  };
+  Tables.prototype.flyOnMin = function (n, t, soc) {
+    var k = this.hour(t);
+    if (k < 0 || k >= this.K) return soc;
+    var C = this.en.capacity_wh, P = this.P[n], F = this.F[n], net = P[k] - F[k];
+    var x = Math.min(C, soc + net * (this.T0 + 3600.0 * (k + 1) - t) / 3600.0), lo = Math.min(soc, x), neg = net < 0;
+    k += 1;
+    while (k < this.K) {
+      net = P[k] - F[k];
+      if (neg && net >= 0) break;
+      if (net < 0) neg = true;
+      x = Math.min(C, x + net);
+      lo = Math.min(lo, x);
+      k += 1;
+    }
+    return lo;
   };
   Tables.prototype.dayTotal = function (n, t) {
     var k = this.hour(t);
@@ -379,51 +447,54 @@
     var night = o.night === undefined ? true : o.night;
     var sh = o.share === undefined || o.share === null ? en.motor_share : o.share, useSlack = Number.isFinite(sh);
     var avoid = en.avoid_hs_m, H = o.horizon === undefined ? field.tEnd : o.horizon;
-    var fd = en.flight_draw_w, wd = en.water_draw_w, WAIT = st.wait_s, EPS_SOC = st.eps_soc, EPS_SLACK = st.eps_slack;
-    var vm = o.vMax === undefined ? legs.vMax(field.u10Max) : o.vMax, maxPops = o.maxPops || 2000000;
+    var WAIT = st.wait_s, EPS_SOC = st.eps_soc, EPS_SLACK = st.eps_slack, WIN = st.dom_window_s;
+    var vm = o.vMax === undefined ? legs.vMax(field.u10Max) : o.vMax, maxPops = o.maxPops || st.max_pops;
     var dl = graph.lat[dest], dn = graph.lon[dest], hc = new Map();
     function heur(n) { var v = hc.get(n); if (v === undefined) { v = gcKm(graph.lat[n], graph.lon[n], dl, dn) * 1000.0 / vm; hc.set(n, v); } return v; }
     var LT = [], LS = [], LK = [], LD = [], LW = [], LN = [], LP = [], LE = [], LA = [], pareto = new Map();
     var why = { seas: 0, no_leg: 0, horizon: 0, reserve: 0, allowance: 0, night: 0, dominated: 0 };
     var stats = { pops: 0, labels: 0, capped: false, pruned: why };
-    var T0 = tab.T0, toWh = en.takeoff_wh;
-    // label a at least as good as label b at node n (sim.route.search: dom): the same hour of the tables, a not later,
-    // and a's charge and slack after holding on until b's time at least b's
+    var T0 = tab.T0;
+    // label a at least as good as label b at node n (sim.route.search: dom)
     function dom(n, ta, sa, ka, da, wa, tb, sb, kb, db, wb) {
-      if (ta > tb || Math.floor((ta - T0) / 3600.0) !== Math.floor((tb - T0) / 3600.0)) return false;
+      if (ta > tb || tb - ta > WIN || da !== db || wa !== wb) return false;
       var x = sa, sol = 0.0;
-      if (tb > ta) {
-        sol = tab.solarWh(n, ta, tb);
-        var drain = (wa || wb) ? wd : fd;
-        x = Math.min(C, sa + sol - drain * (tb - ta) / 3600.0);
-      }
-      if (wa && !wb) x -= toWh;
+      if (tb > ta) { var e = tab.energy(n, ta, tb, wa); sol = e[0]; x = Math.min(C, sa + sol - e[1]); }
       if (x < sb - EPS_SOC) return false;
-      if (!useSlack) return true;
-      return (da === db && ka + sh * sol >= kb - EPS_SLACK) || (da < db && ka >= 0.0);
+      return !useSlack || ka + sh * sol >= kb - EPS_SLACK;
     }
-    function pkey(n, t) { return n * 100000 + Math.floor((t - T0) / 3600.0); }
+    function bucket(t) { return Math.floor((t - T0) / WIN); }
+    function pkey(n, b) { return n * 1000000 + b; }
     function dominated(n, t, soc, slack, day, water) {
-      var lst = pareto.get(pkey(n, t)) || [], q, li;
-      for (q = 0; q < lst.length; q++) {
-        li = lst[q];
-        if (LA[li] && dom(n, LT[li], LS[li], LK[li], LD[li], LW[li], t, soc, slack, day, water)) return true;
+      var b = bucket(t), bb, q, li;
+      for (bb = b - 1; bb <= b; bb++) {
+        var lst = pareto.get(pkey(n, bb));
+        if (!lst) continue;
+        for (q = 0; q < lst.length; q++) {
+          li = lst[q];
+          if (LA[li] && dom(n, LT[li], LS[li], LK[li], LD[li], LW[li], t, soc, slack, day, water)) return true;
+        }
       }
       return false;
     }
     function add(n, t, soc, slack, day, water, parent, edge) {
       if (dominated(n, t, soc, slack, day, water)) { why.dominated++; return null; }
-      var lst = pareto.get(pkey(n, t)), q, li;
-      if (!lst) { lst = []; pareto.set(pkey(n, t), lst); }
-      for (q = 0; q < lst.length; q++) {
-        li = lst[q];
-        if (LA[li] && dom(n, t, soc, slack, day, water, LT[li], LS[li], LK[li], LD[li], LW[li])) LA[li] = false;
+      var b = bucket(t), bb, q, li;
+      for (bb = b; bb <= b + 1; bb++) {
+        var lst = pareto.get(pkey(n, bb));
+        if (!lst || !lst.length) continue;
+        for (q = 0; q < lst.length; q++) {
+          li = lst[q];
+          if (LA[li] && dom(n, t, soc, slack, day, water, LT[li], LS[li], LK[li], LD[li], LW[li])) LA[li] = false;
+        }
+        var kept = lst.filter(function (x) { return LA[x]; });
+        lst.length = 0; Array.prototype.push.apply(lst, kept);
       }
-      var kept = lst.filter(function (x) { return LA[x]; });
-      lst.length = 0; Array.prototype.push.apply(lst, kept);
       var i = LT.length;
       LT.push(t); LS.push(soc); LK.push(slack); LD.push(day); LW.push(water); LN.push(n); LP.push(parent); LE.push(edge); LA.push(true);
-      lst.push(i);
+      var own = pareto.get(pkey(n, b));
+      if (!own) { own = []; pareto.set(pkey(n, b), own); }
+      own.push(i);
       return i;
     }
     function okAfter(n, t, soc, slack, day) {
@@ -433,6 +504,65 @@
         if (slack + sh * rest < -EPS_SLACK) { why.allowance++; return false; }
       }
       return true;
+    }
+    // one leg (sim.route.search: fly): [[arrival, charge, slack, day, edge] or null, soared]
+    function fly(n, m, subM, steps, t, soc, slack, day, water, steadyFirst) {
+      var tt = t, s2 = soc, k2 = slack, d2 = day, lonN = graph.lon[n];
+      var motor = 0.0, draw = 0.0, solTot = 0.0, to = 0.0, modes = [], days = new Map(), soared = false, dd, z, q;
+      if (water) {
+        dd = localDay(tt, lonN);
+        if (dd > d2) {
+          if (useSlack && k2 < -EPS_SLACK) { why.allowance++; return [null, soared]; }
+          d2 = dd; k2 = 0.0;
+        }
+        to = en.takeoff_wh;
+        s2 -= to;
+        k2 -= useSlack ? to : 0.0;
+        motor += to;
+        days.set(d2, [0.0, to]);
+        tt += en.takeoff_s;
+        if (s2 < R - 1e-9) { why.reserve++; return [null, soared]; }
+      }
+      for (z = 0; z < steps.length; z++) {
+        var lc = steps[z][0], brg = steps[z][1], checks = steps[z][2];
+        if (tt > H) { why.horizon++; return [null, soared]; }
+        var smp = field.sample(lc, tt), u = smp[0], v = smp[1], hs = smp[2];
+        if (!(hs <= avoid)) { why.seas++; return [null, soared]; }
+        var sp = Math.sqrt(u * u + v * v), wf = wrap360(Math.atan2(-u, -v) / D2R);
+        var lg = legs.leg(sp, brg - wf - 180.0), mode, vs, pw;
+        if (!steadyFirst && lg[0] > 0.0) { mode = 'soaring'; vs = lg[0]; pw = 0.0; }
+        else if (lg[1] > 0.0) { mode = 'motor'; vs = lg[1]; pw = lg[2]; }
+        else if (lg[0] > 0.0) { mode = 'soaring'; vs = lg[0]; pw = 0.0; }
+        else { why.no_leg++; return [null, soared]; }
+        soared = soared || mode === 'soaring';
+        var dt = subM / vs;
+        for (q = 0; q < checks.length; q++) {
+          if (!(field.sample(checks[q][1], tt + checks[q][0] * dt)[2] <= avoid)) { why.seas++; return [null, soared]; }
+        }
+        dd = localDay(tt, lonN);
+        if (dd > d2) {
+          if (useSlack && k2 < -EPS_SLACK) { why.allowance++; return [null, soared]; }
+          d2 = dd; k2 = 0.0;
+        }
+        var en2 = tab.energy(n, tt, tt + dt, false), sol = en2[0], dr = en2[1];
+        var mo = pw * dt / 3600.0;
+        s2 = Math.min(C, s2 + sol - dr - mo);
+        if (useSlack) k2 += sh * sol - mo;
+        var ed = days.get(d2);
+        if (!ed) { ed = [0.0, 0.0]; days.set(d2, ed); }
+        ed[0] += sol; ed[1] += mo;
+        motor += mo; draw += dr; solTot += sol; tt += dt;
+        modes.push(mode);
+        if (s2 < R - 1e-9) { why.reserve++; return [null, soared]; }
+        if (useSlack) {
+          var rest = localDay(tt, lonN) === d2 ? tab.restAt(n, tt) : 0.0;
+          if (k2 + sh * rest < -EPS_SLACK) { why.allowance++; return [null, soared]; }
+        }
+      }
+      if (!(field.sample(graph.loc[m], tt)[2] <= avoid)) { why.seas++; return [null, soared]; }
+      if (!okAfter(m, tt, s2, k2, d2)) return [null, soared];
+      var dl2 = Array.from(days.keys()).sort(function (a, b) { return a - b; }).map(function (d) { var x = days.get(d); return [d, x[0], x[1]]; });
+      return [[tt, s2, k2, d2, ['leg', n, m, t, tt, modes, motor, draw, solTot, to, dl2]], soared];
     }
     var seq = 0, soc0 = Math.min(C, en.soc0_wh);
     var k0 = useSlack ? sh * (tab.dayTotal(start, t0) - tab.restAt(start, t0)) : 0.0;
@@ -449,7 +579,7 @@
       if (n === dest) { stats.labels = LT.length; return { labels: labels, li: li, stats: stats }; }
       var t = LT[li], soc = LS[li], slack = LK[li], day = LD[li], water = LW[li];
       if (t >= H) continue;
-      var lonN = graph.lon[n], te = Math.min(t + WAIT, T0 + 3600.0 * (Math.floor((t - T0) / 3600.0) + 1)), d2, k2, s2, sol, dd, good, j, e;
+      var lonN = graph.lon[n], te = Math.min(t + WAIT, T0 + 3600.0 * (Math.floor((t - T0) / 3600.0) + 1)), d2, k2, s2, dd, good, j, e;
       // wait on the water
       if (te <= H + 1e-9) {
         var hsA = field.sample(graph.loc[n], t)[2], hsB = field.sample(graph.loc[n], te)[2];
@@ -457,63 +587,28 @@
           d2 = day; k2 = slack; dd = localDay(t, lonN); good = true;
           if (dd > d2) { if (useSlack && k2 < -EPS_SLACK) good = false; d2 = dd; k2 = 0.0; }
           if (good) {
-            sol = tab.solarWh(n, t, te);
-            s2 = Math.min(C, soc + sol - wd * (te - t) / 3600.0);
+            var ew = tab.energy(n, t, te, true), sol = ew[0], dr = ew[1];
+            s2 = Math.min(C, soc + sol - dr);
             k2 = k2 + (useSlack ? sh * sol : 0.0);
             if (s2 >= R - 1e-9 && okAfter(n, te, s2, k2, d2) && !(n === dest)) {
-              e = ['wait', n, n, t, te, ['waiting'], 0.0, wd * (te - t) / 3600.0, sol, 0.0];
+              e = ['wait', n, n, t, te, ['waiting'], 0.0, dr, sol, 0.0, [[d2, sol, 0.0]]];
               j = add(n, te, s2, k2, d2, true, li, e);
               if (j !== null) { seq++; heap.push([te + heur(n), seq, j]); }
             }
           }
         }
       }
-      // legs
-      var es = graph.edges[n], q;
+      // legs: soaring where the hull makes way, and where a step soared also the steady leg (two edges)
+      var es = graph.edges[n], q, sf;
       for (q = 0; q < es.length; q++) {
-        var m = es[q][0], subM = es[q][1], steps = es[q][2];
-        var tt = t, motor = 0.0, draw = 0.0, solTot = 0.0, to = 0.0, modes = [];
-        s2 = soc; k2 = slack; d2 = day; good = true;
-        if (water) {
-          dd = localDay(tt, lonN);
-          if (dd > d2) { if (useSlack && k2 < -EPS_SLACK) continue; d2 = dd; k2 = 0.0; }
-          to = en.takeoff_wh;
-          s2 -= to;
-          k2 -= useSlack ? to : 0.0;
-          motor += to;
-          tt += en.takeoff_s;
-          if (s2 < R - 1e-9) continue;
-        }
-        for (var z = 0; z < steps.length; z++) {
-          var lc = steps[z][0], brg = steps[z][1];
-          if (tt > H) { why.horizon++; good = false; break; }
-          var smp = field.sample(lc, tt), u = smp[0], v = smp[1], hs = smp[2];
-          if (!(hs <= avoid)) { why.seas++; good = false; break; }
-          var sp = Math.sqrt(u * u + v * v), wf = wrap360(Math.atan2(-u, -v) / D2R);
-          var lg = legs.leg(sp, brg - wf - 180.0);
-          if (lg[0] === 'none') { why.no_leg++; good = false; break; }
-          var dt = subM / lg[1];
-          dd = localDay(tt, lonN);
-          if (dd > d2) {
-            if (useSlack && k2 < -EPS_SLACK) { why.allowance++; good = false; break; }
-            d2 = dd; k2 = 0.0;
+        for (sf = 0; sf < 2; sf++) {
+          var res = fly(n, es[q][0], es[q][1], es[q][2], t, soc, slack, day, water, sf === 1), rr = res[0];
+          if (rr !== null) {
+            j = add(es[q][0], rr[0], rr[1], rr[2], rr[3], false, li, rr[4]);
+            if (j !== null) { seq++; heap.push([rr[0] + heur(es[q][0]), seq, j]); }
           }
-          sol = tab.solarWh(n, tt, tt + dt);
-          var mo = lg[2] * dt / 3600.0, dr = fd * dt / 3600.0;
-          s2 = Math.min(C, s2 + sol - dr - mo);
-          if (useSlack) k2 += sh * sol - mo;
-          motor += mo; draw += dr; solTot += sol; tt += dt;
-          modes.push(lg[0]);
-          if (s2 < R - 1e-9) { why.reserve++; good = false; break; }
-          if (useSlack) {
-            var rest = localDay(tt, lonN) === d2 ? tab.restAt(n, tt) : 0.0;
-            if (k2 + sh * rest < -EPS_SLACK) { why.allowance++; good = false; break; }
-          }
+          if (!res[1]) break;
         }
-        if (!good || !okAfter(m, tt, s2, k2, d2)) continue;
-        e = ['leg', n, m, t, tt, modes, motor, draw, solTot, to];
-        j = add(m, tt, s2, k2, d2, false, li, e);
-        if (j !== null) { seq++; heap.push([tt + heur(m), seq, j]); }
       }
     }
     stats.labels = LT.length;
@@ -527,12 +622,14 @@
     var wps = [], legs = [];
     chain.forEach(function (x) {
       var n = labels.LN[x];
-      wps.push({ node: n, lat: graph.lat[n], lon: graph.lon[n], t: labels.LT[x], soc_wh: labels.LS[x], slack_wh: labels.LK[x], water: labels.LW[x] });
+      wps.push({ node: n, lat: graph.lat[n], lon: graph.lon[n], t: labels.LT[x], soc_wh: labels.LS[x], slack_wh: labels.LK[x],
+        day: labels.LD[x], water: labels.LW[x] });
       var e = labels.LE[x];
       if (e === null) return;
       var modes = e[5], uniq = modes.filter(function (m, i) { return modes.indexOf(m) === i; });
       legs.push({ from: e[1], to: e[2], t0: e[3], t1: e[4], mode: e[0] === 'wait' ? 'waiting' : (uniq.length === 1 ? modes[0] : 'mixed'),
-        modes: modes.slice(), motor_wh: e[6], draw_wh: e[7], solar_wh: e[8], takeoff_wh: e[9], soc_end_wh: labels.LS[x] });
+        modes: modes.slice(), motor_wh: e[6], draw_wh: e[7], solar_wh: e[8], takeoff_wh: e[9], soc_end_wh: labels.LS[x],
+        days: e[10].map(function (d) { return d.slice(); }) });
     });
     return { waypoints: wps, legs: legs };
   }
@@ -554,24 +651,28 @@
     out.net_wh = out.draw_wh + out.motor_wh - out.solar_wh;
     return out;
   }
+  // margins of a route against the strict rules (sim.route.strict_margin)
   function strictMargin(graph, tab, en, wps, legs) {
     var R = en.reserve_wh, socM = Infinity, nightM = Infinity;
-    wps.forEach(function (w) { socM = Math.min(socM, w.soc_wh - R); nightM = Math.min(nightM, w.soc_wh - tab.needAt(w.node, w.t, R, true)); });
-    var s0 = wps[0], days = new Map(), motor = new Map();
-    days.set(localDay(s0.t, s0.lon), tab.dayTotal(s0.node, s0.t) - tab.restAt(s0.node, s0.t));
+    wps.forEach(function (w) { socM = Math.min(socM, w.soc_wh - R); nightM = Math.min(nightM, tab.flyOnMin(w.node, w.t, w.soc_wh) - R); });
+    var s0 = wps[0], s1 = wps[wps.length - 1], sol = new Map(), mot = new Map();
+    sol.set(s0.day, tab.dayTotal(s0.node, s0.t) - tab.restAt(s0.node, s0.t));
     legs.forEach(function (lg) {
-      var d = localDay(lg.t0, graph.lon[lg.from]);
-      days.set(d, (days.has(d) ? days.get(d) : 0.0) + lg.solar_wh);
-      motor.set(d, (motor.has(d) ? motor.get(d) : 0.0) + lg.motor_wh);
+      lg.days.forEach(function (x) {
+        sol.set(x[0], (sol.has(x[0]) ? sol.get(x[0]) : 0.0) + x[1]);
+        mot.set(x[0], (mot.has(x[0]) ? mot.get(x[0]) : 0.0) + x[2]);
+      });
     });
-    var am = Infinity;
-    days.forEach(function (v, d) { am = Math.min(am, en.motor_share * v - (motor.has(d) ? motor.get(d) : 0.0)); });
+    if (localDay(s1.t, s1.lon) === s1.day) sol.set(s1.day, (sol.has(s1.day) ? sol.get(s1.day) : 0.0) + tab.restAt(s1.node, s1.t));
+    var am = Infinity, all = new Set(Array.from(sol.keys()).concat(Array.from(mot.keys())));
+    all.forEach(function (d) { am = Math.min(am, en.motor_share * (sol.has(d) ? sol.get(d) : 0.0) - (mot.has(d) ? mot.get(d) : 0.0)); });
     return [socM, nightM, am];
   }
 
   // plan a route (sim.route.plan): o = {t0, layer, tables, relax, maxPops, relaxPops, settings}
   function plan(field, graph, legs, en, startLL, destLL, o) {
     o = o || {};
+    var st = settingsOf(o.settings);
     var t0 = o.t0 === undefined ? field.t0 : o.t0, layer = o.layer || null;
     var tab = o.tables || new Tables(graph, field, en, layer, { settings: o.settings });
     var sn = nearest(graph, startLL[0], startLL[1]), dn = nearest(graph, destLL[0], destLL[1]), s = sn[0], d = dn[0];
@@ -580,34 +681,39 @@
     if (s === null || d === null || field.sample(graph.loc[s], t0)[2] > en.avoid_hs_m) {
       out.ok = false; out.reason = 1; out.reason_text = REASONS[1]; out.route = null; out.closest = null; return out;
     }
-    var vm = legs.vMax(field.u10Max), so = { vMax: vm, maxPops: o.maxPops || 300000, settings: o.settings };
-    var r = search(graph, field, legs, tab, en, s, d, t0, so);
-    out.stats = r.stats;
-    if (r.li !== null) {
-      var rt = routeOf(graph, r.labels, r.li);
-      out.ok = true; out.reason = 0; out.reason_text = REASONS[0];
-      out.route = { waypoints: rt.waypoints, legs: rt.legs, summary: summarize(rt.legs, rt.waypoints, t0) }; out.closest = null;
-      return out;
+    var vm = legs.vMax(field.u10Max), R = en.reserve_wh, C = en.capacity_wh;
+    out.start_need_wh = tab.needAt(s, t0, R, true);
+    var reason = Math.min(C, en.soc0_wh) < tab.needAt(s, t0, R) - 1e-9 ? 2 : null;
+    out.route = null; out.closest = null;
+    var capped = false;
+    if (reason === null) {
+      var r = search(graph, field, legs, tab, en, s, d, t0, { vMax: vm, maxPops: o.maxPops || st.max_pops, settings: o.settings });
+      out.stats = r.stats;
+      capped = r.stats.capped;
+      if (r.li !== null) {
+        var rt = routeOf(graph, r.labels, r.li);
+        out.ok = true; out.reason = 0; out.reason_text = REASONS[0];
+        out.route = { waypoints: rt.waypoints, legs: rt.legs, summary: summarize(rt.legs, rt.waypoints, t0) };
+        return out;
+      }
     }
     out.ok = false;
-    var R = en.reserve_wh, C = en.capacity_wh, startNeed = tab.needAt(s, t0, R, true);
-    var reason = Math.min(C, en.soc0_wh) < startNeed - 1e-9 ? 2 : null;
-    out.start_need_wh = startNeed; out.route = null; out.closest = null;
     if (o.relax === false) { out.reason = reason || 6; out.reason_text = REASONS[out.reason]; return out; }
-    var skip = false, q;
-    for (q = 0; q < RELAX.length; q++) {
-      var name = RELAX[q][0], kw = RELAX[q][1];
+    var skip = false, q, relax = relaxOf(st), strictReason = reason;
+    for (q = 0; q < relax.length; q++) {
+      var name = relax[q][0], kw = relax[q][1];
       if (skip && kw.share === undefined) continue;
       var rv = R - kw.below * C;
       var tab2 = new Tables(graph, field, en, layer, { reserve: rv, tStart: tab.T0, hours: tab.K, settings: o.settings });
-      var r2 = search(graph, field, legs, tab2, en, s, d, t0, { vMax: vm, maxPops: o.relaxPops || 150000, reserve: rv, share: kw.share, settings: o.settings });
-      if (r2.li === null) { skip = r2.stats.pruned.reserve === 0 && r2.stats.pruned.night === 0; continue; }
+      var r2 = search(graph, field, legs, tab2, en, s, d, t0, { vMax: vm, maxPops: o.relaxPops || st.relax_pops, reserve: rv, share: kw.share, settings: o.settings });
+      if (r2.li === null) { skip = r2.stats.pruned.reserve === 0 && r2.stats.pruned.night === 0; capped = capped || r2.stats.capped; continue; }
       var rt2 = routeOf(graph, r2.labels, r2.li), mg = strictMargin(graph, tab, en, rt2.waypoints, rt2.legs);
       out.closest = { relaxation: name, waypoints: rt2.waypoints, legs: rt2.legs, summary: summarize(rt2.legs, rt2.waypoints, t0),
         reserve_margin_wh: mg[0], night_margin_wh: mg[1], allowance_margin_wh: mg[2], stats: r2.stats };
-      if (reason === null) reason = mg[1] < -1e-6 ? 3 : mg[0] < -1e-6 ? 4 : mg[2] < -1e-6 ? 5 : 7;
+      if (reason === null) reason = mg[0] < -1e-6 ? 4 : mg[1] < -1e-6 ? 3 : mg[2] < -1e-6 ? 5 : 7;
       break;
     }
+    if (strictReason === null && capped) reason = 8;
     if (reason === null) reason = 6;
     out.reason = reason; out.reason_text = REASONS[reason];
     return out;
@@ -620,7 +726,7 @@
     return e;
   }
 
-  var ROUTE = { DEFAULTS: DEFAULTS, RELAX: RELAX, REASONS: REASONS, sunSinElev: sunSinElev, modelHourMean: modelHourMean,
+  var ROUTE = { DEFAULTS: DEFAULTS, relaxOf: relaxOf, REASONS: REASONS, sunSinElev: sunSinElev, modelHourMean: modelHourMean,
     bilinear: bilinear, CorridorField: CorridorField, SolarLayer: SolarLayer, gcKm: gcKm, gcPoint: gcPoint, gcBearing: gcBearing,
     wrap360: wrap360, wrap180: wrap180, ringOffsets: ringOffsets, landTester: landTester, corridorGraph: corridorGraph, nearest: nearest,
     LegModel: LegModel, Tables: Tables, localDay: localDay, search: search, routeOf: routeOf, summarize: summarize,

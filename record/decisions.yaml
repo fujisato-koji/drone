@@ -197,3 +197,11 @@ items:
     touches:
       - Q-048
       - R-01
+  - id: D-023
+    date: 2026-11-01
+    by: owner
+    what: "Nights: a low-power mode at night (the avionics at about 1.5 W, assumed, with the sensors that only the low flight and the wave rides need switched off while the sun is below the horizon) and a battery of about 0.35 kg (assumed); seasons and latitudes where a day's solar does not cover a day's draw are avoided."
+    touches:
+      - Q-083
+      - Q-012
+      - R-08
