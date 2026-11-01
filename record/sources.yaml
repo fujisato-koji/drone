@@ -1607,3 +1607,19 @@ items:
     read: partial
     retrieved: 2026-11-01
     note: "Read from the start to the section on reaching a limit: the free API allows 600 calls a minute, 5,000 an hour and 10,000 a day, generally shared by one public address; a location costs max(1, V/10 x max(1, D/14)) calls with V the variables times the models and D the days of its range, at least one call per location, added over the locations of a request; the cost of a request comes back in the X-RateLimit-Cost header; a request that starts and fails costs one call."
+  - id: P174
+    class: P
+    title: "General Solar Position Calculations, NOAA Global Monitoring Division"
+    url: "https://gml.noaa.gov/grad/solcalc/solareqns.PDF"
+    license: "unknown (a work of the US government)"
+    read: full
+    retrieved: 2026-11-01
+    note: "Two pages: the fractional year from the day of the year and the hour (366 in leap years), the equation of time (minutes) and the solar declination (radians) as Fourier series of it, the true solar time from the time offset (eqtime + 4 longitude - 60 timezone), the hour angle (tst / 4 - 180), the cosine of the zenith from the latitude, the declination and the hour angle, the azimuth, and the sunrise and sunset hour angle with a zenith of 90.833 deg for refraction and the solar disk. sim/route.py uses these formulas."
+  - id: P175
+    class: P
+    title: "Open-Meteo historical weather API, ERA5 hourly surface shortwave radiation (models=era5, 0.25 deg) at the route planner's solar points of the six world cases"
+    url: "https://open-meteo.com/en/docs/historical-weather-api"
+    license: "API data CC BY 4.0 (https://open-meteo.com/en/licence), free API for non-commercial use only (https://open-meteo.com/en/terms); ERA5 CC BY 4.0 in the Copernicus Climate Data Store since 2025-07-02"
+    read: excerpt
+    retrieved: 2026-11-01
+    note: "Excerpt: shortwave_radiation (cell_selection=sea) at every second point of each case's corridor (60 points), hourly from a day before the case's start to 36 h after its corridor ends, from https://archive-api.open-meteo.com/v1/archive in one request per case; the URLs, retrieval times and sha256 are in sim/viewer/route/solar_<case>.js. The documentation page defines the variable as the shortwave solar radiation as average of the preceding hour, equal to the total global horizontal irradiation, in W/m2 (read partially, the variable table, the ERA5 availability and cell_selection). Attribution asked for: Weather data by Open-Meteo.com; generated using Copernicus Climate Change Service information."

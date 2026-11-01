@@ -180,3 +180,20 @@ items:
       - Q-077
       - Q-068
       - D-019
+  - id: D-021
+    date: 2026-11-01
+    by: owner
+    what: "The strategic layer plans the route from a start to a destination in the world seas as the fastest arrival within the energy rules. The drone keeps flying through the night, so the energy the planner may spend comes from the day's solar generation, not from a fixed battery amount: an hourly battery simulation along the route (state of charge = previous + solar yield - avionics with the sensor set - motor - take-off) within the battery's usable capacity (battery.mass_kg times lit.cell_p45b_wh_per_kg times a pack fraction and a usable depth); the state of charge never falls below a reserve, in particular through each night (the battery at sunset carries the avionics to sunrise plus the reserve); in each day the motor may use at most a share of that day's solar generation, by default 0.5 (route.motor_share). The share and the battery capacity are inputs with these defaults; the limit is settable. When no route keeps the rules, the planner reports the reason and the route that comes closest. This replaces the first form of the request (the fastest arrival within a fixed trip energy limit)."
+    touches:
+      - Q-066
+      - Q-012
+      - R-08
+      - battery.mass_kg
+      - route.motor_share
+  - id: D-022
+    date: 2026-11-01
+    by: owner
+    what: "The benchmark of the strategic layer and of the aircraft is a circuit around the island of the home operating area (private:loc-01) instead of a circumnavigation of the globe: about 20 km offshore, on the country's side of the median line (its territorial sea or its exclusive economic zone), crossing land where no sea passage keeps these rules, with no landing on the water where sea ice is likely; detours around weak wind are allowed. The loop, the waypoints, the sea-ice months and the weather data are kept in the owner's private store."
+    touches:
+      - Q-048
+      - R-01

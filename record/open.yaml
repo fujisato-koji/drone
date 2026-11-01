@@ -933,3 +933,37 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-11-01
+  - id: Q-081
+    kind: question
+    text: "The route planner (docs/02-form.md#route-planning) leaves out the energy that riding the swell gives (wave-slope soaring and the crest ride of docs/02-form.md#wave-loop): the world seas' swell is irregular (and a historical case's swell is a lower bound, Q-079), while the wave library and the pilot fly a regular swell only. In a calm sea with swell (the case swell_no_wind) the plan therefore takes the motor or waits where the drone might ride. Settle how the leg model credits the wave ride: from closed-loop flights over an irregular swell (the estimator's runs of docs/02-form.md#sea-estimation lost the phase in long rides), or a library over irregular seas, with the swell's height, period and direction against the course."
+    waits_for: assistant
+    affects:
+      - Q-013
+      - Q-066
+      - D-021
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-01
+  - id: Q-082
+    kind: question
+    text: "The route planner's default energy limit and method rest on assumed values (docs/02-form.md#route-planning): the cells' share of the battery mass route.pack_fraction (three P45B cells of P50's mass in battery.mass_kg), the usable depth route.usable_depth, the reserve route.reserve_fraction (a margin, for the owner to set), the take-off route.takeoff_run_s at full thrust (the take-off of R-05 is not chosen; P82 gives the bird's run), the sensor set flown (est.set_tips_rtk_power_w counted in full while flying, though ds.avionics_power_w may already hold its GNSS receiver and IMU), and the planner's discretization: route.refine, route.rings, route.sub_km, route.wait_h, route.lookahead_h, route.eps_soc_wh, the solar layer's route.solar_every and route.q_ghi_w_m2. Settle the battery factors from the pack chosen in step 1.5 and the cells' cycle life at a depth over a year of daily cycles (P50 or a test), the reserve by the owner, the take-off by a test of R-05, and the discretization by a convergence study (the results against finer nodes, more rings, shorter waits and a smaller tolerance)."
+    waits_for: assistant, then owner
+    affects:
+      - D-021
+      - R-05
+      - R-08
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-01
+  - id: Q-083
+    kind: finding
+    text: "Under D-021 the default battery does not carry one night of flight at any of the six world cases (docs/02-form.md#route-planning): the night's draw at route.flight_draw_w, from route.so_summer_quiet_night_wh in the Southern Ocean summer to route.so_winter_low_night_wh in its winter, exceeds the usable capacity route.capacity_wh less the reserve route.reserve_wh in every case, so at the default no route keeps the rules from any start, whatever the wind (in the experiments no plan at the default or at half the capacity keeps them). Carrying the night with the reserve needs route.so_summer_quiet_capacity_needed_wh to route.so_winter_low_capacity_needed_wh of usable capacity, a battery of route.so_summer_quiet_battery_needed_kg to route.so_winter_low_battery_needed_kg against battery.mass_kg; at double the capacity the summer and tropical cases have routes. In the two winter cases the day's solar yield (route.so_winter_low_solar_day_albatross_wh, route.np_winter_solar_day_albatross_wh) is below a day of the draw (route.draw_day_wh), so no battery carries those seasons for days. Decide among: a larger battery (its mass against ds.mass_max_kg), less power at night (sleeping avionics, the sensors off while not flying low), spending the night on the water where the sea allows (ds.avionics_power_w alone), more solar area, or a change of D-021's night rule."
+    waits_for: owner
+    affects:
+      - D-021
+      - battery.mass_kg
+      - R-08
+      - Q-012
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-01
