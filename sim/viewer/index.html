@@ -241,7 +241,14 @@ const I18N = {
     from: '風の吹いてくる向き', fromTip: '風が吹いてくる方位です。0 deg が北、90 deg が東です。',
     sec2: '② 機体を飛ばす', sec2Tip: '上から順に選んで、発進を押します。機体は観測柱の位置から発進します。MPC は、いま表示している波（強い順に 48 成分）と、いまの平均の風を使って先の飛行を予測します。先の突風は知りません。',
     stAc: '1. 機体', flAcTip: '飛ばす機体を選びます。',
-    stHead: '2. 向き', flHeadTip: '発進するときの機体の向きです。風を基準に決まります。',
+    stHead: '2. 向き', flHeadTip: '発進するときの機体の向きで、目的地がないときは飛ぶ進路でもあります。どちらも風を基準に決まります。飛行中に変えると、次の計画からその進路の周期軌道に切り替えます（モータ補助が「あり」で、風だけでは進めない進路では、風の三角形で向けた動力の定常飛行）。周期軌道どうしの切り替えは、新しい周期軌道が機体の状態に合う位相を、最大 15 秒待ちます。どの位相でも合わないときは、たがいに合う周期軌道を順にたどって切り替えます。飛行中は、周期軌道と定常飛行のあいだでは移りません。周期軌道で飛んでいれば、モータが要る進路でも、その進路へいちばん進む周期軌道を飛びます。定常飛行で飛んでいれば、定常飛行のまま、1 秒に 10 度までずつ向きを変えます。「参照軌道の向き」は、風下から 20 度の参照の進路を飛び、その最初の周期軌道のいちばん高い点の向きで発進します。',
+    flHeadTgtTip: '目的地を使うときは、航法が向きを決めるので、ここは選べません。目的地を「なし」にすると選べます。',
+    flHeadRegTip: '規則波では、進路はうねりの進む向きに決まっているので、ここは選べません。',
+    flTgtLockTip: '飛行中は、目的地を使うかどうかを変えられません。目的地を使う飛行では、海面をクリックすると目的地が動きます。',
+    crsNow: (h) => '「' + h + '」の進路', crsPend: (h, s) => '「' + h + '」へ切り替え待ち ' + s + ' 秒',
+    crsDone: (h, s) => '「' + h + '」の進路、変更から ' + s + ' 秒で切り替え',
+    crsSteady: '、動力の定常飛行', crsNone: '、風だけでは進めないので、いちばん進む周期軌道',
+    crsHeld: '（周期軌道から動力の定常飛行へは、飛行中には移りません）', crsHeldSteady: '（定常飛行から周期軌道へは、飛行中には移りません）',
     hUp: '風上へ', hDown: '風下へ', hLeft: '風を横切って左へ', hRight: '風を横切って右へ', hRef: '参照軌道の向き',
     stMotor: '3. モータ補助', flMotorTip: 'モータの推力を、MPC が選ぶ三つ目の操作に加えます。「あり」にすると、MPC は必要な場面でだけ短くモータを回して、飛行を延ばします。プロペラは、回していないときは折りたたまれ、その分の抵抗が加わります。',
     motorOff: 'なし', motorOn: 'あり',
@@ -309,7 +316,7 @@ const I18N = {
     f_tgt: '目的地までの距離', f_tgt_tip: '機体から目的地までの水平距離です。',
     f_vmg: '目的地へ近づく速さ（VMG）', f_vmg_tip: '目的地までの距離が縮む速さです。直近の 30 秒の平均で、ジグザグの途中は小さく見えます。',
     f_tacks: '向き変えの回数', f_tacks_tip: '航法が周期軌道の組を替えた回数です。風上へ進むときのジグザグの折り返しと、風下で左右を替える回数を合わせて数えます。',
-    f_nav: '航法の状態', f_nav_tip: '直進は目的地へまっすぐ、風上へのジグザグと風下での交互は、二つの周期軌道を交互に飛んでいる状態です。進めないは、どの周期軌道の組でも目的地へ近づけない状態です。',
+    f_nav: '航法の状態', f_nav_tip: '直進は目的地へまっすぐ、風上へのジグザグと風下での交互は、二つの周期軌道を交互に飛んでいる状態です。進めないは、どの周期軌道の組でも目的地へ近づけない状態です。目的地がないときは、「向き」の進路と、その変更が切り替えを待っているか、変更から何秒で切り替わったかを示します。',
     nv_direct: '直進', nv_up: '風上へのジグザグ', nv_down: '風下での交互', nv_none: '進めない', nv_arrived: '到着',
     nvMotor: '（モータ周期）', endA: '目的地に着いた',
     mpcMs: (l, m) => '直近 ' + l + ' ms、平均 ' + m + ' ms', mpcSel: (u, c, set) => 'u10 ' + u + ' m/s、chi ' + c + ' deg、余裕 ' + set,
@@ -434,7 +441,14 @@ const I18N = {
     from: 'Wind from', fromTip: 'Direction the wind comes from. 0 deg is north, 90 deg is east.',
     sec2: '2. Fly an aircraft', sec2Tip: 'Choose from the top down, then press Launch. The aircraft launches at the mast. The MPC predicts the flight with the waves on screen (the 48 strongest components) and the mean wind of the moment; it does not know the gusts ahead.',
     stAc: '1. Aircraft', flAcTip: 'Chooses the aircraft to fly.',
-    stHead: '2. Heading', flHeadTip: 'Heading at launch, relative to the wind.',
+    stHead: '2. Heading', flHeadTip: 'The heading at launch and, without a destination, the course flown, both relative to the wind. A change in flight takes effect from the next plan: the planner turns to the cycle of the new course (with Motor assist On, on a course the wind alone makes no progress on, a steady powered leg aimed by the wind triangle). A change between soaring cycles waits up to 15 s for the phase where the new cycle matches the aircraft\'s state, and where the new cycle matches at no phase it goes through cycles that match one another. In flight the kind of leg does not change: a soaring flight flies a course that needs the motor on the soaring cycle that gets furthest along it, and a steady powered leg stays one, turning by up to 10 deg a second. "Reference heading" flies the reference course 20 deg off downwind and launches on the heading of its first cycle at the cycle\'s highest point.',
+    flHeadTgtTip: 'With a destination the navigation decides the heading, so this cannot be chosen; set the destination to "None" to choose it.',
+    flHeadRegTip: 'Over the regular swell the course is fixed along the swell, so this cannot be chosen.',
+    flTgtLockTip: 'Whether a destination is used cannot be changed while flying; in a flight with a destination a click on the sea moves it.',
+    crsNow: (h) => 'course "' + h + '"', crsPend: (h, s) => 'changing to "' + h + '", waiting ' + s + ' s',
+    crsDone: (h, s) => 'course "' + h + '", changed ' + s + ' s after the request',
+    crsSteady: ', steady powered leg', crsNone: ', no progress on the wind alone: the cycle that gets furthest',
+    crsHeld: ' (a soaring flight does not turn into a steady powered leg in flight)', crsHeldSteady: ' (a steady leg does not turn into a soaring cycle in flight)',
     hUp: 'Upwind', hDown: 'Downwind', hLeft: 'Crosswind, left', hRight: 'Crosswind, right', hRef: 'Reference heading (rotated into the wind)',
     stMotor: '3. Motor assist', flMotorTip: 'Adds the motor thrust as a third control the MPC chooses. With "On" the MPC runs the motor in short bursts only where needed, to extend the flight. The propeller is folded when the motor is off, which adds drag.',
     motorOff: 'Off', motorOn: 'On',
@@ -502,7 +516,7 @@ const I18N = {
     f_tgt: 'Distance to destination', f_tgt_tip: 'Horizontal distance from the aircraft to the destination.',
     f_vmg: 'Speed towards destination (VMG)', f_vmg_tip: 'How fast the distance to the destination shrinks, averaged over the last 30 s; it looks small in the middle of a zigzag.',
     f_tacks: 'Turns (tacks and gybes)', f_tacks_tip: 'How often the navigation switched the cycle it flies: the turns of the zigzag upwind plus the changes of side downwind.',
-    f_nav: 'Navigation state', f_nav_tip: 'Direct is straight at the destination; upwind tacking and downwind gybing fly two cycles in turn; no progress means no pair of cycles gets closer.',
+    f_nav: 'Navigation state', f_nav_tip: 'Direct is straight at the destination; upwind tacking and downwind gybing fly two cycles in turn; no progress means no pair of cycles gets closer. Without a destination it shows the course of the heading, whether a change of it still waits, and how many seconds after the change it took effect.',
     nv_direct: 'direct', nv_up: 'upwind tacking', nv_down: 'downwind gybing', nv_none: 'no progress', nv_arrived: 'arrived',
     nvMotor: ' (motor cycle)', endA: 'Reached the destination',
     mpcMs: (l, m) => 'last ' + l + ' ms, mean ' + m + ' ms', mpcSel: (u, c, set) => 'u10 ' + u + ' m/s, chi ' + c + ' deg, margins ' + set,
@@ -939,6 +953,13 @@ function mpcOnMessage(e) {
   MP.last = m.ms; MP.sum += m.ms; MP.n++;
   MP.info = m.info;
   if (FL.wave) waveEntryCheck(m.info);
+  if (FL.log && !FL.wave) {   // the cycles flown, for viewerFlight
+    const k = infoKey(m.info);
+    if (!FL.log.length || FL.log[FL.log.length - 1].key !== k) FL.log.push({ el: FL.el, t0: m.t0, key: k, match: m.info.matchDist });
+  }
+  if (FC.on && FC.pend && FC.pend.t !== null && m.t0 >= FC.pend.t - 1e-9 && FC.cmd && legFlown(FC.cmd.goal, m.info)) {
+    FC.done = { head: FC.pend.head, dt: m.t0 - FC.pend.t }; FC.pend = null;   // the change of course took effect
+  }
   for (let i = 0; i < PLAN_PTS; i++) planPos.set([m.path[6 * i], m.path[6 * i + 2], -m.path[6 * i + 1]], 3 * i);
   planGeo.attributes.position.needsUpdate = true;
 }
@@ -972,7 +993,8 @@ function mpcRequest(t) {
     world: { kind: kind, wind: { ustar: W.ustar, z0: W.z0, ex: W.ex, ey: W.ey, karman: C.karman },
       stokes: STOKES, maxComponents: MPC_MAXC },
     u10: W.u10, chiDeg: MPC_CHI };   // W.u10 and W.ustar: the mean wind of this moment, no gusts
-  if (NV.on && NV.cmd) navRequestFields(req);   // the navigator names the cycle (or a steady motor leg)
+  if (NV.on && NV.cmd) legRequestFields(NV.cmd, req);   // the navigator names the cycle (or a steady motor leg)
+  else if (FC.on && FC.cmd) legRequestFields(FC.cmd, req);   // so does the free course
   if (kind === 'truth') {
     req.world.comps = {};
     for (const key of ['a', 'k', 'omega', 'phase', 'dx', 'dy', 'urel']) req.world.comps[key] = CO[key].slice(0, N);
@@ -1035,16 +1057,67 @@ function navStep(t) {
   }
   return cmd;
 }
-function navCycleKey() {
-  const pt = NV.cmd.point;
+function legCycleKey(cmd) {
+  const pt = cmd.point;
   return { kind: pt.kind, u10: pt.entry.u10, chi_deg: pt.entry.chi_deg, mirror: pt.side < 0 };
 }
-// fields of a planner request that name the navigator's choice: a library cycle, or the entry of a steady motor leg
-function navRequestFields(req) {
-  const pt = NV.cmd.point;
-  if (pt.steady) req.entry = NAV.steadyEntry(pt); else req.cycle = navCycleKey();
-  req.guideSig = [3.0, 3.0, 0.15, 0.1];   // the heading is held to 0.1 rad (sim.mpc.NAV_GUIDE_SIG)
+// fields of a planner request that name the leg of a navigator's or a free course's command: a library cycle, or
+// the entry of a steady motor leg
+function legRequestFields(cmd, req) {
+  const pt = cmd.point;
+  if (pt.steady) req.entry = NAV.steadyEntry(pt); else req.cycle = legCycleKey(cmd);
+  req.guideSig = NAV_GUIDE_SIG;
 }
+// whether a plan's info shows a point's leg flown (and not the cycle before it, held for a phase match)
+function legFlown(pt, info) {
+  if (pt.steady) return info.marginSet === 'steady';
+  return info.kind === pt.kind && info.u10 === pt.entry.u10 && info.chiDeg === pt.entry.chi_deg && !!info.mirror === (pt.side < 0);
+}
+const NAV_GUIDE_SIG = [3.0, 3.0, 0.15, 0.1];   // the heading is held to 0.1 rad (sim.mpc.NAV_GUIDE_SIG)
+// the cycle a plan's info names, as FreeCourse.step wants it
+const infoFlown = (info) => !info ? null : info.marginSet === 'steady' ? 'steady' : { kind: info.kind, u10: info.u10, chi_deg: info.chiDeg, mirror: !!info.mirror };
+const infoKey = (f) => f.marginSet === 'steady' ? 'steady' : f.kind + ':' + f.u10 + ':' + f.chiDeg + ':' + (f.mirror ? 'm' : 'n');
+const legCycle = (cmd) => new MPC.Cycle(cmd.point.steady ? NAV.steadyEntry(cmd.point) : cmd.point.entry, cmd.point.side < 0);
+
+// ---------------------------------------------------------------- free course (no destination)
+// Without a destination the panel's heading is also the course, relative to the wind: NAV.FreeCourse picks the
+// navigator's straight leg along it (the soaring cycle that makes good the most, else with the motor a steady leg
+// aimed by the wind triangle; see its notes). It is read at launch and again whenever it changes in flight; the leg
+// is chosen afresh at the next flight step, every NAV_EVERY_S (every second on a steady leg) and at every plan while
+// a change goes through intermediate cycles, and the worker's planner flies it as it flies the navigator's (the
+// same request and settings): a change between soaring cycles waits for the phase where the new cycle matches the
+// state (MPC.Controller, SWITCH_MATCH_MAX for at most SWITCH_MAX_WAIT_S), and FreeCourse chains it through cycles
+// that match pairwise (MPC.cycleLink within COURSE_LINK_FRAC of SWITCH_MATCH_MAX, so that the aircraft's own deviation
+// from its cycle leaves room); the kind of leg does not change in flight, and a steady leg turns at a limited rate
+// (viewer.steady_turn_deg_per_s, Q-081).
+// 'ref' is the course of the Python experiments, MPC_CHI off downwind, launched on its first cycle's heading.
+const COURSE_DIR = { up: [-1, 0], down: [1, 0], left: [0, 1], right: [0, -1],
+  ref: [Math.cos(MPC_CHI * Math.PI / 180), Math.sin(MPC_CHI * Math.PI / 180)] };   // wind frame: x downwind, y to its left
+const COURSE_LINK_FRAC = 0.5;   // viewer.course_link_frac: the share of SWITCH_MATCH_MAX two chained cycles must match within
+const HEAD_LABEL = { up: 'hUp', down: 'hDown', left: 'hLeft', right: 'hRight', ref: 'hRef' };
+const FC = { on: false, ch: null, cmd: null, head: null, pend: null, done: null };
+// the table of a flight without a destination: the navigator's (the soaring cycles of the motor library, which
+// include the old table's, and its motor cycles with the motor on), else the old table
+function freeTable(name, motorOn) {
+  const es = navEntries(name, motorOn);
+  return es.length ? es : libFor(name, motorOn);
+}
+// the course chooser and the first leg of a flight without a destination; with a table that has no mean ground
+// velocities (the old table alone) the course stays at MPC_CHI as before, and the chooser is null
+function freeStart(name, motorOn, head, lib) {
+  if (!lib.every((e) => e.vx !== undefined)) return { ch: null, cmd: null, c0: MPC.pickCycle(lib, W.u10, MPC_CHI * Math.PI / 180) };
+  const cyc = {}, cycOf = (p) => cyc[p.key] || (cyc[p.key] = new MPC.Cycle(p.entry, p.side < 0));
+  const ch = new NAV.FreeCourse(new NAV.HullSource(lib), {
+    steady: motorOn ? new NAV.SteadyModel(NAV.steadyParams(MPC.makeAircraft(AIRCRAFT[name]), MPC.MOTOR)) : null,
+    link: (a, b) => MPC.cycleLink(cycOf(a), cycOf(b), NAV_GUIDE_SIG), linkMax: COURSE_LINK_FRAC * MPC.SWITCH_MATCH_MAX });
+  const cmd = ch.step(0, W.u10, windFromDeg(), COURSE_DIR[head] || COURSE_DIR.down);
+  return { ch: ch, cmd: cmd, c0: legCycle(cmd) };
+}
+function courseStep(t) { FC.cmd = FC.ch.step(t, W.u10, windFromDeg(), COURSE_DIR[FC.head], infoFlown(MP.info)); }
+$('flHead').addEventListener('change', () => {   // in flight: the new course from the next flight step
+  if (!FL.on || !FC.on) return;
+  FC.head = $('flHead').value; FC.pend = { head: FC.head, t: null, el: FL.el }; FC.done = null;
+});
 // the sector of directions the soaring cycles alone can fetch the destination from: two laylines
 function navLaylines() {
   const hull = NV.src.at(W.u10), psi = NAV.psiOf(windFromDeg());
@@ -1193,7 +1266,7 @@ if (!AIRCRAFT || !Object.keys(AIRCRAFT).length) {
   $('flAc').innerHTML = names.map((n) => '<option>' + n + '</option>').join('');
   const showAc = () => {
     if (ENV.regular) { flNoteFn = () => ''; renderFl(); preloadSea(); return; }
-    const es = HAVE_MPC ? libFor($('flAc').value, $('flMotor').value === 'on') : null;
+    const es = HAVE_MPC ? freeTable($('flAc').value, $('flMotor').value === 'on') : null;
     const ks = es ? [...new Set(es.map((x) => x.u10))].sort((a, b) => a - b) : [];
     flNoteFn = () => !HAVE_MPC ? tx('libMissing') : es && es.length ? tx('mpcLibAt', ks.join(', ')) : tx('mpcNoLib'); renderFl();
   };
@@ -1218,7 +1291,15 @@ function syncTgt() {
   if (!tgtMode()) { tgtMark.visible = false; layLines.forEach((l) => { l.visible = false; }); NV.layKey = ''; }
   else if (NV.target) tgtMark.visible = true;
   if (tgtMode()) navSource();
+  syncHead();
   renderFl();
+}
+// the heading applies without a destination and outside the regular swell; with a destination the navigation decides
+function syncHead() {
+  const el = $('flHead'), lb = el.previousElementSibling;
+  el.disabled = !AIRCRAFT || !Object.keys(AIRCRAFT).length || ENV.regular || tgtMode();
+  el.dataset.t = lb.dataset.t = ENV.regular ? 'flHeadRegTip' : tgtMode() ? 'flHeadTgtTip' : 'flHeadTip';
+  el.title = lb.title = tx(el.dataset.t);
 }
 $('flTgt').addEventListener('change', syncTgt);
 $('flAc').addEventListener('change', () => { if (tgtMode()) { navSource(); NV.layKey = ''; } });
@@ -1232,13 +1313,13 @@ $('tgtSet').addEventListener('click', () => {   // by distance and direction fro
 syncTgt();
 function launch() {
   if (!AIRCRAFT) return;
-  if (ENV.regular) { launchSwell(); return; }
+  if (ENV.regular) { FC.on = false; launchSwell(); return; }   // the course along the swell (the heading does not apply)
   FL.wave = null;
   const name = $('flAc').value, ac = AIRCRAFT[name];
   if (!HAVE_MPC) { flNoteFn = () => tx('libMissing'); renderFl(); return; }
   const useNav = tgtMode();
   if (useNav && !NV.target) { flNoteFn = () => tx('needTarget'); renderFl(); return; }
-  const lib = useNav ? navSource() : libFor(name, $('flMotor').value === 'on');
+  const lib = useNav ? navSource() : freeTable(name, $('flMotor').value === 'on');
   if (!lib || !lib.length) { flNoteFn = () => tx('mpcNoLib'); renderFl(); return; }
   if (!mpcEnsureWorker()) return;
   const p = launchPoint();
@@ -1246,29 +1327,35 @@ function launch() {
   // the highest node of the library cycle the planner starts from
   NV.on = false; NV.cmd = null; NV.tacks = 0; NV.hist = []; NV.trackN = 0; NV.tackN = 0;
   trackGeo.setDrawRange(0, 0); tackGeo.setDrawRange(0, 0);
-  let c0 = MPC.pickCycle(lib, W.u10, MPC_CHI * Math.PI / 180);
+  const head = $('flHead').value;
+  let c0;
+  FC.on = false; FC.ch = null; FC.cmd = null; FC.pend = null; FC.done = null;
   if (useNav) {   // the first cycle is the navigator's
     NV.nav = new NAV.HullNavigator(NV.src, { arrivalRadius: NAV_RADIUS,
       steady: $('flMotor').value === 'on' ? new NAV.SteadyModel(NAV.steadyParams(MPC.makeAircraft(ac), MPC.MOTOR)) : null });
     NV.nav.reset();
     const cmd0 = NV.nav.step(0, [p.x, p.y], W.u10, windFromDeg(), [NV.target.x, NV.target.y]);
     NV.cmd = cmd0; NV.on = true;
-    c0 = new MPC.Cycle(cmd0.point.steady ? NAV.steadyEntry(cmd0.point) : cmd0.point.entry, cmd0.point.side < 0);
+    c0 = legCycle(cmd0);
+  } else {   // the first leg of the course the heading names
+    const st = freeStart(name, $('flMotor').value === 'on', head, lib);
+    c0 = st.c0;
+    if (st.ch) { FC.ch = st.ch; FC.cmd = st.cmd; FC.head = head; FC.on = true; }
   }
   let k = 0;
   for (let i = 1; i < c0.z.length; i++) if (c0.z[i] > c0.z[k]) k = i;
   const zr = c0.z[k], V = c0.V[k], gam = c0.g[k], psiRef = c0.psi[k];
-  const head = $('flHead').value;
-  let psi = psiW + Math.PI;   // upwind
-  if (head === 'down') psi = psiW;
+  let psi = psiW + Math.PI;   // upwind; with a destination the heading of the navigator's first cycle
+  if ((head === 'ref' || useNav) && psiRef !== null) psi = psiRef + psiW;
+  else if (head === 'down') psi = psiW;
   else if (head === 'left') psi = psiW + Math.PI / 2;
   else if (head === 'right') psi = psiW - Math.PI / 2;
-  else if ((head === 'ref' || useNav) && psiRef !== null) psi = psiRef + psiW;
   FL.ac = ac; FL.end = null; FL.act = null;
   FL.motor = $('flMotor').value === 'on';
   FL.reflex = FL.motor && $('flReflex').checked;
   FL.rx = { on: false, n: 0, eJ: 0 };
   FL.T = 0; FL.eJ = 0; FL.nOn = 0; FL.nStep = 0;
+  FL.mg = { vMin: Infinity, tvMin: 0, stallS: 0, cosMin: Infinity, tipMin: Infinity }; FL.log = [];   // margins and cycles flown (viewerFlight)
   MP.rworld = null;
   FL.rf = FL.reflex ? new MPC.Reflex(ac, { foldSwitch: 'state' }) : null;
   if (FL.motor) {
@@ -1280,7 +1367,7 @@ function launch() {
     const A = libActuators();
     FL.act = new MPC.Actuators(ac, { rateModel: A.rate_model, tau: A.tau_s, clRate: A.cl_rate_per_s, kPb2v: A.k_pb2v, delay: A.delay_s });
     MP.worker.postMessage({ type: 'init', ac: ac, entries: lib,
-      settings: FL.motor ? { motor: true, energyLevel: $('flPw').value, thrustSampling: 'sustained', foldSwitch: 'state', thrustUpdate: useNav ? 'raw' : 'clipped', hCeil: useNav ? 28.5 : null } : {}, actuators: A });
+      settings: FL.motor ? { motor: true, energyLevel: $('flPw').value, thrustSampling: 'sustained', foldSwitch: 'state', thrustUpdate: useNav || FC.on ? 'raw' : 'clipped', hCeil: useNav || FC.on ? 28.5 : null } : {}, actuators: A });   // named legs: the navigator's settings (sim.mpc.NAV_PKW)
   }
   FL.s = [p.x, p.y, fSurface(p.x, p.y, T) + zr, V, gam, psi];
   FL.cl = 0; FL.mu = 0; FL.acc = 0; FL.el = 0; FL.trail = []; FL.splash = null; FL.started = true; FL.on = true;
@@ -1330,6 +1417,11 @@ function flightAdvance(dtWanted, t0) {
           if (NV.hist.length > 31) NV.hist.shift();
         }
       }
+      if (FC.on) {   // the free course: a change of the heading at once, else every NAV_EVERY_S (1 s on a steady leg)
+        if (FC.pend && FC.pend.t === null) { courseStep(t); FC.pend.t = t; }
+        else if (Math.round(FL.el / FDT) % Math.round((FC.cmd && FC.cmd.point.steady ? 1 : NAV_EVERY_S) / FDT) === 0
+          || (FC.cmd && FC.cmd.point !== FC.cmd.goal && Math.round(FL.el / FDT) % MPC_EVERY === 0)) courseStep(t);
+      }
       if (Math.round(FL.el / FDT) % MPC_EVERY === 0) mpcRequest(t);
       const ac = FL.ac, V = FL.s[3];
       let pc = mpcControls(t);
@@ -1366,6 +1458,11 @@ function flightAdvance(dtWanted, t0) {
     }
     // with MPC the wingtip counts too (the planner's clearance is the geometric wingtip height)
     const tipH = hgt - 0.5 * FL.ac.span * Math.sin(Math.abs(FL.mu)) * Math.cos(FL.s[4]);
+    if (FL.mg) {
+      if (FL.s[3] < FL.mg.vMin) { FL.mg.vMin = FL.s[3]; FL.mg.tvMin = FL.el; }
+      if (FL.s[3] < FL.ac.v_stall) FL.mg.stallS += FDT;
+      FL.mg.cosMin = Math.min(FL.mg.cosMin, Math.cos(FL.s[4])); FL.mg.tipMin = Math.min(FL.mg.tipMin, tipH);
+    }
     if (hgt < 0 || tipH < 0) {
       const tip = hgt >= 0;
       FL.splash = { x: FL.s[0], y: FL.s[1], z: FL.s[2], t: FL.el, tip: tip };
@@ -1423,7 +1520,15 @@ function updateFlightView() {
     const md = FL.end === 'A' ? 'arrived' : NV.cmd.mode;
     const nm = { 'direct': 'nv_direct', 'upwind tacking': 'nv_up', 'downwind gybing': 'nv_down', 'no progress': 'nv_none', 'arrived': 'nv_arrived' }[md];
     setFl('nav', tx(nm) + (NV.cmd.kind === 'motor' && md !== 'arrived' ? tx('nvMotor') : ''));
-  } else { setFl('tgt', '-'); setFl('vmg', '-'); setFl('tacks', '-'); setFl('nav', '-'); }
+  } else {
+    setFl('tgt', '-'); setFl('vmg', '-'); setFl('tacks', '-');
+    if (FC.on && FC.cmd) {   // the free course: its heading, a change that waits, or how long the last one took
+      const lb = tx(HEAD_LABEL[FC.head]);
+      setFl('nav', (FC.pend ? tx('crsPend', lb, (FL.el - FC.pend.el).toFixed(1)) : FC.done ? tx('crsDone', lb, FC.done.dt.toFixed(1)) : tx('crsNow', lb))
+        + (FC.cmd.goal.steady ? tx('crsSteady') + (FC.cmd.held ? tx('crsHeldSteady') : '')
+          : FC.cmd.mode === 'no progress' ? tx('crsNone') + (FC.cmd.held ? tx('crsHeld') : '') : ''));
+    } else setFl('nav', '-');
+  }
   updateLaylines();
   if (tgtMode()) drawHull();
   if (exhaust) {   // exhaust mark: length follows the thrust (full at 10 % of the weight)
@@ -1807,7 +1912,7 @@ function syncSwellFlightCtl() {
     $('flMotor').value = 'on'; $('flPw').value = 'normal'; $('flReflex').checked = false;
     $('flTgt').value = 'none';
   }
-  for (const id of ['flMotor', 'flHead', 'flTgt']) $(id).disabled = sw || noAc;
+  for (const id of ['flMotor', 'flTgt']) $(id).disabled = sw || noAc;   // the heading: syncHead (from syncTgt)
   if (HAVE_WAVE) for (const o of $('flAc').options) o.disabled = sw && !WIX.grid.aircraft.includes(o.value);
   if (sw && HAVE_WAVE && !WIX.grid.aircraft.includes($('flAc').value)) $('flAc').value = WIX.grid.aircraft[0];
   syncCtl();
@@ -1918,6 +2023,12 @@ function waveSummary() {
 }
 // a read-only hook for scripted checks (the headless browser check): the swell flight's statistics; before a flight
 // the sea time and the wave phase at the launch point (so that a check can launch at the phase a Python run starts at)
+// the free course and the margins of the flight so far, for headless checks
+const ptKey = (p) => !p ? null : p.steady ? 'steady' : p.kind + ':' + p.entry.u10 + ':' + p.entry.chi_deg + ':' + (p.side < 0 ? 'm' : 'n');
+window.viewerFlight = () => ({ el: FL.el, on: FL.on, end: FL.end, s: FL.s, vStall: FL.ac && FL.ac.v_stall, mg: FL.mg, log: FL.log, psiW: Math.atan2(W.ey, W.ex),
+  plans: MP.n, late: MP.late, planMs: MP.n ? MP.sum / MP.n : null,
+  u10: W.u10, nav: $('fl_nav').textContent, sel: $('fl_sel').textContent, head: $('flHead').value, headDisabled: $('flHead').disabled, tgtDisabled: $('flTgt').disabled,
+  fc: { on: FC.on, head: FC.head, pend: FC.pend, done: FC.done, point: FC.cmd && ptKey(FC.cmd.point), goal: FC.cmd && ptKey(FC.cmd.goal), mode: FC.cmd && FC.cmd.mode, held: FC.cmd && FC.cmd.held } });
 window.viewerWaveStats = () => {
   if (FL.wave) return waveSummary();
   const p = launchPoint();
@@ -2483,7 +2594,8 @@ const s2t = (v, out) => out.set(v[0], v[2], -v[1]);   // a sim vector (east, nor
 // the planner's start before a flight: heading relative to the wind and height above the surface (cached per case)
 function camPreview() {
   const name = $('flAc').value, ac = AIRCRAFT && AIRCRAFT[name], motor = $('flMotor').value === 'on';
-  const key = [name, motor, ENV.regular, W.u10.toFixed(1), ENV.regular && SWL.rel].join('|');
+  const head = $('flHead').value, nav = tgtMode();
+  const key = [name, motor, ENV.regular, W.u10.toFixed(1), ENV.regular && SWL.rel, nav || head].join('|');
   if (CAM.pv.key !== key) {
     CAM.pv.key = key; CAM.pv.c = null;
     try {
@@ -2491,9 +2603,9 @@ function camPreview() {
         const st = WAVE.flatStartEntry(NAV, MPC.makeAircraft(Object.assign({ name: name }, ac)), W.u10, SWL.rel);
         if (st) CAM.pv.c = { z: st.z[0], psi: st.psi[0], gam: st.gamma[0] };
       } else if (HAVE_MPC && ac) {
-        const lib = libFor(name, motor);
+        const lib = nav ? libFor(name, motor) : freeTable(name, motor);   // with a destination: the reference course's cycle
         if (lib && lib.length) {
-          const c0 = MPC.pickCycle(lib, W.u10, MPC_CHI * Math.PI / 180);
+          const c0 = nav ? MPC.pickCycle(lib, W.u10, MPC_CHI * Math.PI / 180) : freeStart(name, motor, head, lib).c0;
           let k = 0;
           for (let i = 1; i < c0.z.length; i++) if (c0.z[i] > c0.z[k]) k = i;
           CAM.pv.c = { z: c0.z[k], psi: c0.psi[k], gam: c0.g[k] };
@@ -2501,13 +2613,13 @@ function camPreview() {
       }
     } catch (e) { CAM.pv.c = null; }
   }
-  const c = CAM.pv.c, psiW = Math.atan2(W.ey, W.ex), head = $('flHead').value;
+  const c = CAM.pv.c, psiW = Math.atan2(W.ey, W.ex);
   let psi = psiW + Math.PI;   // as launch() and launchSwell() set it
   if (ENV.regular) psi = psiW + (c ? c.psi : 0);
+  else if ((head === 'ref' || nav) && c && c.psi !== null) psi = psiW + c.psi;
   else if (head === 'down') psi = psiW;
   else if (head === 'left') psi = psiW + Math.PI / 2;
   else if (head === 'right') psi = psiW - Math.PI / 2;
-  else if ((head === 'ref' || tgtMode()) && c && c.psi !== null) psi = psiW + c.psi;
   return { psi: psi, h: c ? c.z : CAM.preH, gam: c ? c.gam : 0 };
 }
 // the pose the onboard views use: the flying (or last) state, else the mast before a flight
@@ -2680,6 +2792,10 @@ function loop(now) {
     const lockSw = FL.on && ENV.regular;
     for (const id of ['swlHs', 'swlTp', 'swlDir', 'swlPre']) { $(id).disabled = lockSw; $(id).title = tx(lockSw ? 'swlLockTip' : id + 'Tip'); }
     fromEl.disabled = lockSw;
+    // whether a destination is used is fixed at launch (a click still moves the destination in flight)
+    const tg = $('flTgt'), noAc = !AIRCRAFT || !Object.keys(AIRCRAFT).length;
+    tg.disabled = FL.on || ENV.regular || noAc;
+    tg.dataset.t = FL.on ? 'flTgtLockTip' : 'flTgtTip'; tg.title = tx(tg.dataset.t);
   }
   // the drawn sea follows the aircraft while it flies (display only; the flight model is analytic)
   {
