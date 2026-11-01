@@ -4410,6 +4410,29 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | est.loop_tips_rtk_hs2_phase_p90 | 0.087 | rad | calculated | docs/02-form.md#sea-estimation |
 | est.loop_tips_rtk_hs2_height_p90 | 0.33 | 1 | calculated | docs/02-form.md#sea-estimation |
 | est.loop_tips_rtk_hs2_pred_rms_m | 0.181 | m | calculated | docs/02-form.md#sea-estimation |
+| world.global_step_deg | 5.0 | deg | assumed | Q-078 |
+| world.global_lat_max_deg | 70.0 | deg | assumed | Q-078 |
+| world.corridor_step_km | 55.6 | km | assumed | Q-078 |
+| world.corridor_points_along | 19 | 1 | assumed | Q-078 |
+| world.corridor_points_across | 11 | 1 | assumed | Q-078 |
+| world.frame_step_h | 3 | h | assumed | Q-078 |
+| world.frames | 25 | 1 | assumed | Q-078 |
+| world.q_wind_ms | 0.25 | m/s | assumed | Q-078 |
+| world.q_height_m | 0.06 | m | assumed | Q-078 |
+| world.q_period_s | 0.1 | s | assumed | Q-078 |
+| world.q_dir_deg | 1.412 | deg | assumed | Q-078 |
+| world.pace_calls_per_min | 400.0 | 1/min | assumed | Q-078 |
+| world.pace_calls_per_h | 4500.0 | 1/h | assumed | Q-078 |
+| world.pace_calls_per_day | 9500.0 | 1/d | assumed | Q-078 |
+| world.corridor_length_km | 1000.8 | km | calculated | docs/02-form.md#world-map |
+| world.corridor_width_km | 556 | km | calculated | docs/02-form.md#world-map |
+| world.global_ocean_points | 1477 | 1 | calculated | docs/02-form.md#world-map |
+| world.global_bytes | 4431 | B | calculated | docs/02-form.md#world-map |
+| world.corridor_bytes | 31350 | B | calculated | docs/02-form.md#world-map |
+| world.calls_corridor | 418 | 1 | calculated | docs/02-form.md#world-map |
+| world.calls_global | 2954 | 1 | calculated | docs/02-form.md#world-map |
+| world.land_bytes | 33581 | B | calculated | docs/02-form.md#world-map |
+| world.land_points | 4504 | 1 | calculated | docs/02-form.md#world-map |
 <!-- tdr:end -->
 
 ## Requirements for the dynamic soaring drone {#ds-requirements}

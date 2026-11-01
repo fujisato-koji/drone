@@ -39,8 +39,24 @@
   .card canvas#strip { height: 96px; }
   .ctl input[type=number] { width: 64px; }
   .ctl input[type=checkbox] { margin: 0 4px 0 0; }
+  #mapPanel { position: fixed; right: 10px; bottom: 10px; width: min(560px, calc(100vw - 330px)); box-sizing: border-box;
+              background: #fcfcfb; color: #52514e; border-radius: 4px; padding: 6px 8px; font-size: 12px; line-height: 1.4;
+              box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25); z-index: 5; }
+  #mapPanel .mtop, #mapPanel .mrow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 3px 0; }
+  #mapPanel .mt { color: #0b0b0b; font-weight: 600; font-size: 13px; }
+  #mapPanel select { flex: 1; min-width: 140px; }
+  #mapPanel input[type=range] { flex: 1; min-width: 80px; }
+  #mapPanel .val { min-width: 120px; text-align: right; font-variant-numeric: tabular-nums; }
+  #mapPanel .dim { color: #6b6a65; }
+  #mapPanel .warn { color: #a3470f; }
+  #mapPanel label.auto { display: flex; align-items: center; gap: 3px; }
+  #mapPanel .filebtn input { display: none; }
+  #mapPanel .filebtn span { border: 1px solid #b9b8b1; border-radius: 3px; padding: 1px 6px; cursor: pointer; background: #f0efec; color: #0b0b0b; }
+  #wmCv { display: block; width: 100%; aspect-ratio: 2 / 1; cursor: crosshair; border-radius: 2px; touch-action: none; }
+  #wmLeg { display: block; width: 100%; height: 34px; }
+  #mapShow { position: fixed; right: 10px; bottom: 10px; z-index: 5; display: none; }
   #tip { position: fixed; pointer-events: none; display: none; background: #0b0b0b; color: #f0efec;
-         font-size: 11px; padding: 2px 6px; border-radius: 3px; z-index: 10; white-space: nowrap; }
+         font-size: 11px; padding: 2px 6px; border-radius: 3px; z-index: 10; white-space: pre; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -59,7 +75,7 @@
 
   <details class="sec" open>
     <summary id="sec1s" data-i="sec1"></summary>
-    <div class="ctl"><label for="envMode" data-i="envMode" data-t="envModeTip"></label><select id="envMode" data-t="envModeTip"><option value="scenario" data-i="emScen"></option><option value="free" data-i="emFree"></option><option value="varying" data-i="emVar"></option><option value="swell" data-i="emSwell"></option></select></div>
+    <div class="ctl"><label for="envMode" data-i="envMode" data-t="envModeTip"></label><select id="envMode" data-t="envModeTip"><option value="scenario" data-i="emScen"></option><option value="free" data-i="emFree"></option><option value="varying" data-i="emVar"></option><option value="swell" data-i="emSwell"></option><option value="world" data-i="emWorld"></option></select></div>
     <div id="scen" style="display:none">
       <div class="ctl"><label for="hour" data-i="hour" data-t="hourTip"></label><input id="hour" type="range" min="0" max="72" step="0.1" value="0" data-t="hourTip"><span class="val" id="hourv"></span></div>
       <div class="ctl"><button id="play" type="button" data-t="playTip"></button>
@@ -91,6 +107,11 @@
       <div class="ctl"><label for="slowKind" data-i="slowKind" data-t="slowKindTip"></label><select id="slowKind" data-t="slowKindTip"><option value="calm" data-i="skCalm"></option><option value="cell" data-i="skCell"></option></select></div>
       <div class="ctl"><label for="envSeed" data-i="envSeed" data-t="envSeedTip"></label><input id="envSeed" type="number" min="1" max="999999" step="1" value="1" data-t="envSeedTip"></div>
       <div class="card"><div class="ct" data-i="stripT" data-t="stripTip"></div><canvas id="strip" width="280" height="96" data-t="stripTip"></canvas></div>
+    </div>
+    <div id="worldCtl" style="display:none">
+      <table id="wro"></table>
+      <div class="warn" id="wWarn"></div>
+      <div class="dim" id="wNote" data-i="worldNote"></div>
     </div>
     <div class="dim" id="timeNote" data-i="timeNote"></div>
     <div class="dim" id="rough"></div>
@@ -150,9 +171,23 @@
     <div class="dim" data-i="help3"></div>
     <div class="dim" data-i="help4"></div>
     <div class="dim" data-i="help5"></div>
+    <div class="dim" data-i="help6"></div>
   </details>
 </div>
 <div id="tip"></div>
+<div id="mapPanel">
+  <div class="mtop"><span class="mt" data-i="mapTitle"></span><select id="wmScen" data-t="wmScenTip"></select>
+    <button id="wmFitW" type="button" data-i="wmFitW" data-t="wmFitWTip"></button><button id="wmFitC" type="button" data-i="wmFitC" data-t="wmFitCTip"></button><button id="wmFitA" type="button" data-i="wmFitA" data-t="wmFitATip"></button><button id="wmHide" type="button" data-i="wmHide" data-t="wmHideTip"></button></div>
+  <canvas id="wmCv" data-t="wmCvTip"></canvas>
+  <div class="mrow"><label for="wmTime" data-i="wmTime" data-t="wmTimeTip"></label><input id="wmTime" type="range" min="0" max="72" step="0.25" value="0" data-t="wmTimeTip"><span class="val" id="wmTimev"></span></div>
+  <div class="mrow"><span id="wmPick"></span></div>
+  <div class="mrow"><button id="wmEnter" type="button" data-i="wmEnter" data-t="wmEnterTip"></button><button id="wmNow" type="button" data-i="wmNow" data-t="wmNowTip"></button><label class="auto" data-t="wmNowGlobTip"><input id="wmNowGlob" type="checkbox" data-t="wmNowGlobTip"><span data-i="wmNowGlob"></span></label><button id="wmSave" type="button" data-i="wmSave" data-t="wmSaveTip"></button><label class="filebtn" data-t="wmFileTip"><input id="wmFile" type="file" accept=".js,.json"><span data-i="wmFile"></span></label></div>
+  <div class="mrow dim" id="wmNowNote"></div>
+  <div class="mrow warn" id="wmMsg"></div>
+  <canvas id="wmLeg" data-t="wmLegTip"></canvas>
+  <div class="dim" id="wmAttr"></div>
+</div>
+<button id="mapShow" type="button" data-i="mapShow" data-t="mapShowTip"></button>
 
 <script src="field.js"></script>
 <script src="traj.js"></script>
@@ -167,6 +202,10 @@
 <script src="navigator.js"></script>
 <script src="wave/index.js"></script>
 <script src="wave.js"></script>
+<script src="worlddata.js"></script>
+<script src="worldmap.js"></script>
+<script src="world/land.js"></script>
+<script src="world/index.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -182,7 +221,7 @@ const I18N = {
     sec1: '① 海と風の設定',
     sec1TipScen: '「シナリオ」では風速と風向をシナリオが決めます。「自由に設定」と「変動あり」では、スライダーで海と風を決めます。',
     sec1TipNoScen: '風速と風向のスライダーで、見せる海と風を決めます。',
-    envMode: '設定の方法', envModeTip: '「シナリオ」は嵐のシナリオの海と風です。「自由に設定」は、風速、向き、海の発達、うねりを自分で決めます。「変動あり」は、自由な設定に加えて、平均の風が時間とともにゆれ、突風が吹き、短い波が風の変化に遅れてついていきます。',
+    envMode: '設定の方法', envModeTip: '「シナリオ」は嵐のシナリオの海と風です。「自由に設定」は、風速、向き、海の発達、うねりを自分で決めます。「変動あり」は、自由な設定に加えて、平均の風が時間とともにゆれ、突風が吹き、短い波が風の変化に遅れてついていきます。「世界の海」は、世界地図で選んだ場所と時刻の実際の海と風（回廊のデータ）です。',
     emScen: 'シナリオ', emFree: '自由に設定', emVar: '変動あり',
     age: '海の発達', ageTip: '風が吹き始めてからの時間です。左端は十分に発達した海で、右へ行くほど短い時間の、まだ育っていない海になります。時間が短いほど、波は低く短くなります。',
     ageFull: '十分に発達', ageH: (h) => h + ' 時間',
@@ -330,7 +369,44 @@ const I18N = {
     ctBand: '高さの帯', ctTip: '翼端', ctStall: '失速', ctLoop: '宙返り', ctN: '荷重倍数', ctEnd: '着水',
     w_py: 'Python の同じ条件の実行', w_py_tip: '同じ機体、海、風、波が起こす風での、Python の実行（--wave-loop-exp、10 分）の値です。平均電力（全体 / 乗ってから）、モータの割合、高さの中央値、数えたかどうかです。実験にない条件では「なし」です。',
     wPy: (p, pa, s, h, c) => p + ' / ' + pa + ' W、モータ ' + s + ' %、高さ ' + h + ' m、' + (c ? '数えた' : '数えない'),
-    over: (a, b) => a + ' / ' + b
+    over: (a, b) => a + ' / ' + b,
+    emWorld: '世界の海',
+    worldNote: '海と風は、回廊のデータを機体（飛んでいないときは観測柱）の位置と時刻で補間した値です。風浪は 10 m の風と、合計の波高からうねりを除いた高さに合う発達時間から作り、うねりは波高と周期と向きから作ります。飛行の 1 秒が気象の 1 秒です。',
+    wr_pos: '場所', wr_time: '気象の時刻 (UTC)', wr_wind: '10 m の風', wr_hs: '波高（合計）', wr_sea: '風浪', wr_swell: 'うねり', wr_src: 'データ',
+    wrWind: (u, d) => u + ' m/s、' + d + ' deg から', wrSea: (hs, h) => hs + ' m、' + (h > 0 ? '発達 ' + h + ' 時間' : '十分に発達'),
+    wrSwell: (hs, tp, d) => hs + ' m、' + tp + ' s、' + d + ' deg から', wrNone: 'なし',
+    swLower: 'ERA5（うねりは合計の波高からの下限推定）', swModel: 'MFWAM（うねりはモデルの分割）',
+    wOutside: '回廊の外です。海と風は回廊の端の値です。', wNoEntry: '地図で場所を選んで「ここで 3D に入る」を押してください。',
+    wNoData: '世界のデータがありません。python -m sim.world scenarios で sim/viewer/world を作ります。',
+    lockWorldTip: '「世界の海」では飛行の 1 秒が気象の 1 秒なので、時間の速さは変えられません。',
+    mapTitle: '世界地図', wmScenTip: '地図に出す海と風のデータです。過去の代表的な場面（ERA5）、今の予報、ファイルから読み込んだものから選びます。',
+    wmFitW: '全体', wmFitWTip: '世界全体を表示します。', wmFitC: '回廊', wmFitCTip: '回廊を画面いっぱいに表示します。',
+    wmFitA: '機体', wmFitATip: '機体（飛んでいないときは選んだ場所）の周り約 6 km を表示します。',
+    wmHide: '隠す', wmHideTip: '地図を隠します。', mapShow: '世界地図', mapShowTip: '世界地図を表示します。',
+    wmCvTip: 'ホイールで拡大と縮小、ドラッグで移動、クリックで場所を選びます。色は有義波高、矢印は 10 m の風が吹いていく向きで、長さは風速に比例します。橙の枠が回廊です。',
+    wmTime: '回廊の時刻', wmTimeTip: '回廊のデータの時刻です。3 時間ごとのデータの間は直線で補間します。「世界の海」で飛んでいる間は気象の時刻に合わせて進み、変えられません。',
+    wmEnter: 'ここで 3D に入る', wmEnterTip: '選んだ場所と回廊の時刻の海と風で 3D を始めます。3D の原点がこの場所になり、機体の位置と軌跡が地図に戻ります。選んでいなければ回廊の中央です。',
+    wmNow: '今の予報を取得', wmNowTip: '選んだ場所の周りの回廊（と、選べば全球）の今の予報を Open-Meteo から取得します。',
+    wmNowGlob: '全球も', wmNowGlobTip: '全球の今の予報も取得します。約 3000 回分の呼び出しになり、6 分ほどかかります。同じ 3 時間のうちに取得したものはこのブラウザに保存してあり、それを使います。',
+    wmSave: '保存', wmSaveTip: '表示中のデータをファイルに保存します。「ファイルから」で読み込めます。',
+    wmFile: 'ファイルから', wmFileTip: '保存したデータのファイルを読み込みます。ファイルは手元で読むだけで、どこにも送りません。',
+    wmNowNote: (c, g) => '今の予報は、選んだ地点の座標を Open-Meteo に送って取得します。呼び出しは回廊で ' + c + ' 回分、全球で ' + g + ' 回分です。無料の API は非商用に限り、1 日 1 万回までです。',
+    wmPickNone: '地図をクリックして場所を選んでください。',
+    wmPick: (la, lo) => '選んだ場所: ' + la + '、' + lo,
+    wmPickVals: (u, d, hs, sw) => '風 ' + u + ' m/s（' + d + ' deg から）、波高 ' + hs + ' m' + (sw ? '、うねり ' + sw + ' m' : ''),
+    wmPickOut: '（回廊の外: 3D には入れません。全球の値です）',
+    wmGlobalAt: (t) => '全球: ' + t, wmNoGlobal: '全球: なし',
+    st_corridorWind: '回廊の風', st_corridorWaves: '回廊の波', st_globalWind: '全球の風', st_globalWaves: '全球の波',
+    wmProg: (st, d, n) => '取得中: ' + st + ' ' + d + ' / ' + n + ' 地点',
+    wmErrFetch: (m) => '取得できませんでした: ' + m, wmErrFile: (m) => 'ファイルを読めませんでした: ' + m,
+    wmErrOut: '選んだ場所は回廊の外です。回廊の中を選んでください。', wmCached: (t) => '全球は、このブラウザに保存した ' + t + ' のものを使いました。',
+    wmLegTip: '有義波高の色の目盛りです（平方根の目盛り）。', legHs: '有義波高 (m)',
+    wmAttrEra5: '気象データ: Open-Meteo.com（CC BY 4.0）。ERA5 は Copernicus Climate Change Service の情報から生成（CC BY 4.0）。',
+    wmAttrNow: '気象データ: Open-Meteo.com（CC BY 4.0）。風は ECMWF IFS 0.25 度、波は Météo-France MFWAM。',
+    wmAttrLand: '海岸線: Natural Earth（パブリックドメイン）。',
+    tipMap: (la, lo, v) => la + '、' + lo + (v ? '\n' + v : ''),
+    help6: '世界地図: 場面か今の予報を選び、地図をクリックして場所を選び、「ここで 3D に入る」を押すと、その場所と時刻の海と風で 3D が始まり、機体の位置が地図に戻ります。',
+    fileTitle: (n) => 'ファイル: ' + n,
   },
   en: {
     pageTitle: 'Sea and wind', title: 'Sea and wind simulator',
@@ -340,7 +416,7 @@ const I18N = {
     sec1: '1. Sea and wind setting',
     sec1TipScen: 'With "Scenario" the scenario sets wind speed and direction. With "Free setting" and "Varying" the sliders choose the sea and wind.',
     sec1TipNoScen: 'The wind speed and direction sliders choose the sea and wind.',
-    envMode: 'Setting', envModeTip: '"Scenario" is the sea and wind of the storm scenario. "Free setting" lets you choose wind speed, direction, sea development and swell. "Varying" adds, on top of the free setting, a mean wind that drifts in time, gusts, and short waves that follow the wind change with a delay.',
+    envMode: 'Setting', envModeTip: '"Scenario" is the sea and wind of the storm scenario. "Free setting" lets you choose wind speed, direction, sea development and swell. "Varying" adds, on top of the free setting, a mean wind that drifts in time, gusts, and short waves that follow the wind change with a delay. "World seas" is the real sea and wind (the corridor data) of the place and time chosen on the world map.',
     emScen: 'Scenario', emFree: 'Free setting', emVar: 'Varying',
     age: 'Sea development', ageTip: 'Time since the wind began. The left end is a fully developed sea; further right is a younger sea that has had less time to grow. A shorter time gives lower and shorter waves.',
     ageFull: 'Fully developed', ageH: (h) => h + ' h',
@@ -488,7 +564,44 @@ const I18N = {
     ctBand: 'height band', ctTip: 'wingtip', ctStall: 'stall', ctLoop: 'loop', ctN: 'load factor', ctEnd: 'contact',
     w_py: 'Python run, same case', w_py_tip: 'The Python run (--wave-loop-exp, 10 minutes) of the same aircraft, sea, wind and wave wind: average power (all / after entry), motor share, median height, and whether it counted. "n/a" where the experiment has no such case.',
     wPy: (p, pa, s, h, c) => p + ' / ' + pa + ' W, motor ' + s + ' %, height ' + h + ' m, ' + (c ? 'counted' : 'not counted'),
-    over: (a, b) => a + ' / ' + b
+    over: (a, b) => a + ' / ' + b,
+    emWorld: 'World seas',
+    worldNote: 'Sea and wind are the corridor data interpolated at the aircraft (at the mast when it is not flying) and the weather time. The wind sea comes from the 10 m wind and the development time that matches the total height less the swell; the swell from its height, period and direction. One second of flight is one second of weather.',
+    wr_pos: 'Place', wr_time: 'Weather time (UTC)', wr_wind: '10 m wind', wr_hs: 'Wave height (total)', wr_sea: 'Wind sea', wr_swell: 'Swell', wr_src: 'Data',
+    wrWind: (u, d) => u + ' m/s from ' + d + ' deg', wrSea: (hs, h) => hs + ' m, ' + (h > 0 ? h + ' h of growth' : 'fully developed'),
+    wrSwell: (hs, tp, d) => hs + ' m, ' + tp + ' s, from ' + d + ' deg', wrNone: 'none',
+    swLower: 'ERA5 (swell: lower bound from the total height)', swModel: 'MFWAM (swell: the model partition)',
+    wOutside: 'Outside the corridor: sea and wind are those of its edge.', wNoEntry: 'Choose a place on the map and press "Enter 3D here".',
+    wNoData: 'No world data: python -m sim.world scenarios writes sim/viewer/world.',
+    lockWorldTip: 'In "World seas" one second of flight is one second of weather, so the speed cannot be changed.',
+    mapTitle: 'World map', wmScenTip: 'The sea and wind shown: representative past cases (ERA5), the forecast now, or a file you loaded.',
+    wmFitW: 'World', wmFitWTip: 'Show the whole world.', wmFitC: 'Corridor', wmFitCTip: 'Fit the corridor to the map.',
+    wmFitA: 'Aircraft', wmFitATip: 'Show about 6 km around the aircraft (or the chosen place when it is not flying).',
+    wmHide: 'Hide', wmHideTip: 'Hide the map.', mapShow: 'World map', mapShowTip: 'Show the world map.',
+    wmCvTip: 'Wheel to zoom, drag to pan, click to choose a place. Colour is the significant wave height; arrows point where the 10 m wind blows, their length grows with its speed. The orange frame is the corridor.',
+    wmTime: 'Corridor time', wmTimeTip: 'The time of the corridor data, interpolated linearly between its 3-hourly fields. While flying in "World seas" it follows the weather time and cannot be changed.',
+    wmEnter: 'Enter 3D here', wmEnterTip: 'Start the 3D view with the sea and wind of the chosen place at the corridor time. The 3D origin is this place, and the aircraft and its trail come back to the map. Without a choice, the corridor centre.',
+    wmNow: 'Fetch the forecast now', wmNowTip: 'Fetch the current forecast for a corridor around the chosen place (and, if ticked, the whole globe) from Open-Meteo.',
+    wmNowGlob: 'globe too', wmNowGlobTip: 'Also fetch the global forecast now: about 3,000 calls and about 6 minutes. One fetched in the same 3 hours is kept in this browser and reused.',
+    wmSave: 'Save', wmSaveTip: 'Save the data shown to a file; "From file" loads it again.',
+    wmFile: 'From file', wmFileTip: 'Load a saved data file. The file is read here only and sent nowhere.',
+    wmNowNote: (c, g) => 'The forecast now is fetched by sending the chosen coordinates to Open-Meteo: ' + c + ' calls for the corridor, ' + g + ' for the globe. The free API is for non-commercial use, up to 10,000 calls a day.',
+    wmPickNone: 'Click the map to choose a place.',
+    wmPick: (la, lo) => 'Chosen place: ' + la + ', ' + lo,
+    wmPickVals: (u, d, hs, sw) => 'wind ' + u + ' m/s from ' + d + ' deg, wave height ' + hs + ' m' + (sw ? ', swell ' + sw + ' m' : ''),
+    wmPickOut: ' (outside the corridor: no 3D here; global values)',
+    wmGlobalAt: (t) => 'Globe: ' + t, wmNoGlobal: 'Globe: none',
+    st_corridorWind: 'corridor wind', st_corridorWaves: 'corridor waves', st_globalWind: 'global wind', st_globalWaves: 'global waves',
+    wmProg: (st, d, n) => 'Fetching ' + st + ': ' + d + ' / ' + n + ' points',
+    wmErrFetch: (m) => 'Could not fetch: ' + m, wmErrFile: (m) => 'Could not read the file: ' + m,
+    wmErrOut: 'The chosen place is outside the corridor; choose one inside it.', wmCached: (t) => 'The globe is the one of ' + t + ' kept in this browser.',
+    wmLegTip: 'Colour scale of the significant wave height (square-root scale).', legHs: 'Significant wave height (m)',
+    wmAttrEra5: 'Weather data by Open-Meteo.com (CC BY 4.0). ERA5: generated using Copernicus Climate Change Service information (CC BY 4.0).',
+    wmAttrNow: 'Weather data by Open-Meteo.com (CC BY 4.0): wind ECMWF IFS 0.25 deg, waves Meteo-France MFWAM.',
+    wmAttrLand: 'Coastlines: Natural Earth (public domain).',
+    tipMap: (la, lo, v) => la + ', ' + lo + (v ? '\n' + v : ''),
+    help6: 'World map: choose a case or the forecast now, click the map to choose a place and press "Enter 3D here"; the 3D view starts with the sea and wind of that place and time, and the aircraft comes back to the map.',
+    fileTitle: (n) => 'File: ' + n,
   }
 };
 let LANG = 'ja';
@@ -1632,17 +1745,25 @@ function setComponents(c) {
 // Build the sea of the sliders with SeaGen. The phases come from a fixed seed, so a slider change
 // moves the sea smoothly. The flight and the planner read CO and W, so they use the new sea at once
 // and the planner's next plan sees it.
-function rebuildSea() {
-  if (ENV.mode === 'swell') { rebuildSwell(); return; }
-  const sw = $('swOn').checked ? { hs: +$('swHs').value, tp: +$('swTp').value, fromDeg: +$('swFrom').value } : null;
-  const set = { u10: +u10El.value, fromDeg: +fromEl.value, hours: EnvSea.AGE_HOURS[+ageEl.value], swell: sw,
-    seed: (F.meta && F.meta.seed) || 1 };
+// The sea of a set {u10, fromDeg, hours, swell, seed} (sim/viewer/envsea.js). With keep {x, y, t} every component's
+// phase stays continuous at that point and sea time (the world sea rebuilds while the aircraft flies).
+function applySet(set, keep) {
   const b = EnvSea.build(set, C), w = b.wind;
+  if (keep && N > 0) WorldData.matchPhases(CO, b.comps, N, keep.x, keep.y, keep.t);
   W.u10 = w.u10; W.from_deg = w.from_deg; W.to_deg = w.to_deg; W.ex = w.ex; W.ey = w.ey; W.ustar = w.ustar; W.z0 = w.z0;
   ENV.u0 = set.u10; ENV.us0 = w.ustar; ENV.U = set.u10; ENV.du = 0; ENV.trains = b.trains;
   setComponents(b.comps);
   seaMat.uniforms.uRange.value = Math.max(1, b.hsTotal);
   ENV.samples = [];   // the strip chart starts again under the new setting
+  return b;
+}
+function rebuildSea() {
+  if (ENV.mode === 'swell') { rebuildSwell(); return; }
+  if (ENV.mode === 'world') { worldRebuild(true); return; }
+  const sw = $('swOn').checked ? { hs: +$('swHs').value, tp: +$('swTp').value, fromDeg: +$('swFrom').value } : null;
+  const set = { u10: +u10El.value, fromDeg: +fromEl.value, hours: EnvSea.AGE_HOURS[+ageEl.value], swell: sw,
+    seed: (F.meta && F.meta.seed) || 1 };
+  applySet(set);
   if (ENV.mode === 'varying' && ENV.slow) {   // the set wind changed under the running variation
     W.adv = ENV.u0; ENV.tLast = T - ENV.t0; envUpdate(T);
   }
@@ -1661,11 +1782,12 @@ function startVarying() {
   envUpdate(T);
 }
 function applyEnvMode(init) {
-  const prev = ENV.mode, m = modeEl.value, scen = m === 'scenario', swell = m === 'swell';
+  const prev = ENV.mode, m = modeEl.value, scen = m === 'scenario', swell = m === 'swell', world = m === 'world';
   ENV.mode = m; ENV.gust = null; ENV.slow = null; W.adv = undefined;
   $('scen').style.display = scen && SCEN ? '' : 'none';
-  $('windCtl').style.display = scen && SCEN ? 'none' : '';   // the scenario sets the wind
-  $('freeCtl').style.display = scen || swell ? 'none' : '';
+  $('windCtl').style.display = (scen && SCEN) || world ? 'none' : '';   // the scenario (or the world data) sets the wind
+  $('freeCtl').style.display = scen || swell || world ? 'none' : '';
+  $('worldCtl').style.display = world ? '' : 'none';
   $('swellCtl').style.display = swell ? '' : 'none';
   // the swell mode's wind: 0 to 12 m/s in whole m/s (the pilot's nearest library wind then has no ties)
   if (swell) { u10El.min = 0; u10El.max = 12; u10El.step = 1; } else { u10El.min = 2; u10El.max = 25; u10El.step = 0.5; }
@@ -1676,7 +1798,7 @@ function applyEnvMode(init) {
   $('varCtl').style.display = m === 'varying' ? '' : 'none';
   u10El.disabled = fromEl.disabled = scen && SCEN;
   for (const id of ['swHs', 'swTp', 'swFrom']) $(id).disabled = !$('swOn').checked;
-  if (m === 'varying') { spdEl.value = 1; $('pause').checked = false; syncLabels(); }   // time runs in real seconds
+  if (m === 'varying' || world) { spdEl.value = 1; $('pause').checked = false; syncLabels(); }   // time runs in real seconds
   if (init) return;
   if (scen) {
     seaMat.uniforms.uRange.value = Math.max(1, hsTot);
@@ -1684,6 +1806,8 @@ function applyEnvMode(init) {
   } else if (swell) {
     if (prev === 'scenario') { u10El.value = Math.min(12, Math.round(W.u10)); fromEl.value = Math.round(W.from_deg) % 360; }
     rebuildSwell(); preloadSea();
+  } else if (world) {
+    worldEnsureEntry(); worldRebuild(true); renderWorld();
   } else {
     if (prev === 'scenario') { u10El.value = Math.min(25, Math.max(2, W.u10)); fromEl.value = Math.round(W.from_deg) % 360; }
     rebuildSea();
@@ -1969,6 +2093,321 @@ let T = 0, last = performance.now();
 const wv = { u: 0, v: 0, w: 0 };
 const _dir = new THREE.Vector3();
 
+// ---------------------------------------------------------------- world map and the world sea
+// The map (sim/viewer/worldmap.js) shows a world file: a historical case of sim/viewer/world (sim.world), the forecast
+// now (fetched here from Open-Meteo), or a file the user picks. "Enter 3D here" takes the chosen place and the map's
+// time: the 3D origin is that place, the weather time runs with the sea time (one second of flight is one second of
+// weather), and the free setting's sea (applySet, EnvSea) is built from the corridor interpolated at the aircraft
+// (at the mast when it is not flying), rebuilt when the sample changes, with the phases kept continuous there.
+const WORLD_IX = window.WORLD_INDEX || null, WD = window.WorldData;
+const WORLD = { files: {}, cur: null, curKey: null, tView: 0, pick: null, entry: null, last: null, now: null, lastT: -1e9,
+  trail: [], trailT: -1e9, ac: null, busy: false, prog: '', msg: null, mask: null, map: null, drawAt: 0, roAt: 0, cachedNote: '' };
+if (WORLD_IX && WORLD_IX.ocean_mask) {
+  const g = WORLD_IX.grid.global, n = g.nlat * g.nlon, mb = WD.unb64(WORLD_IX.ocean_mask);
+  WORLD.mask = new Uint8Array(n);
+  for (let i = 0; i < n; i++) WORLD.mask[i] = (mb[i >> 3] >> (i & 7)) & 1;
+}
+if (!WORLD_IX || !WORLD_IX.scenarios.length) { const o = modeEl.querySelector('option[value=world]'); o.disabled = true; o.title = tx('wNoData'); }
+const f1 = (x, n) => (Number.isFinite(x) ? x.toFixed(n === undefined ? 1 : n) : '-');
+const fLat = (la) => Math.abs(la).toFixed(3) + (la >= 0 ? ' N' : ' S'), fLon = (lo) => Math.abs(lo).toFixed(3) + (lo >= 0 ? ' E' : ' W');
+const fUtc = (t) => new Date(t * 1000).toISOString().slice(0, 16).replace('T', ' ');
+const sep = () => (LANG === 'ja' ? '、' : ', ');
+function worldUnpack(raw) {
+  return { id: raw.id, kind: raw.kind, title: raw.title, corridor: WD.unpack(raw.corridor), global: raw.global ? WD.unpack(raw.global) : null,
+    sources: raw.sources, attribution: raw.attribution };
+}
+function worldTitle(key) {
+  const f = WORLD.files[key];
+  if (f && f.fileName) return tx('fileTitle', f.fileName);
+  if (f && f.title) return f.title[LANG] || f.title.en || key;
+  const s = WORLD_IX && WORLD_IX.scenarios.find((x) => 's:' + x.id === key);
+  return s ? (s.title[LANG] || s.title.en) : key;
+}
+function worldOptions() {
+  const sel = $('wmScen'), keys = [];
+  if (WORLD_IX) for (const s of WORLD_IX.scenarios) keys.push(['s:' + s.id, s.time]);
+  for (const k of Object.keys(WORLD.files)) if (!k.startsWith('s:')) keys.push([k, WORLD.files[k].corridor.time]);
+  sel.textContent = '';
+  for (const [k, tm] of keys) {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = worldTitle(k) + ' (' + String(tm).slice(0, 10) + ')';
+    sel.appendChild(o);
+  }
+  if (WORLD.curKey) sel.value = WORLD.curKey;
+}
+function worldLoadScenario(id, done) {
+  const key = 's:' + id;
+  if (WORLD.files[key]) { done(true); return; }
+  const take = () => { const r = window.WORLD_FILES && window.WORLD_FILES[id]; if (r) WORLD.files[key] = worldUnpack(r); return !!r; };
+  if (take()) { done(true); return; }
+  const info = WORLD_IX && WORLD_IX.scenarios.find((s) => s.id === id);
+  if (!info) { done(false); return; }
+  const el = document.createElement('script');
+  el.onload = () => done(take()); el.onerror = () => done(false);
+  el.src = 'world/' + info.file + '?' + info.sha;
+  document.head.appendChild(el);
+}
+function worldSelect(key) {
+  const f = WORLD.files[key];
+  if (!f) return;
+  WORLD.cur = f; WORLD.curKey = key; WORLD.msg = null;
+  const m = WORLD.map;
+  if (m) { m.setCorridor(f.corridor); if (f.global) m.setGlobal(f.global); }
+  if (f.global) WORLD.globalShown = f.global;
+  if (!(WORLD.entry && WORLD.entry.key === key)) { WORLD.tView = f.corridor.t0; $('wmTime').value = 0; }
+  $('wmTime').max = (f.corridor.nt - 1) * f.corridor.dt_h;
+  if (ENV.mode === 'world' && !FL.on) { worldEnsureEntry(); worldRebuild(true); }
+  renderWorld();
+}
+$('wmScen').addEventListener('change', () => {
+  const k = $('wmScen').value;
+  if (k.startsWith('s:')) worldLoadScenario(k.slice(2), (ok) => { if (ok) worldSelect(k); else { WORLD.msg = ['wmErrFile', k]; renderWorld(); } });
+  else worldSelect(k);
+});
+// the place and time the 3D view runs at
+function worldEnsureEntry() {
+  const f = WORLD.cur;
+  if (!f) { WORLD.entry = null; return; }
+  if (WORLD.entry && WORLD.entry.key === WORLD.curKey) return;
+  const p = WORLD.pick && WD.sampleCorridor(f.corridor, WORLD.pick.lat, WORLD.pick.lon, WORLD.tView).inside ? WORLD.pick : { lat: f.corridor.lat, lon: f.corridor.lon };
+  WORLD.entry = { lat: p.lat, lon: p.lon, t: WORLD.tView, T0: T, key: WORLD.curKey };
+  WORLD.last = null; WORLD.trail = []; WORLD.ac = null;
+}
+function worldEnter() {
+  const f = WORLD.cur;
+  if (!f || FL.on) return;
+  const p = WORLD.pick || { lat: f.corridor.lat, lon: f.corridor.lon };
+  if (!WD.sampleCorridor(f.corridor, p.lat, p.lon, WORLD.tView).inside) { WORLD.msg = ['wmErrOut']; renderWorld(); return; }
+  WORLD.entry = { lat: p.lat, lon: p.lon, t: WORLD.tView, T0: T, key: WORLD.curKey };
+  WORLD.last = null; WORLD.trail = []; WORLD.ac = null; WORLD.msg = null;
+  mx = 0; my = 0;   // the mast at the chosen place, the 3D origin
+  if (modeEl.value !== 'world') { modeEl.value = 'world'; applyEnvMode(false); } else { worldRebuild(true); renderWorld(); }
+}
+$('wmEnter').addEventListener('click', worldEnter);
+const worldTime = () => WORLD.entry.t + (T - WORLD.entry.T0);
+const worldLocal = () => (FL.on ? [FL.s[0], FL.s[1]] : [mx, my]);   // m east and north of the 3D origin
+// Rebuild the 3D sea from the corridor at the local point and the weather time when the sample has changed
+// (wind 0.1 m/s or 1 deg, wind sea 0.02 m, swell 0.02 m, 0.1 s or 1 deg), or always with force.
+function worldRebuild(force) {
+  const e = WORLD.entry, f = WORLD.cur;
+  if (!e || !f || e.key !== WORLD.curKey) return false;
+  const xy = worldLocal(), ll = WD.aeqdInv(e.lat, e.lon, xy[0] / 1000, xy[1] / 1000), tw = worldTime();
+  const s = WD.sampleCorridor(f.corridor, ll[0], ll[1], tw);
+  const set = WD.seaSet(s, C, (F.meta && F.meta.seed) || 1);
+  WORLD.now = { ll, tw, s, set };
+  const L = WORLD.last;
+  const swDiff = (a, b) => (a && b ? Math.abs(a.hs - b.hs) > 0.02 || Math.abs(a.tp - b.tp) > 0.1 || Math.abs(wrap180(a.fromDeg - b.fromDeg)) > 1 : !!a !== !!b);
+  if (!force && L && Math.abs(set.u10 - L.u10) < 0.1 && Math.abs(wrap180(set.fromDeg - L.fromDeg)) < 1
+      && !(Math.abs((set.hsWind || 0) - (L.hsWind || 0)) > 0.02) && !swDiff(set.swell, L.swell)) return false;
+  WORLD.last = set;
+  applySet(set, force ? null : { x: xy[0], y: xy[1], t: T });
+  return true;
+}
+// every frame: the sea at most once a second of sea time, the aircraft and its trail, the readouts and the map
+function worldTick(nowMs) {
+  const active = ENV.mode === 'world' && WORLD.entry && WORLD.entry.key === WORLD.curKey;
+  if (active) {
+    if (T - WORLD.lastT >= 1 || T < WORLD.lastT) { WORLD.lastT = T; worldRebuild(false); }
+    if (FL.started) {
+      const e = WORLD.entry, ll = WD.aeqdInv(e.lat, e.lon, FL.s[0] / 1000, FL.s[1] / 1000);
+      WORLD.ac = { lat: ll[0], lon: ll[1], heading: Math.PI / 2 - FL.s[5] };
+      if (FL.on && (FL.el - WORLD.trailT >= 1 || FL.el < WORLD.trailT)) {
+        if (FL.el < WORLD.trailT) WORLD.trail = [];   // a new flight
+        WORLD.trail.push([ll[0], ll[1]]); WORLD.trailT = FL.el;
+        if (WORLD.trail.length > 7200) WORLD.trail.shift();
+      }
+    }
+  }
+  if (nowMs - WORLD.roAt > 250) { WORLD.roAt = nowMs; renderWorldRo(); }
+  if (active && nowMs - WORLD.drawAt > 500) { WORLD.drawAt = nowMs; renderWorld(); }
+}
+const wroRows = ['pos', 'time', 'wind', 'hs', 'sea', 'swell', 'src'];
+$('wro').innerHTML = wroRows.map((r) => '<tr><td data-i="wr_' + r + '"></td><td id="wr_' + r + '"></td></tr>').join('');
+function renderWorldRo() {
+  if (ENV.mode !== 'world') return;
+  const n = WORLD.now, set = (k, v) => { $('wr_' + k).textContent = v; };
+  if (!n) { for (const r of wroRows) set(r, '-'); $('wWarn').textContent = tx(WORLD_IX ? 'wNoEntry' : 'wNoData'); return; }
+  const s = n.s, st = n.set, wf = WD.windFrom(s.u10, s.v10);
+  set('pos', fLat(n.ll[0]) + sep() + fLon(n.ll[1])); set('time', fUtc(n.tw));
+  set('wind', tx('wrWind', f1(wf[0]), f1(wf[1], 0))); set('hs', f1(s.hs, 2) + ' m');
+  set('sea', tx('wrSea', f1(st.hsWind, 2), st.hours > 0 ? f1(st.hours) : 0));
+  set('swell', st.swell ? tx('wrSwell', f1(st.swell.hs, 2), f1(st.swell.tp), f1(st.swell.fromDeg, 0)) : tx('wrNone'));
+  set('src', worldTitle(WORLD.curKey) + sep() + tx(WORLD.cur.corridor.swell === 'model' ? 'swModel' : 'swLower'));
+  $('wWarn').textContent = s.inside ? '' : tx('wOutside');
+}
+// the map panel
+function renderWorld() {
+  const f = WORLD.cur, m = WORLD.map, flying = FL.on && ENV.mode === 'world';
+  if (ENV.mode === 'world' && WORLD.entry && f && WORLD.entry.key === WORLD.curKey) {
+    WORLD.tView = Math.min(Math.max(worldTime(), f.corridor.t0), f.corridor.t0 + 3600 * f.corridor.dt_h * (f.corridor.nt - 1));
+    $('wmTime').value = (WORLD.tView - f.corridor.t0) / 3600;
+  }
+  for (const id of ['wmScen', 'wmTime', 'wmEnter', 'wmNow', 'wmFile']) $(id).disabled = flying || (WORLD.busy && id !== 'wmTime');
+  $('wmSave').disabled = !f || WORLD.busy;
+  $('wmTimev').textContent = f ? fUtc(WORLD.tView) + ' UTC' : '-';
+  // the chosen place and its values
+  let pickTxt = tx('wmPickNone');
+  if (WORLD.pick && f) {
+    const s = WD.sampleCorridor(f.corridor, WORLD.pick.lat, WORLD.pick.lon, WORLD.tView);
+    let v = s, out = !s.inside;
+    if (out && WORLD.globalShown) v = WD.sampleGlobal(WORLD.globalShown, WORLD.pick.lat, WORLD.pick.lon);
+    const wf = WD.windFrom(v.u10, v.v10);
+    pickTxt = tx('wmPick', fLat(WORLD.pick.lat), fLon(WORLD.pick.lon)) + '; ' + tx('wmPickVals', f1(wf[0]), f1(wf[1], 0), f1(v.hs, 2), !out && v.hsw >= WD.SWELL_MIN ? f1(v.hsw, 2) : '') + (out ? tx('wmPickOut') : '');
+  }
+  $('wmPick').textContent = pickTxt;
+  renderWorldNote();
+  const g = WORLD.globalShown;
+  const attr = [f && f.corridor.swell === 'model' ? tx('wmAttrNow') : tx('wmAttrEra5'), tx('wmAttrLand'), g ? tx('wmGlobalAt', g.time) : tx('wmNoGlobal')];
+  $('wmAttr').textContent = attr.join(' ');
+  if (m) {
+    m.setTime(WORLD.tView); m.setPick(WORLD.pick); m.setAircraft(ENV.mode === 'world' ? WORLD.ac : null);
+    m.setTrail(ENV.mode === 'world' ? WORLD.trail : []); m.draw();
+  }
+}
+function renderWorldNote() {
+  const c = WD.nowCost(null, WORLD_IX ? WORLD_IX.ocean_points : 0);
+  $('wmNowNote').textContent = tx('wmNowNote', c.corridor, c.global);
+  const msg = WORLD.msg ? tx(WORLD.msg[0], WORLD.msg[1]) : '';
+  $('wmMsg').textContent = [WORLD.prog, msg, WORLD.cachedNote].filter(Boolean).join(' ');
+}
+dyn.push(() => { worldOptions(); renderWorld(); renderWorldRo(); drawWorldLegend(); });
+// the legend: the wave height scale
+function drawWorldLegend() {
+  const cv = $('wmLeg'), r = Math.min(devicePixelRatio || 1, 2), w = cv.clientWidth || 300, h = cv.clientHeight || 34;
+  cv.width = w * r; cv.height = h * r;
+  const g = cv.getContext('2d'); g.setTransform(r, 0, 0, r, 0, 0);
+  g.clearRect(0, 0, w, h);
+  const x0 = 120, x1 = w - 10, y0 = 4, bh = 10, HM = WorldMap.HS_MAX;
+  g.fillStyle = '#52514e'; g.font = '11px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText(tx('legHs'), 0, y0 + 9);
+  for (let x = x0; x < x1; x++) {
+    const hs = Math.pow((x - x0) / (x1 - x0), 2) * HM, c = WorldMap.hsColor(hs);
+    g.fillStyle = 'rgb(' + c.join(',') + ')'; g.fillRect(x, y0, 1.5, bh);
+  }
+  g.textAlign = 'center'; g.fillStyle = '#52514e';
+  for (const v of [0, 1, 2, 4, 6, 9, 12]) {
+    const x = x0 + Math.sqrt(v / HM) * (x1 - x0);
+    g.fillRect(x - 0.5, y0 + bh, 1, 3); g.fillText(String(v), x, y0 + bh + 14);
+  }
+}
+// picking, hovering, fitting, hiding
+function worldPick(lat, lon) {
+  if (FL.on && ENV.mode === 'world') return;   // the place stays while it flies
+  WORLD.pick = { lat, lon }; WORLD.msg = null; renderWorld();
+}
+function worldHover(lat, lon, cx, cy) {
+  if (lat === null || lat === undefined || lat < -90 || lat > 90) { tip.style.display = 'none'; return; }
+  let v = '';
+  const f = WORLD.cur;
+  if (f) {
+    let s = WD.sampleCorridor(f.corridor, lat, lon, WORLD.tView);
+    if (!s.inside) s = WORLD.globalShown ? WD.sampleGlobal(WORLD.globalShown, lat, lon) : null;
+    if (s && Number.isFinite(s.u10)) { const wf = WD.windFrom(s.u10, s.v10); v = tx('wmPickVals', f1(wf[0]), f1(wf[1], 0), f1(s.hs, 2), s.hsw >= WD.SWELL_MIN ? f1(s.hsw, 2) : ''); }
+  }
+  tip.textContent = tx('tipMap', fLat(lat), fLon(lon), v);
+  tip.style.left = (cx + 12) + 'px'; tip.style.top = (cy + 12) + 'px'; tip.style.display = 'block';
+}
+WORLD.map = window.WorldMap ? WorldMap.create($('wmCv'), { onPick: worldPick, onHover: worldHover }) : null;
+if (WORLD.map && window.WORLD_LAND) WORLD.map.setLand(window.WORLD_LAND);
+$('wmFitW').addEventListener('click', () => WORLD.map && WORLD.map.fit('world'));
+$('wmFitC').addEventListener('click', () => WORLD.map && WORLD.map.fit('corridor'));
+$('wmFitA').addEventListener('click', () => { if (WORLD.map) { WORLD.map.setAircraft(ENV.mode === 'world' ? WORLD.ac : null); WORLD.map.setPick(WORLD.pick); WORLD.map.fit('aircraft'); } });
+function worldShowMap(show) {
+  $('mapPanel').style.display = show ? '' : 'none'; $('mapShow').style.display = show ? 'none' : 'block';
+  try { localStorage.setItem('viewerMapHidden', show ? '0' : '1'); } catch (e) { /* storage blocked */ }
+  if (show) { renderWorld(); drawWorldLegend(); }
+}
+$('wmHide').addEventListener('click', () => worldShowMap(false));
+$('mapShow').addEventListener('click', () => worldShowMap(true));
+addEventListener('resize', () => { if (WORLD.map) WORLD.map.draw(); drawWorldLegend(); });
+$('wmTime').addEventListener('input', () => {
+  const f = WORLD.cur;
+  if (!f) return;
+  WORLD.tView = f.corridor.t0 + 3600 * +$('wmTime').value;
+  if (ENV.mode === 'world' && WORLD.entry && WORLD.entry.key === WORLD.curKey && !FL.on) { WORLD.entry.t = WORLD.tView; WORLD.entry.T0 = T; worldRebuild(true); }
+  renderWorld();
+});
+// the forecast now, fetched from this page (the coordinates go to Open-Meteo)
+const NOW_KEY = 'viewerWorldNowGlobal';
+function worldCachedGlobal() {
+  try {
+    const d = JSON.parse(localStorage.getItem(NOW_KEY) || 'null');
+    if (d && d.t0 === Math.floor(Date.now() / 1000 / 10800) * 10800) return WD.unpack(d.packed);
+  } catch (e) { /* storage blocked or old */ }
+  return null;
+}
+function worldStoreGlobal(g) {
+  try { localStorage.setItem(NOW_KEY, JSON.stringify({ t0: g.t0, packed: WD.pack(g) })); } catch (e) { /* storage blocked */ }
+}
+async function worldFetchNow() {
+  if (WORLD.busy) return;
+  if (!WORLD.pick) { WORLD.msg = ['wmPickNone']; renderWorld(); return; }
+  const p = WORLD.pick;
+  let glob = null, cached = null;
+  WORLD.cachedNote = '';
+  if ($('wmNowGlob').checked && WORLD.mask) {
+    cached = worldCachedGlobal();
+    if (cached) WORLD.cachedNote = tx('wmCached', cached.time); else glob = { grid: WORLD_IX.grid.global, mask: WORLD.mask };
+  }
+  WORLD.busy = true; WORLD.msg = null; renderWorld();
+  try {
+    const res = await WD.fetchNow(p.lat, p.lon, { global: glob,
+      onProgress: (stage, d, n) => { WORLD.prog = tx('wmProg', tx('st_' + stage), d, n); renderWorldNote(); } });
+    if (res.global) worldStoreGlobal(res.global);
+    WORLD.files.now = { id: 'now', kind: 'now', title: { ja: '今の予報', en: 'Forecast now' }, corridor: res.corridor,
+      global: res.global || cached || null, sources: res.sources, attribution: ['Weather data by Open-Meteo.com (CC BY 4.0)'] };
+    worldOptions(); $('wmScen').value = 'now'; worldSelect('now');
+  } catch (e) {
+    WORLD.msg = ['wmErrFetch', String((e && e.message) || e)];
+  }
+  WORLD.busy = false; WORLD.prog = ''; renderWorld();
+}
+$('wmNow').addEventListener('click', worldFetchNow);
+// save the data shown, and load a saved file (read here only)
+$('wmSave').addEventListener('click', () => {
+  const f = WORLD.cur;
+  if (!f) return;
+  const obj = { id: f.id, kind: f.kind, title: f.title, corridor: WD.pack(f.corridor), attribution: f.attribution, sources: f.sources };
+  if (f.global) obj.global = WD.pack(f.global);
+  const text = '// world file saved from the viewer at ' + new Date().toISOString() + '\n(window.WORLD_FILES = window.WORLD_FILES || {})['
+    + JSON.stringify(f.id) + '] =\n' + JSON.stringify(obj) + ';\n';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/javascript' }));
+  a.download = 'world_' + f.id + '_' + f.corridor.time.replace(/[:]/g, '') + '.js';
+  document.body.appendChild(a); a.click(); a.remove();
+});
+$('wmFile').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const raw = WD.parseFile(String(rd.result));
+      if (!raw || !raw.corridor) throw new Error('no corridor');
+      const key = 'f:' + file.name;
+      WORLD.files[key] = worldUnpack(raw); WORLD.files[key].fileName = file.name;
+      worldOptions(); $('wmScen').value = key; worldSelect(key);
+    } catch (err) { WORLD.msg = ['wmErrFile', String((err && err.message) || err)]; renderWorld(); }
+  };
+  rd.readAsText(file);
+  e.target.value = '';
+});
+// start: the first case, the whole world
+{
+  let hidden = false;
+  try { hidden = localStorage.getItem('viewerMapHidden') === '1'; } catch (e) { /* storage blocked */ }
+  worldShowMap(!hidden);
+  worldOptions();
+  if (WORLD_IX && WORLD_IX.scenarios.length) {
+    const id = WORLD_IX.scenarios[0].id;
+    worldLoadScenario(id, (ok) => { if (ok) { worldSelect('s:' + id); if (WORLD.map) WORLD.map.fit('world'); } });
+  } else renderWorld();
+  drawWorldLegend();
+}
+// for the headless checks
+window.viewerWorldProject = (la, lo) => { const r = $('wmCv').getBoundingClientRect(), q = WORLD.map.project(la, lo); return [r.left + q[0], r.top + q[1]]; };
+window.viewerWorld = () => ({ mode: ENV.mode, entry: WORLD.entry, now: WORLD.now && { ll: WORLD.now.ll, tw: WORLD.now.tw, set: WORLD.now.set, inside: WORLD.now.s.inside },
+  ac: WORLD.ac, trail: WORLD.trail.length, cur: WORLD.curKey, T, W: { u10: W.u10, from: W.from_deg }, N, fl: { on: FL.on, el: FL.el, end: FL.end } });
+
 // keep a particle inside the box of side SEA around the sea centre
 function wrapParticle(i) {
   px[i] = seaC.x + (((px[i] - seaC.x + HALF) % SEA) + SEA) % SEA - HALF;
@@ -2011,12 +2450,13 @@ function loop(now) {
     T += dt;
   }
   envUpdate(T);   // the varying wind and the short waves at the new sea time
+  worldTick(now);  // the world sea at the aircraft's place and the weather time, and the map
   if (ENV.dirty) { ENV.dirty = false; uploadC(); }
   {   // locks: the setting does not change in flight, and time runs in real seconds when the wind varies
-    const lv = ENV.mode === 'varying';
+    const lv = ENV.mode === 'varying' || ENV.mode === 'world', lk = ENV.mode === 'world' ? 'lockWorldTip' : 'lockVarTip';
     spdEl.disabled = $('pause').disabled = lv;
-    spdEl.title = tx(lv ? 'lockVarTip' : 'spdTip');
-    $('pause').title = $('pause').parentElement.title = tx(lv ? 'lockVarTip' : 'pauseTip');
+    spdEl.title = tx(lv ? lk : 'spdTip');
+    $('pause').title = $('pause').parentElement.title = tx(lv ? lk : 'pauseTip');
     modeEl.disabled = FL.on; modeEl.title = tx(FL.on ? 'envLockTip' : 'envModeTip');
     if (ENV.mode === 'swell') {   // the swell (and so the wave library) and the wind direction stay fixed in flight
       for (const id of ['swlHs', 'swlTp', 'swlDir', 'swlPre']) { $(id).disabled = FL.on; $(id).title = tx(FL.on ? 'swlLockTip' : id + 'Tip'); }

@@ -164,6 +164,68 @@ After that, only a flight test can close it: low turns over a lake or a calm sea
   The Python run of the same case gives wave.loop_albatross_hs3_along_u6_p63_power_w, wave.loop_albatross_hs3_along_u6_p63_power_after_w and wave.loop_albatross_hs3_along_u6_p63_motor_share over its ten minutes, and mpc.js_wave_py_power_w, mpc.js_wave_py_power_after_w and mpc.js_wave_py_motor_share over a run of mpc.js_wave_py_t_s.
 - The target is fixed at 20 deg off downwind as in the Python experiments, and the wave-aware phase shift, the estimators and the sensors are not ported yet.
 
+#### World map and the world sea (`sim/world.py`, `sim/viewer/worldmap.js`) {#world-map}
+
+The viewer simulates representative real seas and winds of the world at two time scales: a small world map for hours to days, and the 3D view for minutes in real time at a chosen place and time.
+This is the data and the map (stages 1 and 2); flying the long trip on the map with the velocity hull and the energy budget, the routing layer, targets on the map and the year-long run come next, on the same files.
+
+- Two fields hold one byte per value with fixed steps (table below; the grids and steps are assumed, Q-078).
+  The global snapshot holds the 10 m wind (east and north) and the significant wave height at the ocean points of a coarse grid at one time; the ocean points are those outside the Natural Earth land (P168), simplified into `sim/viewer/world/land.js`, which the map also draws.
+  The corridor is a band of points along a bearing around a centre, on the azimuthal equidistant projection about the centre, with the 10 m wind, the total significant height and the swell's height, period and direction at fixed time steps; the wind sea is not stored but made from the wind.
+- The forecast now comes from the Open-Meteo forecast API (ECMWF IFS 0.25 deg wind, P169) and marine API (Meteo-France MFWAM, P170), chosen because it gives a swell partition at the corridor's time step (GFS Wave gives one too; ECMWF WAM and ERA5-Ocean do not).
+  A historical case comes from ERA5 (P165) through the Open-Meteo archive (P171) and ERA5-Ocean through the marine API (P172), which has no partition, so its swell is the lower bound of the climate study (`sim.climate.swell_lower_bound`, docs/02-form.md#wind-climate) with the peak period and the mean direction of the whole spectrum (Q-079).
+- The free API counts every location of a request as at least one call (P173): a corridor costs world.calls_corridor calls and a global snapshot world.calls_global.
+  `python -m sim.world` sends the locations in batches, keeps under the pace below with a log that every run shares, caches each response in `sim/cache/world`, and writes the URL, retrieval time and sha256 of every request into the file it packs.
+  One call of a location covers several days of a few variables, so the six global snapshots come from two date windows with one request per location each.
+- `python -m sim.world scenarios` writes one file per case into `sim/viewer/world` (its corridor and the global snapshot at its start) and `index.js`, and the page loads a case's file only when it is chosen.
+  `python -m sim.world now --lat --lon` packs the current forecast into a file that git ignores and the page loads with "From file"; it refuses a corridor near the owner's private sites inside the repository (such a file is written under the private store with `--out`).
+  `python -m sim.world_keys` writes the keys of this section.
+
+<!-- world_keys budget begin -->
+| item | key |
+|---|---|
+| global snapshot: grid step, highest latitude | world.global_step_deg, world.global_lat_max_deg |
+| global snapshot: ocean points, bytes of data | world.global_ocean_points, world.global_bytes |
+| corridor: step, points along and across | world.corridor_step_km, world.corridor_points_along, world.corridor_points_across |
+| corridor: length and width | world.corridor_length_km, world.corridor_width_km |
+| corridor: frame step, frames, bytes of data | world.frame_step_h, world.frames, world.corridor_bytes |
+| one byte per value: wind, height, period, direction | world.q_wind_ms, world.q_height_m, world.q_period_s, world.q_dir_deg |
+| largest scenario file, index file | world.scenario_file_max_bytes, world.index_bytes |
+| land file and its points | world.land_bytes, world.land_points |
+| free API calls for one corridor, one global snapshot | world.calls_corridor, world.calls_global |
+| pace kept by the fetcher (minute, hour, UTC day) | world.pace_calls_per_min, world.pace_calls_per_h, world.pace_calls_per_day |
+<!-- world_keys budget end -->
+
+The six cases, each three days from its start (UTC), with the wind and heights over all points and frames of its corridor:
+
+<!-- world_keys scenarios begin -->
+| case | start (UTC) | centre | mean wind | largest wind | mean height | largest height | mean swell | mean swell period |
+|---|---|---|---|---|---|---|---|---|
+<!-- world_keys scenarios end -->
+
+- Southern Ocean winter low: a passage of a low at the climate point so_2 in July 2023 (the wind's peak in the middle of the three days, rising before and falling after), one of the strongest of the twenty winters' passages with a full calm at np_1 within eight days.
+  Its year and that of the January window come after October 2021, so the archived MFWAM swell partition can check the lower bound there (Q-079).
+  The band is centred west of so_2 so that it stays upwind of the Kerguelen Islands, as the point does.
+- Southern Ocean summer quiet spell: one of the two longest summer spells below the climate study's calm threshold at so_1 in its twenty years, the one inside the January window.
+- North Pacific transition zone in winter: the three days at np_2 in the January window whose mean wind and height lie nearest the point's winter medians.
+- North Pacific summer under the subtropical high: three days of calm at np_1 in the July window.
+- Trade-wind belt: the South Atlantic south-east trades in July, the steadiest three days (the smallest spread of the wind against its mean) of five trade-wind and doldrum points probed in the July window.
+- Swell without wind: the eastern Pacific doldrums under the intertropical convergence zone in July, where swell from the southern winter arrives under almost no local wind, the calmest three days with swell of nine points probed.
+  It is the case the free setting cannot make (its wind starts above calm), and the one in which only the swell can carry the drone (wave-slope soaring, Q-013).
+
+The map (bottom right, hideable) draws the land, the global wave height and wind arrows, the corridor's finer field at the time of a slider over its three days, the chosen place, and the aircraft with its trail.
+The wheel zooms down to metres, the labels and tooltips follow the language switch, and the legend and the data attribution sit under the map.
+"Enter 3D here" makes the chosen place the 3D origin and sets the setting "World seas", in which the weather time runs with the sea time (one second of flight is one second of weather, and the speed is locked).
+Once a second of sea time the corridor is interpolated at the aircraft (at the mast before the launch), space bilinear and time linear with directions by unit vectors (`sim/viewer/worlddata.js`, the port of `sim/world.py`).
+When the sample has changed, the free setting's path builds the sea (`applySet`, `sim/viewer/envsea.js`): the 10 m wind, a wind sea grown for the hours whose duration-limited height matches the total height less the swell (fully developed when it reaches the fully developed sea), and the swell.
+Each wave component keeps its phase at the aircraft, so the sea does not jump under it, and the planner flies as in the free setting.
+The aircraft's position goes back to latitude and longitude by the same projection about the place.
+"Fetch the forecast now" calls Open-Meteo from the page, which works from a page opened as a file because the APIs allow any origin.
+The note beside the button says that the chosen coordinates go to Open-Meteo and what the calls cost; the global snapshot is kept in the browser's storage for its 3-hour step.
+A fetched forecast can be saved to a file and loaded again from a file, which the page reads locally only; that is the way to fly a private place without putting it into the repository.
+`sim/tests/test_world.py` checks the quantization (within half a step), the geometry, the interpolation, the packing, the batches, cache and pace against a fake service and a trimmed real response, and the privacy guard.
+`sim/tests/test_world_js.py` requires `worlddata.js` to decode exactly as Python and to give the same geometry, samples, forecast corridor, request URLs and byte codes, development hours that reproduce the wind sea's height, and phases that stay continuous at a point when the sea is rebuilt.
+
 ### Aircraft model (`sim/aircraft.py`, `sim/dsearch.py`) {#aircraft-model}
 
 - The aircraft is a point mass with a lift coefficient and a bank angle as controls, a parabolic drag polar (cd0, Oswald factor, aspect ratio), and limits on lift coefficient, bank, and load factor.

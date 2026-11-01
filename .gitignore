@@ -1,3 +1,4 @@
 private/
 __pycache__/
 sim/cache/
+sim/viewer/world/now.js

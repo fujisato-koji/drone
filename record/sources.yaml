@@ -1559,3 +1559,51 @@ items:
     read: partial
     retrieved: 2026-10-31
     note: "Page 1 (features) read: pressure precision +-0.005 hPa (+-0.05 m) in the high precision mode, measured as the average standard deviation; relative accuracy +-0.06 hPa (+-0.5 m); absolute accuracy +-1 hPa (+-8 m); 0.5 Pa/K; 1.7 uA for pressure at 1 Hz; 2.0 x 2.5 x 1.0 mm. A later revision quoted by distributors gives +-0.002 hPa precision; the 2016 figure is used."
+  - id: P168
+    class: P
+    title: "Natural Earth 1:110m physical vectors, land (ne_110m_land), version 5.1.2"
+    url: "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_110m_land.geojson"
+    license: "public domain (Natural Earth terms of use, https://www.naturalearthdata.com/about/terms-of-use/)"
+    read: full
+    retrieved: 2026-11-01
+    note: "The land polygons as GeoJSON (sha256 9e0729ee253ca7d7a5c4ae9395fb1902264c5377c52e224d13dd85010e2835d9, the same file on the repository's master that day), simplified by sim.world.simplify_land into sim/viewer/world/land.js (Ramer-Douglas-Peucker at 0.05 deg, integers of 0.01 deg); the file records the URL and the sha256, and gives the map's land and the ocean mask of the global grid."
+  - id: P169
+    class: P
+    title: "Open-Meteo forecast API, ECMWF IFS 0.25 deg hourly 10 m wind speed and direction (models=ecmwf_ifs025)"
+    url: "https://open-meteo.com/en/docs"
+    license: "API data CC BY 4.0 (https://open-meteo.com/en/licence), free API for non-commercial use only (https://open-meteo.com/en/terms); ECMWF open data CC BY 4.0"
+    read: excerpt
+    retrieved: 2026-11-01
+    note: "Excerpt: the 10 m wind of single points from https://api.open-meteo.com/v1/forecast (wind_speed_unit=ms, cell_selection=sea) as sim.world and sim/viewer/worlddata.js request it for the forecast now; a request from a page opened as a file came back (the API allows any origin). Attribution asked for: Weather data by Open-Meteo.com."
+  - id: P170
+    class: P
+    title: "Open-Meteo marine weather API, Meteo-France MFWAM wave forecast with the swell partition (models=meteofrance_wave, 0.08 deg, 3-hourly)"
+    url: "https://open-meteo.com/en/docs/marine-weather-api"
+    license: "API data CC BY 4.0 (https://open-meteo.com/en/licence), free API for non-commercial use only (https://open-meteo.com/en/terms)"
+    read: excerpt
+    retrieved: 2026-11-01
+    note: "Probes of https://marine-api.open-meteo.com/v1/marine on 2026-11-01 at 45S 52E: MFWAM (meteofrance_wave) and GFS Wave 0.25 deg (ncep_gfswave025) return swell_wave_height, swell_wave_period and swell_wave_direction; ECMWF WAM (ecmwf_wam, ecmwf_wam025) and ERA5-Ocean (era5_ocean) return them undefined; no model returned swell_wave_peak_period; the two partitions differed there (MFWAM 1.9 m, 11.8 s, from 212 deg; GFS Wave 3.2 m, 14.4 s, from 240 deg). A probe for 2023-07-10 returned the MFWAM partition from the archive. The documentation page was seen only through a summary: archived forecasts from October 2021 for MFWAM, secondary swell for some models and tertiary for GFS Wave; it does not say whether swell_wave_period is a mean or a peak period. The response allows any origin."
+  - id: P171
+    class: P
+    title: "Open-Meteo historical weather API, ERA5 hourly 10 m wind (models=era5, 0.25 deg) for the world cases: six corridors and the 5 deg global grid, July 2023 and January 2022"
+    url: "https://open-meteo.com/en/docs/historical-weather-api"
+    license: "API data CC BY 4.0 (https://open-meteo.com/en/licence), free API for non-commercial use only (https://open-meteo.com/en/terms); ERA5 CC BY 4.0 in the Copernicus Climate Data Store since 2025-07-02"
+    read: excerpt
+    retrieved: 2026-11-01
+    note: "Excerpt: the 10 m wind (cell_selection=sea) at the corridor points of the cases of sim.world.SCENARIOS for the days of each, and at the ocean points of the global grid over the two windows of sim.world.WINDOWS, from https://archive-api.open-meteo.com/v1/archive; every request URL, its retrieval time and the sha256 of the response are in the case files of sim/viewer/world under sources. Attribution asked for: Weather data by Open-Meteo.com; generated using Copernicus Climate Change Service information."
+  - id: P172
+    class: P
+    title: "Open-Meteo marine weather API, ERA5-Ocean hourly significant wave height, peak period and mean direction (models=era5_ocean, 0.5 deg) for the world cases"
+    url: "https://open-meteo.com/en/docs/marine-weather-api"
+    license: "API data CC BY 4.0 (https://open-meteo.com/en/licence), free API for non-commercial use only (https://open-meteo.com/en/terms); ERA5 CC BY 4.0 in the Copernicus Climate Data Store since 2025-07-02"
+    read: excerpt
+    retrieved: 2026-11-01
+    note: "Excerpt: the wave height, peak period and mean direction at the corridor points, and the wave height at the global grid's ocean points, for the same cases and windows as P171, from https://marine-api.open-meteo.com/v1/marine; the URLs, retrieval times and sha256 are in the case files. A probe for 2023-07-10 confirmed that this model returns no swell or wind-sea variables (as P167 found). Points on land or ice come back without values."
+  - id: P173
+    class: P
+    title: "Open-Meteo API rate limiting, docs/api-rate-limiting.md of the open-meteo repository"
+    url: "https://github.com/open-meteo/open-meteo/blob/main/docs/api-rate-limiting.md"
+    license: "AGPL-3.0 (the repository)"
+    read: partial
+    retrieved: 2026-11-01
+    note: "Read from the start to the section on reaching a limit: the free API allows 600 calls a minute, 5,000 an hour and 10,000 a day, generally shared by one public address; a location costs max(1, V/10 x max(1, D/14)) calls with V the variables times the models and D the days of its range, at least one call per location, added over the locations of a request; the cost of a request comes back in the X-RateLimit-Cost header; a request that starts and fails costs one call."

@@ -915,3 +915,21 @@ items:
     opened: 2026-11-01
     closed: 2026-11-01
     closed_by: D-020
+  - id: Q-078
+    kind: question
+    text: "The world map's data (docs/02-form.md#world-map) follows the owner's request of 2026-11-01 as relayed to the assistant: a 5 deg global grid of ocean points, a corridor of about 1000 by 600 km at about 0.5 deg, every 3 hours for 3 days, one byte per value, data kept very small. The assistant chose the rest: the grid's highest latitude (world.global_lat_max_deg), the steps of the bytes (world.q_wind_ms and world.q_height_m are coarser than the request's example so that the wind and the waves of a Southern Ocean storm fit in a byte), the corridor's point counts and the fetcher's pace. Confirm these as a decision, or change them. A global snapshot costs world.calls_global calls of the free API's 10,000 a day (P173), so the six cases share two date windows and a page's fetch of the global forecast takes several minutes."
+    waits_for: owner
+    affects:
+      - Q-066
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-01
+  - id: Q-079
+    kind: finding
+    text: "The swell of the world sea is approximate (docs/02-form.md#world-map). A historical case takes the lower bound of sim/climate.py with the peak period and mean direction of the whole spectrum, so a swell under a wind sea of similar height is missed and a wind sea's peak can be taken for the swell's period; a forecast takes MFWAM's partition, whose period Open-Meteo does not define as mean or peak (P170), while the 3D sea uses it as the peak period of a narrow swell spectrum (sim/viewer/seagen.js). Settle the definition of the period, and compare the lower bound with the MFWAM partition archived since October 2021 at the cases' places and times, before a flight result in the world sea carries a decision."
+    waits_for: assistant
+    affects:
+      - Q-013
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-01
