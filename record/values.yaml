@@ -26978,10 +26978,10 @@ items:
     unit: deg/s
     status: assumed
     basis:
-      - Q-081
+      - Q-084
   - key: viewer.course_link_frac
     v: 0.5
     unit: 1
     status: assumed
     basis:
-      - Q-081
+      - Q-084
