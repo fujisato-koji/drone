@@ -26925,3 +26925,63 @@ items:
     status: assumed
     basis:
       - Q-080
+  - key: viewer.fps_free_before
+    v: 8.5
+    unit: Hz
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.fps_free_after
+    v: 60.1
+    unit: Hz
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.fps_flight_before
+    v: 5.6
+    unit: Hz
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.fps_flight_after
+    v: 60.1
+    unit: Hz
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.fps_regular_before
+    v: 60.1
+    unit: Hz
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.fps_regular_after
+    v: 60.1
+    unit: Hz
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.script_share_free_before
+    v: 0.98
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.script_share_free_after
+    v: 0.29
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.wind_section_ms
+    v: 34
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.wind_frame_max_ms
+    v: 12.6
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer

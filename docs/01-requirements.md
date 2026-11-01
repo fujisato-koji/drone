@@ -4494,6 +4494,16 @@ So the scope of the budget is asked as Q-003, class 1 or class 2 as Q-004, and t
 | viewer.wind_refresh_s | 0.25 | s | assumed | Q-080 |
 | viewer.cam_fov_deg | 70 | deg | assumed | Q-080 |
 | viewer.cam_tau_s | 0.15 | s | assumed | Q-080 |
+| viewer.fps_free_before | 8.5 | Hz | calculated | docs/02-form.md#viewer |
+| viewer.fps_free_after | 60.1 | Hz | calculated | docs/02-form.md#viewer |
+| viewer.fps_flight_before | 5.6 | Hz | calculated | docs/02-form.md#viewer |
+| viewer.fps_flight_after | 60.1 | Hz | calculated | docs/02-form.md#viewer |
+| viewer.fps_regular_before | 60.1 | Hz | calculated | docs/02-form.md#viewer |
+| viewer.fps_regular_after | 60.1 | Hz | calculated | docs/02-form.md#viewer |
+| viewer.script_share_free_before | 0.98 | 1 | calculated | docs/02-form.md#viewer |
+| viewer.script_share_free_after | 0.29 | 1 | calculated | docs/02-form.md#viewer |
+| viewer.wind_section_ms | 34 | ms | calculated | docs/02-form.md#viewer |
+| viewer.wind_frame_max_ms | 12.6 | ms | calculated | docs/02-form.md#viewer |
 <!-- tdr:end -->
 
 ## Requirements for the dynamic soaring drone {#ds-requirements}
