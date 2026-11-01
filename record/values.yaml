@@ -20369,7 +20369,7 @@ items:
     basis:
       - docs/02-form.md#receding-horizon
   - key: reflex.contact_truth_v2_v_min_over_stall
-    v: 0.976
+    v: 1.022
     unit: 1
     status: calculated
     basis:
@@ -20561,13 +20561,13 @@ items:
     basis:
       - docs/02-form.md#receding-horizon
   - key: reflex.contact_flat_v2_gamma_max_deg
-    v: 31.58
+    v: 29.114
     unit: deg
     status: calculated
     basis:
       - docs/02-form.md#receding-horizon
   - key: reflex.contact_flat_v2_v_min_over_stall
-    v: 0.898
+    v: 0.881
     unit: 1
     status: calculated
     basis:
@@ -20581,6 +20581,54 @@ items:
   - key: reflex.contact_flat_v2_tip_depth_max_m
     v: 0.0
     unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: reflex.contact_truth_v2_rescues_with_range
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: reflex.contact_truth_v2_rescues_range_only
+    v: 0
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: reflex.contact_truth_v2_rescues_prediction_only
+    v: 30
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: reflex.contact_flat_v2_rescues_with_range
+    v: 22
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: reflex.contact_flat_v2_rescues_range_only
+    v: 13
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: reflex.contact_flat_v2_rescues_prediction_only
+    v: 8
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: reflex.v2_stall_firings
+    v: 13
+    unit: 1
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
+  - key: reflex.v2_stall_firings_dive
+    v: 0
+    unit: 1
     status: calculated
     basis:
       - docs/02-form.md#receding-horizon
@@ -20806,6 +20854,12 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#receding-horizon
+  - key: reflex.nav5_wingtip_min_m
+    v: 0.51
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
   - key: reflex.nav10_albatross_u13_upwind_firings
     v: 0
     unit: 1
@@ -20932,6 +20986,12 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#receding-horizon
+  - key: reflex.nav10_wingtip_min_m
+    v: 5.48
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
   - key: reflex.loop_runs
     v: 56
     unit: 1
@@ -20939,13 +20999,13 @@ items:
     basis:
       - docs/02-form.md#receding-horizon
   - key: reflex.loop_fired_runs
-    v: 1
+    v: 0
     unit: 1
     status: calculated
     basis:
       - docs/02-form.md#receding-horizon
   - key: reflex.loop_firings
-    v: 1
+    v: 0
     unit: 1
     status: calculated
     basis:
@@ -20999,7 +21059,7 @@ items:
     basis:
       - docs/02-form.md#receding-horizon
   - key: reflex.loop_cause_stall
-    v: 1
+    v: 0
     unit: 1
     status: calculated
     basis:
@@ -21016,8 +21076,14 @@ items:
     status: calculated
     basis:
       - docs/02-form.md#receding-horizon
+  - key: reflex.loop_wingtip_min_m
+    v: 1.33
+    unit: m
+    status: calculated
+    basis:
+      - docs/02-form.md#receding-horizon
   - key: reflex.loop_reflex_s_max
-    v: 0.28
+    v: 0.0
     unit: s
     status: calculated
     basis:
@@ -21431,7 +21497,7 @@ items:
     basis:
       - docs/02-form.md#receding-horizon
   - key: reflex.loop_albatross_hs2_along_u3_p64_firings
-    v: 1
+    v: 0
     unit: 1
     status: calculated
     basis:
