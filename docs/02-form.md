@@ -2197,6 +2197,32 @@ At the conditions of the closed-loop runs of the navigation section (a flat sea,
   On the soaring leg downwind it made route.cmp_run5_albatross_u16_downwind_ratio of it: at a library wind the hull at or below the whole rounding step is the next lower library wind's, so the plan is slower there than the closed loop on that wind's own cycles, which lost some speed to the gybes and the final approach; that run also used the motor for nav.run5_albatross_u16_downwind_motor_share of its time, which the plan does not count.
   The plan does not discount its speeds for the closed loop's losses, and the closed loop flew a flat sea with the truth state and wind; the world seas' waves, gusts and estimated states are not in either.
 
+### Fixed routes and laps
+
+The benchmark lap of D-022 flies a fixed loop of waypoints, so its graph is a path rather than a corridor's grid, and its weather is a box of latitude and longitude over weeks; the loop and the weather stay in the owner's private store, and `python -m sim.route loop` plans the lap from a private input file (the tests fly an invented island only, `sim/tests/test_route_loop.py`).
+
+- The path graph (`path_graph`): nodes along the polyline at most route.sub_km apart, each segment cut in equal parts and every vertex a node, and one leg from each node to the next, flown in steps as on a corridor's graph (the course of the arc at each step's start, the field's grid crossings for the sea test).
+  A closed loop is a polyline that ends at its first point: its end is a node of its own at the start's place, so a lap is planned from the first node to the last by their indices.
+  Ranges of vertices flown over land are dry: the legs between their two vertices and the nodes strictly inside.
+  The land test of `sim/viewer/world/land.js` lists the wet nodes and legs that touch land instead of removing them, since the route is fixed.
+- The search's hooks, which act only on a path graph (a corridor's plans are unchanged, `sim/tests/test_route.py` and `sim/tests/test_route_js.py`):
+  - the lower bound of the time to go is the distance left along the path over the fastest speed of the leg model, since a lap ends where it starts;
+  - no wait on the water at a dry node, nor at a node in a UTC month that the node forbids (the months D-022 rules out for a landing there), the month taken at the wait's start;
+  - a dry leg flies the steady powered leg on every step, at the field's 10 m wind there, and tests no sea; it pays a take-off only when the aircraft is afloat at the leg's start, that is at the wet vertex before the land, since no wait is allowed inside; the arrival at a dry node tests no sea; the energy rules hold over land as over the sea.
+- The field (`BoxField`) is the 10 m wind and the total wave height on a regular grid of latitude and longitude, sampled as a corridor (bilinear in space over the corners that hold a value, linear in time), the wave height missing over land; several months join in time into one field, a frame that two months both hold taken once.
+- The solar layer (`BoxSolar`) is the surface shortwave radiation as 3-hour means, the value at a stamp being the mean over the three hours before it, bilinear in space.
+  The planner's tables are hourly, so each 3-hour mean is split into its hours in proportion to the fitted model's hourly means at the node (the shape of the sun's elevation; the factor route.solar_fit_w_m2 cancels), which keeps the 3-hour mean, and held flat where the model has no sun in the interval while the data have some (the diffuse light of a twilight, or the model's sunrise set against the data's).
+  This is an assumption (Q-091): clouds that come and go within the three hours, and the light around sunrise and sunset, can fall in other hours than the model's shape gives.
+- The runner, `python -m sim.route loop INPUT --out OUT`, plans every start time of the input in both directions (the reversed polyline), in node with route.js through `sim/route_loop.js` by default as the experiments are (`--engine python` in Python), with the limits of labels from the input since a lap is long (route.max_pops and route.relax_pops when the input gives none).
+  For each plan it writes the days to complete; the shares of soaring, motor and waiting by time and of soaring and motor by distance, with the dry distance; the lowest charge and where; the strict margins of the reserve, the night and the allowance, with the waypoint of the night's lowest; the waits (merged, longest first) and the legs that used the motor (most energy first) by their nodes; the time, waits and motor energy per segment of the polyline; whether the strict search stopped at its limit, the farthest node it took and each relaxed search's count; and when no route keeps the rules, the reason and the closest route.
+  Its output names nodes and the input's vertices, never coordinates, and its log prints none; it writes only the file it is given.
+  Python and route.js give the same plans on the invented lap in both directions (`sim/tests/test_route_loop.py`).
+- The approximations, open items:
+  - the route follows the polyline: the leg model's soaring makes way along a leg by flying the best pair of cycles on either side of the course, and the excursion of those cycles to either side is not checked against a band around the line, such as the sea area that D-022 keeps to (Q-090);
+  - the hourly split of the 3-hour means above (Q-091);
+  - no lateral freedom: the plan cannot leave the line for better wind or seas, though D-022 allows detours around weak wind, nor choose another sea passage (Q-092);
+  - the dry crossing: the steady leg over land at the field's 10 m wind and at the steady leg's height over the sea, with no climb over the terrain and no rules of flight over land (Q-093).
+
 ### Limits
 
 - The leg model is the flat sea's (above), without the wave ride (Q-081), with the hull of the library wind below, and with the plan's speeds not discounted for the closed loop's losses (the table above).
@@ -2204,7 +2230,7 @@ At the conditions of the closed-loop runs of the navigation section (a flat sea,
 - The dominance is approximate (above): neither the window nor the tolerances bound how much later a route found can arrive than the earliest (a shorter window and smaller tolerances found earlier arrivals on the experiments, K-023), and a plan can fail where only a dropped label's route keeps the rules; the graph's step, rings and waits are assumed (Q-082), and the results have not been checked against a finer graph.
 - The night's requirement is computed at a node with that node's solar energy, though the aircraft flies on, and a cloudy run below the draw can stand in for the night; the panel is horizontal and its energy reaches the battery without losses; the take-off is assumed; the sensor set is counted while flying by day, the night's low-power draw throughout the night.
 - The cases are world.frames frames of world.frame_step_h hours of a corridor of world.corridor_length_km by world.corridor_width_km (docs/02-form.md#world-map).
-  The benchmark of D-022, a circuit around the island of the home operating area, needs a field along its loop for longer and a graph along it with land crossings where no sea passage keeps the rules; the planner's interfaces take them (a field locates a point, samples it and lists the grid crossings of a step; the graph is nodes of latitude and longitude with their legs, and the land test is a function of the graph's builder), and the loop's data stay in the owner's private store.
+  The benchmark lap of D-022 is planned on a path graph along its loop over a box of weather (above), with the approximations of Q-090 to Q-093; the loop's data stay in the owner's private store.
 
 ## Control modes {#control-modes}
 

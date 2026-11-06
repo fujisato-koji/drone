@@ -988,3 +988,42 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-11-01
+  - id: Q-090
+    kind: question
+    text: "A fixed route (docs/02-form.md#route-planning, fixed routes and laps) follows its polyline: each leg is a great-circle arc between two nodes, and the leg model's soaring makes way along it by flying the best pair of soaring cycles on either side of the course, so the real track swings to both sides of the line by the cycles' excursion, which the plan does not check against a band around the line (such as the sea area the benchmark lap of D-022 keeps to, or a margin from a coast). Settle how far a soaring leg's track leaves its course (from the cycles of the motor library and the tactical layer's switching, docs/02-form.md#navigation) and whether the path graph needs a band, a shorter leg or a check of the excursion."
+    waits_for: assistant
+    affects:
+      - D-022
+      - D-021
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-06
+  - id: Q-091
+    kind: question
+    text: "The solar layer of a box (BoxSolar, docs/02-form.md#route-planning) takes the surface shortwave radiation as 3-hour means and splits each into its hours in proportion to the fitted model's hourly means at the node (route.solar_fit_w_m2's shape, the sine of the sun's elevation), holding it flat where the model has no sun in the interval: an assumption. Clouds that come and go within the three hours and the light around sunrise and sunset can fall in other hours than the model's shape gives, which moves the energy between the hours of the battery's tables (the night rule and the motor's allowance count by the hour). Settle it against hourly radiation at the same points (the hourly ERA5 of the corridor layers, P175, split by the same rule from its own 3-hour means), or take hourly data for the lap."
+    waits_for: assistant
+    affects:
+      - D-022
+      - D-021
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-06
+  - id: Q-092
+    kind: question
+    text: "The path graph of a fixed route (docs/02-form.md#route-planning) gives the plan no lateral freedom: it flies the polyline it is given and can only choose when to fly, soar, use the motor or wait, so it cannot leave the line for better wind or seas, though D-022 allows detours around weak wind, nor choose another sea passage than the one drawn. Settle whether the benchmark lap of D-022 needs a band of nodes across the line (a corridor's graph bent along the loop, with the land test of corridor_graph) or alternative polylines, and how the plan's arrival changes with them."
+    waits_for: assistant
+    affects:
+      - D-022
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-06
+  - id: Q-093
+    kind: question
+    text: "A dry stretch of a fixed route (docs/02-form.md#route-planning) is flown on the steady powered leg at the field's 10 m wind over land and at the steady leg's height over the sea, with no climb over the terrain, no gusts or shelter of the land, no wait and no landing until the next wet vertex; the rules for flying over land (the height, the people and property below) are not in the plan. Settle the crossing's height and climb energy from the terrain along it, the wind over land, and with the owner the rules a crossing of D-022 keeps."
+    waits_for: assistant, then owner
+    affects:
+      - D-022
+      - D-021
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-06
