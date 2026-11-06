@@ -156,6 +156,110 @@
     return Number.isFinite(v) ? v : null;
   };
 
+  // ------------------------------------------------------------ a box of latitude and longitude (sim.route.BoxField)
+  var BOX_GRID = ['na', 'nc', 'lat0', 'lon0', 'step_deg', 'dt_h'];
+  // one box dict from several joined in time (sim.route.box_join)
+  function boxJoin(ds, names) {
+    ds = (Array.isArray(ds) ? ds.slice() : [ds]).sort(function (x, y) { return x.t0 - y.t0; });
+    var a = ds[0], dt = 3600.0 * a.dt_h, tFirst = a.t0, tLast = null, vals = {}, i, q, k;
+    names.forEach(function (n) { vals[n] = []; });
+    for (i = 0; i < ds.length; i++) {
+      var d = ds[i];
+      for (k = 0; k < BOX_GRID.length; k++) if (+d[BOX_GRID[k]] !== +a[BOX_GRID[k]]) throw new Error('boxJoin: ' + BOX_GRID[k] + ' differs between the dicts');
+      for (q = 0; q < d.nt; q++) {
+        var t = d.t0 + q * dt, x = (t - tFirst) / dt;
+        if (Math.abs(x - Math.round(x)) > 1e-6) throw new Error('boxJoin: a frame lies off the time grid of the first dict');
+        if (tLast !== null) {
+          if (t <= tLast + 1e-6) continue;
+          if (t > tLast + dt + 1e-6) throw new Error('boxJoin: a gap in time between the dicts');
+        }
+        for (k = 0; k < names.length; k++) vals[names[k]].push(d.vals[names[k]][q]);
+        tLast = t;
+      }
+    }
+    var out = { t0: a.t0, nt: vals[names[0]].length, vals: vals };
+    BOX_GRID.forEach(function (g) { out[g] = a[g]; });
+    return out;
+  }
+  // nt frames of n values into one flat array (null for NaN)
+  function boxFlat(frames, n, what) {
+    var out = new Float64Array(frames.length * n), k, j;
+    for (k = 0; k < frames.length; k++) {
+      if (frames[k].length !== n) throw new Error(what + ': ' + frames[k].length + ' values for ' + n + ' points');
+      for (j = 0; j < n; j++) { var x = frames[k][j]; out[k * n + j] = (x === null || x === undefined) ? NaN : +x; }
+    }
+    return out;
+  }
+  // fractional grid indices of (lat, lon) in a box, the longitude within 180 deg of lon0 (sim.route.box_index)
+  function boxIndex(b, lat, lon) {
+    var d = lon - b.lon0;
+    if (d >= 180.0) d -= 360.0; else if (d < -180.0) d += 360.0;
+    return [(lat - b.lat0) / b.step, d / b.step];
+  }
+  // the wind and the waves on a box with the corridor's interface (sim.route.BoxField): d = {na, nc, lat0, lon0,
+  // step_deg, t0, dt_h, nt, vals: {u10, v10, hs}}, each a list of nt flat arrays, row-major from the south-west
+  function BoxField(d) {
+    this.na = d.na; this.nc = d.nc; this.nt = d.nt; this.np = d.na * d.nc;
+    this.lat0 = d.lat0; this.lon0 = d.lon0; this.step = d.step_deg;
+    this.t0 = d.t0; this.dt = 3600.0 * d.dt_h; this.tEnd = this.t0 + this.dt * (this.nt - 1);
+    var vals = {}, self = this;
+    ['u10', 'v10', 'hs'].forEach(function (n) { vals[n] = boxFlat(d.vals[n].slice(0, d.nt), self.np, 'BoxField ' + n); });
+    this.f = { vals: vals };
+    var u = vals.u10, v = vals.v10, mx = -Infinity, i;
+    for (i = 0; i < u.length; i++) { var s = Math.sqrt(u[i] * u[i] + v[i] * v[i]); if (s > mx) mx = s; }
+    this.u10Max = mx;
+  }
+  BoxField.join = function (ds) { return new BoxField(boxJoin(ds, ['u10', 'v10', 'hs'])); };
+  BoxField.prototype.locate = function (lat, lon) {
+    var ij = boxIndex(this, lat, lon), fi = ij[0], fj = ij[1];
+    if (fi >= -1e-9 && fi <= this.na - 1 + 1e-9 && fj >= -1e-9 && fj <= this.nc - 1 + 1e-9) return [fi, fj, corners(this.na, this.nc, fi, fj)];
+    return null;
+  };
+  BoxField.prototype.crossings = CorridorField.prototype.crossings;
+  BoxField.prototype.at = CorridorField.prototype.at;
+  BoxField.prototype.sample = CorridorField.prototype.sample;
+
+  // the surface shortwave radiation on a box as means over dt_h whole hours, the value stamped s the mean over
+  // [s - dt_h, s), split into hours by the fitted model's shape (sim.route.BoxSolar)
+  function BoxSolar(d) {
+    this.na = d.na; this.nc = d.nc; this.lat0 = d.lat0; this.lon0 = d.lon0; this.step = d.step_deg;
+    this.s0 = d.t0; this.ds = 3600.0 * d.dt_h; this.ns = d.nt;
+    this.hours = Math.round(this.ds / 3600.0);
+    if (this.hours < 1 || Math.abs(this.ds - 3600.0 * this.hours) > 1e-6 || Math.abs(this.s0 / 3600.0 - Math.round(this.s0 / 3600.0)) > 1e-9) {
+      throw new Error('BoxSolar: the stamps and the interval must be whole hours');
+    }
+    this.v = boxFlat(d.vals.shortwave_radiation.slice(0, d.nt), this.na * this.nc, 'BoxSolar');
+    this.t0 = this.s0 - this.ds; this.nt = this.ns * this.hours;
+    this.shapes = new Map();
+  }
+  BoxSolar.join = function (ds) { return new BoxSolar(boxJoin(ds, ['shortwave_radiation'])); };
+  BoxSolar.prototype.locate = function (lat, lon) {
+    var ij = boxIndex(this, lat, lon), fi = ij[0], fj = ij[1];
+    if (fi >= -1e-9 && fi <= this.na - 1 + 1e-9 && fj >= -1e-9 && fj <= this.nc - 1 + 1e-9) return [fi, fj, lat, lon];
+    return null;
+  };
+  BoxSolar.prototype.shape = function (loc, q) {
+    var key = loc[2] + ',' + loc[3] + ',' + q, r = this.shapes.get(key), h;
+    if (r === undefined) {
+      var ta = this.t0 + q * this.ds, s = [], tot = 0.0;
+      for (h = 0; h < this.hours; h++) s.push(modelHourMean(loc[2], loc[3], ta + 3600.0 * h, 1.0));
+      for (h = 0; h < s.length; h++) tot += s[h];
+      r = [s, tot];
+      this.shapes.set(key, r);
+    }
+    return r;
+  };
+  BoxSolar.prototype.hourMean = function (loc, tHour) {
+    if (loc === null) return null;
+    var k = Math.round((tHour - this.t0) / 3600.0);
+    if (k < 0 || k >= this.nt) return null;
+    var q = Math.floor(k / this.hours), h = k % this.hours;
+    var g = bilinear(this.v, q * this.na * this.nc, this.na, this.nc, loc[0], loc[1]);
+    if (!Number.isFinite(g)) return null;
+    var sh = this.shape(loc, q), m = sh[1] / this.hours;
+    return m > 0.0 ? g * sh[0][h] / m : g;
+  };
+
   // ------------------------------------------------------------ great-circle geometry
   function gcKm(lat1, lon1, lat2, lon2) {
     var p1 = lat1 * D2R, p2 = lat2 * D2R;
@@ -269,6 +373,70 @@
     }
     return [best, bd];
   }
+
+  // the graph of a fixed route (sim.route.path_graph): points [[lat, lon], ...], dry [[a, b], ...] vertex ranges
+  // flown over land, land rings or null for no test
+  function pathGraph(field, points, subKm, dry, land) {
+    subKm = subKm === undefined || subKm === null ? DEFAULTS.sub_km : subKm;
+    var pts = points.map(function (p) { return [+p[0], +p[1]]; }), lat = [], lon = [], seg = [], vnode = [], i, k, n, q;
+    if (pts.length < 2) throw new Error('pathGraph: a route needs two points at least');
+    for (i = 0; i < pts.length - 1; i++) {
+      var la1 = pts[i][0], lo1 = pts[i][1], la2 = pts[i + 1][0], lo2 = pts[i + 1][1], L = gcKm(la1, lo1, la2, lo2);
+      if (L < 1e-9) throw new Error('pathGraph: vertices ' + i + ' and ' + (i + 1) + ' coincide');
+      var ns = Math.max(1, Math.ceil(L / subKm - 1e-9));
+      vnode.push(lat.length);
+      for (k = 0; k < ns; k++) {
+        var p = k === 0 ? [la1, lo1] : gcPoint(la1, lo1, la2, lo2, k / ns);
+        lat.push(p[0]); lon.push(p[1]); seg.push(i);
+      }
+    }
+    vnode.push(lat.length); lat.push(pts[pts.length - 1][0]); lon.push(pts[pts.length - 1][1]); seg.push(pts.length - 1);
+    var N = lat.length, loc = [], bad = 0;
+    for (n = 0; n < N; n++) { loc.push(field.locate(lat[n], lon[n])); if (loc[n] === null) bad++; }
+    if (bad) throw new Error('pathGraph: ' + bad + ' nodes lie outside the field');
+    var dryNode = [], dryEdge = [];
+    for (n = 0; n < N; n++) { dryNode.push(false); dryEdge.push(n < N - 1 ? [false] : []); }
+    (dry || []).forEach(function (r) {
+      var a = r[0] | 0, b = r[1] | 0, x;
+      if (!(a >= 0 && a < b && b <= pts.length - 1)) throw new Error('pathGraph: dry range (' + a + ', ' + b + ') is not a < b within the vertices');
+      for (x = vnode[a]; x < vnode[b]; x++) dryEdge[x][0] = true;
+      for (x = vnode[a] + 1; x < vnode[b]; x++) dryNode[x] = true;
+    });
+    var onLand = land && land.length ? landTester(land) : null, edges = [], length = [], hitNodes = [], hitLegs = [];
+    for (n = 0; n < N - 1; n++) {
+      var m = n + 1, Le = gcKm(lat[n], lon[n], lat[m], lon[m]), ne = Math.max(1, Math.ceil(Le / subKm - 1e-9)), pp = [], locs = [];
+      for (k = 0; k < ne; k++) pp.push(gcPoint(lat[n], lon[n], lat[m], lon[m], k / ne));
+      for (k = 0; k < ne; k++) { var lc = field.locate(pp[k][0], pp[k][1]); if (lc === null) throw new Error('pathGraph: a step of the leg from node ' + n + ' lies outside the field'); locs.push(lc); }
+      var steps = [];
+      for (q = 0; q < ne; q++) steps.push([locs[q], gcBearing(pp[q][0], pp[q][1], lat[m], lon[m]), field.crossings(locs[q], q + 1 < ne ? locs[q + 1] : loc[m])]);
+      edges.push([[m, Le * 1000.0 / ne, steps]]);
+      length.push(Le * 1000.0);
+      if (onLand && !dryEdge[n][0]) {
+        var hit = false;
+        for (k = 1; k < ne && !hit; k++) if (onLand(pp[k][0], pp[k][1])) hit = true;
+        for (k = 0; k < ne && !hit; k++) { var c = gcPoint(lat[n], lon[n], lat[m], lon[m], (k + 0.5) / ne); if (onLand(c[0], c[1])) hit = true; }
+        if (hit) hitLegs.push(n);
+      }
+    }
+    edges.push([]);
+    if (onLand) for (n = 0; n < N; n++) if (!dryNode[n] && onLand(lat[n], lon[n])) hitNodes.push(n);
+    var rem = new Array(N);
+    rem[N - 1] = 0.0;
+    for (n = N - 2; n >= 0; n--) rem[n] = rem[n + 1] + length[n];
+    var noWait = [];
+    for (n = 0; n < N; n++) noWait.push([]);
+    return { lat: lat, lon: lon, loc: loc, edges: edges, stepKm: subKm, remM: rem, dryNode: dryNode, dryEdge: dryEdge,
+      noWaitMonths: noWait, vertexNode: vnode, seg: seg, landHits: { nodes: hitNodes, legs: hitLegs } };
+  }
+  // forbid waiting in the UTC months (1..12) at the nodes from vertex a to vertex b (sim.route.set_no_wait)
+  function setNoWait(graph, months, vertices) {
+    var a = 0, b = graph.lat.length - 1, n;
+    if (vertices !== undefined && vertices !== null) { a = graph.vertexNode[vertices[0] | 0]; b = graph.vertexNode[vertices[1] | 0]; }
+    if (a > b) throw new Error('setNoWait: vertices (a, b) need a <= b');
+    months.forEach(function (mo) { if (!(mo >= 1 && mo <= 12 && mo === Math.floor(mo))) throw new Error('setNoWait: months are 1..12'); });
+    for (n = a; n <= b; n++) months.forEach(function (mo) { if (graph.noWaitMonths[n].indexOf(+mo) < 0) graph.noWaitMonths[n].push(+mo); });
+  }
+  function utcMonth(t) { return new Date(Math.floor(t / 86400.0) * 86400000).getUTCMonth() + 1; }
 
   // ------------------------------------------------------------ leg model
   function LegModel(hulls, steady, st) {
@@ -450,7 +618,26 @@
     var WAIT = st.wait_s, EPS_SOC = st.eps_soc, EPS_SLACK = st.eps_slack, WIN = st.dom_window_s;
     var vm = o.vMax === undefined ? legs.vMax(field.u10Max) : o.vMax, maxPops = o.maxPops || st.max_pops;
     var dl = graph.lat[dest], dn = graph.lon[dest], hc = new Map();
-    function heur(n) { var v = hc.get(n); if (v === undefined) { v = gcKm(graph.lat[n], graph.lon[n], dl, dn) * 1000.0 / vm; hc.set(n, v); } return v; }
+    // a fixed route's graph (pathGraph): the distance left along the path, no wait where forbidden, dry legs
+    var rem = graph.remM || null, dryNode = graph.dryNode || null, dryEdge = graph.dryEdge || null;
+    var noWait = graph.noWaitMonths || null, path = rem !== null || dryNode !== null || noWait !== null, months = new Map();
+    function heur(n) {
+      var v = hc.get(n);
+      if (v === undefined) {
+        v = rem !== null ? Math.max(0.0, rem[n] - rem[dest]) / vm : gcKm(graph.lat[n], graph.lon[n], dl, dn) * 1000.0 / vm;
+        hc.set(n, v);
+      }
+      return v;
+    }
+    function mayWait(n, t) {
+      if (dryNode !== null && dryNode[n]) return false;
+      if (noWait !== null && noWait[n].length) {
+        var d = Math.floor(t / 86400.0), mo = months.get(d);
+        if (mo === undefined) { mo = utcMonth(t); months.set(d, mo); }
+        return noWait[n].indexOf(mo) < 0;
+      }
+      return true;
+    }
     var LT = [], LS = [], LK = [], LD = [], LW = [], LN = [], LP = [], LE = [], LA = [], pareto = new Map();
     var why = { seas: 0, no_leg: 0, horizon: 0, reserve: 0, allowance: 0, night: 0, dominated: 0 };
     var stats = { pops: 0, labels: 0, capped: false, pruned: why };
@@ -507,8 +694,9 @@
       }
       return true;
     }
-    // one leg (sim.route.search: fly): [[arrival, charge, slack, day, edge] or null, soared]
-    function fly(n, m, subM, steps, t, soc, slack, day, water, steadyFirst) {
+    // one leg (sim.route.search: fly): [[arrival, charge, slack, day, edge] or null, soared]; a dry leg flies the
+    // steady leg only and tests no sea
+    function fly(n, m, subM, steps, t, soc, slack, day, water, steadyFirst, dry) {
       var tt = t, s2 = soc, k2 = slack, d2 = day, lonN = graph.lon[n];
       var motor = 0.0, draw = 0.0, solTot = 0.0, to = 0.0, modes = [], days = new Map(), soared = false, dd, z, q, sMin = soc;
       if (water) {
@@ -530,16 +718,20 @@
         var lc = steps[z][0], brg = steps[z][1], checks = steps[z][2];
         if (tt > H) { why.horizon++; return [null, soared]; }
         var smp = field.sample(lc, tt), u = smp[0], v = smp[1], hs = smp[2];
-        if (!(hs <= avoid)) { why.seas++; return [null, soared]; }
+        if (dry) { if (!(Number.isFinite(u) && Number.isFinite(v))) { why.no_leg++; return [null, soared]; } }
+        else if (!(hs <= avoid)) { why.seas++; return [null, soared]; }
         var sp = Math.sqrt(u * u + v * v), wf = wrap360(Math.atan2(-u, -v) * R2D);
         var lg = legs.leg(sp, brg - wf - 180.0), mode, vs, pw;
-        if (!steadyFirst && lg[0] > 0.0) { mode = 'soaring'; vs = lg[0]; pw = 0.0; }
+        if (dry) {
+          if (lg[1] > 0.0) { mode = 'motor'; vs = lg[1]; pw = lg[2]; } else { why.no_leg++; return [null, soared]; }
+        }
+        else if (!steadyFirst && lg[0] > 0.0) { mode = 'soaring'; vs = lg[0]; pw = 0.0; }
         else if (lg[1] > 0.0) { mode = 'motor'; vs = lg[1]; pw = lg[2]; }
         else if (lg[0] > 0.0) { mode = 'soaring'; vs = lg[0]; pw = 0.0; }
         else { why.no_leg++; return [null, soared]; }
         soared = soared || mode === 'soaring';
         var dt = subM / vs;
-        for (q = 0; q < checks.length; q++) {
+        for (q = 0; q < (dry ? 0 : checks.length); q++) {
           if (!(field.sample(checks[q][1], tt + checks[q][0] * dt)[2] <= avoid)) { why.seas++; return [null, soared]; }
         }
         dd = localDay(tt, lonN);
@@ -563,7 +755,7 @@
           if (k2 + sh * rest < -EPS_SLACK) { why.allowance++; return [null, soared]; }
         }
       }
-      if (!(field.sample(graph.loc[m], tt)[2] <= avoid)) { why.seas++; return [null, soared]; }
+      if (!(dryNode !== null && dryNode[m]) && !(field.sample(graph.loc[m], tt)[2] <= avoid)) { why.seas++; return [null, soared]; }
       if (!okAfter(m, tt, s2, k2, d2)) return [null, soared];
       var dl2 = Array.from(days.keys()).sort(function (a, b) { return a - b; }).map(function (d) { var x = days.get(d); return [d, x[0], x[1]]; });
       return [[tt, s2, k2, d2, ['leg', n, m, t, tt, modes, motor, draw, solTot, to, dl2, sMin]], soared];
@@ -580,12 +772,13 @@
       stats.pops++;
       if (stats.pops > maxPops) { stats.capped = true; break; }
       var n = LN[li];
+      if (path && !(n <= stats.reached)) stats.reached = n;
       if (n === dest) { stats.labels = LT.length; return { labels: labels, li: li, stats: stats }; }
       var t = LT[li], soc = LS[li], slack = LK[li], day = LD[li], water = LW[li];
       if (t >= H) continue;
       var lonN = graph.lon[n], te = Math.min(t + WAIT, T0 + 3600.0 * (Math.floor((t - T0) / 3600.0) + 1)), d2, k2, s2, dd, good, j, e;
       // wait on the water
-      if (te <= H + 1e-9) {
+      if (te <= H + 1e-9 && (!path || mayWait(n, t))) {
         var hsA = field.sample(graph.loc[n], t)[2], hsB = field.sample(graph.loc[n], te)[2];
         if (Number.isFinite(hsA) && Number.isFinite(hsB) && hsA <= avoid && hsB <= avoid) {
           d2 = day; k2 = slack; dd = localDay(t, lonN); good = true;
@@ -603,10 +796,11 @@
         }
       }
       // legs: soaring where the hull makes way, and where a step soared also the steady leg (two edges)
-      var es = graph.edges[n], q, sf;
+      var es = graph.edges[n], de = dryEdge !== null ? dryEdge[n] : null, q, sf;
       for (q = 0; q < es.length; q++) {
+        var dry = de !== null && de[q];
         for (sf = 0; sf < 2; sf++) {
-          var res = fly(n, es[q][0], es[q][1], es[q][2], t, soc, slack, day, water, sf === 1), rr = res[0];
+          var res = fly(n, es[q][0], es[q][1], es[q][2], t, soc, slack, day, water, sf === 1, dry), rr = res[0];
           if (rr !== null) {
             j = add(es[q][0], rr[0], rr[1], rr[2], rr[3], false, li, rr[4]);
             if (j !== null) { seq++; heap.push([rr[0] + heur(es[q][0]), seq, j]); }
@@ -674,16 +868,19 @@
     return [socM, nightM, am];
   }
 
-  // plan a route (sim.route.plan): o = {t0, layer, tables, relax, maxPops, relaxPops, settings}
+  // plan a route (sim.route.plan): o = {t0, layer, tables, relax, maxPops, relaxPops, settings, startNode, destNode}
   function plan(field, graph, legs, en, startLL, destLL, o) {
     o = o || {};
     var st = settingsOf(o.settings);
     var t0 = o.t0 === undefined ? field.t0 : o.t0, layer = o.layer || null;
     var tab = o.tables || new Tables(graph, field, en, layer, { settings: o.settings });
-    var sn = nearest(graph, startLL[0], startLL[1]), dn = nearest(graph, destLL[0], destLL[1]), s = sn[0], d = dn[0];
+    var sn = o.startNode === undefined || o.startNode === null ? nearest(graph, startLL[0], startLL[1]) : [o.startNode, 0.0];
+    var dn = o.destNode === undefined || o.destNode === null ? nearest(graph, destLL[0], destLL[1]) : [o.destNode, 0.0];
+    var s = sn[0], d = dn[0];
     var out = { start_node: s, dest_node: d, t0: t0, start_snap_km: sn[1], dest_snap_km: dn[1],
       dist_km: s !== null && d !== null ? gcKm(graph.lat[s], graph.lon[s], graph.lat[d], graph.lon[d]) : null };
-    if (s === null || d === null || field.sample(graph.loc[s], t0)[2] > en.avoid_hs_m) {
+    if (graph.remM && s !== null && d !== null) out.path_km = (graph.remM[s] - graph.remM[d]) / 1000.0;
+    if (s === null || d === null || graph.loc[s] === null || field.sample(graph.loc[s], t0)[2] > en.avoid_hs_m) {
       out.ok = false; out.reason = 1; out.reason_text = REASONS[1]; out.route = null; out.closest = null; return out;
     }
     var vm = legs.vMax(field.u10Max), R = en.reserve_wh, C = en.capacity_wh;
@@ -705,12 +902,14 @@
     out.ok = false;
     if (o.relax === false) { out.reason = reason || 6; out.reason_text = REASONS[out.reason]; return out; }
     var skip = false, q, relax = relaxOf(st), strictReason = reason;
+    out.relaxed = [];
     for (q = 0; q < relax.length; q++) {
       var name = relax[q][0], kw = relax[q][1];
       if (skip && kw.share === undefined) continue;
       var rv = R - kw.below * C;
       var tab2 = new Tables(graph, field, en, layer, { reserve: rv, tStart: tab.T0, hours: tab.K, settings: o.settings });
       var r2 = search(graph, field, legs, tab2, en, s, d, t0, { vMax: vm, maxPops: o.relaxPops || st.relax_pops, reserve: rv, share: kw.share, settings: o.settings });
+      out.relaxed.push({ relaxation: name, found: r2.li !== null, pops: r2.stats.pops, capped: r2.stats.capped });
       if (r2.li === null) { skip = r2.stats.pruned.reserve === 0 && r2.stats.pruned.night === 0; continue; }
       var rt2 = routeOf(graph, r2.labels, r2.li), mg = strictMargin(graph, tab, en, rt2.waypoints, rt2.legs);
       out.closest = { relaxation: name, waypoints: rt2.waypoints, legs: rt2.legs, summary: summarize(rt2.legs, rt2.waypoints, t0),
@@ -732,6 +931,7 @@
   }
 
   var ROUTE = { DEFAULTS: DEFAULTS, relaxOf: relaxOf, REASONS: REASONS, sunSinElev: sunSinElev, modelHourMean: modelHourMean,
+    boxJoin: boxJoin, BoxField: BoxField, BoxSolar: BoxSolar, pathGraph: pathGraph, setNoWait: setNoWait, utcMonth: utcMonth,
     bilinear: bilinear, CorridorField: CorridorField, SolarLayer: SolarLayer, gcKm: gcKm, gcPoint: gcPoint, gcBearing: gcBearing,
     wrap360: wrap360, wrap180: wrap180, ringOffsets: ringOffsets, landTester: landTester, corridorGraph: corridorGraph, nearest: nearest,
     LegModel: LegModel, Tables: Tables, localDay: localDay, search: search, routeOf: routeOf, summarize: summarize,

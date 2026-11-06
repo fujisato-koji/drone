@@ -10,6 +10,10 @@
         the experiments of docs/02-form.md#route-planning into sim/out/route.json (by default planned in node with
         sim/viewer/route.js through sim/route_exp.js, which plans as this module does, sim/tests/test_route_js.py).
     python -m sim.route plan --case ID --start LAT,LON --dest LAT,LON [--aircraft albatross-3m] [--capacity-factor 1]
+    python -m sim.route loop INPUT --out OUT [--workers 4] [--engine node|python]
+        the laps of a fixed route (the benchmark lap of D-022) from a private input file (the notes above run_loop):
+        each start time in both directions on a path graph over a box of weather, the plans and their summaries into
+        OUT (node by default, through sim/route_loop.js); nothing else is written and no coordinate is printed.
 
 The planner finds the earliest arrival at the destination subject to the owner's energy rules (D-021):
 - an hourly battery: state of charge = previous + solar yield - avionics - motor - take-off, at most the usable
@@ -22,9 +26,12 @@ The planner finds the earliest arrival at the destination subject to the owner's
 Geometry: nodes have latitude and longitude, a leg between two nodes is a great-circle arc flown in sub-steps of at
 most SUB_KM, each at the course of the arc at its start and with the wind and waves sampled there and then (no flat
 plane beyond a leg). The field (wind and wave height) is pluggable: CorridorField samples a corridor file of
-sim.world; a coarse global or band time series can take its place with the same locate() and sample(). The graph of
-a corridor is the corridor grid refined REFINE times, each node linked to the nodes of RINGS rings (one link per
-direction); links that touch land (sim/viewer/world/land.js) are left out.
+sim.world, BoxField a box of latitude and longitude (months joined in time), with the same locate(), crossings() and
+sample(); BoxSolar is a solar layer of 3-hour means on a box. The graph of a corridor is the corridor grid refined
+REFINE times, each node linked to the nodes of RINGS rings (one link per direction); links that touch land
+(sim/viewer/world/land.js) are left out. The graph of a fixed route (path_graph) is its polyline in nodes at most
+SUB_KM apart, each linked to the next, with dry stretches over land, the distance left along the path and months
+without waits on the water per node, which the search's hooks read.
 
 Leg model (sim.navigator): for a course, the hull of the highest library wind at or below the sampled wind makes way
 by soaring when its best soaring pair reaches MIN_VMG along the course (plan_pair, motor_ok=False), at its speed made
@@ -340,6 +347,158 @@ class CorridorField:
         return out[0], out[1], out[2]
 
 
+# ================================================================ a box of latitude and longitude (fixed routes)
+
+
+def _floats(xs, n, what):
+    """A flat array of n floats (None, as JSON's null, for NaN)."""
+    if len(xs) != n:
+        raise ValueError(f"{what}: {len(xs)} values for {n} points")
+    return [float("nan") if x is None else float(x) for x in xs]
+
+
+BOX_GRID = ("na", "nc", "lat0", "lon0", "step_deg", "dt_h")
+
+
+def box_join(ds, names):
+    """One box dict from several joined in time (months of a horizon of weeks): the same grid and time step, each on
+    the time grid of the first and with no gap after the frames before it; a frame at a time an earlier dict holds
+    already is left out (the earlier dict's is kept)."""
+    ds = sorted(ds, key=lambda d: float(d["t0"]))
+    a = ds[0]
+    dt = 3600.0 * float(a["dt_h"])
+    t_first, t_last = float(a["t0"]), None
+    vals = {n: [] for n in names}
+    for d in ds:
+        for k in BOX_GRID:
+            if float(d[k]) != float(a[k]):
+                raise ValueError(f"box_join: {k} differs between the dicts")
+        for q in range(int(d["nt"])):
+            t = float(d["t0"]) + q * dt
+            x = (t - t_first) / dt
+            if abs(x - round(x)) > 1e-6:
+                raise ValueError("box_join: a frame lies off the time grid of the first dict")
+            if t_last is not None:
+                if t <= t_last + 1e-6:
+                    continue
+                if t > t_last + dt + 1e-6:
+                    raise ValueError("box_join: a gap in time between the dicts")
+            for n in names:
+                vals[n].append(d["vals"][n][q])
+            t_last = t
+    return dict({k: a[k] for k in BOX_GRID}, t0=a["t0"], nt=len(vals[names[0]]), vals=vals)
+
+
+def box_index(box, lat, lon):
+    """Fractional grid indices (along the latitudes, along the longitudes) of (lat, lon) in a box (lat0, lon0,
+    step), the longitude taken within 180 deg of lon0."""
+    d = lon - box.lon0
+    if d >= 180.0:
+        d -= 360.0
+    elif d < -180.0:
+        d += 360.0
+    return (lat - box.lat0) / box.step, d / box.step
+
+
+class BoxField(CorridorField):
+    """The 10 m wind and the total wave height on a regular latitude-longitude grid (a box), with the corridor's
+    interface (locate, crossings, sample, t0, t_end, u10_max, nt, dt) and its sampling (space bilinear over the finite
+    corners, time linear). Input {na, nc, lat0, lon0, step_deg, t0, dt_h, nt, vals: {u10, v10, hs}}: each variable a list
+    of nt flat arrays of na * nc values, row-major from the south-west (index i * nc + j at lat0 + i step_deg,
+    lon0 + j step_deg), frame k at t0 + k dt_h hours, NaN (or None) for missing; hs is NaN over land, as the
+    corridor's is. BoxField.join takes several such dicts in time (box_join)."""
+
+    NAMES = ("u10", "v10", "hs")
+
+    def __init__(self, d):
+        self.f = {k: d[k] for k in BOX_GRID + ("t0", "nt")}
+        self.na, self.nc, self.nt = int(d["na"]), int(d["nc"]), int(d["nt"])
+        self.lat0, self.lon0, self.step = float(d["lat0"]), float(d["lon0"]), float(d["step_deg"])
+        self.t0, self.dt = float(d["t0"]), 3600.0 * float(d["dt_h"])
+        self.t_end = self.t0 + self.dt * (self.nt - 1)
+        n = self.na * self.nc
+        self.vals = {nm: [_floats(d["vals"][nm][k], n, f"BoxField {nm} frame {k}") for k in range(self.nt)]
+                     for nm in self.NAMES}
+        u, v = np.asarray(self.vals["u10"], float), np.asarray(self.vals["v10"], float)
+        self.u10_max = float(np.nanmax(np.sqrt(u * u + v * v)))
+
+    @classmethod
+    def join(cls, ds):
+        return cls(box_join([ds] if isinstance(ds, dict) else list(ds), cls.NAMES))
+
+    def locate(self, lat, lon):
+        """As CorridorField.locate: (fi, fj, corners), or None outside the box."""
+        fi, fj = box_index(self, lat, lon)
+        if -1e-9 <= fi <= self.na - 1 + 1e-9 and -1e-9 <= fj <= self.nc - 1 + 1e-9:
+            return fi, fj, corners(self.na, self.nc, fi, fj)
+        return None
+
+
+class BoxSolar:
+    """The surface shortwave radiation on a box (BoxField's grid) as means over intervals of dt_h whole hours (3-hour
+    means): the value stamped s is the mean over [s - dt_h, s). SolarLayer's interface (locate, hour_mean, t0 the start
+    of its first hour, nt its hours). hour_mean is the interval's mean, bilinear in space over the finite corners, split
+    into its hours in proportion to the fitted model's hourly means at the place (model_hour_mean, whose factor
+    route.solar_fit_w_m2 cancels), or held flat where the model's mean over the interval is 0 (assumed,
+    docs/02-form.md#route-planning). Input {na, nc, lat0, lon0, step_deg, t0, dt_h, nt, vals: {shortwave_radiation}}
+    with t0 the first stamp; BoxSolar.join takes several in time."""
+
+    NAMES = ("shortwave_radiation",)
+
+    def __init__(self, d):
+        self.na, self.nc = int(d["na"]), int(d["nc"])
+        self.lat0, self.lon0, self.step = float(d["lat0"]), float(d["lon0"]), float(d["step_deg"])
+        self.s0, self.ds, self.ns = float(d["t0"]), 3600.0 * float(d["dt_h"]), int(d["nt"])
+        self.hours = int(round(self.ds / 3600.0))
+        if self.hours < 1 or abs(self.ds - 3600.0 * self.hours) > 1e-6 or abs(self.s0 / 3600.0 - round(self.s0 / 3600.0)) > 1e-9:
+            raise ValueError("BoxSolar: the stamps and the interval must be whole hours")
+        n = self.na * self.nc
+        self.v = [_floats(d["vals"]["shortwave_radiation"][k], n, f"BoxSolar frame {k}") for k in range(self.ns)]
+        self.t0 = self.s0 - self.ds
+        self.nt = self.ns * self.hours
+        self._shape = {}
+
+    @classmethod
+    def join(cls, ds):
+        return cls(box_join([ds] if isinstance(ds, dict) else list(ds), cls.NAMES))
+
+    def locate(self, lat, lon):
+        """(fi, fj, lat, lon), or None outside the box (the tables then take the fitted model)."""
+        fi, fj = box_index(self, lat, lon)
+        if -1e-9 <= fi <= self.na - 1 + 1e-9 and -1e-9 <= fj <= self.nc - 1 + 1e-9:
+            return fi, fj, lat, lon
+        return None
+
+    def shape(self, loc, q):
+        """The model's hourly means over interval q at loc and their sum."""
+        key = (loc[2], loc[3], q)
+        r = self._shape.get(key)
+        if r is None:
+            ta = self.t0 + q * self.ds
+            s = [model_hour_mean(loc[2], loc[3], ta + 3600.0 * h, 1.0) for h in range(self.hours)]
+            tot = 0.0
+            for x in s:
+                tot += x
+            r = (s, tot)
+            self._shape[key] = r
+        return r
+
+    def hour_mean(self, loc, t_hour):
+        """W/m2 over the hour starting at t_hour, or None outside the box, its hours or its finite values."""
+        if loc is None:
+            return None
+        k = int(round((t_hour - self.t0) / 3600.0))
+        if k < 0 or k >= self.nt:
+            return None
+        q, h = k // self.hours, k % self.hours
+        g = bilinear(self.v[q], self.na, self.nc, loc[0], loc[1])
+        if not math.isfinite(g):
+            return None
+        s, tot = self.shape(loc, q)
+        m = tot / self.hours
+        return g * s[h] / m if m > 0.0 else g
+
+
 # ================================================================ great-circle geometry
 
 
@@ -394,10 +553,13 @@ def ring_offsets(rings):
 
 class Graph:
     """Nodes (lat, lon, field location) and their legs: for each node a list of (to, sub-step metres, steps) with
-    steps a list of (field location, course deg) at the start of each sub-step."""
+    steps a list of (field location, course deg) at the start of each sub-step. A graph along a fixed route
+    (path_graph) also carries rem_m, dry_node, dry_edge and no_wait_months, which the search reads (None on a
+    corridor's graph)."""
 
     def __init__(self, lat, lon, loc, edges, step_km):
         self.lat, self.lon, self.loc, self.edges, self.step_km = lat, lon, loc, edges, step_km
+        self.rem_m = self.dry_node = self.dry_edge = self.no_wait_months = None
 
     def nearest(self, lat, lon):
         best, bd = None, math.inf
@@ -475,6 +637,115 @@ def corridor_graph(field, refine=REFINE, rings=RINGS, sub_km=SUB_KM, land=None):
             steps.append((locs[q], gc_bearing(p[0], p[1], lat[m], lon[m]), field.crossings(locs[q], end)))
         edges[n].append((m, sub_m, steps))
     return Graph(lat, lon, loc, edges, h)
+
+
+def path_graph(field, points, sub_km=SUB_KM, dry=None, land=None):
+    """The graph of a fixed route (the benchmark lap of D-022, or any polyline of (lat, lon) points): nodes along the
+    polyline at most sub_km apart (each segment in equal parts), every vertex a node, and one leg from each node to the
+    next, in steps as corridor_graph builds them (location, course, grid crossings). A closed loop is a polyline
+    whose last point equals its first; its end is a node of its own at the start's place, so a lap runs from node 0
+    to the last node. dry: ranges (a, b) of vertex indices, a < b, flown over land: the legs from vertex a to vertex b
+    are dry and the nodes strictly between them are dry nodes (no wait, no sea test on arrival). land: rings of
+    sim.world.load_land (None to load them, False for none) against which the other nodes and the steps of the other
+    legs are tested as corridor_graph tests them; a fixed route keeps its legs, so the hits are listed (land_hits: the
+    nodes, and the legs by their start node), not removed. The graph carries rem_m (each node's distance along the
+    path to the last node, m), vertex_node (each vertex's node), seg (the vertex each node follows), dry_node,
+    dry_edge (per node, per leg) and no_wait_months (per node a set of UTC months 1..12 in which the search does not
+    wait on the water there; empty here, set_no_wait sets them)."""
+    pts = [(float(p[0]), float(p[1])) for p in points]
+    if len(pts) < 2:
+        raise ValueError("path_graph: a route needs two points at least")
+    lat, lon, seg, vnode = [], [], [], []
+    for i in range(len(pts) - 1):
+        (la1, lo1), (la2, lo2) = pts[i], pts[i + 1]
+        L = gc_km(la1, lo1, la2, lo2)
+        if L < 1e-9:
+            raise ValueError(f"path_graph: vertices {i} and {i + 1} coincide")
+        ns = max(1, int(math.ceil(L / sub_km - 1e-9)))
+        vnode.append(len(lat))
+        for k in range(ns):
+            p = (la1, lo1) if k == 0 else gc_point(la1, lo1, la2, lo2, k / ns)
+            lat.append(p[0])
+            lon.append(p[1])
+            seg.append(i)
+    vnode.append(len(lat))
+    lat.append(pts[-1][0])
+    lon.append(pts[-1][1])
+    seg.append(len(pts) - 1)
+    N = len(lat)
+    loc = [field.locate(lat[n], lon[n]) for n in range(N)]
+    if any(lc is None for lc in loc):
+        raise ValueError(f"path_graph: {sum(1 for lc in loc if lc is None)} nodes lie outside the field")
+    dry_node, dry_edge = [False] * N, [[False] for _ in range(N - 1)] + [[]]
+    for a, b in (dry or ()):
+        a, b = int(a), int(b)
+        if not 0 <= a < b <= len(pts) - 1:
+            raise ValueError(f"path_graph: dry range ({a}, {b}) is not a < b within the vertices")
+        for n in range(vnode[a], vnode[b]):
+            dry_edge[n][0] = True
+        for n in range(vnode[a] + 1, vnode[b]):
+            dry_node[n] = True
+    edges, length, pts_wet = [], [], []
+    for n in range(N - 1):
+        m = n + 1
+        L = gc_km(lat[n], lon[n], lat[m], lon[m])
+        ns = max(1, int(math.ceil(L / sub_km - 1e-9)))
+        pp = [gc_point(lat[n], lon[n], lat[m], lon[m], k / ns) for k in range(ns)]
+        locs = [field.locate(p[0], p[1]) for p in pp]
+        if any(lc is None for lc in locs):
+            raise ValueError(f"path_graph: a step of the leg from node {n} lies outside the field")
+        steps = [(locs[q], gc_bearing(pp[q][0], pp[q][1], lat[m], lon[m]),
+                  field.crossings(locs[q], locs[q + 1] if q + 1 < ns else loc[m])) for q in range(ns)]
+        edges.append([(m, L * 1000.0 / ns, steps)])
+        length.append(L * 1000.0)
+        if not dry_edge[n][0]:
+            chk = [gc_point(lat[n], lon[n], lat[m], lon[m], (k + 0.5) / ns) for k in range(ns)]
+            pts_wet.append((n, pp[1:] + chk))
+    edges.append([])
+    rem = [0.0] * N
+    for n in range(N - 2, -1, -1):
+        rem[n] = rem[n + 1] + length[n]
+    rings = W.load_land() if land is None else (land or [])
+    hit_nodes, hit_legs = [], []
+    if rings:
+        wet = [n for n in range(N) if not dry_node[n]]
+        on = W.on_land(rings, [lat[n] for n in wet], [lon[n] for n in wet])
+        hit_nodes = [n for n, x in zip(wet, on) if x]
+        allp = [p for _, ps in pts_wet for p in ps]
+        if allp:
+            on = W.on_land(rings, [p[0] for p in allp], [p[1] for p in allp])
+            k = 0
+            for n, ps in pts_wet:
+                if bool(np.any(on[k:k + len(ps)])):
+                    hit_legs.append(n)
+                k += len(ps)
+    g = Graph(lat, lon, loc, edges, sub_km)
+    g.rem_m, g.dry_node, g.dry_edge = rem, dry_node, dry_edge
+    g.no_wait_months = [set() for _ in range(N)]
+    g.vertex_node, g.seg = vnode, seg
+    g.land_hits = {"nodes": hit_nodes, "legs": hit_legs}
+    return g
+
+
+def set_no_wait(graph, months, vertices=None):
+    """Forbid waiting on the water in the UTC months `months` (1..12) at the nodes of a path graph from vertex a to
+    vertex b (vertices (a, b), both included; None: every node)."""
+    if vertices is None:
+        a, b = 0, len(graph.lat) - 1
+    else:
+        a, b = graph.vertex_node[int(vertices[0])], graph.vertex_node[int(vertices[1])]
+        if a > b:
+            raise ValueError("set_no_wait: vertices (a, b) need a <= b")
+    ms = {int(x) for x in months}
+    if not ms <= set(range(1, 13)):
+        raise ValueError("set_no_wait: months are 1..12")
+    for n in range(a, b + 1):
+        graph.no_wait_months[n] |= ms
+
+
+def utc_month(t):
+    """The UTC month (1..12) of the unix time t."""
+    return (_dt.date(1970, 1, 1) + _dt.timedelta(days=int(math.floor(t / 86400.0)))).month
 
 
 # ================================================================ leg model
@@ -758,7 +1029,10 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
            v_max=None, max_pops=MAX_POPS):
     """Earliest arrival at `dest` from `start` (node indices) at unix time t0 (module notes). share None: the
     allowance of D-021 (en["motor_share"]); share math.inf: no allowance. Returns (labels, the arrival label or
-    None, stats)."""
+    None, stats). On a graph of a fixed route (path_graph) the lower bound of the time to go is the distance left along
+    the path (rem_m) over the fastest speed, the search does not wait at a dry node or at a node whose no_wait_months
+    hold the label's UTC month, a dry leg flies the steady powered leg only and tests no sea, and the arrival at a dry
+    node tests no sea; stats["reached"] is the farthest node taken."""
     R = en["reserve_wh"] if reserve is None else reserve
     C = en["capacity_wh"]
     sh = en["motor_share"] if share is None else share
@@ -768,13 +1042,35 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
     vm = legs.v_max(field.u10_max) if v_max is None else v_max
     dl, dn = graph.lat[dest], graph.lon[dest]
     hcache = {}
+    rem = getattr(graph, "rem_m", None)
+    dry_node = getattr(graph, "dry_node", None)
+    dry_edge = getattr(graph, "dry_edge", None)
+    no_wait = getattr(graph, "no_wait_months", None)
+    path = rem is not None or dry_node is not None or no_wait is not None
+    months = {}
 
     def heur(n):
         v = hcache.get(n)
         if v is None:
-            v = gc_km(graph.lat[n], graph.lon[n], dl, dn) * 1000.0 / vm
+            if rem is not None:
+                v = max(0.0, rem[n] - rem[dest]) / vm
+            else:
+                v = gc_km(graph.lat[n], graph.lon[n], dl, dn) * 1000.0 / vm
             hcache[n] = v
         return v
+
+    def may_wait(n, t):
+        """No wait at a dry node, nor at a node whose no_wait_months hold the UTC month of t."""
+        if dry_node is not None and dry_node[n]:
+            return False
+        if no_wait is not None and no_wait[n]:
+            d = math.floor(t / 86400.0)
+            mo = months.get(d)
+            if mo is None:
+                mo = utc_month(t)
+                months[d] = mo
+            return mo not in no_wait[n]
+        return True
 
     # label arrays
     LT, LS, LK, LD, LW, LN, LP, LE, LA = [], [], [], [], [], [], [], [], []
@@ -848,9 +1144,10 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
                 return False
         return True
 
-    def fly(n, m, sub_m, steps, t, soc, slack, day, water, steady_first):
+    def fly(n, m, sub_m, steps, t, soc, slack, day, water, steady_first, dry=False):
         """One leg from node n (soaring where the hull makes way, else the steady leg; or the steady leg where it
-        makes way, else soaring): (arrival time, charge, slack, day, edge, soared) or (None, soared)."""
+        makes way, else soaring; a dry leg the steady leg only, with no sea test): (arrival time, charge, slack, day,
+        edge, soared) or (None, soared)."""
         tt, s2, k2, d2 = t, soc, slack, day
         lon_n = graph.lon[n]
         motor = draw = sol_tot = to = 0.0
@@ -879,13 +1176,23 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
                 why["horizon"] += 1
                 return None, soared
             u, v, hs = field.sample(lc, tt)
-            if not (hs <= avoid):
+            if dry:
+                if not (math.isfinite(u) and math.isfinite(v)):
+                    why["no_leg"] += 1
+                    return None, soared
+            elif not (hs <= avoid):
                 why["seas"] += 1
                 return None, soared
             sp = math.sqrt(u * u + v * v)
             wf = wrap360(math.atan2(-u, -v) * R2D)
             vs_soar, vs_mot, pw_mot = legs.leg(sp, brg - wf - 180.0)
-            if not steady_first and vs_soar > 0.0:
+            if dry:
+                if vs_mot > 0.0:
+                    mode, vs, pw = "motor", vs_mot, pw_mot
+                else:
+                    why["no_leg"] += 1
+                    return None, soared
+            elif not steady_first and vs_soar > 0.0:
                 mode, vs, pw = "soaring", vs_soar, 0.0
             elif vs_mot > 0.0:
                 mode, vs, pw = "motor", vs_mot, pw_mot
@@ -896,7 +1203,7 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
                 return None, soared
             soared = soared or mode == "soaring"
             dt = sub_m / vs
-            for f, lc2 in checks:
+            for f, lc2 in (() if dry else checks):
                 if not (field.sample(lc2, tt + f * dt)[2] <= avoid):
                     why["seas"] += 1
                     return None, soared
@@ -928,7 +1235,7 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
                 if k2 + sh * rest < -EPS_SLACK:
                     why["allowance"] += 1
                     return None, soared
-        if not (field.sample(graph.loc[m], tt)[2] <= avoid):
+        if not (dry_node is not None and dry_node[m]) and not (field.sample(graph.loc[m], tt)[2] <= avoid):
             why["seas"] += 1
             return None, soared
         if not ok_after(m, tt, s2, k2, d2):
@@ -952,6 +1259,8 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
             stats["capped"] = True
             break
         n = LN[li]
+        if path and n > stats.get("reached", -1):
+            stats["reached"] = n
         if n == dest:
             stats["labels"] = len(LT)
             return (LT, LS, LK, LD, LW, LN, LP, LE), li, stats
@@ -961,7 +1270,7 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
         lon_n = graph.lon[n]
         # ---- wait on the water until the end of the hour of the tables (WAIT_S at most)
         te = min(t + WAIT_S, T0 + 3600.0 * (math.floor((t - T0) / 3600.0) + 1))
-        if te <= H + 1e-9:
+        if te <= H + 1e-9 and (not path or may_wait(n, t)):
             hs_a = field.sample(graph.loc[n], t)[2]
             hs_b = field.sample(graph.loc[n], te)[2]
             if math.isfinite(hs_a) and math.isfinite(hs_b) and hs_a <= avoid and hs_b <= avoid:
@@ -983,9 +1292,11 @@ def search(graph, field, legs, tab, en, start, dest, t0, *, reserve=None, night=
                             seq += 1
                             heapq.heappush(heap, (te + heur(n), seq, j))
         # ---- legs: soaring where the hull makes way, and where a step soared also the steady leg (two edges)
-        for m, sub_m, steps in graph.edges[n]:
+        de = dry_edge[n] if dry_edge is not None else None
+        for q, (m, sub_m, steps) in enumerate(graph.edges[n]):
+            dry = de is not None and de[q]
             for steady_first in (False, True):
-                r, soared = fly(n, m, sub_m, steps, t, soc, slack, day, water, steady_first)
+                r, soared = fly(n, m, sub_m, steps, t, soc, slack, day, water, steady_first, dry)
                 if r is not None:
                     tt, s2, k2, d2, e = r
                     j = add(m, tt, s2, k2, d2, False, li, e)
@@ -1076,16 +1387,22 @@ RELAX = (("reserve_lowered_1", {"below": RELAX_BELOW[0]}),
 
 
 def plan(field, graph, legs, en, start_ll, dest_ll, t0=None, layer=None, tables=None, relax=True, max_pops=MAX_POPS,
-         relax_pops=RELAX_POPS):
+         relax_pops=RELAX_POPS, start_node=None, dest_node=None):
     """Plan a route (module notes). Returns a dict: ok, reason (code, text), route (waypoints, legs, summary),
-    closest (the closest route when not ok, with the relaxation that found it and its margins), stats."""
+    closest (the closest route when not ok, with the relaxation that found it and its margins), stats, and relaxed
+    (each relaxed search tried: its name, whether it found a route, its labels taken and whether it stopped at its
+    limit). start_node, dest_node: node indices in place of the nearest nodes to start_ll and dest_ll (a lap's start
+    and end coincide: node 0 and the last node of its path graph); a path graph's plan also gives path_km."""
     t0 = field.t0 if t0 is None else float(t0)
     tab = tables or Tables(graph, field, en, layer)
-    s, ds_ = graph.nearest(*start_ll)
-    d, dd_ = graph.nearest(*dest_ll)
+    s, ds_ = graph.nearest(*start_ll) if start_node is None else (int(start_node), 0.0)
+    d, dd_ = graph.nearest(*dest_ll) if dest_node is None else (int(dest_node), 0.0)
     out = {"start_node": s, "dest_node": d, "t0": t0, "start_snap_km": ds_, "dest_snap_km": dd_,
            "dist_km": gc_km(graph.lat[s], graph.lon[s], graph.lat[d], graph.lon[d]) if s is not None and d is not None else None}
-    if s is None or d is None or field.sample(graph.loc[s], t0)[2] > en["avoid_hs_m"]:
+    rem = getattr(graph, "rem_m", None)
+    if rem is not None and s is not None and d is not None:
+        out["path_km"] = (rem[s] - rem[d]) / 1000.0
+    if s is None or d is None or graph.loc[s] is None or field.sample(graph.loc[s], t0)[2] > en["avoid_hs_m"]:
         out.update(ok=False, reason=1, reason_text=REASONS[1], route=None, closest=None)
         return out
     vm = legs.v_max(field.u10_max)
@@ -1112,6 +1429,7 @@ def plan(field, graph, legs, en, start_ll, dest_ll, t0=None, layer=None, tables=
     # the relaxation ladder (RELAX); a rung that pruned nothing for the reserve or the night skips to the last rung
     skip = False
     strict_reason = reason
+    out["relaxed"] = []
     for name, kw in RELAX:
         if skip and "share" not in kw:
             continue
@@ -1119,6 +1437,8 @@ def plan(field, graph, legs, en, start_ll, dest_ll, t0=None, layer=None, tables=
         tab2 = Tables(graph, field, en, layer, reserve=rv, t_start=tab.T0, hours=tab.K)
         labels, li, st2 = search(graph, field, legs, tab2, en, s, d, t0, v_max=vm, max_pops=relax_pops,
                                  reserve=rv, share=kw.get("share"))
+        out["relaxed"].append({"relaxation": name, "found": li is not None, "pops": st2["pops"],
+                               "capped": st2["capped"]})
         if li is None:
             skip = st2["pruned"]["reserve"] == 0 and st2["pruned"]["night"] == 0
             continue
@@ -1239,17 +1559,24 @@ def make_solar(only=None, pace_dir=None, log=print):
 # ================================================================ export for route.js
 
 
+def js_settings():
+    """The planner's settings as route.js takes them (its DEFAULTS)."""
+    return {"refine": REFINE, "rings": RINGS, "sub_km": SUB_KM, "wait_s": WAIT_S, "lookahead_h": LOOKAHEAD_H,
+            "u_q": U_Q, "a_q": A_Q, "eps_soc": EPS_SOC, "eps_slack": EPS_SLACK, "min_vmg": MIN_VMG,
+            "dom_window_s": DOM_WINDOW_S, "max_pops": MAX_POPS, "relax_pops": RELAX_POPS,
+            "relax_below": list(RELAX_BELOW)}
+
+
+def js_hulls(aircraft):
+    """The hull points of an aircraft as route.js's LegModel takes them."""
+    return [{"u10": u, "points": [dict(vx=vx, vy=vy, power=pw, kind=kd, key=key, side=sd) for vx, vy, pw, kd, key, sd in pts]}
+            for u, pts in hull_points(aircraft)]
+
+
 def export_params(path=PARAMS_JS):
-    obj = {"settings": {"refine": REFINE, "rings": RINGS, "sub_km": SUB_KM, "wait_s": WAIT_S, "lookahead_h": LOOKAHEAD_H,
-                        "u_q": U_Q, "a_q": A_Q, "eps_soc": EPS_SOC, "eps_slack": EPS_SLACK, "min_vmg": MIN_VMG,
-                        "dom_window_s": DOM_WINDOW_S, "max_pops": MAX_POPS, "relax_pops": RELAX_POPS,
-                        "relax_below": list(RELAX_BELOW)},
-           "aircraft": {}}
+    obj = {"settings": js_settings(), "aircraft": {}}
     for a in AIRCRAFT:
-        obj["aircraft"][a] = {"energy": energy_defaults(a), "steady": steady_params(a),
-                              "hulls": [{"u10": u, "points": [dict(vx=vx, vy=vy, power=pw, kind=kd, key=key, side=sd)
-                                                               for vx, vy, pw, kd, key, sd in pts]}
-                                        for u, pts in hull_points(a)]}
+        obj["aircraft"][a] = {"energy": energy_defaults(a), "steady": steady_params(a), "hulls": js_hulls(a)}
     from sim.mpc import LIB_MOTOR_PATH
     path = Path(path)
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
@@ -1397,6 +1724,319 @@ def run_exp(workers=4, cases=None, out=OUT_JSON, log=_log, engine="node"):
     return obj
 
 
+# ================================================================ fixed routes: laps (python -m sim.route loop)
+#
+# The input of `python -m sim.route loop INPUT --out OUT` is one JSON file (NaN or null for a missing value):
+#   fields           a list of BoxField dicts (one or more months, joined in time; BoxField)
+#   solar            a list of BoxSolar dicts (3-hour means, joined in time), or null for the fitted model alone
+#   points           the polyline [[lat, lon], ...]; a closed loop ends at its first point
+#   dry              optional, [[a, b], ...]: vertex ranges flown over land (path_graph)
+#   no_wait          optional, [{"months": [1..12, ...], "vertices": [a, b]}, ...]: no wait on the water in those UTC
+#                    months at the nodes from vertex a to vertex b ("vertices" left out or null: every node)
+#   starts           the start times (unix seconds, UTC)
+#   aircraft         optional, one of AIRCRAFT (default the first); capacity_factor optional (default 1);
+#   sensor_set       optional, a key of SENSOR_SETS (default SENSOR_SET)
+#   directions       optional, a subset of ["forward", "reverse"] (default both; reverse flies the reversed polyline)
+#   sub_km           optional, the longest distance between nodes and of a step (default route.sub_km)
+#   max_pops, relax_pops   optional, the labels the strict and each relaxed search take at most (default route.max_pops,
+#                    route.relax_pops); relax optional (default true); land optional (default true: test the
+#                    route's wet nodes and legs against sim/viewer/world/land.js and list the hits)
+# The output holds no coordinates: the waypoints and the summaries name nodes (path_graph of the same input gives
+# their places) and the vertices of the input's polyline they lie between.
+
+LOOP_DIRECTIONS = ("forward", "reverse")
+
+
+def loop_directions(inp):
+    """[(name, points, dry ranges, no-wait entries)] of a loop input, the reverse direction's polyline reversed and its
+    vertex ranges renumbered to it."""
+    pts = [[float(p[0]), float(p[1])] for p in inp["points"]]
+    nv = len(pts)
+    dry = [[int(r[0]), int(r[1])] for r in inp.get("dry") or []]
+    nw = [{"months": [int(m) for m in e["months"]],
+           "vertices": None if e.get("vertices") is None else [int(e["vertices"][0]), int(e["vertices"][1])]}
+          for e in inp.get("no_wait") or []]
+
+    def rv(r):
+        return [nv - 1 - r[1], nv - 1 - r[0]]
+
+    out = []
+    for name in inp.get("directions") or LOOP_DIRECTIONS:
+        if name == "forward":
+            out.append((name, pts, dry, nw))
+        elif name == "reverse":
+            out.append((name, pts[::-1], [rv(r) for r in dry],
+                        [{"months": e["months"], "vertices": None if e["vertices"] is None else rv(e["vertices"])} for e in nw]))
+        else:
+            raise ValueError(f"loop: unknown direction {name!r}")
+    return out
+
+
+def loop_graph(field, points, dry, no_wait, sub_km=SUB_KM, land=None):
+    g = path_graph(field, points, sub_km, dry, land)
+    for e in no_wait:
+        set_no_wait(g, e["months"], e["vertices"])
+    return g
+
+
+def loop_lows(graph, tab, en, r):
+    """The strict margins of the route found (as plan gives a closest route's) and, for the route or the closest
+    route, the waypoint with the lowest night margin (Tables.fly_on_min less the reserve)."""
+    R = en["reserve_wh"]
+    for k in ("route", "closest"):
+        rt = r.get(k)
+        if not rt:
+            continue
+        if k == "route":
+            sm, nm, am = strict_margin(graph, tab, en, rt["waypoints"], rt["legs"])
+            rt["margins"] = {"reserve_margin_wh": sm, "night_margin_wh": nm, "allowance_margin_wh": am}
+        best = None
+        for w in rt["waypoints"]:
+            x = tab.fly_on_min(w["node"], w["t"], w["soc_wh"]) - R
+            if best is None or x < best["night_margin_wh"]:
+                best = {"node": w["node"], "t": w["t"], "night_margin_wh": x}
+        rt["night_low"] = best
+
+
+def loop_job(job):
+    """One direction's plans in Python (engine "python"): job (input, direction, start times)."""
+    inp, name, starts = job
+    field = BoxField.join(inp["fields"])
+    layer = BoxSolar.join(inp["solar"]) if inp.get("solar") else None
+    _, pts, dry, nw = next(d for d in loop_directions(inp) if d[0] == name)
+    g = loop_graph(field, pts, dry, nw, inp.get("sub_km", SUB_KM), None if inp.get("land", True) else False)
+    aircraft = inp.get("aircraft", AIRCRAFT[0])
+    lm = leg_model(aircraft)
+    en = energy_defaults(aircraft, inp.get("capacity_factor", 1.0), inp.get("sensor_set", SENSOR_SET))
+    tab = Tables(g, field, en, layer)
+    rows = []
+    for t0 in starts:
+        t1 = time.time()
+        r = plan(field, g, lm, en, None, None, t0=t0, layer=layer, tables=tab, relax=inp.get("relax", True),
+                 max_pops=inp.get("max_pops", MAX_POPS), relax_pops=inp.get("relax_pops", RELAX_POPS),
+                 start_node=0, dest_node=len(g.lat) - 1)
+        r["wall_s"] = time.time() - t1
+        loop_lows(g, tab, en, r)
+        rows.append(r)
+    return rows
+
+
+def _nulls(frames):
+    return [[None if (x is None or not math.isfinite(float(x))) else x for x in fr] for fr in frames]
+
+
+def _box_json(ds):
+    """Box dicts as JSON for node (null for NaN)."""
+    return json.dumps([dict(d, vals={k: _nulls(v) for k, v in d["vals"].items()}) for d in ds], allow_nan=False,
+                      separators=(",", ":"))
+
+
+def loop_node_boxes(inp):
+    """The input's boxes as JSON for node, once for all its jobs (loop_job_node)."""
+    inp["_fields_json"] = _box_json(inp["fields"])
+    inp["_solar_json"] = _box_json(inp["solar"]) if inp.get("solar") else "null"
+    return inp
+
+
+def _numbers_back(x):
+    """node's JSON with the non-finite numbers as strings (route_loop.js) back to floats."""
+    if isinstance(x, dict):
+        return {k: _numbers_back(v) for k, v in x.items()}
+    if isinstance(x, list):
+        return [_numbers_back(v) for v in x]
+    if x in ("Infinity", "-Infinity", "NaN"):
+        return float(x)
+    return x
+
+
+def loop_job_node(job):
+    """One direction's plans in node with sim/viewer/route.js (engine "node", sim/route_loop.js): job (input with
+    its boxes as JSON by loop_node_boxes, direction, start times)."""
+    import shutil
+    import subprocess
+    inp, name, starts = job
+    node = shutil.which("node")
+    if not node:
+        raise RuntimeError("loop: node not found (use --engine python)")
+    _, pts, dry, nw = next(d for d in loop_directions(inp) if d[0] == name)
+    aircraft = inp.get("aircraft", AIRCRAFT[0])
+    rest = {"points": pts, "dry": dry, "no_wait": nw, "sub_km": inp.get("sub_km", SUB_KM),
+            "land": bool(inp.get("land", True)),
+            "energy": energy_defaults(aircraft, inp.get("capacity_factor", 1.0), inp.get("sensor_set", SENSOR_SET)),
+            "hulls": js_hulls(aircraft), "steady": steady_params(aircraft), "settings": js_settings(),
+            "starts": list(starts), "relax": bool(inp.get("relax", True)),
+            "max_pops": inp.get("max_pops", MAX_POPS), "relax_pops": inp.get("relax_pops", RELAX_POPS)}
+    msg = ('{"fields":' + inp["_fields_json"] + ',"solar":' + inp["_solar_json"] + ","
+           + json.dumps(rest, allow_nan=False, separators=(",", ":"))[1:])
+    r = subprocess.run([node, str(HERE / "route_loop.js")], input=msg, capture_output=True, text=True)
+    if r.returncode:
+        raise RuntimeError(r.stderr[-3000:])
+    return _numbers_back(json.loads(r.stdout))
+
+
+def loop_where(g, n, nv, reverse):
+    """The vertices of the input's polyline that node n of a direction's graph lies between ([i, i] at vertex i)."""
+    i = g.seg[n]
+    a, b = (i, i) if g.vertex_node[i] == n else (i, i + 1)
+    return [nv - 1 - a, nv - 1 - b] if reverse else [a, b]
+
+
+def loop_summary(g, r, en, nv, reverse):
+    """A lap's plan in short: the result and reason, the days, the shares of soaring, motor and waiting by time and
+    of soaring and motor by distance (and the dry distance), the lowest charge, the strict margins with the night's
+    lowest, the waits (merged, longest first) and the legs with motor energy (most first), and the time, waits and
+    motor per segment of the input's polyline; of the route found, else of the closest route."""
+    st = r.get("stats") or {}
+    out = {"ok": r["ok"], "reason": r["reason"], "reason_text": r["reason_text"], "t0": r["t0"],
+           "path_km": r.get("path_km"), "nodes": len(g.lat), "strict_pops": st.get("pops"),
+           "strict_capped": st.get("capped"), "reached_node": st.get("reached"),
+           "reached_between": loop_where(g, st["reached"], nv, reverse) if st.get("reached") is not None else None,
+           "relaxed": r.get("relaxed"), "of": None}
+    rt = r.get("route") or r.get("closest")
+    if not rt:
+        return out
+    out["of"] = "route" if r.get("route") else "closest (" + rt["relaxation"] + ")"
+    wps, legs, sm = rt["waypoints"], rt["legs"], rt["summary"]
+    T = sm["time_h"]
+    mg = rt.get("margins") or {k: rt[k] for k in ("reserve_margin_wh", "night_margin_wh", "allowance_margin_wh")}
+    km = {"soaring": 0.0, "motor": 0.0}
+    dry_km = 0.0
+    segs = {}
+    waits, motor = [], []
+
+    def segment(n):
+        """The input's polyline segment (its two vertices) that the leg or wait from node n belongs to."""
+        i = min(g.seg[n], nv - 2)
+        return (nv - 2 - i, nv - 1 - i) if reverse else (i, i + 1)
+
+    for lg in legs:
+        n = lg["from"]
+        sg = segs.setdefault(segment(n), {"hours": 0.0, "wait_h": 0.0, "motor_wh": 0.0, "soaring_km": 0.0, "motor_km": 0.0})
+        h = (lg["t1"] - lg["t0"]) / 3600.0
+        sg["hours"] += h
+        if lg["mode"] == "waiting":
+            sg["wait_h"] += h
+            if waits and waits[-1]["node"] == n and abs(waits[-1]["t1"] - lg["t0"]) < 1e-6:
+                waits[-1]["t1"] = lg["t1"]
+                waits[-1]["hours"] += h
+            else:
+                waits.append({"node": n, "between": loop_where(g, n, nv, reverse), "t0": lg["t0"], "t1": lg["t1"], "hours": h})
+            continue
+        m, sub_m, _ = g.edges[n][0]
+        if m != lg["to"]:
+            raise ValueError("loop_summary: a leg that is not the path's")
+        dry = g.dry_edge[n][0]
+        for md in lg["modes"]:
+            km[md] += sub_m / 1000.0
+            sg[md + "_km"] += sub_m / 1000.0
+        if dry:
+            dry_km += sub_m * len(lg["modes"]) / 1000.0
+        sg["motor_wh"] += lg["motor_wh"]
+        if lg["motor_wh"] > 0.0:
+            motor.append({"from": n, "to": m, "between": loop_where(g, n, nv, reverse), "t0": lg["t0"],
+                          "motor_wh": lg["motor_wh"], "takeoff_wh": lg["takeoff_wh"],
+                          "motor_h": h * sum(1 for x in lg["modes"] if x == "motor") / len(lg["modes"]), "dry": dry})
+    low = None
+    for w in wps:
+        if low is None or w["soc_wh"] < low["soc_wh"]:
+            low = {"soc_wh": w["soc_wh"], "node": w["node"], "t": w["t"], "within_leg": False}
+    for lg in legs:
+        if lg["soc_min_wh"] < low["soc_wh"]:
+            low = {"soc_wh": lg["soc_min_wh"], "node": lg["from"], "t": lg["t0"], "within_leg": True}
+    low["between"] = loop_where(g, low["node"], nv, reverse)
+    nl = rt.get("night_low")
+    dist = km["soaring"] + km["motor"]
+    out.update({
+        "days": T / 24.0, "time_h": T,
+        "share_time": {k: (sm[k + "_h"] / T if T > 0 else 0.0) for k in ("soaring", "motor", "wait")},
+        "share_distance": {k: (km[k] / dist if dist > 0 else 0.0) for k in ("soaring", "motor")},
+        "km": dict(km, dry=dry_km), "waits": sm["waits"], "takeoffs": sum(1 for lg in legs if lg["takeoff_wh"] > 0.0),
+        "motor_wh": sm["motor_wh"], "takeoff_wh": sm["takeoff_wh"], "solar_wh": sm["solar_wh"],
+        "lowest_charge": low, "margins": mg,
+        "night": {"carried": mg["night_margin_wh"] >= -1e-6, "night_margin_wh": mg["night_margin_wh"],
+                  "lowest_at": dict(nl, between=loop_where(g, nl["node"], nv, reverse)) if nl else None},
+        "longest_waits": sorted(waits, key=lambda w: -w["hours"]),
+        "most_motor": sorted(motor, key=lambda x: -x["motor_wh"]),
+        "segments": [dict(v, between=list(k)) for k, v in sorted(segs.items())]})
+    return out
+
+
+def _strip_coords(r):
+    for k in ("route", "closest"):
+        if r.get(k):
+            for w in r[k]["waypoints"]:
+                w.pop("lat", None)
+                w.pop("lon", None)
+    return r
+
+
+def run_loop(path, out, workers=4, engine="node", log=_log):
+    """Plan the laps of a loop input (the notes above) and write them, with each plan's summary (loop_summary), to
+    `out`. Prints no coordinates."""
+    from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+    raw = Path(path).read_bytes()
+    inp = json.loads(raw)
+    for k in ("fields", "points", "starts"):
+        if not inp.get(k):
+            raise SystemExit(f"loop: the input has no {k}")
+    if not isinstance(inp["fields"], list):
+        inp["fields"] = [inp["fields"]]
+    if inp.get("solar") and not isinstance(inp["solar"], list):
+        inp["solar"] = [inp["solar"]]
+    starts = [float(t) for t in inp["starts"]]
+    field = BoxField.join(inp["fields"])
+    dirs = loop_directions(inp)
+    land = None if inp.get("land", True) else False
+    if land is None:
+        land = W.load_land()
+    nv = len(inp["points"])
+    graphs, info = {}, {}
+    for name, pts, dry, nw in dirs:
+        g = loop_graph(field, pts, dry, nw, inp.get("sub_km", SUB_KM), land)
+        graphs[name] = g
+        times = [field.t0 + k * field.dt for k in range(field.nt)]
+        nosea = [n for n in range(len(g.lat)) if not g.dry_node[n]
+                 and any(not math.isfinite(field.sample(g.loc[n], t)[2]) for t in times)]
+        info[name] = {"nodes": len(g.lat), "path_km": g.rem_m[0] / 1000.0, "dry_nodes": sum(g.dry_node),
+                      "vertex_node": g.vertex_node, "land_hits": g.land_hits, "wet_nodes_without_sea": nosea}
+        log(f"{name}: {len(g.lat)} nodes, {g.rem_m[0] / 1000.0:.1f} km, {sum(g.dry_node)} dry nodes, "
+            f"{len(g.land_hits['nodes'])} wet nodes and {len(g.land_hits['legs'])} wet legs on land, "
+            f"{len(nosea)} wet nodes without a sea value")
+    if engine == "node":
+        loop_node_boxes(inp)
+    k = max(1, min(len(starts), -(-workers // len(dirs))))
+    jobs = [(inp, name, starts[q::k]) for name, *_ in dirs for q in range(k) if starts[q::k]]
+    pool = ThreadPoolExecutor if engine == "node" else ProcessPoolExecutor
+    fn = loop_job_node if engine == "node" else loop_job
+    aircraft = inp.get("aircraft", AIRCRAFT[0])
+    en = energy_defaults(aircraft, inp.get("capacity_factor", 1.0), inp.get("sensor_set", SENSOR_SET))
+    plans = []
+    t_wall = time.time()
+    with pool(max_workers=workers) as ex:
+        for (_, name, ts), res in zip(jobs, ex.map(fn, jobs)):
+            for t0, r in zip(ts, res):
+                s = loop_summary(graphs[name], r, en, nv, name == "reverse")
+                plans.append({"direction": name, "start": t0, "summary": s, "plan": _strip_coords(r)})
+                day = _dt.datetime.fromtimestamp(t0, _dt.timezone.utc).strftime("%Y-%m-%d %H:%M")
+                log(f"{name} {day}Z: " + (f"ok in {s['days']:.2f} d" if r["ok"] else f"fail {r['reason']}")
+                    + (f" (strict search capped at {s['strict_pops']} labels)" if s["strict_capped"] else "")
+                    + f"  ({r['wall_s']:.1f} s, {time.time() - t_wall:.0f} s in all)")
+    plans.sort(key=lambda p: (LOOP_DIRECTIONS.index(p["direction"]), p["start"]))
+    files = MODEL_FILES + ([HERE / "viewer" / "route.js", HERE / "route_loop.js"] if engine == "node" else [])
+    obj = {"meta": dict(record.meta("python -m sim.route loop", files), engine=engine,
+                        input_sha256=hashlib.sha256(raw).hexdigest()),
+           "settings": dict(js_settings(), sub_km=inp.get("sub_km", SUB_KM), max_pops=inp.get("max_pops", MAX_POPS),
+                            relax_pops=inp.get("relax_pops", RELAX_POPS), relax=bool(inp.get("relax", True)),
+                            solar_box=bool(inp.get("solar"))),
+           "aircraft": aircraft, "capacity_factor": inp.get("capacity_factor", 1.0), "energy": en,
+           "graphs": info, "plans": plans}
+    Path(out).parent.mkdir(parents=True, exist_ok=True)
+    with open(out, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(obj, fh, indent=None, separators=(",", ":"), default=float)
+    log(f"wrote {len(plans)} plans")
+    return obj
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python -m sim.route")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -1407,6 +2047,11 @@ def main(argv=None):
     p = sub.add_parser("exp")
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--cases", nargs="*")
+    p.add_argument("--engine", choices=("node", "python"), default="node")
+    p = sub.add_parser("loop", help="plan the laps of a fixed route from a private input file (notes above run_loop)")
+    p.add_argument("input")
+    p.add_argument("--out", required=True)
+    p.add_argument("--workers", type=int, default=4)
     p.add_argument("--engine", choices=("node", "python"), default="node")
     p = sub.add_parser("plan")
     p.add_argument("--case", required=True)
@@ -1421,6 +2066,8 @@ def main(argv=None):
         print(export_params())
     elif a.cmd == "exp":
         run_exp(a.workers, a.cases, engine=a.engine)
+    elif a.cmd == "loop":
+        run_loop(a.input, a.out, a.workers, a.engine)
     else:
         field = CorridorField.from_case(a.case)
         layer = SolarLayer.load(a.case)
