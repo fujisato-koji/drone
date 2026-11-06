@@ -988,3 +988,23 @@ items:
     raised_by: assistant
     phase: design
     opened: 2026-11-01
+  - id: Q-085
+    kind: question
+    text: "The route planner in the viewer (docs/02-form.md#viewer) follows the owner's request of 2026-11-02 as relayed to the assistant: in the world seas choose a start and a destination on the map, plan the route to it (the fastest arrival within the energy rules of D-021 and D-023, the limit settable with the record's defaults), show the route, then start it in 3D. The assistant chose the rest. The energy limit is two fields, the usable capacity and the motor's share, with the defaults of route_params.js (route.capacity_wh, route.motor_share); the plan starts at the map's corridor time; a click outside the data says so and chooses nothing; a closest route is shown but cannot be started. A wait on the water is not flown or drawn, since landing and take-off are not modelled: the flight stops at the wait's point, and a button moves the weather clock to the wait's end (or keeps it when the flight is later than the plan) and launches again from that point as at the mast; only the plan counts the take-off's energy. The 3D view runs in real time in the world seas (one second of flight is one second of weather), so flying a whole route takes the plan's hours; there is no faster clock and no skip of a flown leg. Decide whether to keep real time, to allow a faster clock for planned flights (the MPC planner already runs late in a browser without a graphics processor, Q-065), or to add a skip to the next waypoint that moves the aircraft without flying, labelled as the wait's skip is; and whether to model the landing, the time on the water and the take-off in 3D. Confirm the rest as a decision, or change it."
+    waits_for: owner
+    affects:
+      - D-021
+      - Q-065
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-06
+  - id: Q-086
+    kind: finding
+    text: "The 3D flight of a planned route (docs/02-form.md#viewer) can differ from the plan. A change between a soaring run and a motor run happens in flight at the run's end, as the destination flight's navigator already allows, while the free course never changes the kind of leg in flight because both changes stalled the aircraft or touched the water in node closed loops (Q-084); whether a planned flight keeps such a change in flight or stops and relaunches at it on the new kind, as at a wait, is for the owner. On a soaring run the navigator takes the hull of the nearest library wind while the plan takes the hull of the library wind at or below the rounding step (docs/02-form.md#route-planning), and it falls back to the steady leg where no soaring pair makes way, so the kind and the speed flown can differ from the plan's. The navigator flies straight lines in the 3D frame (the azimuthal equidistant projection about the latest launch point) towards the ends of the plan's great-circle runs, and the plan's time at the aircraft is interpolated by the share of the run's length flown. Waves, gusts and the closed loop's losses are in the 3D flight and not in the plan (docs/02-form.md#route-planning). In a headless browser with software rendering, where the MPC plans ran far behind (Q-065), the first planned flight tried (so_summer_quiet upwind, after the skip of its first wait) held the steady leg and kept within a few minutes of the plan's clock over most of its first run, then touched the water with a wingtip a few hundred metres before the first waypoint, in the navigator's final approach, so no arrival at a waypoint has been seen in 3D yet; whether the cause is the late plans, the steady leg's hold (Q-073) or the approach is not known. To settle: fly planned routes in closed loops and compare the time at each waypoint with the plan's, with and without the change of kind in flight."
+    waits_for: assistant, then owner
+    affects:
+      - Q-084
+      - Q-081
+    raised_by: assistant
+    phase: design
+    opened: 2026-11-06

@@ -43,7 +43,15 @@
   .card canvas#wdLeg { height: 46px; }
   #mapPanel { position: fixed; right: 10px; bottom: 10px; width: min(560px, calc(100vw - 330px)); box-sizing: border-box;
               background: #fcfcfb; color: #52514e; border-radius: 4px; padding: 6px 8px; font-size: 12px; line-height: 1.4;
-              box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25); z-index: 5; }
+              box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25); z-index: 5; max-height: calc(100vh - 20px); overflow-y: auto; }
+  #mapPanel summary { cursor: pointer; color: #0b0b0b; font-weight: 600; font-size: 13px; margin: 6px 0 2px; }
+  #mapPanel table { border-collapse: collapse; width: 100%; margin: 2px 0; }
+  #mapPanel td { padding: 0 8px 1px 0; vertical-align: top; }
+  #mapPanel td:first-child { white-space: nowrap; color: #6b6a65; }
+  #rtro td:first-child, #rtfl td:first-child { width: 11em; }
+  #mapPanel input[type=number] { width: 64px; }
+  #mapPanel .sub { color: #0b0b0b; font-weight: 600; margin: 4px 0 1px; }
+  #mapPanel .sw { display: inline-block; width: 18px; height: 4px; vertical-align: middle; margin: 0 4px 0 8px; border-radius: 2px; }
   #mapPanel .mtop, #mapPanel .mrow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 3px 0; }
   #mapPanel .mt { color: #0b0b0b; font-weight: 600; font-size: 13px; }
   #mapPanel select { flex: 1; min-width: 140px; }
@@ -167,6 +175,7 @@
     <div class="dim" data-i="help4"></div>
     <div class="dim" data-i="help5"></div>
     <div class="dim" data-i="help6"></div>
+    <div class="dim" data-i="help7"></div>
   </details>
 </div>
 <div id="tip"></div>
@@ -179,6 +188,19 @@
   <div class="mrow"><button id="wmEnter" type="button" data-i="wmEnter" data-t="wmEnterTip"></button><button id="wmNow" type="button" data-i="wmNow" data-t="wmNowTip"></button><label class="auto" data-t="wmNowGlobTip"><input id="wmNowGlob" type="checkbox" data-t="wmNowGlobTip"><span data-i="wmNowGlob"></span></label><button id="wmSave" type="button" data-i="wmSave" data-t="wmSaveTip"></button><label class="filebtn" data-t="wmFileTip"><input id="wmFile" type="file" accept=".js,.json"><span data-i="wmFile"></span></label></div>
   <div class="mrow dim" id="wmNowNote"></div>
   <div class="mrow warn" id="wmMsg"></div>
+  <details id="rtSec" open>
+    <summary data-i="rtHead" data-t="rtHeadTip"></summary>
+    <div class="mrow"><label for="rtPick" data-i="rtPick" data-t="rtPickTip"></label><select id="rtPick" data-t="rtPickTip"><option value="place" data-i="rtPickPlace"></option><option value="start" data-i="rtPickStart"></option><option value="dest" data-i="rtPickDest"></option></select></div>
+    <div class="mrow"><span id="rtPts"></span></div>
+    <div class="mrow"><label for="rtCap" data-i="rtCap" data-t="rtCapTip"></label><input id="rtCap" type="number" min="1" max="5000" step="0.1" data-t="rtCapTip"><span>Wh</span><label for="rtShare" data-i="rtShare" data-t="rtShareTip"></label><input id="rtShare" type="number" min="0" max="1" step="0.05" data-t="rtShareTip"><button id="rtReset" type="button" data-i="rtReset" data-t="rtResetTip"></button></div>
+    <div class="mrow"><button id="rtPlan" type="button" data-i="rtPlan" data-t="rtPlanTip"></button><button id="rtCancel" type="button" data-i="rtCancel" data-t="rtCancelTip"></button><button id="rtGo" type="button" data-i="rtGo" data-t="rtGoTip"></button><span class="dim" id="rtBusy"></span></div>
+    <div class="mrow warn" id="rtMsg"></div>
+    <div class="mrow" id="rtLegend"></div>
+    <table id="rtro"></table>
+    <table id="rtfl"></table>
+    <div id="rtWait" style="display:none"><div class="sub" data-i="rtWaitHead"></div><div id="rtWaitTxt"></div><div class="mrow"><button id="rtSkip" type="button" data-i="rtSkip" data-t="rtSkipTip"></button></div></div>
+    <div class="dim" data-i="rtNoLand"></div>
+  </details>
   <canvas id="wmLeg" data-t="wmLegTip"></canvas>
   <div class="dim" id="wmAttr"></div>
 </div>
@@ -201,6 +223,9 @@
 <script src="worldmap.js"></script>
 <script src="world/land.js"></script>
 <script src="world/index.js"></script>
+<script src="route_params.js"></script>
+<script src="route.js"></script>
+<script src="routeview.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -406,6 +431,77 @@ const I18N = {
     wmAttrLand: '海岸線: Natural Earth（パブリックドメイン）。',
     tipMap: (la, lo, v) => la + '、' + lo + (v ? '\n' + v : ''),
     help6: '世界地図: 場面か今の予報を選び、地図をクリックして場所を選び、「ここで 3D に入る」を押すと、その場所と時刻の海と風で 3D が始まり、機体の位置が地図に戻ります。',
+    help7: '経路の計画: 地図のクリックを「出発点」にして出発点を選ぶと、続けて目的地を選べます。「経路を計画」で経路が地図と 3D に出て、規則を守る経路なら「スタート」で 3D で飛ばせます。',
+    rtHead: '経路の計画',
+    rtHeadTip: '地図で出発点と目的地を選び、エネルギーの規則（D-021、D-023）を守っていちばん早く着く経路を計画して、地図と 3D に表示します。計画に使えるのは、選んだデータの回廊（橙の枠）の中だけで、今の予報では取得して値のある点だけです。出発の時刻は地図の「回廊の時刻」です。',
+    rtPick: '地図のクリック', rtPickTip: '地図をクリックしたときに選ぶものです。「場所」は 3D に入る場所、「出発点」と「目的地」は経路の計画に使います。出発点を選ぶと、次のクリックは目的地になります。',
+    rtPickPlace: '場所（3D に入る）', rtPickStart: '出発点', rtPickDest: '目的地',
+    rtPtStart: '出発点', rtPtDest: '目的地', rtNone: '未選択',
+    rtOut_outside: 'そこは回廊の外で、データがありません。橙の枠の中を選んでください。',
+    rtOut_land: 'そこは陸の上です。海の上を選んでください。',
+    rtOut_nodata: 'そこには、この時刻の予報の値がありません（取得した範囲の外か、値が欠けています）。',
+    rtOut_none: '地図のデータがありません。',
+    rtCap: '電池の容量', rtCapTip: '電池の使える容量 (Wh) です。初期値は記録の値（D-023 の電池から求めた route.capacity_wh）です。容量の一定の割合（route.reserve_fraction）を予備として残し、出発のときは満充電です。',
+    rtShare: 'モータの割合', rtShareTip: 'その日に集めた太陽の発電量のうち、モータと離水に使ってよい割合です（0 から 1）。初期値は D-021 の値（route.motor_share）です。',
+    rtReset: '初期値に戻す', rtResetTip: '電池の容量とモータの割合を、記録の初期値に戻します。',
+    rtPlan: '経路を計画', rtPlanTip: '出発点から目的地まで、規則を守っていちばん早く着く経路を探します。探索はワーカーで動くので、そのあいだも画面は動きます。数十秒かかることがあります。',
+    rtCancel: '中止', rtCancelTip: '計画の探索を止めます。',
+    rtGo: 'スタート', rtGoTip: '計画した経路を 3D で飛ばします。出発の格子点を 3D の原点にして、計画の出発時刻から、観測柱からと同じように発進します。航法が経由点を順に目指し、滑空の区間は速度の包絡線で（風だけの周期軌道を先に）、モータの区間は動力の定常飛行で飛びます。3D は実時間なので、経路の全部を飛ぶには計画の所要時間がかかります。',
+    rtGoNo: '規則を守る経路がないので、スタートできません。いちばん近い経路は表示だけです。',
+    rtBusy: (s) => '計画中（' + s + ' 秒）',
+    rtTook: (s, w) => '計画にかかった時間: ' + s + ' 秒（探索 ' + w + ' 秒）',
+    rtNeedPts: '先に、地図で出発点と目的地を選んでください。',
+    rtAcMissing: (a) => '機体 ' + a + ' には経路計画のパラメータがありません。② で albatross-3m か baseline-2m を選んでください。',
+    rtBadEnergy: '電池の容量は 0 より大きく、モータの割合は 0 から 1 にしてください。',
+    rtNoWorker: 'ワーカーを作れなかったので、このページで計画します。終わるまで画面が止まります。',
+    rtErr: (m) => '計画でエラーが出ました: ' + m,
+    rtCancelled: '計画を中止しました。',
+    rtStale: '表示中の計画は、いま選んでいるデータのものではありません。もう一度計画してください。',
+    rtNoParams: 'window.ROUTE_PARAMS がありません。python -m sim.route export で route_params.js を作ってください。経路の計画は使えません。',
+    rtLegSoar: '滑空', rtLegMotor: 'モータ（定常飛行）', rtLegWait: '着水して待つ', rtLegEnds: '○ 出発点、□ 目的地', rtLegClosest: '破線はいちばん近い経路',
+    rtR1: '出発点が回廊の外か陸の上にあるか、出発のときの波が避ける高さを超えています。',
+    rtR2: '満充電でも、出発点から次の夜を越せません。',
+    rtR3: 'いちばん近い経路は途中で予備を保ちますが、次の夜を越せません。',
+    rtR4: 'いちばん近い経路でも、電池が予備を下回ります。',
+    rtR5: 'いちばん近い経路は電池の規則を守りますが、モータがその日の割り当てを超えます。',
+    rtR6: '規則をゆるめても、回廊の時間の中で目的地に着く経路がありません（波、データの終わり、ゆるめた規則でも足りないエネルギー、またはゆるめた探索の上限）。',
+    rtR7: 'ゆるめた探索だけが経路を見つけ、その経路は規則を守ります（厳密な探索の近似が見落としました）。',
+    rtR8: '厳密な探索が上限の数（route.max_pops）で止まりました。経路は見つからず、ないとも言えません。',
+    rs_res: '結果', rs_in: '計画の条件', rs_arr: '到着', rs_dist: '距離', rs_share: '時間の内訳', rs_soc: '最低の充電量', rs_night: '夜の規則',
+    rs_energy: 'モータ（離水を含む） / 太陽', rs_snap: '格子点までのずれ', rs_solar: '日射', rs_need: '出発点で夜に要る充電', rs_close: 'いちばん近い経路', rs_short: '規則に足りない量',
+    rsOk: '規則を守る経路', rsFail: (r, t) => '規則を守る経路はありません（理由 ' + r + '）。' + t,
+    rsIn: (a, c, s, t) => a + '、容量 ' + c + ' Wh、モータの割合 ' + s + '、出発 ' + t + ' UTC',
+    rsArr: (t, h) => t + ' UTC（' + h + ' 時間）',
+    rsDist: (d, l) => '出発点から目的地まで ' + d + ' km、経路の長さ ' + l + ' km',
+    rsShare: (a, b, c) => '滑空 ' + a + ' %、モータ ' + b + ' %、着水して待つ ' + c + ' %',
+    rsSoc: (s, r) => s + ' Wh（予備 ' + r + ' Wh）',
+    rsNightOk: (m) => '守る（余裕 ' + m + ' Wh）', rsNightNo: (m) => '守らない（' + m + ' Wh 足りない）',
+    rsEnergy: (m, s) => m + ' Wh / ' + s + ' Wh',
+    rsSnap: (a, b) => '出発点 ' + a + ' km、目的地 ' + b + ' km',
+    rsSolarLayer: 'ERA5 の日射（この場面の日射の層）', rsSolarModel: '太陽の高さから当てはめたモデル（このデータには日射の層がありません）',
+    rsNeed: (n, c) => n + ' Wh（容量 ' + c + ' Wh）',
+    rsRelax1: (b) => '予備を容量の ' + b + ' 倍下げた探索で見つけた経路',
+    rsRelax2: (b) => '予備を容量の ' + b + ' 倍下げ、モータの割り当てをなくした探索で見つけた経路',
+    rsShort: (a, b, c) => '予備 ' + a + ' Wh、夜 ' + b + ' Wh、モータの割り当て ' + c + ' Wh',
+    rf_seg: 'いまの区間', rf_clock: '3D の時刻（気象）', rf_plan: '計画の時刻（この点）', rf_diff: '計画との差',
+    rfSeg: (i, n, k, d) => i + ' / ' + n + '（' + k + '）' + (d === null ? '' : '、次の点まで ' + d + ' km'),
+    rfClock: (t, h) => t + ' UTC（出発から ' + h + ' 時間）',
+    rfWaitPlan: (a, b) => '着水して待つ ' + a + ' から ' + b + ' UTC',
+    rfLate: (m) => '3D が計画より ' + m + ' 分遅い', rfEarly: (m) => '3D が計画より ' + m + ' 分早い', rfOn: '計画どおり（1 分以内）',
+    rfDone: (t, p) => '目的地に着きました。3D は ' + t + ' UTC、計画は ' + p + ' UTC です。',
+    rfEnded: (w) => '計画の飛行は終わりました（' + w + '）。',
+    endW: '計画の着水（待つ）', endX: '発進できなかった',
+    rtWaitHead: '着水して待つ（計画）',
+    rtWaitTxt: (h, a, b) => '計画はここで ' + h + ' 時間、着水して待ちます（' + a + ' から ' + b + ' UTC）。',
+    rtWaitWhy: '計画は待つ理由を記録しません。待つあいだの値です。',
+    rtWaitSoc: (a, b, s, d) => '充電 ' + a + ' Wh から ' + b + ' Wh（太陽 ' + s + ' Wh、消費 ' + d + ' Wh）',
+    rtWaitSlack: (a, b) => 'その日のモータの残り ' + a + ' Wh から ' + b + ' Wh',
+    rtWaitMid: '地方時の 0 時をまたぐので、モータの割り当てが新しくなります',
+    rtWaitNight: (p) => '夜（太陽が地平線の下）が ' + p + ' %',
+    rtWaitSea: (a, b, m) => '波高 ' + a + ' m から ' + b + ' m（避ける高さ ' + m + ' m）',
+    rtWaitWind: (a, b) => '風 ' + a + ' m/s から ' + b + ' m/s',
+    rtSkip: '待ち時間を飛ばして再発進', rtSkipTip: '3D の時計を待ちの終わりまで進め（3D が計画より遅れていれば、いまの時刻のまま）、この点から観測柱からと同じように発進し直します。',
+    rtNoLand: '着水と離水は描きません。待つ点で 3D の飛行は止まり、再発進は観測柱からの発進と同じです（離水の電力は計画だけが数えます）。',
     fileTitle: (n) => 'ファイル: ' + n,
   },
   en: {
@@ -606,6 +702,69 @@ const I18N = {
     wmAttrLand: 'Coastlines: Natural Earth (public domain).',
     tipMap: (la, lo, v) => la + ', ' + lo + (v ? '\n' + v : ''),
     help6: 'World map: choose a case or the forecast now, click the map to choose a place and press "Enter 3D here"; the 3D view starts with the sea and wind of that place and time, and the aircraft comes back to the map.',
+    help7: 'Route planning: set "Map click" to "Start" and click the start, then the destination; "Plan the route" shows the route on the map and in 3D, and when it keeps the rules "Start" flies it in 3D.',
+    rtHead: 'Route planning',
+    rtHeadTip: 'Choose a start and a destination on the map; the planner finds the earliest arrival within the energy rules (D-021, D-023) and shows it on the map and in 3D. Only the corridor of the data chosen (the orange frame) can be planned over, and for the forecast now only the points its fetch has values for. The start time is the map\'s "Corridor time".',
+    rtPick: 'Map click', rtPickTip: 'What a click on the map chooses: "Place" is where 3D is entered, "Start" and "Destination" are the route\'s. After the start the next click chooses the destination.',
+    rtPickPlace: 'Place (enter 3D)', rtPickStart: 'Start', rtPickDest: 'Destination',
+    rtPtStart: 'Start', rtPtDest: 'Destination', rtNone: 'not chosen',
+    rtOut_outside: 'That is outside the corridor, where there are no data; choose inside the orange frame.',
+    rtOut_land: 'That is on land; choose a point on the sea.',
+    rtOut_nodata: 'The forecast has no values there at this time (outside the fetched area, or missing).',
+    rtOut_none: 'No map data.',
+    rtCap: 'Battery capacity', rtCapTip: 'The usable capacity of the battery (Wh). The default is the record\'s (route.capacity_wh, from the battery of D-023); a share of it (route.reserve_fraction) is kept as a reserve, and the battery starts full.',
+    rtShare: 'Motor share', rtShareTip: 'The share of the solar energy collected each day that the motor and the take-offs may use (0 to 1). The default is D-021\'s (route.motor_share).',
+    rtReset: 'Defaults', rtResetTip: 'Set the battery capacity and the motor share back to the record\'s defaults.',
+    rtPlan: 'Plan the route', rtPlanTip: 'Search the earliest arrival from the start to the destination within the rules. The search runs in a worker, so the page keeps running; it can take tens of seconds.',
+    rtCancel: 'Cancel', rtCancelTip: 'Stop the search.',
+    rtGo: 'Start', rtGoTip: 'Fly the planned route in 3D: the start\'s grid point becomes the 3D origin, and the aircraft launches there at the plan\'s start time as at the mast. The navigator makes for the waypoints in turn, soaring runs on the velocity hull (soaring cycles first), motor runs as the steady powered leg. 3D runs in real time, so the whole route takes the plan\'s hours.',
+    rtGoNo: 'No route keeps the rules, so there is nothing to start; the closest route is only shown.',
+    rtBusy: (s) => 'Planning (' + s + ' s)',
+    rtTook: (s, w) => 'The plan took ' + s + ' s (search ' + w + ' s)',
+    rtNeedPts: 'Choose a start and a destination on the map first.',
+    rtAcMissing: (a) => 'The planner has no parameters for ' + a + '; choose albatross-3m or baseline-2m in section 2.',
+    rtBadEnergy: 'The capacity must be above 0 and the motor share between 0 and 1.',
+    rtNoWorker: 'Could not create the worker; planning in the page, which stops until the plan is done.',
+    rtErr: (m) => 'The planner failed: ' + m,
+    rtCancelled: 'Planning cancelled.',
+    rtStale: 'The plan shown belongs to other data; plan again.',
+    rtNoParams: 'window.ROUTE_PARAMS is missing: write route_params.js with python -m sim.route export. Route planning is off.',
+    rtLegSoar: 'soaring', rtLegMotor: 'motor (steady leg)', rtLegWait: 'wait on the water', rtLegEnds: 'circle start, square destination', rtLegClosest: 'dashed: the closest route',
+    rs_res: 'Result', rs_in: 'Inputs', rs_arr: 'Arrival', rs_dist: 'Distance', rs_share: 'Time', rs_soc: 'Lowest charge', rs_night: 'Night rule',
+    rs_energy: 'Motor (with take-offs) / solar', rs_snap: 'Snap to the grid', rs_solar: 'Irradiance', rs_need: 'Charge the night needs at the start', rs_close: 'Closest route', rs_short: 'Short of the rules',
+    rsOk: 'a route that keeps the rules', rsFail: (r, t) => 'No route keeps the rules (reason ' + r + '): ' + t,
+    rsIn: (a, c, s, t) => a + ', capacity ' + c + ' Wh, motor share ' + s + ', start ' + t + ' UTC',
+    rsArr: (t, h) => t + ' UTC (' + h + ' h)',
+    rsDist: (d, l) => d + ' km from start to destination, ' + l + ' km along the route',
+    rsShare: (a, b, c) => 'soaring ' + a + ' %, motor ' + b + ' %, waiting on the water ' + c + ' %',
+    rsSoc: (s, r) => s + ' Wh (reserve ' + r + ' Wh)',
+    rsNightOk: (m) => 'kept (margin ' + m + ' Wh)', rsNightNo: (m) => 'not kept (' + m + ' Wh short)',
+    rsEnergy: (m, s) => m + ' Wh / ' + s + ' Wh',
+    rsSnap: (a, b) => 'start ' + a + ' km, destination ' + b + ' km',
+    rsSolarLayer: 'ERA5 irradiance (the case\'s solar layer)', rsSolarModel: 'the model fitted to the sun\'s elevation (these data have no solar layer)',
+    rsNeed: (n, c) => n + ' Wh (capacity ' + c + ' Wh)',
+    rsRelax1: (b) => 'found with the reserve lowered by ' + b + ' capacities',
+    rsRelax2: (b) => 'found with the reserve lowered by ' + b + ' capacities and no motor allowance',
+    rsShort: (a, b, c) => 'reserve ' + a + ' Wh, night ' + b + ' Wh, motor allowance ' + c + ' Wh',
+    rf_seg: 'Segment', rf_clock: '3D time (weather)', rf_plan: 'Plan time (here)', rf_diff: 'Against the plan',
+    rfSeg: (i, n, k, d) => i + ' / ' + n + ' (' + k + ')' + (d === null ? '' : ', ' + d + ' km to the next point'),
+    rfClock: (t, h) => t + ' UTC (' + h + ' h since the start)',
+    rfWaitPlan: (a, b) => 'waiting on the water ' + a + ' to ' + b + ' UTC',
+    rfLate: (m) => '3D ' + m + ' min behind the plan', rfEarly: (m) => '3D ' + m + ' min ahead of the plan', rfOn: 'on the plan (within a minute)',
+    rfDone: (t, p) => 'Arrived: 3D ' + t + ' UTC, plan ' + p + ' UTC.',
+    rfEnded: (w) => 'The planned flight ended (' + w + ').',
+    endW: 'the plan lands to wait', endX: 'could not launch',
+    rtWaitHead: 'Waiting on the water (the plan)',
+    rtWaitTxt: (h, a, b) => 'The plan lands here and waits ' + h + ' h (' + a + ' to ' + b + ' UTC).',
+    rtWaitWhy: 'The plan does not record why it waits; the values over the wait:',
+    rtWaitSoc: (a, b, s, d) => 'charge ' + a + ' Wh to ' + b + ' Wh (solar ' + s + ' Wh, draw ' + d + ' Wh)',
+    rtWaitSlack: (a, b) => 'motor allowance left in the day ' + a + ' Wh to ' + b + ' Wh',
+    rtWaitMid: 'a local midnight falls inside, so the motor allowance starts again',
+    rtWaitNight: (p) => 'night (the sun below the horizon) ' + p + ' %',
+    rtWaitSea: (a, b, m) => 'wave height ' + a + ' m to ' + b + ' m (avoided above ' + m + ' m)',
+    rtWaitWind: (a, b) => 'wind ' + a + ' m/s to ' + b + ' m/s',
+    rtSkip: 'Skip the wait and relaunch', rtSkipTip: 'Move the 3D clock to the end of the wait (or keep it, if 3D is behind the plan) and launch again from this point as at the mast.',
+    rtNoLand: 'Landing and take-off are not drawn: the 3D flight stops at a wait, and the relaunch is the launch at the mast (only the plan counts the take-off\'s energy).',
     fileTitle: (n) => 'File: ' + n,
   }
 };
@@ -1317,7 +1476,7 @@ function launch() {
   FL.wave = null;
   const name = $('flAc').value, ac = AIRCRAFT[name];
   if (!HAVE_MPC) { flNoteFn = () => tx('libMissing'); renderFl(); return; }
-  const useNav = tgtMode();
+  const useNav = tgtMode() || !!RV.fly;   // a planned route flies the navigator to its waypoints in turn
   if (useNav && !NV.target) { flNoteFn = () => tx('needTarget'); renderFl(); return; }
   const lib = useNav ? navSource() : freeTable(name, $('flMotor').value === 'on');
   if (!lib || !lib.length) { flNoteFn = () => tx('mpcNoLib'); renderFl(); return; }
@@ -1331,8 +1490,9 @@ function launch() {
   let c0;
   FC.on = false; FC.ch = null; FC.cmd = null; FC.pend = null; FC.done = null;
   if (useNav) {   // the first cycle is the navigator's
-    NV.nav = new NAV.HullNavigator(NV.src, { arrivalRadius: NAV_RADIUS,
-      steady: $('flMotor').value === 'on' ? new NAV.SteadyModel(NAV.steadyParams(MPC.makeAircraft(ac), MPC.MOTOR)) : null });
+    const steadyOf = () => new NAV.SteadyModel(NAV.steadyParams(MPC.makeAircraft(ac), MPC.MOTOR));
+    if (RV.fly) { RV.fly.navs = rvNavigators(name, steadyOf); NV.nav = RV.fly.navs[RV.fly.plan.seg().kind]; }
+    else NV.nav = new NAV.HullNavigator(NV.src, { arrivalRadius: NAV_RADIUS, steady: $('flMotor').value === 'on' ? steadyOf() : null });
     NV.nav.reset();
     const cmd0 = NV.nav.step(0, [p.x, p.y], W.u10, windFromDeg(), [NV.target.x, NV.target.y]);
     NV.cmd = cmd0; NV.on = true;
@@ -1374,9 +1534,11 @@ function launch() {
   splashMark.visible = false; splashLbl.style.display = 'none'; flSplashFn = () => ''; renderFl();
   buildShape(ac);
   flightMesh.visible = true;
+  return true;
 }
-$('flGo').addEventListener('click', launch);
-$('flStop').addEventListener('click', stopFlight);
+// the panel's launch leaves a planned flight; the stop button also ends one that waits on the water
+$('flGo').addEventListener('click', () => { if (RV.fly) RV.fly = null; launch(); renderRoute(); });
+$('flStop').addEventListener('click', () => { stopFlight(); if (RV.fly && !RV.fly.ended && !FL.on) RV.fly.ended = 'S'; renderRoute(); });
 
 // place the destination by a click (not a drag) on the sea, when the destination is set by a click
 {
@@ -1389,7 +1551,7 @@ $('flStop').addEventListener('click', stopFlight);
     ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
     if (!ray.ray.intersectPlane(plane, hit)) return;
     if (Math.abs(hit.x - seaC.x) > HALF || Math.abs(-hit.z - seaC.y) > HALF) return;
-    if (tgtMode()) setTarget(hit.x, -hit.z);   // a click places only the destination
+    if (tgtMode() && !RV.fly) setTarget(hit.x, -hit.z);   // a click places only the destination (not on a planned route)
   });
 }
 
@@ -1407,7 +1569,10 @@ function flightAdvance(dtWanted, t0) {
     {
       if (NV.on) {
         if (Math.round(FL.el / FDT) % Math.round(((NV.cmd && NV.cmd.mode === 'direct') ? 1 : NAV_EVERY_S) / FDT) === 0) navStep(t);   // every second in the final approach
-        if (Math.hypot(NV.target.x - FL.s[0], NV.target.y - FL.s[1]) <= NAV_RADIUS) { FL.end = 'A'; stopFlight(); break; }
+        if (Math.hypot(NV.target.x - FL.s[0], NV.target.y - FL.s[1]) <= NAV_RADIUS) {
+          const nx = RV.fly ? rvArrive(t) : 'end';   // a planned route goes on to its next waypoint, or stops to wait
+          if (nx !== 'fly') { FL.end = nx === 'wait' ? 'W' : 'A'; stopFlight(); break; }
+        }
         if (Math.round(FL.el / FDT) % Math.round(2 / FDT) === 0 && NV.trackN < TRACK_MAX) {
           trackPos.set([FL.s[0], 0.5, -FL.s[1]], 3 * NV.trackN); NV.trackN++;
           trackGeo.setDrawRange(0, NV.trackN); trackGeo.attributes.position.needsUpdate = true;
@@ -2140,6 +2305,7 @@ function worldSelect(key) {
   if (!(WORLD.entry && WORLD.entry.key === key)) { WORLD.tView = f.corridor.t0; $('wmTime').value = 0; }
   $('wmTime').max = (f.corridor.nt - 1) * f.corridor.dt_h;
   if (ENV.mode === 'world' && !FL.on) { worldEnsureEntry(); worldRebuild(true); }
+  rvWorldChanged();   // the route's points and plan belong to the data they were chosen in
   renderWorld();
 }
 $('wmScen').addEventListener('change', () => {
@@ -2220,7 +2386,7 @@ function renderWorldRo() {
 }
 // the map panel
 function renderWorld() {
-  const f = WORLD.cur, m = WORLD.map, flying = FL.on && ENV.mode === 'world';
+  const f = WORLD.cur, m = WORLD.map, flying = (FL.on || rvActive()) && ENV.mode === 'world';
   if (ENV.mode === 'world' && WORLD.entry && f && WORLD.entry.key === WORLD.curKey) {
     WORLD.tView = Math.min(Math.max(worldTime(), f.corridor.t0), f.corridor.t0 + 3600 * f.corridor.dt_h * (f.corridor.nt - 1));
     $('wmTime').value = (WORLD.tView - f.corridor.t0) / 3600;
@@ -2244,7 +2410,9 @@ function renderWorld() {
   $('wmAttr').textContent = attr.join(' ');
   if (m) {
     m.setTime(WORLD.tView); m.setPick(WORLD.pick); m.setAircraft(ENV.mode === 'world' ? WORLD.ac : null);
-    m.setTrail(ENV.mode === 'world' ? WORLD.trail : []); m.draw();
+    m.setTrail(ENV.mode === 'world' ? WORLD.trail : []);
+    m.setRoute(rvMapRoute()); m.setEnds(HAVE_ROUTE ? { start: RV.start, dest: RV.dest } : null);
+    m.draw();
   }
 }
 function renderWorldNote() {
@@ -2274,7 +2442,9 @@ function drawWorldLegend() {
 }
 // picking, hovering, fitting, hiding
 function worldPick(lat, lon) {
-  if (FL.on && ENV.mode === 'world') return;   // the place stays while it flies
+  if ((FL.on || rvActive()) && ENV.mode === 'world') return;   // the place stays while it flies
+  const which = HAVE_ROUTE ? $('rtPick').value : 'place';
+  if (which === 'start' || which === 'dest') { rvPick(which, lat, lon); return; }   // a point of the route
   WORLD.pick = { lat, lon }; WORLD.msg = null; renderWorld();
 }
 function worldHover(lat, lon, cx, cy) {
@@ -2306,7 +2476,7 @@ $('wmTime').addEventListener('input', () => {
   const f = WORLD.cur;
   if (!f) return;
   WORLD.tView = f.corridor.t0 + 3600 * +$('wmTime').value;
-  if (ENV.mode === 'world' && WORLD.entry && WORLD.entry.key === WORLD.curKey && !FL.on) { WORLD.entry.t = WORLD.tView; WORLD.entry.T0 = T; worldRebuild(true); }
+  if (ENV.mode === 'world' && WORLD.entry && WORLD.entry.key === WORLD.curKey && !FL.on && !rvActive()) { WORLD.entry.t = WORLD.tView; WORLD.entry.T0 = T; worldRebuild(true); }
   renderWorld();
 });
 // the forecast now, fetched from this page (the coordinates go to Open-Meteo)
@@ -2374,6 +2544,341 @@ $('wmFile').addEventListener('change', (e) => {
   rd.readAsText(file);
   e.target.value = '';
 });
+// ---------------------------------------------------------------- route planning in the world seas (routeview.js)
+// The map's click chooses a start and a destination inside the data of the chosen case (its corridor; the forecast now
+// only where its fetch has values). "経路を計画" runs route.js (the port of sim/route.py, unchanged) in a worker made from
+// a Blob URL of the modules' own source texts, with the energy limit of the fields (the defaults are route_params.js's:
+// the usable capacity of D-023's battery and the motor's share of D-021) from the map's corridor time. The plan is drawn
+// on the map and in 3D by kind of run. "スタート" makes the plan's first waypoint the 3D origin at the plan's start time
+// and flies the route with the navigator, waypoint by waypoint, as the destination flight does: a soaring run on the
+// velocity hull (soaring cycles first, the steady leg only where they make no way), a motor run as the steady leg. A
+// wait on the water is not flown: the flight stops at its point, and "待ち時間を飛ばして再発進" moves the weather clock to
+// the wait's end and launches again there as at the mast (landing and take-off are not drawn). The 3D sea and wind
+// come from the corridor at the aircraft (worldRebuild, once a second of sea time), as in any flight in the world seas.
+const RP = window.ROUTE_PARAMS || null, HAVE_ROUTE = !!(RP && window.ROUTE && window.RouteView);
+const RV = { start: null, dest: null, seq: 0, worker: null, busy: null, id: 0, res: null, ms: null, msg: null, fly: null,
+  cov: null, covKey: null, tickAt: 0, mainPlanner: null, land: window.WORLD_LAND ? WD.decodeLand(window.WORLD_LAND) : null };
+const RT_COL = { soaring: '#0e9f6e', motor: '#e6a100', wait: '#b0177a' };
+const RT_KIND = { soaring: 'rtLegSoar', motor: 'rtLegMotor', wait: 'rtLegWait' };
+const rvActive = () => !!(RV.fly && !RV.fly.ended && !RV.fly.plan.done);
+const rvAircraft = () => (RP && RP.aircraft[$('flAc').value] ? $('flAc').value : null);
+const rvDefaults = () => RouteView.defaults(RP, rvAircraft() || Object.keys(RP.aircraft)[0]);
+const rvT0 = () => WORLD.tView;   // the plan starts at the map's corridor time
+function rvKey() {   // the data of a plan: the world file shown, a fresh key for each file loaded or fetched
+  const f = WORLD.cur;
+  if (!f) return null;
+  if (!f.rvSeq) f.rvSeq = ++RV.seq;
+  return WORLD.curKey + '#' + f.rvSeq;
+}
+function rvResetEnergy() {
+  if (!HAVE_ROUTE) return;
+  const d = rvDefaults();
+  $('rtCap').value = d.capacityWh.toFixed(1); $('rtShare').value = String(d.motorShare);
+}
+// the energy limit of the fields; a field that shows its default unchanged gives the exact default
+function rvEnergy() {
+  const d = rvDefaults(), c = +$('rtCap').value, s = +$('rtShare').value;
+  return { capWh: c === +d.capacityWh.toFixed(1) ? d.capacityWh : c, share: s === d.motorShare ? d.motorShare : s };
+}
+function rvCoverage() {
+  const k = rvKey();
+  if (!k) return null;
+  if (RV.covKey !== k) { RV.cov = new RouteView.Coverage(WORLD.cur.corridor, RV.land); RV.covKey = k; }
+  return RV.cov;
+}
+function rvClear() { RV.res = null; RV.ms = null; rvBuild3d(); }
+function rvWorldChanged() {
+  if (!HAVE_ROUTE || rvActive()) return;
+  if (RV.res && RV.res.key !== rvKey()) { RV.start = null; RV.dest = null; rvClear(); }
+  renderRoute();
+}
+function rvPick(which, lat, lon) {
+  const cov = rvCoverage(), why = cov ? cov.check(lat, lon, rvT0()) : 'none';
+  if (why !== 'ok') { RV.msg = ['rtOut_' + why]; renderRoute(); return; }
+  RV[which] = { lat, lon }; RV.msg = null;
+  if (!RV.busy) rvClear();   // a new point leaves the plan behind
+  if (which === 'start') $('rtPick').value = 'dest';
+  renderRoute(); renderWorld();
+}
+// the planner's worker, made from the modules' source texts (works from a page opened as a file)
+function rvEnsureWorker() {
+  if (RV.worker) return true;
+  try {
+    const url = URL.createObjectURL(new Blob([RouteView.workerSource()], { type: 'text/javascript' }));
+    const w = new Worker(url);
+    w.onmessage = rvOnMessage;
+    w.onerror = (ev) => rvFail(ev.message || 'error');
+    w.postMessage({ type: 'init', params: RP, land: RV.land });
+    RV.worker = w;
+    return true;
+  } catch (err) { RV.worker = null; return false; }
+}
+function rvLoadSolar(id, done) {   // sim/viewer/route/solar_<id>.js, loaded when first needed
+  const have = () => (window.ROUTE_SOLAR && window.ROUTE_SOLAR[id]) || null;
+  if (have()) { done(have()); return; }
+  const el = document.createElement('script');
+  el.onload = () => done(have()); el.onerror = () => done(null);
+  el.src = 'route/solar_' + id + '.js';
+  document.head.appendChild(el);
+}
+function rvPlan() {
+  if (!HAVE_ROUTE || RV.busy || rvActive()) return;
+  const a = rvAircraft(), f = WORLD.cur;
+  if (!f) { RV.msg = ['rtOut_none']; renderRoute(); return; }
+  if (!a) { RV.msg = ['rtAcMissing', $('flAc').value]; renderRoute(); return; }
+  if (!RV.start || !RV.dest) { RV.msg = ['rtNeedPts']; renderRoute(); return; }
+  const e = rvEnergy();
+  if (!(e.capWh > 0) || !(e.share >= 0 && e.share <= 1)) { RV.msg = ['rtBadEnergy']; renderRoute(); return; }
+  const sid = WORLD.curKey.startsWith('s:') ? WORLD.curKey.slice(2) : null, key = rvKey();
+  RV.fly = null;   // a planned flight that has ended gives way to the new plan
+  RV.id++;
+  const id = RV.id;
+  RV.busy = { t: performance.now(), id: id }; RV.msg = null; rvClear(); renderRoute();
+  const go = (solar) => {
+    if (!RV.busy || RV.busy.id !== id) return;
+    const job = { key: key, corridor: f.corridor, solar: solar, aircraft: a, capWh: e.capWh, share: e.share,
+      start: [RV.start.lat, RV.start.lon], dest: [RV.dest.lat, RV.dest.lon], t0: rvT0() };
+    if (rvEnsureWorker()) RV.worker.postMessage({ type: 'plan', id: id, job: job });
+    else { RV.msg = ['rtNoWorker']; renderRoute(); setTimeout(() => rvMainThread(job, id), 50); }
+  };
+  if (sid) rvLoadSolar(sid, go); else go(null);
+}
+function rvMainThread(job, id) {   // without a worker: in the page, which stops meanwhile
+  try {
+    if (!RV.mainPlanner) RV.mainPlanner = new RouteView.Planner(RP, RV.land);
+    const t1 = performance.now(), r = RV.mainPlanner.plan(job);
+    r.plan_ms = performance.now() - t1;
+    if (RV.busy && RV.busy.id === id) rvDone(r);
+  } catch (err) { rvFail(String((err && err.message) || err)); }
+}
+function rvOnMessage(e) {
+  const m = e.data;
+  if (m.type === 'ready' || !RV.busy || m.id !== RV.busy.id) return;
+  if (m.type === 'error') { rvFail(m.message); return; }
+  rvDone(m.result);
+}
+function rvDone(r) {
+  RV.ms = performance.now() - RV.busy.t; RV.busy = null; RV.res = r;
+  if (RV.msg && RV.msg[0] === 'rtNoWorker') RV.msg = null;
+  rvBuild3d(); renderRoute(); renderWorld();
+}
+function rvFail(msg) { RV.busy = null; RV.msg = ['rtErr', msg]; renderRoute(); }
+function rvCancel() {
+  if (!RV.busy) return;
+  if (RV.worker) { RV.worker.terminate(); RV.worker = null; }   // a new worker is made for the next plan
+  RV.busy = null; RV.msg = ['rtCancelled']; renderRoute();
+}
+// the planned route on the map: the route found, else the closest route (dashed)
+function rvMapRoute() {
+  if (!HAVE_ROUTE || !RV.res || RV.res.key !== rvKey()) return null;
+  const rt = RV.res.route || RV.res.closest;
+  if (!rt) return null;
+  return { dashed: !RV.res.route, segs: rt.segments.filter((s) => s.kind !== 'wait').map((s) => ({ pts: s.pts, color: RT_COL[s.kind] })),
+    waits: rt.segments.filter((s) => s.kind === 'wait').map((s) => ({ lat: s.a[0], lon: s.a[1], color: RT_COL.wait })) };
+}
+// the route found in 3D: a line 1.5 m above the mean sea, coloured by kind and drawn over the waves, with the waits as
+// points; about the current 3D origin (each launch of a planned flight makes its own point the origin)
+const rvGeo = new THREE.BufferGeometry(), rvWaitGeo = new THREE.BufferGeometry();
+const rvLine = new THREE.LineSegments(rvGeo, new THREE.LineBasicMaterial({ vertexColors: true, depthTest: false, transparent: true, opacity: 0.9 }));
+const rvWaits = new THREE.Points(rvWaitGeo, new THREE.PointsMaterial({ vertexColors: true, size: 10, sizeAttenuation: false, depthTest: false }));
+for (const o of [rvLine, rvWaits]) { o.frustumCulled = false; o.visible = false; o.renderOrder = 5; scene.add(o); }
+function rvBuild3d() {
+  const rt = RV.res && RV.res.route, e = WORLD.entry;
+  rvLine.visible = rvWaits.visible = false;
+  if (!rt || !e || RV.res.key !== rvKey() || e.key !== WORLD.curKey) return;
+  const pos = [], col = [], wp = [], wc = [], H = 1.5;
+  const loc = (ll) => { const q = WD.aeqdFwd(e.lat, e.lon, ll[0], ll[1]); return [q[0] * 1000, q[1] * 1000]; };
+  for (const s of rt.segments) {
+    const c = new THREE.Color(RT_COL[s.kind]);
+    if (s.kind === 'wait') { const p = loc(s.a); wp.push(p[0], H, -p[1]); wc.push(c.r, c.g, c.b); continue; }
+    for (let k = 0; k + 1 < s.pts.length; k++) {   // pieces of about 2 km, so that each arc follows the projection
+      const a = s.pts[k], b = s.pts[k + 1], n = Math.max(1, Math.ceil(ROUTE.gcKm(a[0], a[1], b[0], b[1]) / 2));
+      let prev = loc(a);
+      for (let q = 1; q <= n; q++) {
+        const cur = loc(q === n ? b : ROUTE.gcPoint(a[0], a[1], b[0], b[1], q / n));
+        pos.push(prev[0], H, -prev[1], cur[0], H, -cur[1]); col.push(c.r, c.g, c.b, c.r, c.g, c.b);
+        prev = cur;
+      }
+    }
+  }
+  rvGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); rvGeo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  rvWaitGeo.setAttribute('position', new THREE.Float32BufferAttribute(wp, 3)); rvWaitGeo.setAttribute('color', new THREE.Float32BufferAttribute(wc, 3));
+  rvLine.visible = pos.length > 0; rvWaits.visible = wp.length > 0;
+}
+// the planned flight: the navigators of the two kinds of run, built at each launch for the aircraft flown
+function rvNavigators(name, steadyOf) {
+  const all = navEntries(name, true), mot = all.filter((x) => x.kind === 'motor');
+  return { soaring: new NAV.HullNavigator(new NAV.HullSource(all), { arrivalRadius: NAV_RADIUS, steady: steadyOf() }),
+    motor: new NAV.HullNavigator(new NAV.HullSource(mot.length ? mot : all), { arrivalRadius: NAV_RADIUS, steady: steadyOf() }) };
+}
+function rvSetTarget() {   // the end of the segment flown, in the 3D frame
+  const s = RV.fly.plan.seg(), e = WORLD.entry, a = WD.aeqdFwd(e.lat, e.lon, s.a[0], s.a[1]), b = WD.aeqdFwd(e.lat, e.lon, s.b[0], s.b[1]);
+  RV.fly.segA = [a[0] * 1000, a[1] * 1000];
+  setTarget(b[0] * 1000, b[1] * 1000);
+  NV.hist = [];
+}
+// at the end of a flying segment (sea time t): on to the next ('fly'), or 'wait' or 'end'
+function rvArrive(t) {
+  const F = RV.fly, r = F.plan.arrive(WORLD.entry.t + (t - WORLD.entry.T0));
+  if (r === 'fly') {
+    rvSetTarget();
+    const nav = F.navs[F.plan.seg().kind];
+    if (NV.nav !== nav) { NV.nav = nav; nav.reset(); }
+    navStep(t);
+  }
+  return r;
+}
+// the 3D origin at a point of the plan at weather time t, the mast there (fresh: a new flight's trail)
+function rvEnterAt(ll, t, fresh) {
+  WORLD.entry = { lat: ll[0], lon: ll[1], t: t, T0: T, key: WORLD.curKey };
+  WORLD.last = null; WORLD.ac = null; WORLD.msg = null; WORLD.lastT = -1e9;
+  if (fresh) WORLD.trail = [];
+  WORLD.trailT = -1;   // the map's trail of one plan goes on across its launches
+  mx = 0; my = 0;
+  if (modeEl.value !== 'world' || ENV.mode !== 'world') { modeEl.value = 'world'; applyEnv(false); } else worldRebuild(true);
+  rvBuild3d(); renderWorld();
+}
+function rvLaunch() {   // each launch of a planned flight flies the plan's aircraft with its motor
+  $('flAc').value = RV.fly.res.aircraft; $('flMotor').value = 'on';
+  rvSetTarget();
+  if (!launch()) RV.fly.ended = 'X';
+}
+function rvStart() {
+  const r = RV.res;
+  if (!r || !r.ok || RV.busy || FL.on || rvActive()) return;
+  if (r.key !== rvKey()) { RV.msg = ['rtStale']; renderRoute(); return; }
+  if (!AIRCRAFT || !AIRCRAFT[r.aircraft]) { RV.msg = ['rtAcMissing', r.aircraft]; renderRoute(); return; }
+  for (const [id, v] of [['flAc', r.aircraft], ['flMotor', 'on']]) { $(id).value = v; $(id).dispatchEvent(new Event('change')); }   // the plan's aircraft, with its motor
+  RV.fly = { plan: new RouteView.FlightPlan(r.route.segments), navs: null, res: r, ended: null, segA: null };
+  RV.msg = null;
+  FL.started = false; flightMesh.visible = false;   // no aircraft until the first launch (the plan can begin with a wait)
+  rvEnterAt(r.route.segments[0].a, r.t0, true);
+  if (!RV.fly.plan.wait) rvLaunch();
+  renderRoute();
+}
+function rvSkip() {   // leave a wait: the clock to its end, then launch there
+  const F = RV.fly;
+  if (!F || !F.plan.wait || FL.on) return;
+  const lv = F.plan.leave(worldTime());
+  rvEnterAt(lv.at, lv.t, false);
+  if (!F.plan.done) rvLaunch();
+  renderRoute();
+}
+function rvTick(now) {
+  if (!HAVE_ROUTE) return;
+  const F = RV.fly;
+  if (F && !F.ended && !F.plan.done && !F.plan.wait && !FL.on && FL.end && FL.end !== 'W') F.ended = FL.end;   // stopped, touched the water or failed
+  if (now - RV.tickAt < 250) return;
+  RV.tickAt = now;
+  renderRoute();
+}
+// the texts of the route block
+function rvRows(el, rows) {
+  el.textContent = '';
+  for (const [k, v] of rows) {
+    const tr = document.createElement('tr'), a = document.createElement('td'), b = document.createElement('td');
+    a.textContent = tx(k); b.textContent = v; tr.append(a, b); el.appendChild(tr);
+  }
+}
+const reasonText = (r) => (LANG === 'ja' ? tx('rtR' + r.reason) : r.reason_text);
+function rvRouteRows(r, rt) {
+  const s = rt.summary, H = s.time_h, pc = (x) => (H > 0 ? (100 * x / H).toFixed(0) : '0'), nm = rt.margins.night_wh;
+  return [['rs_arr', tx('rsArr', fUtc(r.t0 + 3600 * H), f1(H))], ['rs_dist', tx('rsDist', f1(r.dist_km, 0), f1(rt.length_km, 0))],
+    ['rs_share', tx('rsShare', pc(s.soaring_h), pc(s.motor_h), pc(s.wait_h))], ['rs_soc', tx('rsSoc', f1(rt.lowest_soc_wh), f1(r.energy.reserve_wh))],
+    ['rs_night', nm >= -1e-6 ? tx('rsNightOk', f1(Math.max(0, nm))) : tx('rsNightNo', f1(-nm))],
+    ['rs_energy', tx('rsEnergy', f1(s.motor_wh), f1(s.solar_wh))]];
+}
+function rvResultRows(r) {
+  const rows = [['rs_res', r.ok ? tx('rsOk') : tx('rsFail', r.reason, reasonText(r))],
+    ['rs_in', tx('rsIn', r.aircraft, f1(r.energy.capacity_wh), r.energy.motor_share, fUtc(r.t0))]];
+  if (r.reason === 2) rows.push(['rs_need', tx('rsNeed', f1(r.start_need_wh), f1(r.energy.capacity_wh))]);
+  if (r.route) rows.push(...rvRouteRows(r, r.route));
+  if (r.closest) {
+    const c = r.closest, m = c.margins, sh = (x) => f1(Math.max(0, -x));
+    rows.push(['rs_close', c.relaxation === 'reserve_lowered_1' ? tx('rsRelax1', r.relax_below[0]) : tx('rsRelax2', r.relax_below[1])]);
+    rows.push(...rvRouteRows(r, c));
+    rows.push(['rs_short', tx('rsShort', sh(m.reserve_wh), sh(m.night_wh), sh(m.allowance_wh))]);
+  }
+  if (r.start_snap_km !== null && r.start_snap_km !== undefined) rows.push(['rs_snap', tx('rsSnap', f1(r.start_snap_km), f1(r.dest_snap_km))]);
+  rows.push(['rs_solar', tx(r.solar === 'layer' ? 'rsSolarLayer' : 'rsSolarModel')]);
+  return rows;
+}
+function rvFlightRows() {
+  const F = RV.fly, P = F.plan, r = F.res, rows = [], tw = WORLD.entry ? worldTime() : null;
+  if (P.done) {
+    const last = P.log[P.log.length - 1];
+    return [['rf_seg', tx('rfDone', fUtc(last.t), fUtc(r.t0 + 3600 * r.route.summary.time_h))]];
+  }
+  const s = P.seg(), n = P.segs.length;
+  let left = null, tPlan = null;
+  if (s && s.kind !== 'wait' && FL.on && NV.target && F.segA) {
+    left = Math.hypot(NV.target.x - FL.s[0], NV.target.y - FL.s[1]);
+    tPlan = P.planTime(left, Math.hypot(NV.target.x - F.segA[0], NV.target.y - F.segA[1]));
+  }
+  rows.push(['rf_seg', tx('rfSeg', P.i + 1, n, s ? tx(RT_KIND[s.kind]) : '-', left === null ? null : f1(left / 1000))]);
+  if (tw !== null) rows.push(['rf_clock', tx('rfClock', fUtc(tw), f1((tw - r.t0) / 3600, 2))]);
+  if (P.wait) rows.push(['rf_plan', tx('rfWaitPlan', fUtc(P.wait.t0), fUtc(P.wait.t1))]);
+  else if (tPlan !== null) {
+    rows.push(['rf_plan', fUtc(tPlan) + ' UTC']);
+    const dm = (tw - tPlan) / 60;
+    rows.push(['rf_diff', Math.abs(dm) < 1 ? tx('rfOn') : dm > 0 ? tx('rfLate', dm.toFixed(0)) : tx('rfEarly', (-dm).toFixed(0))]);
+  }
+  if (F.ended) rows.push(['rf_seg', tx('rfEnded', tx('end' + F.ended))]);
+  return rows;
+}
+function renderRoute() {
+  if (!HAVE_ROUTE) {
+    $('rtMsg').textContent = tx('rtNoParams');
+    for (const id of ['rtPick', 'rtCap', 'rtShare', 'rtReset', 'rtPlan', 'rtCancel', 'rtGo']) $(id).disabled = true;
+    return;
+  }
+  const ll = (p) => (p ? fLat(p.lat) + sep() + fLon(p.lon) : tx('rtNone'));
+  $('rtPts').textContent = tx('rtPtStart') + ': ' + ll(RV.start) + ' / ' + tx('rtPtDest') + ': ' + ll(RV.dest);
+  const act = rvActive(), r = RV.res;
+  $('rtPlan').disabled = !!RV.busy || act || FL.on;
+  $('rtCancel').disabled = !RV.busy;
+  $('rtGo').disabled = !r || !r.ok || !!RV.busy || act || FL.on;
+  $('rtGo').title = tx(r && !r.ok ? 'rtGoNo' : 'rtGoTip');
+  for (const id of ['rtPick', 'rtCap', 'rtShare', 'rtReset']) $(id).disabled = act;
+  $('rtBusy').textContent = RV.busy ? tx('rtBusy', ((performance.now() - RV.busy.t) / 1000).toFixed(1))
+    : r && RV.ms !== null ? tx('rtTook', (RV.ms / 1000).toFixed(1), (r.plan_ms / 1000).toFixed(1)) : '';
+  $('rtMsg').textContent = RV.msg ? tx(RV.msg[0], RV.msg[1]) : (r && r.key !== rvKey() ? tx('rtStale') : '');
+  const sw = (k) => '<span class="sw" style="background:' + RT_COL[k] + '"></span>' + tx(RT_KIND[k]);
+  $('rtLegend').innerHTML = sw('soaring') + sw('motor') + sw('wait') + '<span class="dim">&nbsp;&nbsp;' + tx('rtLegEnds') + (r && !r.route && r.closest ? sep() + tx('rtLegClosest') : '') + '</span>';
+  rvRows($('rtro'), r ? rvResultRows(r) : []);
+  rvRows($('rtfl'), RV.fly ? rvFlightRows() : []);
+  const w = RV.fly && !RV.fly.ended && RV.fly.plan.wait;
+  $('rtWait').style.display = w ? '' : 'none';
+  if (w) {
+    const facts = [tx('rtWaitSoc', f1(w.soc0), f1(w.soc1), f1(w.solar_wh), f1(w.draw_wh)), tx('rtWaitSlack', f1(w.slack0), f1(w.slack1)),
+      tx('rtWaitNight', (100 * w.night_share).toFixed(0)), tx('rtWaitSea', f1(w.hs[0], 2), f1(w.hs[1], 2), f1(w.avoid_hs_m)),
+      tx('rtWaitWind', f1(w.wind[0]), f1(w.wind[1]))];
+    if (w.midnight) facts.push(tx('rtWaitMid'));
+    $('rtWaitTxt').textContent = tx('rtWaitTxt', f1((w.t1 - w.t0) / 3600), fUtc(w.t0), fUtc(w.t1)) + ' ' + tx('rtWaitWhy') + ' ' + facts.join(sep()) + (LANG === 'ja' ? '。' : '.');
+    $('rtSkip').disabled = FL.on;
+  }
+}
+if (HAVE_ROUTE) {
+  rvResetEnergy();
+  $('rtReset').addEventListener('click', () => { rvResetEnergy(); renderRoute(); });
+  $('rtPlan').addEventListener('click', rvPlan);
+  $('rtCancel').addEventListener('click', rvCancel);
+  $('rtGo').addEventListener('click', rvStart);
+  $('rtSkip').addEventListener('click', rvSkip);
+}
+dyn.push(renderRoute);
+// for the headless checks
+window.viewerRoute = () => ({ have: HAVE_ROUTE, start: RV.start, dest: RV.dest, busy: !!RV.busy, ms: RV.ms, msg: RV.msg,
+  energy: HAVE_ROUTE ? rvEnergy() : null, defaults: HAVE_ROUTE ? rvDefaults() : null, worker: !!RV.worker,
+  res: RV.res && { ok: RV.res.ok, reason: RV.res.reason, key: RV.res.key, t0: RV.res.t0, plan_ms: RV.res.plan_ms, solar: RV.res.solar,
+    summary: (RV.res.route || RV.res.closest || {}).summary || null, nodes: (RV.res.route || RV.res.closest || { waypoints: [] }).waypoints.map((w) => w.node),
+    segments: (RV.res.route || RV.res.closest || { segments: [] }).segments.map((s) => [s.kind, s.t0, s.t1]) },
+  line3d: { visible: rvLine.visible, n: rvGeo.attributes.position ? rvGeo.attributes.position.count : 0, waits: rvWaitGeo.attributes.position ? rvWaitGeo.attributes.position.count : 0 },
+  map: rvMapRoute() && { segs: rvMapRoute().segs.length, waits: rvMapRoute().waits.length, dashed: rvMapRoute().dashed },
+  fly: RV.fly && { i: RV.fly.plan.i, n: RV.fly.plan.segs.length, wait: !!RV.fly.plan.wait, done: RV.fly.plan.done, ended: RV.fly.ended, log: RV.fly.plan.log,
+    target: NV.target, nav: !RV.fly.navs || !FL.started ? null : NV.nav === RV.fly.navs.motor ? 'motor' : NV.nav === RV.fly.navs.soaring ? 'soaring' : null },
+  tw: WORLD.entry ? worldTime() : null, entry: WORLD.entry, fl: { on: FL.on, started: FL.started, end: FL.end, el: FL.el, s: FL.s && FL.s.slice() } });
+
 // start: the first case, the whole world
 {
   let hidden = false;
@@ -2775,6 +3280,7 @@ function loop(now) {
   }
   envUpdate(T);   // the slow change of the wind and the short waves at the new sea time
   worldTick(now);  // the world sea at the aircraft's place and the weather time, and the map
+  rvTick(now);     // the route planner's state, the planned flight and its clocks
   if (ENV.dirty) { ENV.dirty = false; uploadC(); }
   {   // locks: the setting and the variation do not change in flight, a flight over the regular swell keeps its swell
     // and wind direction, and time runs in real seconds (one second of flight is one second of weather) with the
@@ -2783,7 +3289,7 @@ function loop(now) {
     spdEl.disabled = $('pause').disabled = lv;
     spdEl.title = tx(lv ? lk : 'spdTip');
     $('pause').title = $('pause').parentElement.title = tx(lv ? lk : 'pauseTip');
-    modeEl.disabled = FL.on; modeEl.title = tx(FL.on ? 'envLockTip' : 'envModeTip');
+    modeEl.disabled = FL.on || rvActive(); modeEl.title = tx(modeEl.disabled ? 'envLockTip' : 'envModeTip');
     varyEl.disabled = FL.on || ENV.regular;
     varyEl.title = $('varyLbl').title = tx(FL.on ? 'varyLockTip' : ENV.regular ? 'varyRegTip' : 'varyTip');
     swTypeEl.disabled = FL.on && ENV.regular;

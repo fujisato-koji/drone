@@ -35785,3 +35785,39 @@ items:
     status: assumed
     basis:
       - Q-084
+  - key: viewer.route_plan_so_summer_quiet_upwind_page_ms
+    v: 33014
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.route_plan_so_summer_quiet_across_page_ms
+    v: 100030
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.route_plan_so_summer_quiet_upwind_bare_ms
+    v: 1716
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.route_plan_so_summer_quiet_across_bare_ms
+    v: 8690
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.route_plan_so_summer_quiet_upwind_node_ms
+    v: 1696
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer
+  - key: viewer.route_plan_so_summer_quiet_across_node_ms
+    v: 9430
+    unit: ms
+    status: calculated
+    basis:
+      - docs/02-form.md#viewer

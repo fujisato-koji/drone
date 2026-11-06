@@ -1,6 +1,7 @@
 // The viewer's small world map: an equirectangular canvas with the land of sim/viewer/world/land.js, the wave
 // height and the wind arrows of the global snapshot, the finer field of the corridor at a chosen time, the chosen
-// place, and the aircraft with its trail. Wheel to zoom, drag to pan, click to choose a place.
+// place, a planned route (its runs coloured by kind, its waits, its start and destination), and the aircraft with its
+// trail. Wheel to zoom, drag to pan, click to choose a place.
 // Classic script for the browser: attaches WorldMap to window (uses WorldData from worlddata.js).
 (function (root) {
   'use strict';
@@ -24,7 +25,7 @@
     opts = opts || {};
     const g = cv.getContext('2d');
     const st = { W: 0, H: 0, dpr: 1, lon0: 0, lat0: 0, k: 1, land: null, global: null, cor: null, t: 0, pick: null,
-      aircraft: null, trail: [], drag: null, img: null, imgKey: null };
+      aircraft: null, trail: [], drag: null, img: null, imgKey: null, route: null, ends: null };
     function size() {
       const r = Math.min(root.devicePixelRatio || 1, 2), w = cv.clientWidth || cv.width, h = cv.clientHeight || cv.height;
       if (w !== st.W || h !== st.H || r !== st.dpr) { st.W = w; st.H = h; st.dpr = r; cv.width = w * r; cv.height = h * r; }
@@ -183,6 +184,35 @@
         o.forEach((p, m) => { const X = px(p[1]), Y = py(p[0]); if (m === 0) g.moveTo(X, Y); else g.lineTo(X, Y); });
         g.stroke();
       }
+      // the planned route: runs over a light halo (dashed for the closest route), waits as rings, then the start (a
+      // circle) and the destination (a square)
+      const RT = st.route;
+      if (RT) {
+        for (const s of RT.segs) {
+          if (!s.pts || s.pts.length < 2) continue;
+          for (const [w, c] of [[5, COL.halo], [2.5, s.color]]) {
+            g.strokeStyle = c; g.lineWidth = w; g.setLineDash(RT.dashed && c !== COL.halo ? [6, 4] : []);
+            g.beginPath(); s.pts.forEach((p, m) => { const X = px(p[1]), Y = py(p[0]); if (m === 0) g.moveTo(X, Y); else g.lineTo(X, Y); }); g.stroke();
+          }
+        }
+        g.setLineDash([]);
+        for (const w of RT.waits || []) {
+          const X = px(w.lon), Y = py(w.lat);
+          g.strokeStyle = COL.halo; g.lineWidth = 5; g.beginPath(); g.arc(X, Y, 5, 0, 2 * Math.PI); g.stroke();
+          g.strokeStyle = w.color; g.lineWidth = 2.5; g.beginPath(); g.arc(X, Y, 5, 0, 2 * Math.PI); g.stroke();
+        }
+      }
+      if (st.ends) {
+        const mark = (p, square) => {
+          if (!p) return;
+          const X = px(p.lon), Y = py(p.lat);
+          g.fillStyle = COL.halo; g.strokeStyle = COL.ink; g.lineWidth = 2; g.beginPath();
+          if (square) g.rect(X - 5, Y - 5, 10, 10); else g.arc(X, Y, 5.5, 0, 2 * Math.PI);
+          g.fill(); g.stroke();
+          g.fillStyle = COL.ink; g.beginPath(); g.arc(X, Y, 1.8, 0, 2 * Math.PI); g.fill();
+        };
+        mark(st.ends.start, false); mark(st.ends.dest, true);
+      }
       // trail and aircraft
       if (st.trail.length > 1) {
         g.strokeStyle = COL.trail; g.lineWidth = 2; g.beginPath();
@@ -249,6 +279,8 @@
       setPick(p) { st.pick = p; },
       setAircraft(p) { st.aircraft = p; },
       setTrail(tr) { st.trail = tr || []; },
+      setRoute(r) { st.route = r || null; },   // {segs: [{pts: [[lat, lon], ...], color}], waits: [{lat, lon, color}], dashed}
+      setEnds(e) { st.ends = e || null; },      // {start: {lat, lon} or null, dest: ...}
       fit, draw, hsColor, HS_MAX, RAMP,
       view() { return { lon0: st.lon0, lat0: st.lat0, k: st.k }; },
       project(lat, lon) { return [px(lon), py(lat)]; }
