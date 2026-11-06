@@ -3,8 +3,9 @@
 // longitude to the local plane (azimuthal equidistant about a centre), turn a sample into the free setting's
 // sea (EnvSea), and fetch the forecast "now" from Open-Meteo in batches of locations.
 // Classic script: attaches WorldData to globalThis, and sets module.exports under node (which needs seagen.js
-// next to it for seaSet).
-(function (root) {
+// next to it for seaSet). WorldData.moduleSource() is this file's code, for a worker made from a Blob URL (the route
+// planner's, sim/viewer/routeview.js; seaSet is not available there).
+(function worldDataModule(root) {
   'use strict';
   const R = 6371.0088;   // km, as sim.world.R_EARTH_KM
   const D2R = Math.PI / 180;
@@ -388,6 +389,7 @@
   const WorldData = { R, unb64, unpack, oceanGrid, parseFile, decodeLand, SCALES, quantize, pack, aeqdFwd, aeqdInv, corridorPoints, corridorIndex, corridorOutline,
     bilinear, sampleCorridor, sampleGlobal, corridorAt, windFrom, windUV, developHours, seaSet, matchPhases, U_MIN, SWELL_MIN,
     DATASETS, BATCH, PACE_PER_MIN, requestUrl, fetchLocations, buildCorridor, buildGlobal, oceanPoints, fetchNow, nowCost, dateUTC };
+  WorldData.moduleSource = function () { return '(' + worldDataModule.toString() + ')(globalThis);\n'; };
   root.WorldData = WorldData;
   if (typeof module !== 'undefined' && module.exports) module.exports = WorldData;
 })(typeof window !== 'undefined' ? window : globalThis);

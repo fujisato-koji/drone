@@ -8,8 +8,9 @@
 // Frame: wind toward +x, y to the left of the downwind direction. A world vector (east, north)
 // turns into it through psiW = -90 deg - windFrom (radians). Compass bearings in degrees.
 // Attaches NAV to globalThis; module.exports under node. Parity with Python is tested in
-// sim/tests/test_navigator_js.py.
-(function () {
+// sim/tests/test_navigator_js.py. NAV.moduleSource() is this file's code, for a worker made from a Blob URL
+// (the route planner's, sim/viewer/routeview.js).
+(function navigatorModule() {
   'use strict';
   var MIN_VMG = 0.3;
   var LIMIT_FRAC = 0.5;
@@ -586,6 +587,7 @@
   var NAV = { MIN_VMG: MIN_VMG, VelocityHull: VelocityHull, HullSource: HullSource,
     HullNavigator: HullNavigator, SteadyModel: SteadyModel, steadyParams: steadyParams, steadyEntry: steadyEntry, FreeCourse: FreeCourse, sailHull: sailHull, pointsFromEntries: pointsFromEntries,
     toWind: toWind, toWorld: toWorld, psiOf: psiOf };
+  NAV.moduleSource = function () { return '(' + navigatorModule.toString() + ')();\n'; };
   globalThis.NAV = NAV;
   if (typeof module !== 'undefined' && module.exports) module.exports = NAV;
 })();

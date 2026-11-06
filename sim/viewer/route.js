@@ -9,8 +9,9 @@
 // Needs navigator.js (NAV: the velocity hull and the steady leg) and worlddata.js (WorldData: decoding and the
 // corridor's projection). Parameters come from route_params.js (python -m sim.route export); solar layers from
 // sim/viewer/route/solar_<id>.js. Attaches ROUTE to globalThis; module.exports under node. Parity with Python is
-// tested in sim/tests/test_route_js.py.
-(function (root) {
+// tested in sim/tests/test_route_js.py. ROUTE.moduleSource() is this file's code, for the viewer's planning worker
+// (sim/viewer/routeview.js).
+(function routeModule(root) {
   'use strict';
   var NAV = root.NAV || (typeof require !== 'undefined' ? require('./navigator.js') : null);
   var WD = root.WorldData || (typeof require !== 'undefined' ? require('./worlddata.js') : null);
@@ -736,6 +737,7 @@
     wrap360: wrap360, wrap180: wrap180, ringOffsets: ringOffsets, landTester: landTester, corridorGraph: corridorGraph, nearest: nearest,
     LegModel: LegModel, Tables: Tables, localDay: localDay, search: search, routeOf: routeOf, summarize: summarize,
     strictMargin: strictMargin, plan: plan, energyOf: energyOf };
+  ROUTE.moduleSource = function () { return '(' + routeModule.toString() + ')(globalThis);\n'; };
   root.ROUTE = ROUTE;
   if (typeof module !== 'undefined' && module.exports) module.exports = ROUTE;
 })(typeof window !== 'undefined' ? window : globalThis);
